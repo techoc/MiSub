@@ -98,6 +98,7 @@ D1 当前采用“行级 JSON”结构：
 - `plusAsSpace`：拉取订阅时是否把 `+` 视为空格。
 - `website`：订阅源网站/来源信息。
 - `userInfo`：运行时或历史流量信息，可能包含 `upload`、`download`、`total`、`expire`。
+- `lastFetchedAt`：上一次成功拉取该订阅源的时间（ISO 8601 字符串），由前端在更新成功后写入并随订阅持久化，用于卡片展示。
 
 手动节点常见字段：
 

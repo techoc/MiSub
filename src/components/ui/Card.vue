@@ -112,6 +112,33 @@
         return `https://${website}`;
     };
 
+    // 上一次成功获取订阅的时间：当天只显示时分，跨天补充日期，跨年再补充年份
+    const lastFetchedInfo = computed(() => {
+        const raw = props.misub.lastFetchedAt;
+        if (!raw) return null;
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) return null;
+
+        const pad = (value) => String(value).padStart(2, '0');
+        const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        const now = new Date();
+        const sameDay =
+            date.getFullYear() === now.getFullYear() &&
+            date.getMonth() === now.getMonth() &&
+            date.getDate() === now.getDate();
+
+        let label = time;
+        if (!sameDay) {
+            const monthDay = `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+            label =
+                date.getFullYear() === now.getFullYear()
+                    ? `${monthDay} ${time}`
+                    : `${date.getFullYear()}-${monthDay} ${time}`;
+        }
+
+        return { label, full: date.toLocaleString() };
+    });
+
     const websiteUrl = computed(() => {
         const explicitWebsite = normalizeWebsiteUrl(props.misub.website);
         if (explicitWebsite) return explicitWebsite;
@@ -339,6 +366,25 @@
                 <Switch v-model="misub.enabled" @change="emit('change')" />
 
                 <div class="flex items-center gap-3">
+                    <span
+                        data-testid="subscription-last-fetched"
+                        class="whitespace-nowrap text-[11px] text-gray-400 dark:text-gray-500"
+                        :title="
+                            lastFetchedInfo
+                                ? t('subscriptions.lastFetchedTitle', {
+                                      time: lastFetchedInfo.full,
+                                  })
+                                : t('subscriptions.lastFetchedNever')
+                        "
+                    >
+                        {{
+                            lastFetchedInfo
+                                ? t('subscriptions.lastFetched', {
+                                      time: lastFetchedInfo.label,
+                                  })
+                                : t('subscriptions.lastFetchedNever')
+                        }}
+                    </span>
                     <button
                         @click.stop="emit('update')"
                         :disabled="misub.isUpdating"

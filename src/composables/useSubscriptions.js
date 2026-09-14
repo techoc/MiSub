@@ -183,6 +183,8 @@ export function useSubscriptions(markDirty) {
             subToUpdate.nodeCount = data.count || 0;
             subToUpdate.userInfo = data.userInfo || null;
             subToUpdate.lastError = null; // 成功后清除错误状态
+            // 记录上一次成功获取订阅的时间（随订阅一起持久化）
+            subToUpdate.lastFetchedAt = new Date().toISOString();
 
             if (!isInitialLoad) {
                 showToast(
@@ -328,6 +330,8 @@ export function useSubscriptions(markDirty) {
 
                     if (updateResult.success) {
                         sub.nodeCount = updateResult.nodeCount || 0;
+                        // 记录上一次成功获取订阅的时间（随订阅一起持久化）
+                        sub.lastFetchedAt = new Date().toISOString();
                         successCount++;
                     }
                 });
