@@ -3,6 +3,8 @@
  * 包含各种通用的辅助函数
  */
 
+import { normalizeGeneratorOptions } from './subscription/generator-options.js';
+
 /**
  * 计算数据的简单哈希值，用于检测变更
  * @param {any} data - 要计算哈希的数据
@@ -581,11 +583,21 @@ export function migrateConfigSettings(config) {
     if (migratedConfig.hasOwnProperty('builtinEnableUdp')) {
         migratedConfig.builtinEnableUdp = toBoolean(migratedConfig.builtinEnableUdp);
     }
+    if (migratedConfig.hasOwnProperty('builtinEnableTfo')) {
+        migratedConfig.builtinEnableTfo = toBoolean(migratedConfig.builtinEnableTfo);
+    }
     if (migratedConfig.hasOwnProperty('builtinLoonSkipCertVerify')) {
         migratedConfig.builtinLoonSkipCertVerify = toBoolean(
             migratedConfig.builtinLoonSkipCertVerify
         );
     }
+    migratedConfig.generatorOptions = normalizeGeneratorOptions(migratedConfig.generatorOptions);
+    migratedConfig.dnsMode =
+        String(migratedConfig.dnsMode || 'clean')
+            .trim()
+            .toLowerCase() === 'polluted'
+            ? 'polluted'
+            : 'clean';
 
     return migratedConfig;
 }

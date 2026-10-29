@@ -1,3 +1,5 @@
+import { normalizeGeneratorOptions } from './generator-options.js';
+
 export function createUnifiedTemplateModel(input = {}) {
     return {
         meta: {
@@ -18,6 +20,7 @@ export function createUnifiedTemplateModel(input = {}) {
             enableUdp: Boolean(input.settings?.enableUdp),
             customDnsOverride: input.settings?.customDnsOverride || '',
             dnsMode: input.settings?.dnsMode || 'clean',
+            generatorOptions: normalizeGeneratorOptions(input.settings?.generatorOptions),
         },
         extras: typeof input.extras === 'object' && input.extras !== null ? input.extras : {},
     };

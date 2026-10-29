@@ -48,6 +48,7 @@ import {
     renderSingboxFromIniTemplate,
     renderSurgeFromIniTemplate,
 } from './template-pipeline.js';
+import { resolveGeneratorOptions } from './generator-options.js';
 import { getBuiltinTemplate } from './builtin-template-registry.js';
 import { assertPublicNetworkUrl } from '../security-utils.js';
 
@@ -502,7 +503,11 @@ export function resolveEffectiveEngine({
     return profileEngineMode || globalEngineMode || 'builtin';
 }
 
-export function resolveBuiltinRequestOptions({ searchParams, userAgent = '' } = {}) {
+export function resolveBuiltinRequestOptions({
+    searchParams,
+    userAgent = '',
+    generatorOptions = {},
+} = {}) {
     const params = searchParams || new URLSearchParams('');
     const dnsMode = params.get('dns-mode') || params.get('dnsMode') || '';
     return {
@@ -510,6 +515,7 @@ export function resolveBuiltinRequestOptions({ searchParams, userAgent = '' } = 
         searchParams: params,
         hiddifyCompatible: isHiddifyAgent(userAgent),
         dnsMode: dnsMode.toLowerCase() === 'polluted' ? 'polluted' : 'clean',
+        generatorOptions: resolveGeneratorOptions(generatorOptions, params),
     };
 }
 
@@ -1122,13 +1128,17 @@ export async function handleMisubRequest(context) {
                     ...resolveBuiltinRequestOptions({
                         searchParams: url.searchParams,
                         userAgent: userAgentHeader,
+                        generatorOptions: config.generatorOptions,
                     }),
                     fileName: subName,
                     managedConfigUrl: buildManagedConfigUrl(request.url),
                     interval: config.UpdateInterval || 86400,
                     skipCertVerify: shouldSkipCertificateVerify,
                     enableUdp: shouldEnableUdp,
-                    enableTfo: urlTfo === 'true' || urlTfo === '1',
+                    enableTfo:
+                        urlTfo !== null
+                            ? urlTfo === 'true' || urlTfo === '1'
+                            : Boolean(config.builtinEnableTfo),
                     ruleLevel,
                     regionOverrides: Array.isArray(config.regionOverrides)
                         ? config.regionOverrides
@@ -1287,12 +1297,14 @@ export async function handleMisubRequest(context) {
     const finalSkipCertVerify =
         urlScv !== null ? urlScv === 'true' || urlScv === '1' : shouldSkipCertificateVerify;
     const finalEnableUdp = urlUdp !== null ? urlUdp === 'true' || urlUdp === '1' : shouldEnableUdp;
-    const finalEnableTfo = urlTfo === 'true' || urlTfo === '1';
+    const finalEnableTfo =
+        urlTfo !== null ? urlTfo === 'true' || urlTfo === '1' : Boolean(config.builtinEnableTfo);
 
     const builtinOptions = {
         ...resolveBuiltinRequestOptions({
             searchParams: url.searchParams,
             userAgent: userAgentHeader,
+            generatorOptions: config.generatorOptions,
         }),
         fileName: subName,
         managedConfigUrl: '',

@@ -2,6 +2,7 @@ import yaml from 'js-yaml';
 import { clashFix } from '../../../utils/format-utils.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
+import { normalizeGeneratorOptions } from '../generator-options.js';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.js';
 
 function mapGroupType(type) {
@@ -162,8 +163,11 @@ function mapRule(rule, ruleProviderMap) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-export function renderClashFromTemplateModel(model) {
+export function renderClashFromTemplateModel(model, options = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
+    const generatorOptions = normalizeGeneratorOptions(
+        options.generatorOptions || normalizedModel.settings?.generatorOptions
+    );
 
     // 所有客户端都保留链式策略组；仅 Mihomo/Meta 展开节点级 dialer-proxy。
     if (Array.isArray(normalizedModel.extras?.chainProxy)) {
@@ -213,15 +217,16 @@ export function renderClashFromTemplateModel(model) {
 
     const config = {
         'mixed-port': 7890,
-        'allow-lan': false,
-        'bind-address': '127.0.0.1',
-        ipv6: false,
+        'allow-lan': generatorOptions.allowLan,
+        'bind-address': generatorOptions.allowLan ? '0.0.0.0' : '127.0.0.1',
+        ipv6: generatorOptions.ipv6,
         mode: 'rule',
         'log-level': 'info',
         'external-controller': '127.0.0.1:9090',
         dns: resolveSafeDnsConfig(normalizedModel.settings?.customDnsOverride, {
             mode: normalizedModel.settings?.dnsMode,
             proxyGroup: DNS_PROXY_GROUP,
+            generatorOptions,
         }),
         proxies: normalizedModel.proxies,
         'proxy-groups': normalizedModel.groups

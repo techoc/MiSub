@@ -66,7 +66,11 @@ export function validateSingboxConfig(config, mode) {
     assert(config.route?.auto_detect_interface === true, 'sing-box auto interface detection is disabled');
 
     const dns = config.dns || {};
-    assert(dns.strategy === 'prefer_ipv4', 'sing-box DNS strategy is not prefer_ipv4');
+    const ipv6Enabled = array(tun.address).some(address => String(address).includes(':'));
+    assert(
+        dns.strategy === (ipv6Enabled ? 'prefer_ipv4' : 'ipv4_only'),
+        'sing-box DNS strategy does not match its IPv6 TUN state'
+    );
     assert(array(dns.rules).some(rule => array(rule.rule_set).includes(SINGBOX_CN_RULE_SET) && rule.server === 'dns-cn-1'), 'sing-box geosite-cn DNS route is missing');
     const cnRuleSet = array(config.route?.rule_set).find(ruleSet => ruleSet?.tag === SINGBOX_CN_RULE_SET);
     assert(cnRuleSet?.type === 'remote' && cnRuleSet.format === 'binary', 'sing-box geosite-cn rule-set definition is missing');

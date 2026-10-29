@@ -1,4 +1,5 @@
 import yaml from 'js-yaml';
+import { normalizeGeneratorOptions } from '../generator-options.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 
 /**
@@ -314,8 +315,11 @@ function mapRule(rule) {
     };
 }
 
-export function renderEgernFromTemplateModel(model) {
+export function renderEgernFromTemplateModel(model, options = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
+    const generatorOptions = normalizeGeneratorOptions(
+        options.generatorOptions || normalizedModel.settings?.generatorOptions
+    );
 
     const proxies = normalizedModel.proxies.map(mapProxy).filter(Boolean);
 
@@ -328,7 +332,7 @@ export function renderEgernFromTemplateModel(model) {
     const config = {
         general: {
             dns_server: ['223.5.5.5', '114.114.114.114'],
-            ipv6: false,
+            ipv6: generatorOptions.ipv6,
         },
         proxies,
         policy_groups: policyGroups,

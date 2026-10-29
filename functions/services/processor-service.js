@@ -20,6 +20,7 @@ import { base64EncodeUtf8 } from '../modules/utils.js';
 import yaml from 'js-yaml';
 import { urlsToClashProxies } from '../utils/url-to-clash.js';
 import { resolveSafeDnsConfig } from '../modules/subscription/safe-dns.js';
+import { normalizeGeneratorOptions } from '../modules/subscription/generator-options.js';
 
 function getTemplateExtension(templateUrl) {
     const raw = typeof templateUrl === 'string' ? templateUrl.trim() : '';
@@ -88,17 +89,19 @@ export function renderClashYamlProfileTemplate(templateText, nodeList, options =
         .filter((line) => line && !line.startsWith('#'));
     const proxies = urlsToClashProxies(nodeUrls, options).map(stripInternalProxyFields);
     deduplicateProxyNames(proxies);
+    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
 
     return yaml.dump(
         {
             ...config,
-            'allow-lan': false,
-            'bind-address': '127.0.0.1',
-            ipv6: false,
+            'allow-lan': generatorOptions.allowLan,
+            'bind-address': generatorOptions.allowLan ? '0.0.0.0' : '127.0.0.1',
+            ipv6: generatorOptions.ipv6,
             'external-controller': '127.0.0.1:9090',
             dns: resolveSafeDnsConfig(config.dns, {
                 mode: options.dnsMode,
                 proxyGroup: '🌐 DNS 出口',
+                generatorOptions,
             }),
             proxies,
         },
@@ -224,6 +227,7 @@ export class ProcessorService {
                     isMeta: builtinOptions.isMeta,
                     customDnsOverride: builtinOptions.customDnsOverride || '',
                     dnsMode: builtinOptions.dnsMode || 'clean',
+                    generatorOptions: builtinOptions.generatorOptions,
                 };
 
                 switch (targetFormat) {

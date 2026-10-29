@@ -20,6 +20,7 @@ import {
     DEFAULT_RELAY_GROUP,
     pruneProxyGroups,
 } from './builtin-rules-provider.js';
+import { normalizeGeneratorOptions } from './generator-options.js';
 
 /**
  * 清理控制字符
@@ -295,6 +296,7 @@ export function generateBuiltinLoonConfig(nodeList, options = {}) {
         enableTfo = false,
         ruleLevel = 'std',
     } = options;
+    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
 
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
@@ -336,7 +338,7 @@ export function generateBuiltinLoonConfig(nodeList, options = {}) {
     }
 
     sections.push(`[General]
-ipv6 = false
+ipv6 = ${generatorOptions.ipv6 ? 'true' : 'false'}
 dns-server = system, 223.5.5.5, 119.29.29.29
 skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10, localhost, *.local
 proxy-test-url = http://www.gstatic.com/generate_204

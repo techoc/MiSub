@@ -1,5 +1,6 @@
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
+import { normalizeGeneratorOptions } from '../generator-options.js';
 
 function buildProxyLine(proxy) {
     const type = String(proxy.type || '').toLowerCase();
@@ -305,6 +306,9 @@ function buildRuleLine(rule) {
 
 export function renderSurgeFromTemplateModel(model, options = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
+    const generatorOptions = normalizeGeneratorOptions(
+        options.generatorOptions || normalizedModel.settings?.generatorOptions
+    );
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -337,8 +341,8 @@ export function renderSurgeFromTemplateModel(model, options = {}) {
         'encrypted-dns-server = h3://223.6.6.6/dns-query',
         'skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10, localhost, *.local, elpass.app, e.crashlytics.com, captive.apple.com, ::ffff:0:0:0:0/1, ::ffff:128:0:0:0/1, fe80::/10, fc00::/7, ::1/128',
         'bypass-tun = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10',
-        'ipv6 = true',
-        'ipv6-vif = auto',
+        `ipv6 = ${generatorOptions.ipv6 ? 'true' : 'false'}`,
+        ...(generatorOptions.ipv6 ? ['ipv6-vif = auto'] : []),
         'internet-test-url = http://www.apple.com/library/test/success.html',
         'proxy-test-url = http://www.gstatic.com/generate_204',
         'test-timeout = 5',

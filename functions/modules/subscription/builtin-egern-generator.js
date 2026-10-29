@@ -18,6 +18,7 @@ export function generateBuiltinEgernConfig(nodeList, options = {}) {
         skipCertVerify: options.skipCertVerify,
         enableUdp: options.enableUdp,
         enableTfo: options.enableTfo,
+        generatorOptions: options.generatorOptions,
         addFlagEmoji: options.addFlagEmoji,
     });
 }

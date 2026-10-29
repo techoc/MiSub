@@ -28,6 +28,38 @@ function normalizeExternalApiConfig(value) {
 function normalizeSettingsObject(source = {}) {
     const merged = { ...DEFAULT_SETTINGS, ...source };
     merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
+    const generatorOptions =
+        source.generatorOptions &&
+        typeof source.generatorOptions === 'object' &&
+        !Array.isArray(source.generatorOptions)
+            ? source.generatorOptions
+            : {};
+    const dns =
+        generatorOptions.dns &&
+        typeof generatorOptions.dns === 'object' &&
+        !Array.isArray(generatorOptions.dns)
+            ? generatorOptions.dns
+            : {};
+    const singbox =
+        generatorOptions.singbox &&
+        typeof generatorOptions.singbox === 'object' &&
+        !Array.isArray(generatorOptions.singbox)
+            ? generatorOptions.singbox
+            : {};
+    merged.generatorOptions = {
+        ...DEFAULT_SETTINGS.generatorOptions,
+        ...generatorOptions,
+        dns: {
+            ...DEFAULT_SETTINGS.generatorOptions.dns,
+            ...dns,
+        },
+        singbox: {
+            ...DEFAULT_SETTINGS.generatorOptions.singbox,
+            ...singbox,
+        },
+    };
+    merged.dnsMode =
+        String(merged.dnsMode || 'clean').toLowerCase() === 'polluted' ? 'polluted' : 'clean';
     return merged;
 }
 

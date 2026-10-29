@@ -16,6 +16,7 @@ import {
     pruneProxyGroups,
 } from './builtin-rules-provider.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';
+import { normalizeGeneratorOptions } from './generator-options.js';
 
 function cleanControlChars(str) {
     if (typeof str !== 'string') return str;
@@ -267,6 +268,7 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
         enableTfo = false,
         ruleLevel = 'std',
     } = options;
+    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
 
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
@@ -369,6 +371,14 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
             ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
             outbound: 'DIRECT',
         },
+        ...(generatorOptions.ipv6
+            ? [
+                  {
+                      ip_cidr: ['::1/128', 'fc00::/7', 'fe80::/10'],
+                      outbound: 'DIRECT',
+                  },
+              ]
+            : []),
         { domain_suffix: ['localhost'], outbound: 'DIRECT' },
         ...rawRules.map((r) => {
             if (r.type === 'rule_set') return { rule_set: [r.tag], outbound: r.outbound };
@@ -380,6 +390,7 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     const dnsConfig = buildSingboxDnsConfig(options.customDnsOverride || '', {
         mode: options.dnsMode,
         proxyGroup: DNS_PROXY_GROUP,
+        generatorOptions,
     });
 
     const config = {
@@ -389,9 +400,12 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
             {
                 type: 'tun',
                 tag: 'tun-in',
-                address: ['172.19.0.1/30'],
-                auto_route: true,
-                strict_route: true,
+                address: [
+                    '172.19.0.1/30',
+                    ...(generatorOptions.ipv6 ? ['fdfe:dcba:9876::1/126'] : []),
+                ],
+                auto_route: generatorOptions.singbox.tunAutoRoute,
+                strict_route: generatorOptions.singbox.tunStrictRoute,
                 stack: 'mixed',
             },
         ],

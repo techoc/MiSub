@@ -222,6 +222,7 @@ export function parseIniTemplate(templateText, options = {}) {
             enableUdp: Boolean(options.enableUdp),
             customDnsOverride: options.customDnsOverride || '',
             dnsMode: options.dnsMode || 'clean',
+            generatorOptions: options.generatorOptions,
         },
         extras: parsedChainProxy.length > 0 ? { chainProxy: parsedChainProxy } : {},
     });

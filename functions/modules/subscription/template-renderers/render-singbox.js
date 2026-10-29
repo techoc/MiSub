@@ -1,6 +1,7 @@
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../safe-dns.js';
+import { normalizeGeneratorOptions } from '../generator-options.js';
 import { getSingboxDnsRuleSet, pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 
 function sanitizeTag(value) {
@@ -388,6 +389,9 @@ function buildRuleSets(rules) {
 
 export function renderSingboxFromTemplateModel(model, options = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
+    const generatorOptions = normalizeGeneratorOptions(
+        options.generatorOptions || normalizedModel.settings?.generatorOptions
+    );
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -407,12 +411,23 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
             (ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET
         ),
     ];
-    const routeRules = normalizedModel.rules.map(mapRuleToSingbox).filter(Boolean);
+    const routeRules = [
+        ...(generatorOptions.ipv6
+            ? [
+                  {
+                      ip_cidr: ['::1/128', 'fc00::/7', 'fe80::/10'],
+                      outbound: 'DIRECT',
+                  },
+              ]
+            : []),
+        ...normalizedModel.rules.map(mapRuleToSingbox).filter(Boolean),
+    ];
     const defaultOutbound =
         normalizedModel.groups.find((group) => group.name !== DNS_PROXY_GROUP)?.name || 'DIRECT';
     const dnsConfig = buildSingboxDnsConfig(normalizedModel.settings?.customDnsOverride, {
         mode: normalizedModel.settings?.dnsMode,
         proxyGroup: DNS_PROXY_GROUP,
+        generatorOptions,
     });
 
     const config = {
@@ -422,9 +437,12 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
             {
                 type: 'tun',
                 tag: 'tun-in',
-                address: ['172.19.0.1/30'],
-                auto_route: true,
-                strict_route: true,
+                address: [
+                    '172.19.0.1/30',
+                    ...(generatorOptions.ipv6 ? ['fdfe:dcba:9876::1/126'] : []),
+                ],
+                auto_route: generatorOptions.singbox.tunAutoRoute,
+                strict_route: generatorOptions.singbox.tunStrictRoute,
                 stack: 'mixed',
             },
         ],

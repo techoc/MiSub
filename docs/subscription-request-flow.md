@@ -169,6 +169,15 @@ URL 参数可以覆盖部分转换行为：
 - `udp=true|false`
 - `tfo=true|false`
 - `scv=true|false`
+- `ipv6=true|false`
+- `allow-lan=true|false`
+- `dns-enable=true|false`
+- `dns-ipv6=true|false`
+- `dns-use-hosts=true|false`
+- `dns-use-system-hosts=true|false`
+- `dns-respect-rules=true|false`
+- `tun-auto-route=true|false`
+- `tun-strict-route=true|false`
 - `list=true`
 - `refresh`、`nocache`、`debug` 强制刷新缓存。
 

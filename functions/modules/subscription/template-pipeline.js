@@ -42,7 +42,7 @@ export function renderClashFromIniTemplate(templateText, options = {}) {
     // 智能注入地区分组逻辑
     model = applySmartModelOptimizations(model);
 
-    return renderClashFromTemplateModel(model);
+    return renderClashFromTemplateModel(model, options);
 }
 
 export function renderSingboxFromIniTemplate(templateText, options = {}) {
@@ -137,5 +137,5 @@ export function renderEgernFromIniTemplate(templateText, options = {}) {
         proxies,
     });
     model = applySmartModelOptimizations(model);
-    return renderEgernFromTemplateModel(model);
+    return renderEgernFromTemplateModel(model, options);
 }

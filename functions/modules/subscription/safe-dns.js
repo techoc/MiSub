@@ -1,4 +1,5 @@
 import yaml from 'js-yaml';
+import { applyDnsGeneratorOptions, normalizeGeneratorOptions } from './generator-options.js';
 
 export const DNS_MODES = Object.freeze({
     CLEAN: 'clean',
@@ -205,6 +206,7 @@ export function resolveSafeDnsConfig(raw, options = {}) {
         return clone(rawOverride);
     }
 
+    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
     const policy = resolveDnsPolicy(raw, options);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
     const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
@@ -257,10 +259,8 @@ export function resolveSafeDnsConfig(raw, options = {}) {
             dns[key] = override[key];
     });
 
-    dns.enable = true;
-    dns.ipv6 = false;
+    applyDnsGeneratorOptions(dns, generatorOptions.dns);
     dns['enhanced-mode'] = 'fake-ip';
-    dns['respect-rules'] = true;
     return dns;
 }
 
@@ -278,6 +278,7 @@ function parseSingboxResolver(value, tag, detour) {
 }
 
 export function buildSingboxDnsConfig(raw, options = {}) {
+    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
     const policy = resolveDnsPolicy(raw, options);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
     const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
@@ -291,7 +292,7 @@ export function buildSingboxDnsConfig(raw, options = {}) {
     const foreignTag = foreignServers[0]?.tag || 'dns-foreign-1';
 
     return {
-        strategy: 'prefer_ipv4',
+        strategy: generatorOptions.dns.ipv6 ? 'prefer_ipv4' : 'ipv4_only',
         servers: [...domesticServers, ...foreignServers],
         rules: [
             { rule_set: [SINGBOX_CN_RULE_SET], action: 'route', server: domesticTag },

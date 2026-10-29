@@ -8,6 +8,7 @@ import { urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
+import { normalizeGeneratorOptions } from './generator-options.js';
 import {
     POLICY_GROUPS,
     RULE_SETS,
@@ -142,6 +143,7 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
         userAgent = '',
         hiddifyCompatible = false,
     } = options;
+    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
     const enableMihomoSyntax =
         Boolean(options.isMeta) || isMetaCore(userAgent, options.searchParams);
     const isHiddifyClient = hiddifyCompatible || /hiddify/i.test(userAgent || '');
@@ -217,13 +219,14 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
             mode: options.dnsMode,
             proxyGroup: DNS_PROXY_GROUP,
             subscriptionDnsPolicies: options.subscriptionDnsPolicies || [],
+            generatorOptions,
         });
 
         const config = {
             'mixed-port': 7890,
-            'allow-lan': false,
-            'bind-address': '127.0.0.1',
-            ipv6: false,
+            'allow-lan': generatorOptions.allowLan,
+            'bind-address': generatorOptions.allowLan ? '0.0.0.0' : '127.0.0.1',
+            ipv6: generatorOptions.ipv6,
             mode: 'rule',
             'log-level': 'info',
             'external-controller': '127.0.0.1:9090',

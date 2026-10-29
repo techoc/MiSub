@@ -202,6 +202,12 @@ Profile 输出链路：
     - `defaultOptions.tfo`
     - `defaultOptions.sort`
     - `defaultOptions.list`
+- `generatorOptions`：内置生成器的统一客户端配置开关。
+    - `ipv6`：所有客户端启用 IPv6。
+    - `allowLan`：Clash / Mihomo 监听局域网。
+    - `dns.enable` / `dns.ipv6`：内置 DNS 与 AAAA 解析。
+    - `dns.useHosts` / `dns.useSystemHosts` / `dns.respectRules`：Clash DNS 行为。
+    - `singbox.tunAutoRoute` / `singbox.tunStrictRoute`：Sing-box TUN 路由行为。
 
 页面与交互相关字段：
 

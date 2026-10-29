@@ -1,5 +1,6 @@
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
+import { normalizeGeneratorOptions } from '../generator-options.js';
 
 function buildProxyLine(proxy) {
     const type = String(proxy.type || '').toLowerCase();
@@ -209,6 +210,9 @@ function normalizeQxVmessMethod(method) {
 
 export function renderQuanxFromTemplateModel(model, options = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
+    const generatorOptions = normalizeGeneratorOptions(
+        options.generatorOptions || normalizedModel.settings?.generatorOptions
+    );
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -236,7 +240,7 @@ export function renderQuanxFromTemplateModel(model, options = {}) {
         'server_check_url=http://www.gstatic.com/generate_204',
         '',
         '[dns]',
-        'no-ipv6',
+        ...(generatorOptions.ipv6 ? [] : ['no-ipv6']),
         'server = 223.5.5.5',
         'server = 114.114.114.114',
         '',
