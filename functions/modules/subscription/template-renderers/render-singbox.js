@@ -21,6 +21,25 @@ function buildOutbound(proxy) {
     const serverPort = parsePort(proxy.port);
     if (!serverPort) return null;
 
+    if (type === 'http' || type === 'https') {
+        const outbound = {
+            tag,
+            type: 'http',
+            server,
+            server_port: serverPort,
+            username: proxy.username || undefined,
+            password: proxy.password || undefined,
+        };
+        if (type === 'https' || proxy.tls || proxy.sni || proxy.servername) {
+            outbound.tls = {
+                enabled: true,
+                server_name: proxy.servername ?? proxy.sni ?? server,
+                insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
+            };
+        }
+        return outbound;
+    }
+
     if (type === 'trojan') {
         return {
             tag,
@@ -68,7 +87,6 @@ function buildOutbound(proxy) {
             server_port: serverPort,
             uuid: proxy.uuid || '',
             security: proxy.cipher || 'auto',
-            udp_relay_mode: proxy['udp-relay-mode'] || 'native',
             congestion_control: proxy['congestion-control'] || 'cubic',
             alter_id: Number.isFinite(Number(proxy.alterId)) ? Number(proxy.alterId) : 0,
         };
@@ -204,7 +222,7 @@ function buildOutbound(proxy) {
         const congestionControl =
             proxy['congestion-control'] || proxy['congestion-controller'] || proxy.congestion;
         if (congestionControl) outbound.congestion_control = congestionControl;
-        if (proxy['udp-relay-mode']) outbound.udp_relay_mode = proxy['udp-relay-mode'];
+        // sing-box TUIC schema has no udp_relay_mode field.
         if (proxy['udp-over-stream'] !== undefined)
             outbound.udp_over_stream = Boolean(proxy['udp-over-stream']);
         if (proxy['zero-rtt-handshake'] !== undefined || proxy['reduce-rtt'] !== undefined) {

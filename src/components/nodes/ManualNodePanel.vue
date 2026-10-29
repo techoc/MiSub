@@ -4,7 +4,10 @@
     import NodeActions from './ManualNodePanel/NodeActions.vue';
     import NodeTable from './ManualNodePanel/NodeTable.vue';
     import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
-    import { normalizeManualNodeGroupName } from '@/composables/manual-nodes/groups.js';
+    import {
+        normalizeManualNodeGroupName,
+        DEFAULT_GROUP_KEY,
+    } from '@/composables/manual-nodes/groups.js';
 
     const props = defineProps({
         manualNodes: { type: Array, default: () => [] },
@@ -42,6 +45,7 @@
         'open-batch-group-modal', // Added
         'ping',
         'ping-all',
+        'sort-by-latency',
         'manage-groups',
     ]);
 
@@ -117,7 +121,7 @@
 
         if (activeGroup) {
             const normalizedActiveGroup =
-                activeGroup === '默认' ? '' : normalizeManualNodeGroupName(activeGroup);
+                activeGroup === DEFAULT_GROUP_KEY ? '' : normalizeManualNodeGroupName(activeGroup);
             nodes = nodes.filter(
                 (node) => normalizeManualNodeGroupName(node.group) === normalizedActiveGroup
             );
@@ -193,6 +197,7 @@
             @delete-all="handleDeleteAll"
             @toggle-selection-mode="toggleSelectionMode"
             @ping-all="emit('ping-all')"
+            @sort-by-latency="emit('sort-by-latency')"
             @manage-groups="emit('manage-groups')"
         />
 

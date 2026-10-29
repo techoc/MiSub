@@ -166,7 +166,7 @@ function buildOutbound(proxy) {
         const congestionControl =
             proxy['congestion-controller'] || proxy['congestion-control'] || proxy.congestion;
         if (congestionControl) outbound.congestion_control = congestionControl;
-        if (proxy['udp-relay-mode']) outbound.udp_relay_mode = proxy['udp-relay-mode'];
+        // sing-box TUIC schema has no udp_relay_mode field; do not emit Clash-only option.
         if (proxy['udp-over-stream'] !== undefined)
             outbound.udp_over_stream = Boolean(proxy['udp-over-stream']);
         if (proxy['zero-rtt-handshake'] !== undefined || proxy['reduce-rtt'] !== undefined) {
@@ -212,10 +212,11 @@ function buildOutbound(proxy) {
         outbound.server_port = port;
         if (proxy.username) outbound.username = proxy.username;
         if (proxy.password) outbound.password = proxy.password;
-        if (type === 'https') {
+        if (type === 'https' || proxy.tls || proxy.sni || proxy.servername) {
             outbound.tls = {
                 enabled: true,
                 server_name: proxy.sni || proxy.servername || server,
+                insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
             };
         }
     } else if (type === 'socks5' || type === 'socks5-tls') {

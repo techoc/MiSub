@@ -87,7 +87,7 @@ const D1_KNOWN_SETTINGS_KEYS = new Set([
     'misub_clients_v1',
     'misub_guestbook_v1',
     'misub_settings_v1',
-    'misub_restore_snapshot_latest'
+    'misub_restore_snapshot_latest',
 ]);
 
 async function ensureD1Schema(d1Db) {
@@ -558,17 +558,26 @@ class D1StorageAdapter {
 
     async getSubscriptionsByIds(ids = []) {
         if (!Array.isArray(ids) || ids.length === 0) return [];
-        const placeholders = ids.map(() => '?').join(',');
+        // D1 单条 SQL 绑定变量上限为 100，超过会报
+        // "too many SQL variables" 而整条查询失败。
+        // 因此按 90 一批分片查询，再合并结果（同时保留原有 legacy 'main' 回退）。
+        const CHUNK_SIZE = 90;
+        const uniqueIds = Array.from(new Set(ids));
         try {
-            const results = await this.db
-                .prepare(`SELECT data FROM subscriptions WHERE id IN (${placeholders})`)
-                .bind(...ids)
-                .all();
-            const directHits = Array.isArray(results?.results)
-                ? results.results.map((row) => JSON.parse(row.data))
-                : [];
+            const directHits = [];
+            for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+                const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
+                const placeholders = chunk.map(() => '?').join(',');
+                const results = await this.db
+                    .prepare(`SELECT data FROM subscriptions WHERE id IN (${placeholders})`)
+                    .bind(...chunk)
+                    .all();
+                if (Array.isArray(results?.results)) {
+                    directHits.push(...results.results.map((row) => JSON.parse(row.data)));
+                }
+            }
             const foundIds = new Set(directHits.map((item) => item?.id).filter(Boolean));
-            const missingIds = ids.filter((id) => !foundIds.has(id));
+            const missingIds = uniqueIds.filter((id) => !foundIds.has(id));
 
             if (missingIds.length === 0) return directHits;
 
@@ -888,13 +897,11 @@ const D1_MIGRATION_KEYS = [
     'misub_clients_v1',
     'misub_guestbook_v1',
     'misub_settings_v1',
-    'misub_restore_snapshot_latest'
+    'misub_restore_snapshot_latest',
 ];
 
 /** 需要按前缀枚举后逐条搬运的键 */
-const D1_MIGRATION_KEY_PREFIXES = [
-    DATA_KEYS.PROFILE_DOWNLOAD_COUNT_PREFIX
-];
+const D1_MIGRATION_KEY_PREFIXES = [DATA_KEYS.PROFILE_DOWNLOAD_COUNT_PREFIX];
 
 export { D1_MIGRATION_KEYS, D1_MIGRATION_KEY_PREFIXES };
 
@@ -924,7 +931,7 @@ export class DataMigrator {
                 errors: [],
             };
 
-            const copyKey = async key => {
+            const copyKey = async (key) => {
                 try {
                     const value = await kvAdapter.get(key);
                     if (value === null || value === undefined) {

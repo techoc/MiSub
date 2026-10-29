@@ -36,6 +36,12 @@ import { listRuleTemplates } from './rule-template-handler.js';
 
 const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
 
+function normalizeLoginPath(customLoginPath) {
+    if (typeof customLoginPath !== 'string') return '/login';
+    const normalized = customLoginPath.trim().replace(/^\/+/, '');
+    return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
+}
+
 function normalizeProfile(profile = {}) {
     const normalized = { ...profile };
     normalized.subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
@@ -649,15 +655,27 @@ export async function handleSettingsSave(request, env) {
         }
         SettingsCache.clear();
 
-        // 清除节点缓存（设置变更可能影响节点处理逻辑）
-        try {
-            await clearAllNodeCaches(storageAdapter);
-        } catch (cacheError) {
-            console.warn('[API] Failed to clear node caches:', cacheError.message);
-        }
+        // 纯界面偏好的保存（客户端用 X-MiSub-Save-Scope: preferences 声明，
+        // 目前只有「忽略的待处理项」走这条路）不需要让整站节点缓存失效，
+        // 也不该给用户发一条「设置已更新」的 TG 消息 ——
+        // 「忽略」是轻量动作，每次都触发通知 + 全量缓存重建会很扰民。
+        // 用请求头而不是在 body 里塞标记：body 会被 { ...oldSettings, ...newSettings }
+        // 合并进设置并持久化，标记会变成脏数据。
+        // 注意：只有确实不影响节点处理的载荷才允许带这个头，
+        // 否则会漏掉必要的缓存失效。
+        const preferencesOnly = request.headers.get('x-misub-save-scope') === 'preferences';
 
-        const message = `⚙️ *MiSub 设置更新* ⚙️\n\n您的 MiSub 应用设置已成功更新。`;
-        await sendTgNotification(finalSettings, message);
+        if (!preferencesOnly) {
+            // 清除节点缓存（设置变更可能影响节点处理逻辑）
+            try {
+                await clearAllNodeCaches(storageAdapter);
+            } catch (cacheError) {
+                console.warn('[API] Failed to clear node caches:', cacheError.message);
+            }
+
+            const message = `⚙️ *MiSub 设置更新* ⚙️\n\n您的 MiSub 应用设置已成功更新。`;
+            await sendTgNotification(finalSettings, message);
+        }
 
         return createJsonResponse({
             success: true,
@@ -806,17 +824,29 @@ export async function handlePublicProfilesRequest(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicConfig(env) {
+export async function handlePublicConfig(request, env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
 
         // Merge with default settings to ensure enablePublicPage exists
         const mergedSettings = { ...defaultSettings, ...settings };
+        const configuredLoginPath = normalizeLoginPath(mergedSettings.customLoginPath);
+        let isLoginPath = configuredLoginPath === '/login';
+        try {
+            const clientPath = request?.headers?.get('X-MiSub-Path');
+            const referer = request?.headers?.get('Referer');
+            const sourcePath = clientPath || (referer ? new URL(referer).pathname : '');
+            if (sourcePath) {
+                isLoginPath = new URL(sourcePath, request.url).pathname === configuredLoginPath;
+            }
+        } catch {
+            // Keep the safe default when the browser sends an invalid/missing path.
+        }
 
         return createJsonResponse({
             enablePublicPage: mergedSettings.enablePublicPage,
-            customLoginPath: mergedSettings.customLoginPath,
+            isLoginPath,
             customPage: {
                 enabled: mergedSettings.customPage?.enabled || false,
                 useDefaultLayout: mergedSettings.customPage?.useDefaultLayout !== false,

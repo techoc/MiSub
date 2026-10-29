@@ -12,6 +12,7 @@
     import SubscriptionImportModal from '../components/modals/SubscriptionImportModal.vue';
     import BatchGroupModal from '../components/modals/BatchGroupModal.vue'; // Added
     import { useI18n } from '../i18n/index.js';
+    import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
 
     const GroupManagementModal = defineAsyncComponent(
         () => import('../components/modals/GroupManagementModal.vue')
@@ -24,7 +25,7 @@
 
     // Component Logic Reuse
     const isSortingNodes = ref(false);
-    const manualNodeViewMode = ref(localStorage.getItem('manualNodeViewMode') || 'card');
+    const manualNodeViewMode = ref(readRawPreference('manualNodeViewMode') || 'card');
     const showDeleteNodesModal = ref(false);
     const showBatchDeleteModal = ref(false);
     const batchDeleteIds = ref([]);
@@ -65,6 +66,7 @@
         pingingNodes,
         pingNodeId,
         pingAllNodes,
+        sortNodesByLatency,
     } = useManualNodes(markDirty);
 
     const handleSearchTermUpdate = (val) => {
@@ -84,7 +86,7 @@
     // Actions
     const setViewMode = (mode) => {
         manualNodeViewMode.value = mode;
-        localStorage.setItem('manualNodeViewMode', mode);
+        writeRawPreference('manualNodeViewMode', mode);
     };
 
     const handleDeleteNodeWithCleanup = (nodeId) => {
@@ -101,6 +103,14 @@
     const handleAutoSortNodes = () => {
         autoSortNodes();
         showToast(t('manualNodes.sortedByRegion'), 'success');
+    };
+
+    const handleSortByLatency = () => {
+        const ok = sortNodesByLatency();
+        showToast(
+            ok ? t('manualNodes.sortByLatencyDone') : t('manualNodes.sortByLatencyNoData'),
+            ok ? 'success' : 'warning'
+        );
     };
 
     const handleDeduplicateNodes = () => {
@@ -204,6 +214,7 @@
             :pinging-nodes="pingingNodes"
             @ping="pingNodeId"
             @ping-all="pingAllNodes"
+            @sort-by-latency="handleSortByLatency"
         />
 
         <ManualNodeEditModal
@@ -245,7 +256,9 @@
                 </h3>
             </template>
             <template #body>
-                <p class="text-sm text-gray-400">{{ t('manualNodes.deleteAllConfirmBody') }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ t('manualNodes.deleteAllConfirmBody') }}
+                </p>
             </template>
         </Modal>
 

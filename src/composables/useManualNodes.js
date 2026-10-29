@@ -7,6 +7,7 @@ import { useToastStore } from '../stores/toast.js'; // Restored
 import { extractNodeName, extractHostAndPort } from '../lib/utils.js';
 import { pingNode } from '../utils/ping.js';
 import { filterManualNodes, isManualNodeEntry } from './manual-nodes/filters.js';
+import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
 import { buildDedupPlan as buildDedupPlanCore } from './manual-nodes/dedup.js';
 import { buildAutoSortedSubscriptions } from './manual-nodes/sorting.js';
 import {
@@ -30,11 +31,12 @@ export function useManualNodes(markDirty) {
     });
 
     const manualNodesCurrentPage = ref(1);
-    const manualNodesPerPage = ref(parseInt(localStorage.getItem('manualNodesPPS')) || 24);
+    // 走共享助手：站点存储被禁用时裸读会抛 SecurityError，导致整个组合式函数起不来
+    const manualNodesPerPage = ref(parseInt(readRawPreference('manualNodesPPS'), 10) || 24);
     const searchTerm = ref('');
 
     watch(manualNodesPerPage, (newVal) => {
-        localStorage.setItem('manualNodesPPS', newVal);
+        writeRawPreference('manualNodesPPS', newVal);
         manualNodesCurrentPage.value = 1;
     });
 
@@ -227,6 +229,44 @@ export function useManualNodes(markDirty) {
         markDirty();
     }
 
+    /**
+     * 按延迟排序：延迟低的在前。
+     * - 只排序已测出延迟（status === 'ok'）的节点
+     * - 未测出延迟/失败的节点排在最后（保持原有相对顺序）
+     * - 与地区排序不同，这里只对节点重排，订阅源位置不受影响
+     * @returns {boolean} 是否成功排序（无延迟数据时返回 false）
+     */
+    function sortNodesByLatency() {
+        const results = pingResults.value || {};
+        const hasAnyLatency = Object.values(results).some(
+            (item) => item && item.status === 'ok' && Number.isFinite(item.latency)
+        );
+        if (!hasAnyLatency) return false;
+
+        const nodes = [...manualNodes.value];
+        const latencyOf = (node) => {
+            const r = results[node.id];
+            return r && r.status === 'ok' && Number.isFinite(r.latency) ? r.latency : Infinity;
+        };
+
+        nodes.sort((a, b) => {
+            const la = latencyOf(a);
+            const lb = latencyOf(b);
+            if (la !== lb) return la - lb;
+            // 延迟相同（或都未测出）时保持名称稳定排序
+            return (a.name || '').localeCompare(b.name || '', 'zh-CN');
+        });
+
+        const otherItems = (allSubscriptions.value || []).filter(
+            (item) => !nodes.some((n) => n.id === item.id)
+        );
+        dataStore.overwriteSubscriptions([...nodes, ...otherItems]);
+
+        manualNodesCurrentPage.value = 1;
+        markDirty();
+        return true;
+    }
+
     watch(searchTerm, (newValue, oldValue) => {
         if (newValue !== oldValue) {
             manualNodesCurrentPage.value = 1;
@@ -402,6 +442,7 @@ export function useManualNodes(markDirty) {
         deleteAllNodes,
         addNodesFromBulk,
         autoSortNodes,
+        sortNodesByLatency,
         deduplicateNodes,
         buildDedupPlan,
         applyDedupPlan,
