@@ -15,7 +15,7 @@ function handleApiError(error, context = '') {
     console.error(`[API Error - ${context}]`, error);
 
     let errorType = 'unknown';
-    let errorMessage = t('subscriptions.unknownError');
+    let errorMessage;
 
     let status = null;
 

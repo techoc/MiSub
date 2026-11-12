@@ -119,7 +119,7 @@ export async function collectWithinTimeout(promises, timeoutMs) {
     // 等待全部完成或超时信号
     const raceResult = await Promise.race([Promise.all(wrappedPromises), timeoutPromise]);
 
-    let results = [];
+    let results;
 
     if (raceResult === 'TIMEOUT') {
         const completedCount = wrappedPromises.filter((p) => {

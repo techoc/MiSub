@@ -6,8 +6,8 @@ import { extractNodeRegion, getRegionEmoji } from './geo-utils.js';
  */
 
 // 常用元数据正则表达式
-const MULTIPLIER_REGEX = /(?:^|\s|[\[\(\x])([0-9]+(?:\.[0-9]+)?)(?:\s*倍|x|X)(?:\s|$|[\]\)])/i;
-const TAG_REGEX = /(?:\[|\(|#|\s)([a-zA-Z0-9_\-]+)(?:\]|\)|\s|$)/g;
+const MULTIPLIER_REGEX = /(?:^|\s|[[(x])([0-9]+(?:\.[0-9]+)?)(?:\s*倍|x|X)(?:\s|$|[)])/i;
+const TAG_REGEX = /(?:\[|\(|#|\s)([a-zA-Z0-9_-]+)(?:\]|\)|\s|$)/g;
 const EMOJI_FLAG_REGEX = /[\u{1F1E6}-\u{1F1FF}]{2}/gu;
 
 /**
@@ -65,7 +65,7 @@ export function extractNodeMetadata(name) {
     // 移除国旗、多余的符号等
     cleanName = cleanName
         .replace(EMOJI_FLAG_REGEX, '')
-        .replace(/[\[\]\(\)#]/g, '')
+        .replace(/[[\]()#]/g, '')
         .replace(/\s{2,}/g, ' ')
         .trim();
 

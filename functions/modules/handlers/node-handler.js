@@ -329,7 +329,7 @@ export async function handleNodeCountRequest(request, env) {
                             if (padding) {
                                 normalized += '='.repeat(4 - padding);
                             }
-                            const base64Regex = /^[A-Za-z0-9+\/=]+$/;
+                            const base64Regex = /^[A-Za-z0-9+/=]+$/;
                             if (base64Regex.test(normalized) && normalized.length >= 20) {
                                 const binaryString = atob(normalized);
                                 const bytes = new Uint8Array(binaryString.length);
@@ -593,7 +593,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                     console.error('Batch update decode error:', e);
                     try {
                         const cleanedText = text.replace(/\s/g, '');
-                        const base64Regex = /^[A-Za-z0-9+\/=]+$/;
+                        const base64Regex = /^[A-Za-z0-9+/=]+$/;
                         if (base64Regex.test(cleanedText) && cleanedText.length >= 20) {
                             const binaryString = atob(cleanedText);
                             const bytes = new Uint8Array(binaryString.length);

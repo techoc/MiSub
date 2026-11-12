@@ -202,7 +202,7 @@ function buildProxyLine(proxy) {
             const reserved = Array.isArray(proxy.reserved)
                 ? proxy.reserved
                 : String(proxy.reserved)
-                      .split(/[\/,]/)
+                      .split(/[,]/)
                       .map((v) => Number(v.trim()))
                       .filter(Number.isFinite);
 

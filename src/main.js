@@ -68,7 +68,7 @@ if (typeof window !== 'undefined') {
 
     const tryRecoverAssetLoad = async (resourceUrl) => {
         if (!isSameOriginResource(resourceUrl)) return false;
-        let resourcePath = '';
+        let resourcePath;
         try {
             resourcePath = new URL(resourceUrl, window.location.href).pathname;
         } catch {
@@ -141,7 +141,7 @@ if (typeof window !== 'undefined') {
                     // 非 JS/CSS 资源（图片、字体、manifest 等）加载失败不影响应用运行，
                     // 也不该弹「请尝试刷新页面」——刷新解决不了，反而会误报服务端有意返回的
                     // 品牌资源 404，把正常的伪装行为说成故障。
-                    let resourcePath = '';
+                    let resourcePath;
                     try {
                         resourcePath = new URL(resourceUrl, window.location.href).pathname;
                     } catch {

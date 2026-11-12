@@ -16,7 +16,7 @@
  * @returns {{token: string, profileIdentifier: (string|null)}}
  */
 export function resolveRequestContext(url, config, allProfiles) {
-    let token = '';
+    let token;
     let profileIdentifier = null;
     const pathSegments = url.pathname.split('/').filter(Boolean);
 

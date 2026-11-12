@@ -683,13 +683,14 @@ export function translateRuleLine(line, format) {
         case 'loon':
             return line;
 
-        case 'quanx':
+        case 'quanx': {
             let qxType = type;
             if (type === 'DOMAIN-SUFFIX') qxType = 'HOST-SUFFIX';
             if (type === 'DOMAIN-KEYWORD') qxType = 'HOST-KEYWORD';
             if (type === 'DOMAIN') qxType = 'HOST';
             if (type === 'MATCH') return `FINAL, ${value}`;
             return `${qxType}, ${value}, ${target}${extra ? ', ' + extra : ''}`;
+        }
 
         default:
             return line;

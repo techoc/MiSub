@@ -51,7 +51,7 @@ export function extractNodeName(url) {
             case 'trojan':
             case 'vless':
                 return mainPart.substring(mainPart.indexOf('@') + 1).split(':')[0] || '';
-            case 'ss':
+            case 'ss': {
                 const atIndexSS = mainPart.indexOf('@');
                 if (atIndexSS !== -1) return mainPart.substring(atIndexSS + 1).split(':')[0] || '';
                 try {
@@ -70,6 +70,7 @@ export function extractNodeName(url) {
                     }
                 }
                 return '';
+            } // end case 'ss'
             default:
                 if (url.startsWith('http')) return new URL(url).hostname;
                 return '';

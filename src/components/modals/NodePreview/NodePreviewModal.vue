@@ -520,7 +520,7 @@
             if (isDev) {
                 console.debug('[Preview] URL parse failed, falling back to regex:', e);
             }
-            const match = node.url.match(/@([^:\/]+):(\d+)/);
+            const match = node.url.match(/@([^:/]+):(\d+)/);
             if (match) {
                 result.server = match[1];
                 result.port = match[2];

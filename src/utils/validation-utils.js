@@ -92,13 +92,13 @@ export function validatePasswordStrength(password) {
     }
 
     // 包含特殊字符
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (/[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(password)) {
         score += 1;
     } else {
         suggestions.push(t('validation.includeSpecial'));
     }
 
-    let message = '';
+    let message;
     if (score <= 2) {
         message = t('validation.passwordWeak');
     } else if (score <= 4) {

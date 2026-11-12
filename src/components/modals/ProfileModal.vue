@@ -255,7 +255,7 @@
 
                 // 确保 subconverter 对象存在
                 if (!profileCopy.subconverter || typeof profileCopy.subconverter !== 'object') {
-                    profileSub: profileCopy.subconverter = {
+                    profileCopy.subconverter = {
                         engineMode: '',
                         backend: '',
                         options: {

@@ -52,7 +52,7 @@ export async function resolveNodeListWithCache({
         : await getCache(storageAdapter, cacheKey);
 
     let combinedNodeList;
-    let cacheHeaders = {};
+    let cacheHeaders;
     const cacheLooksIncomplete =
         cachedData &&
         (isCacheFarBelowExpected(cachedData, expectedNodeCount) ||

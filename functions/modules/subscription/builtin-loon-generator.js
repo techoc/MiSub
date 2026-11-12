@@ -27,6 +27,7 @@ import { normalizeGeneratorOptions } from './generator-options.js';
  */
 function cleanControlChars(str) {
     if (typeof str !== 'string') return str;
+    // eslint-disable-next-line no-control-regex -- 目的本身就是清除控制字符，正则必须包含控制字符范围
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 

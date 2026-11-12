@@ -302,7 +302,7 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
                     records.sort(NodeUtils.makeComparator({ keys: params.keys }));
                 }
                 break;
-            case 'dedup':
+            case 'dedup': {
                 const includeProtocol = params?.includeProtocol !== false;
                 const seenNodes = new Map();
                 for (const r of records) {
@@ -319,6 +319,7 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
                 }
                 records = Array.from(seenNodes.values());
                 break;
+            } // end case 'dedup'
         }
     }
 

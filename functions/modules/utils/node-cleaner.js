@@ -122,7 +122,7 @@ export function fixSSEncoding(nodeUrl, options = {}) {
     const rawHash = hashIndex === -1 ? '' : payload.slice(hashIndex + 1);
 
     const atIndex = beforeHash.indexOf('@');
-    let normalizedBeforeHash = beforeHash;
+    let normalizedBeforeHash;
 
     if (atIndex !== -1) {
         const userInfo = beforeHash.slice(0, atIndex);

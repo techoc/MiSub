@@ -378,7 +378,7 @@ export async function handlePreviewContentRequest(request, env) {
         const contentLength = rawContent.length;
 
         // 检测内容类型
-        const isBase64 = /^[A-Za-z0-9+\/=]+$/s.test(rawContent.replace(/\s/g, ''));
+        const isBase64 = /^[A-Za-z0-9+/=]+$/s.test(rawContent.replace(/\s/g, ''));
         let decodedContent = rawContent;
         let contentInfo = {
             originalLength: contentLength,

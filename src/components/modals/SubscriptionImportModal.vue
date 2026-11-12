@@ -204,15 +204,15 @@
 
                     // 根据错误类型提供友好的错误信息
                     if (error.status === 408 || errorMsg.includes('timeout')) {
-                        throw new Error(t('importNodes.requestTimeout'));
+                        throw new Error(t('importNodes.requestTimeout'), { cause: error });
                     } else if (error.status === 413 || errorMsg.includes('too large')) {
-                        throw new Error(t('importNodes.contentTooLarge'));
+                        throw new Error(t('importNodes.contentTooLarge'), { cause: error });
                     } else if (errorMsg.includes('DNS')) {
-                        throw new Error(t('importNodes.dnsFailed'));
+                        throw new Error(t('importNodes.dnsFailed'), { cause: error });
                     } else if (error.status >= 500) {
-                        throw new Error(t('importNodes.serverError'));
+                        throw new Error(t('importNodes.serverError'), { cause: error });
                     }
-                    throw new Error(errorMsg);
+                    throw new Error(errorMsg, { cause: error });
                 }
                 throw error;
             } finally {

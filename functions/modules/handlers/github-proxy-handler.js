@@ -9,7 +9,7 @@ export async function handleGithubReleaseRequest(request, env) {
     const url = new URL(request.url);
     const repo = url.searchParams.get('repo');
 
-    if (!repo || !/^[\w\-\.]+\/[\w\-\.]+$/.test(repo)) {
+    if (!repo || !/^[\w.-]+\/[\w.-]+$/.test(repo)) {
         return createErrorResponse('Invalid repo parameter. Format: owner/repo', 400);
     }
 

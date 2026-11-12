@@ -424,7 +424,7 @@ export function sanitizeNodeForYaml(nodeUrl) {
         // YAML Flow Style Unquoted Scalars cannot start with:
         // [, ], {, }, ,, :, -, ?, !, #, &, *, %, >, |, @
         // We replace them with full-width equivalents or '★' for *
-        const unsafeStartRegex = /^([*&!\[\]\{\},:?#%|>@\-])/;
+        const unsafeStartRegex = /^([*&!{}[\],:?#%|>@-])/;
         if (unsafeStartRegex.test(name)) {
             return name
                 .replace(/^[*]/, '★')

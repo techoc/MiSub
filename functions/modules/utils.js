@@ -294,7 +294,7 @@ export function isValidBase64(str) {
         normalized += '='.repeat(4 - padding);
     }
 
-    const base64Regex = /^[A-Za-z0-9+\/=]+$/;
+    const base64Regex = /^[A-Za-z0-9+/=]+$/;
     return base64Regex.test(normalized) && normalized.length > 20;
 }
 
@@ -557,36 +557,36 @@ export function migrateConfigSettings(config) {
         return !!val;
     };
 
-    if (migratedConfig.hasOwnProperty('enableAccessLog')) {
+    if (Object.prototype.hasOwnProperty.call(migratedConfig, 'enableAccessLog')) {
         migratedConfig.enableAccessLog = toBoolean(migratedConfig.enableAccessLog);
     }
-    if (migratedConfig.hasOwnProperty('enableTrafficNode')) {
+    if (Object.prototype.hasOwnProperty.call(migratedConfig, 'enableTrafficNode')) {
         migratedConfig.enableTrafficNode = toBoolean(migratedConfig.enableTrafficNode);
     }
     // [Migration] 映射旧名到新名（如果新名不存在且旧名存在）
     if (
-        !migratedConfig.hasOwnProperty('builtinSkipCertVerify') &&
-        migratedConfig.hasOwnProperty('transformBackendScv')
+        !Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinSkipCertVerify') &&
+        Object.prototype.hasOwnProperty.call(migratedConfig, 'transformBackendScv')
     ) {
         migratedConfig.builtinSkipCertVerify = toBoolean(migratedConfig.transformBackendScv);
     }
     if (
-        !migratedConfig.hasOwnProperty('builtinEnableUdp') &&
-        migratedConfig.hasOwnProperty('transformBackendUdp')
+        !Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinEnableUdp') &&
+        Object.prototype.hasOwnProperty.call(migratedConfig, 'transformBackendUdp')
     ) {
         migratedConfig.builtinEnableUdp = toBoolean(migratedConfig.transformBackendUdp);
     }
 
-    if (migratedConfig.hasOwnProperty('builtinSkipCertVerify')) {
+    if (Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinSkipCertVerify')) {
         migratedConfig.builtinSkipCertVerify = toBoolean(migratedConfig.builtinSkipCertVerify);
     }
-    if (migratedConfig.hasOwnProperty('builtinEnableUdp')) {
+    if (Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinEnableUdp')) {
         migratedConfig.builtinEnableUdp = toBoolean(migratedConfig.builtinEnableUdp);
     }
-    if (migratedConfig.hasOwnProperty('builtinEnableTfo')) {
+    if (Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinEnableTfo')) {
         migratedConfig.builtinEnableTfo = toBoolean(migratedConfig.builtinEnableTfo);
     }
-    if (migratedConfig.hasOwnProperty('builtinLoonSkipCertVerify')) {
+    if (Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinLoonSkipCertVerify')) {
         migratedConfig.builtinLoonSkipCertVerify = toBoolean(
             migratedConfig.builtinLoonSkipCertVerify
         );
