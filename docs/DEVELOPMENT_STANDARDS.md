@@ -29,14 +29,14 @@ MiSub 前后端开发规范。所有新代码与重构应遵循本页约定；�
 
 - **单引号**：字符串一律单引号（173/180 文件已符合）。
 - **分号**：语句以分号结尾（159/180 文件已符合；新代码必须带分号）。
-- **缩进**：2 空格（注意：当前 153/180 文件为 4 空格，属历史遗留；**新代码统一 2 空格**，后续逐步迁移旧文件，勿混用）。
+- **缩进**：4 空格（与 `.prettierrc.json` 的 `tabWidth: 4`、`.editorconfig` 一致，`npm run format` 统一处理）。
 - **命名**：文件/目录 kebab-case；函数/变量 camelCase；常量 UPPER_SNAKE；组件 PascalCase。
 - **ESM**：统一 `import` / `export`，不使用 CommonJS（`require` / `module.exports`）。
 - **无 TODO/FIXME 残留**：合并前清空。
 
 ### 尚未引入的自动化
 
-- 仓库暂无 ESLint / Prettier / EditorConfig。如需批量统一历史文件，先引入工具 + 配置，再跑全量测试（基线 571 全绿）验证无行为变化，最后单独提交。
+- **自动化已就位**：ESLint（flat config，`npm run lint`）+ Prettier（`.prettierrc.json`，`npm run format`）+ EditorConfig。提交前跑 `npm run lint` 与 `npm run format:check`。如需批量统一历史文件，先引入工具 + 配置，再跑全量测试验证无行为变化，最后单独提交。
 
 ## Frontend Structure
 
@@ -70,7 +70,8 @@ MiSub 前后端开发规范。所有新代码与重构应遵循本页约定；�
 - 行为变更用 TDD：先写复现失败的测试，再修复，再跑针对性测试。
 - 涉及外部资源（订阅 URL、cookie、token、webhook）必须用 sanitized fixtures，**禁止真实凭据进测试/提交**。
 - 提交前必跑：
-    - `npm run test:run`（全量，基线 571 全绿）
+    - `npm run test:run`（全量，须全绿）
+    - `npm run lint`（0 error；warning 为已知技术债）
     - `npm run build`
 
 ## Git / Commit

@@ -22,8 +22,7 @@
 ├─ dev-dist/                # 开发构建产物（自动生成）
 ├─ node_modules/            # 依赖（自动生成）
 ├─ schema.sql               # D1 表结构
-├─ fix_d1_schema.sql        # D1 表结构修复脚本
-├─ wrangler.toml            # Cloudflare 配置
+├─ wrangler-cf-pages.toml   # Cloudflare Pages 配置（绑定/环境变量在 Pages 控制台维护）
 ├─ package.json             # 脚本与依赖
 ├─ vite.config.js           # Vite 配置
 └─ vitest.config.js         # Vitest 配置
