@@ -290,6 +290,18 @@ function buildGroupOutbounds(groups) {
     });
 }
 
+const SINGBOX_BUILTIN_OUTBOUNDS = new Set(['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS', 'GLOBAL']);
+
+/**
+ * 规则出口必须指向真实渲染出的组/节点或内置策略；
+ * 渲染时被丢弃的组（空成员 fail-closed 等）不能留下悬空规则或 route.final。
+ */
+function isRenderableRuleOutbound(policy, groupTags, proxyTags) {
+    const value = String(policy || '').trim();
+    if (!value) return false;
+    return SINGBOX_BUILTIN_OUTBOUNDS.has(value) || groupTags.has(value) || proxyTags.has(value);
+}
+
 function mapRuleToSingbox(rule) {
     const type = String(rule.type || '').toLowerCase();
     if (type === 'rule-set') {
@@ -392,13 +404,6 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
     );
-    // 关闭 DNS 出口组注入时，DNS 服务器与 rule-set 的 detour 同步降级为 DIRECT，保证配置仍然有效；
-    // 组不在模型中（如 explicit dns block 整块替换、组被修剪）时同样降级，避免悬空引用
-    const dnsExitGroupPresent = normalizedModel.groups.some(
-        (group) => group.name === DNS_PROXY_GROUP
-    );
-    const dnsDetour =
-        options.injectDnsExitGroup !== false && dnsExitGroupPresent ? DNS_PROXY_GROUP : 'DIRECT';
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -409,9 +414,19 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
             ? normalizedModel.proxies
             : urlsToClashProxies(proxyUrls);
     const proxyOutbounds = proxies.map(buildOutbound).filter(Boolean);
+    // 渲染组集合：成员被剥空（如 fail-closed 的 REJECT/DIRECT）的 urltest 组不输出——
+    // sing-box 对空 outbounds 的 urltest/selector 直接解析失败
     const groupOutbounds = buildGroupOutbounds(
         normalizedModel.groups.filter((g) => Array.isArray(g.members) && g.members.length > 0)
-    );
+    ).filter((outbound) => (outbound.outbounds || []).length > 0);
+    const renderedGroupTags = new Set(groupOutbounds.map((outbound) => outbound.tag));
+    const renderedProxyTags = new Set(proxyOutbounds.map((outbound) => outbound.tag));
+    // DNS 出口 detour 只能引用真实渲染出来的组；组被丢弃（如零节点）时降级为 DIRECT，
+    // 保证 detour / download_detour / route.final 不产生悬空引用
+    const dnsDetour =
+        options.injectDnsExitGroup !== false && renderedGroupTags.has(DNS_PROXY_GROUP)
+            ? DNS_PROXY_GROUP
+            : 'DIRECT';
     const ruleSetObjects = [
         { ...getSingboxDnsRuleSet(), download_detour: dnsDetour },
         ...buildRuleSets(normalizedModel.rules, dnsDetour).filter(
@@ -427,10 +442,15 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
                   },
               ]
             : []),
-        ...normalizedModel.rules.map(mapRuleToSingbox).filter(Boolean),
+        ...normalizedModel.rules
+            .filter((rule) =>
+                isRenderableRuleOutbound(rule.policy, renderedGroupTags, renderedProxyTags)
+            )
+            .map(mapRuleToSingbox)
+            .filter(Boolean),
     ];
     const defaultOutbound =
-        normalizedModel.groups.find((group) => group.name !== DNS_PROXY_GROUP)?.name || 'DIRECT';
+        groupOutbounds.find((outbound) => outbound.tag !== DNS_PROXY_GROUP)?.tag || 'DIRECT';
     const dnsConfig = buildSingboxDnsConfig(normalizedModel.settings?.customDnsOverride, {
         mode: normalizedModel.settings?.dnsMode,
         proxyGroup: dnsDetour,

@@ -757,6 +757,9 @@ ruleset=🎯 全球直连,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/mast
 ruleset=🛑 广告拦截,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list
 ruleset=🐟 漏网之鱼,[]FINAL
 custom_proxy_group=🚀 节点选择\`select\`[]DIRECT\`.*
+custom_proxy_group=🎯 全球直连\`select\`[]DIRECT
+custom_proxy_group=🛑 广告拦截\`select\`[]REJECT
+custom_proxy_group=🐟 漏网之鱼\`select\`[]🚀 节点选择
 `,
             {
                 nodeList: 'trojan://password@1.2.3.4:443#HK-01',

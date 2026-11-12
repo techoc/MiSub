@@ -20,6 +20,18 @@ function mapGroupType(type) {
     return 'select';
 }
 
+const CLASH_BUILTIN_POLICIES = new Set(['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS', 'GLOBAL']);
+
+/**
+ * 规则策略必须指向真实渲染出的组/节点或内置策略；
+ * 渲染时被丢弃的组（空成员 fail-closed 等）不能留下悬空规则。
+ */
+function isRenderableRulePolicy(policy, groupNames, proxyNames) {
+    const value = String(policy || '').trim();
+    if (!value) return false;
+    return CLASH_BUILTIN_POLICIES.has(value) || groupNames.has(value) || proxyNames.has(value);
+}
+
 function filterAutoSelectMembers(group) {
     const type = mapGroupType(group.type);
     const members = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
@@ -191,13 +203,6 @@ export function renderClashFromTemplateModel(model, options = {}) {
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
     );
-    // 关闭 DNS 出口组注入时，Safe DNS 的境外解析引用同步降级为 DIRECT，保证配置仍然有效；
-    // 组不在模型中（如 explicit dns block 整块替换、组被修剪）时同样降级，避免悬空引用
-    const dnsExitGroupPresent = normalizedModel.groups.some(
-        (group) => group.name === DNS_PROXY_GROUP
-    );
-    const dnsDetour =
-        options.injectDnsExitGroup !== false && dnsExitGroupPresent ? DNS_PROXY_GROUP : 'DIRECT';
 
     // 所有客户端都保留链式策略组；仅 Mihomo/Meta 展开节点级 dialer-proxy。
     if (Array.isArray(normalizedModel.extras?.chainProxy)) {
@@ -248,6 +253,42 @@ export function renderClashFromTemplateModel(model, options = {}) {
         };
     });
 
+    // 渲染组集合：成员被 filterAutoSelectMembers 剥空（如 fail-closed 的 REJECT/DIRECT）
+    // 或 filter 无匹配的组不输出——mihomo 对空 proxies 且无 use 的组直接解析失败
+    // （`use` or `proxies` missing），这是 OpenClash 启动报错的根源。
+    const renderedGroups = normalizedModel.groups
+        .filter(
+            (group) =>
+                (Array.isArray(group.members) && group.members.length > 0) ||
+                (Array.isArray(group.filters) && group.filters.length > 0)
+        )
+        .map((group) => {
+            const proxies = filterAutoSelectMembers(group);
+            const use = group.options?.use;
+            if (proxies.length === 0 && !use) return null;
+            return {
+                name: group.name,
+                type: mapGroupType(group.type),
+                proxies,
+                filter:
+                    Array.isArray(group.filters) && group.filters.length > 0
+                        ? group.filters.join('|')
+                        : undefined,
+                ...group.options,
+            };
+        })
+        .filter(Boolean);
+    const renderedGroupNames = new Set(renderedGroups.map((group) => group.name));
+    const renderedProxyNames = new Set(
+        normalizedModel.proxies.map((proxy) => proxy.name || proxy.tag).filter(Boolean)
+    );
+
+    // DNS 出口 detour 只能引用真实渲染出来的组；组被丢弃（如零节点）时降级为 DIRECT
+    const dnsDetour =
+        options.injectDnsExitGroup !== false && renderedGroupNames.has(DNS_PROXY_GROUP)
+            ? DNS_PROXY_GROUP
+            : 'DIRECT';
+
     const config = {
         'mixed-port': 7890,
         'allow-lan': generatorOptions.allowLan,
@@ -262,26 +303,12 @@ export function renderClashFromTemplateModel(model, options = {}) {
             generatorOptions,
         }),
         proxies: normalizedModel.proxies,
-        'proxy-groups': normalizedModel.groups
-            .filter(
-                (group) =>
-                    (Array.isArray(group.members) && group.members.length > 0) ||
-                    (Array.isArray(group.filters) && group.filters.length > 0)
-            )
-            .map((group) => {
-                return {
-                    name: group.name,
-                    type: mapGroupType(group.type),
-                    proxies: filterAutoSelectMembers(group),
-                    filter:
-                        Array.isArray(group.filters) && group.filters.length > 0
-                            ? group.filters.join('|')
-                            : undefined,
-                    ...group.options,
-                };
-            }),
+        'proxy-groups': renderedGroups,
         'rule-providers': Object.keys(ruleProviders).length > 0 ? ruleProviders : undefined,
         rules: normalizedModel.rules
+            .filter((rule) =>
+                isRenderableRulePolicy(rule.policy, renderedGroupNames, renderedProxyNames)
+            )
             .map((rule) => {
                 if (String(rule.type || '').toUpperCase() !== 'RULE-SET' || !rule.value) {
                     return mapRule(rule, ruleProviderMap);

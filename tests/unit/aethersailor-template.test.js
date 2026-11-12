@@ -54,6 +54,8 @@ describe('Aethersailor ini 模板解析兼容（issue #332）', () => {
                 'ruleset=🎯 全球直连,[]GEOSITE,private',
                 'ruleset=🎯 全球直连,[]GEOIP,private,no-resolve',
                 'ruleset=🐟 漏网之鱼,[]FINAL',
+                'custom_proxy_group=🎯 全球直连`select`[]DIRECT',
+                'custom_proxy_group=🐟 漏网之鱼`select`[]DIRECT',
             ].join('\n')
         );
 
@@ -65,7 +67,13 @@ describe('Aethersailor ini 模板解析兼容（issue #332）', () => {
 
     it('无 no-resolve 的 GEOIP 与 FINAL 行为不变', () => {
         const model = parseIniTemplate(
-            ['[custom]', 'ruleset=🎯 全球直连,[]GEOIP,CN', 'ruleset=🐟 漏网之鱼,[]FINAL'].join('\n')
+            [
+                '[custom]',
+                'ruleset=🎯 全球直连,[]GEOIP,CN',
+                'ruleset=🐟 漏网之鱼,[]FINAL',
+                'custom_proxy_group=🎯 全球直连`select`[]DIRECT',
+                'custom_proxy_group=🐟 漏网之鱼`select`[]DIRECT',
+            ].join('\n')
         );
 
         const config = yaml.load(renderClashFromTemplateModel(model));
