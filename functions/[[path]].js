@@ -21,6 +21,7 @@
 import { handleMisubRequest } from './modules/subscription-handler.js';
 import { handleApiRequest } from './modules/api-router.js';
 import { createJsonResponse, migrateConfigSettings } from './modules/utils.js';
+import { installLogGate } from './utils/log-gate.js';
 import {
     corsMiddleware,
     csrfOriginMiddleware,
@@ -161,6 +162,7 @@ async function fetchSpaEntry(request, env, next) {
  */
 export async function onRequest(context) {
     const { request, env, next } = context;
+    installLogGate(env); // 按环境变量门控 console.*（见 utils/log-gate.js），默认行为不变
     const url = new URL(request.url);
 
     try {
