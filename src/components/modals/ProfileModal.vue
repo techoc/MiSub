@@ -310,7 +310,7 @@
                 };
             }
         },
-        { deep: true, immediate: true }
+        { immediate: true }
     );
 
     const handleConfirm = () => {
