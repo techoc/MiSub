@@ -65,7 +65,7 @@ export function isValidBase64(str) {
         normalized += '='.repeat(4 - padding);
     }
 
-    const base64Regex = /^[A-Za-z0-9+\/=]+$/;
+    const base64Regex = /^[A-Za-z0-9+/=]+$/;
     return base64Regex.test(normalized) && normalized.length > 20;
 }
 
