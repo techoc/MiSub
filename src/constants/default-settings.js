@@ -18,6 +18,8 @@ export const DEFAULT_SETTINGS = {
     builtinEnableTfo: false,
     builtinLoonSkipCertVerify: false,
     dnsMode: 'clean',
+    injectAiPolicy: true,
+    injectDnsExitGroup: true,
     generatorOptions: {
         ipv6: false,
         allowLan: false,

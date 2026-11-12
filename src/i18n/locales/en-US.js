@@ -1219,6 +1219,8 @@ export default {
             transformBuiltinSkipCert: 'Built-in: skip certificate verification',
             transformBuiltinUdp: 'Built-in: force UDP on',
             transformBuiltinTfo: 'Built-in: enable TCP Fast Open',
+            transformInjectAi: 'Inject AI service groups & routing rules',
+            transformInjectDnsExit: 'Inject DNS exit proxy group',
             transformTemplateConfig: '2. Template config',
             transformPresetPlaceholder: 'Select preset rule config...',
             transformRemotePlaceholder: 'Enter remote .ini config URL',

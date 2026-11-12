@@ -1175,6 +1175,8 @@ export default {
             transformBuiltinSkipCert: '内置：跳过证书校验',
             transformBuiltinUdp: '内置：强制开启 UDP',
             transformBuiltinTfo: '内置：开启 TCP Fast Open',
+            transformInjectAi: '注入 AI 服务分组与分流规则',
+            transformInjectDnsExit: '注入 DNS 出口策略组',
             transformTemplateConfig: '2. 模板配置',
             transformPresetPlaceholder: '选择预设规则配置...',
             transformRemotePlaceholder: '输入远程 .ini 配置文件 URL',

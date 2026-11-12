@@ -418,6 +418,24 @@
                                     >
                                     <Switch v-model="settings.builtinEnableTfo" size="sm" />
                                 </div>
+                                <div
+                                    class="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 p-2.5 dark:border-white/5 dark:bg-white/5"
+                                >
+                                    <span
+                                        class="text-[11px] font-medium text-gray-700 dark:text-gray-300"
+                                        >{{ t('settings.transformInjectAi') }}</span
+                                    >
+                                    <Switch v-model="settings.injectAiPolicy" size="sm" />
+                                </div>
+                                <div
+                                    class="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 p-2.5 dark:border-white/5 dark:bg-white/5"
+                                >
+                                    <span
+                                        class="text-[11px] font-medium text-gray-700 dark:text-gray-300"
+                                        >{{ t('settings.transformInjectDnsExit') }}</span
+                                    >
+                                    <Switch v-model="settings.injectDnsExitGroup" size="sm" />
+                                </div>
                             </div>
                         </div>
                     </div>
