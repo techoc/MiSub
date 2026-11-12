@@ -1,4 +1,4 @@
-import { groupNodeLinesByRegion } from './region-groups.js';
+import { groupNodeLinesByRegion, isPlaceholderInfoNode } from './region-groups.js';
 import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';
 
 /**
@@ -125,7 +125,11 @@ function aiPolicyGroups(proxyNames, regionNames, { relay = false } = {}) {
  */
 function generateRegionData(proxies, options = {}) {
     // [智能升级] 直接传递代理对象数组，region-groups 现在能识别 metadata
-    return groupNodeLinesByRegion(proxies, options);
+    // 占位信息节点（trojan://127.0.0.1）不参与地区分组，避免地区组仅由占位节点构成
+    const realProxies = (Array.isArray(proxies) ? proxies : []).filter(
+        (proxy) => !isPlaceholderInfoNode(proxy)
+    );
+    return groupNodeLinesByRegion(realProxies, options);
 }
 
 /**

@@ -52,6 +52,17 @@ function normalizeRegionOverrides(overrides = []) {
         .filter(Boolean);
 }
 
+/**
+ * 判断是否为面板套餐信息占位节点（trojan://127.0.0.1 的"流量剩余/到期时间"提示节点）。
+ * 此类节点不是真实代理：不参与地区分组——OpenClash 启动前会剔除占位节点，
+ * 若地区组成员全部由占位节点构成，剔除后策略组会变成空 proxies，
+ * 导致 mihomo 解析失败（`use` or `proxies` missing）。
+ */
+export function isPlaceholderInfoNode(proxy) {
+    const server = proxy?.server;
+    return server === '127.0.0.1' || server === '::1';
+}
+
 export function groupNodeLinesByRegion(nodes = [], options = {}) {
     const groups = new Map();
     const regionOverrides = normalizeRegionOverrides(options.regionOverrides);

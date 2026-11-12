@@ -1,4 +1,4 @@
-import { groupNodeLinesByRegion } from './region-groups.js';
+import { groupNodeLinesByRegion, isPlaceholderInfoNode } from './region-groups.js';
 import { AI_SERVICE_RULES } from './builtin-rules-provider.js';
 import { DNS_PROXY_GROUP, isExplicitDnsOverride } from './safe-dns.js';
 
@@ -374,10 +374,13 @@ export function applySmartModelOptimizations(model, options = {}) {
     // 4. 检查等级。如果是 none (完全禁用)，我们只执行占位符展开和清理，不进行智能注入。
     if (!isCustomOrNone && normalizedLevel !== 'base') {
         // 3. 准备获取所有节点的名称，用于后续注入
+        // 占位信息节点（trojan://127.0.0.1）不参与地区分组：OpenClash 会剔除占位节点，
+        // 若地区组成员全部为占位节点，剔除后策略组变空会导致配置解析失败
         const proxyNames = model.proxies.map((p) => p.name || p.tag).filter(Boolean);
         if (proxyNames.length > 0) {
-            // 4. 识别地区分组并注入
-            const nodeEntries = proxyNames.map((name) => ({ tag: name }));
+            const nodeEntries = model.proxies
+                .filter((proxy) => !isPlaceholderInfoNode(proxy))
+                .map((proxy) => ({ tag: proxy.name || proxy.tag }));
             const regions = groupNodeLinesByRegion(nodeEntries);
 
             // 注入地区自动选优组
