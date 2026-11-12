@@ -191,6 +191,8 @@ export function renderClashFromTemplateModel(model, options = {}) {
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
     );
+    // 关闭 DNS 出口组注入时，Safe DNS 的境外解析引用同步降级为 DIRECT，保证配置仍然有效
+    const dnsDetour = options.injectDnsExitGroup === false ? 'DIRECT' : DNS_PROXY_GROUP;
 
     // 所有客户端都保留链式策略组；仅 Mihomo/Meta 展开节点级 dialer-proxy。
     if (Array.isArray(normalizedModel.extras?.chainProxy)) {
@@ -251,7 +253,7 @@ export function renderClashFromTemplateModel(model, options = {}) {
         'external-controller': '127.0.0.1:9090',
         dns: resolveSafeDnsConfig(normalizedModel.settings?.customDnsOverride, {
             mode: normalizedModel.settings?.dnsMode,
-            proxyGroup: DNS_PROXY_GROUP,
+            proxyGroup: dnsDetour,
             generatorOptions,
         }),
         proxies: normalizedModel.proxies,

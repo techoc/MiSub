@@ -47,6 +47,7 @@ import {
 } from './main-handler/template-url.js';
 import {
     resolveBuiltinRequestOptions,
+    resolveInjectionToggle,
     shouldRenderClashYamlProfileTemplateLocally,
 } from './main-handler/engine-flags.js';
 import {
@@ -77,6 +78,7 @@ export {
     resolveBuiltinEngineFlags,
     resolveBuiltinRequestOptions,
     resolveEffectiveEngine,
+    resolveInjectionToggle,
     shouldRenderClashYamlProfileTemplateLocally,
 } from './main-handler/engine-flags.js';
 
@@ -374,6 +376,16 @@ export {
                         url.searchParams.get('dnsMode') ||
                         config.dnsMode ||
                         'clean',
+                    injectAiPolicy: resolveInjectionToggle(
+                        url.searchParams,
+                        ['ai-inject', 'aiInject'],
+                        config.injectAiPolicy
+                    ),
+                    injectDnsExitGroup: resolveInjectionToggle(
+                        url.searchParams,
+                        ['dns-inject', 'dnsInject'],
+                        config.injectDnsExitGroup
+                    ),
                 };
                 const rendered = await ProcessorService.renderOutput({
                     targetFormat,
@@ -545,6 +557,16 @@ export {
             url.searchParams.get('dnsMode') ||
             config.dnsMode ||
             'clean',
+        injectAiPolicy: resolveInjectionToggle(
+            url.searchParams,
+            ['ai-inject', 'aiInject'],
+            config.injectAiPolicy
+        ),
+        injectDnsExitGroup: resolveInjectionToggle(
+            url.searchParams,
+            ['dns-inject', 'dnsInject'],
+            config.injectDnsExitGroup
+        ),
     };
 
     const managedConfigUrl = buildManagedConfigUrl(request.url);

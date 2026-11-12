@@ -272,6 +272,8 @@ export class ProcessorService {
                     customDnsOverride: builtinOptions.customDnsOverride || '',
                     dnsMode: builtinOptions.dnsMode || 'clean',
                     generatorOptions: builtinOptions.generatorOptions,
+                    injectAiPolicy: builtinOptions.injectAiPolicy !== false,
+                    injectDnsExitGroup: builtinOptions.injectDnsExitGroup !== false,
                 };
 
                 switch (targetFormat) {

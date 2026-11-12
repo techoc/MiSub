@@ -340,7 +340,7 @@ function detectRuleSetFormat(url) {
     return raw.endsWith('.srs') ? 'binary' : 'source';
 }
 
-function buildRuleSets(rules) {
+function buildRuleSets(rules, dnsDetour = DNS_PROXY_GROUP) {
     const remoteRuleSets = rules
         .filter(
             (rule) =>
@@ -352,7 +352,7 @@ function buildRuleSets(rules) {
             format: detectRuleSetFormat(rule.value),
             url: pinRemoteRuleUrl(rule.value),
             update_interval: '24h',
-            download_detour: DNS_PROXY_GROUP,
+            download_detour: dnsDetour,
         }));
 
     const implicitRuleSets = [];
@@ -378,7 +378,7 @@ function buildRuleSets(rules) {
                                   `https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-${value}.srs`
                               ),
                     update_interval: '24h',
-                    download_detour: DNS_PROXY_GROUP,
+                    download_detour: dnsDetour,
                 });
             }
         }
@@ -392,6 +392,8 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
     );
+    // 关闭 DNS 出口组注入时，DNS 服务器与 rule-set 的 detour 同步降级为 DIRECT，保证配置仍然有效
+    const dnsDetour = options.injectDnsExitGroup === false ? 'DIRECT' : DNS_PROXY_GROUP;
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -406,8 +408,8 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
         normalizedModel.groups.filter((g) => Array.isArray(g.members) && g.members.length > 0)
     );
     const ruleSetObjects = [
-        getSingboxDnsRuleSet(),
-        ...buildRuleSets(normalizedModel.rules).filter(
+        { ...getSingboxDnsRuleSet(), download_detour: dnsDetour },
+        ...buildRuleSets(normalizedModel.rules, dnsDetour).filter(
             (ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET
         ),
     ];
@@ -426,7 +428,7 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
         normalizedModel.groups.find((group) => group.name !== DNS_PROXY_GROUP)?.name || 'DIRECT';
     const dnsConfig = buildSingboxDnsConfig(normalizedModel.settings?.customDnsOverride, {
         mode: normalizedModel.settings?.dnsMode,
-        proxyGroup: DNS_PROXY_GROUP,
+        proxyGroup: dnsDetour,
         generatorOptions,
     });
 

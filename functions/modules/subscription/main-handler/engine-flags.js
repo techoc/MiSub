@@ -55,6 +55,40 @@ export function resolveEffectiveEngine({
     return profileEngineMode || globalEngineMode || 'builtin';
 }
 
+function parseToggleValue(value) {
+    if (value === null || value === undefined) return null;
+    const normalized = String(value).trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+    return null;
+}
+
+/**
+ * 解析模板注入开关（URL 参数 > 配置值 > 默认值）。
+ * 用于 AI 服务分组注入（ai-inject / aiInject）与 DNS 出口策略组注入（dns-inject / dnsInject）。
+ * @param {URLSearchParams} searchParams - 请求 URL 参数
+ * @param {string[]} paramNames - 支持的参数名（按优先级排列）
+ * @param {boolean|string|undefined} configValue - 全局/Profile 配置里的开关值
+ * @param {boolean} fallback - 都未设置时的默认值
+ * @returns {boolean}
+ */
+export function resolveInjectionToggle(
+    searchParams,
+    paramNames = [],
+    configValue,
+    fallback = true
+) {
+    const params = searchParams || new URLSearchParams('');
+    for (const name of paramNames) {
+        if (!params.has(name)) continue;
+        const fromParam = parseToggleValue(params.get(name));
+        if (fromParam !== null) return fromParam;
+    }
+    const fromConfig = parseToggleValue(configValue);
+    if (fromConfig !== null) return fromConfig;
+    return fallback;
+}
+
 export function resolveBuiltinRequestOptions({
     searchParams,
     userAgent = '',

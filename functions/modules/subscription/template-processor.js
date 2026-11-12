@@ -332,11 +332,14 @@ function ensureAiPolicy(model) {
  * 模板模型智能优化器（主入口）
  * 包含：自动解析过滤器、注入地区组、展开占位符、清理无效引用及空组
  * @param {Object} model - 统一模板模型
+ * @param {Object} [options] - 注入开关：injectAiPolicy / injectDnsExitGroup（默认均开启）
  */
-export function applySmartModelOptimizations(model) {
+export function applySmartModelOptimizations(model, options = {}) {
     const { ruleLevel } = model.meta || {};
     const normalizedLevel = (ruleLevel || '').toLowerCase();
     const isCustomOrNone = !normalizedLevel || normalizedLevel === 'none';
+    const injectDnsExitGroup = options.injectDnsExitGroup !== false;
+    const injectAiPolicy = options.injectAiPolicy !== false;
 
     // 1. 执行现有的正则过滤器解析 (始终执行)
     resolveGroupFilters(model);
@@ -344,16 +347,18 @@ export function applySmartModelOptimizations(model) {
     // 2. DNS 出口策略组注入：
     // 只要没用自定义 DNS（使用作者默认 Safe DNS），就保证注入 DNS 出口策略组；
     // 只要自定义配置了 DNS，就不跟随注入 DNS 出口策略组。
+    // injectDnsExitGroup 开关（默认开启）提供手动关闭出口；关闭时渲染端会把
+    // Safe DNS / rule-set 的 detour 同步降级为 DIRECT，保证配置仍然有效。
     const hasCustomDns = Boolean(
         model.settings?.customDnsOverride && String(model.settings.customDnsOverride).trim()
     );
-    if (!hasCustomDns) {
+    if (!hasCustomDns && injectDnsExitGroup) {
         ensureDnsProxyGroup(model);
     }
 
     // 3. AI 服务分组与分流规则注入：
     // 仅在非纯自定义模板模式（启用内置分流）下才注入
-    if (!isCustomOrNone) {
+    if (!isCustomOrNone && injectAiPolicy) {
         ensureAiPolicy(model);
     }
 
