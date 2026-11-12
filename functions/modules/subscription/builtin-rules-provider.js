@@ -471,6 +471,7 @@ export const PINNED_RULE_REVISIONS = Object.freeze({
     SING_GEOSITE: '0adeef8a3b9201292f6786ef4de81bcc02e971eb',
     SING_GEOIP: 'b9c5e675b4d5359d4b47f4434fa7ae77e9991306',
     BLACKMATRIX: '538b8a79532c44dfbcb8e694d2f43e753c60b157',
+    AETHERSAILOR: '1ceee12ed9a5b6ed1b4fa75f2b78e38fcfa05dfa',
 });
 
 const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
@@ -513,6 +514,7 @@ export function pinRemoteRuleUrl(sourceUrl, options = {}) {
             'sagernet/sing-geosite': PINNED_RULE_REVISIONS.SING_GEOSITE,
             'sagernet/sing-geoip': PINNED_RULE_REVISIONS.SING_GEOIP,
             'blackmatrix7/ios_rule_script': PINNED_RULE_REVISIONS.BLACKMATRIX,
+            'aethersailor/custom_openclash_rules': PINNED_RULE_REVISIONS.AETHERSAILOR,
         };
         const revision = revisions[key];
         if (revision) {

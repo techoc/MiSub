@@ -165,16 +165,25 @@ function getRuleProviderBehavior(providerUrl) {
     return 'classical';
 }
 
+function appendRuleExtras(rule, rendered) {
+    // 保留模板作者声明的规则尾参（如 GEOIP 的 no-resolve——Aethersailor 模板全部携带，
+    // 丢掉会让 GEOIP 命中前触发 DNS 解析，语义与性能都偏离原意）。
+    const extras = Array.isArray(rule.extras) ? rule.extras.filter(Boolean) : [];
+    return extras.length > 0 ? `${rendered},${extras.join(',')}` : rendered;
+}
+
 function mapRule(rule, ruleProviderMap) {
     const type = String(rule.type || '').toUpperCase();
     if (!type) return null;
     if (type === 'MATCH' || type === 'FINAL') return `MATCH,${rule.policy}`;
-    if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
+    if (type === 'GEOIP') {
+        return appendRuleExtras(rule, `GEOIP,${rule.value || 'CN'},${rule.policy}`);
+    }
     if (type === 'RULE-SET') {
         const providerName = ruleProviderMap.get(rule.value);
         return `RULE-SET,${providerName || rule.value},${rule.policy}`;
     }
-    return `${type},${rule.value},${rule.policy}`;
+    return appendRuleExtras(rule, `${type},${rule.value},${rule.policy}`);
 }
 
 export function renderClashFromTemplateModel(model, options = {}) {
@@ -225,7 +234,8 @@ export function renderClashFromTemplateModel(model, options = {}) {
             behavior: getRuleProviderBehavior(providerUrl),
             url: providerUrl,
             path: `./ruleset/${providerName}.${usesTextList ? 'list' : usesMrs ? 'mrs' : 'yaml'}`,
-            interval: 86400,
+            // 模板 ruleset 行声明的更新间隔（如 Aethersailor 的 1800/28800）优先于默认值
+            interval: Number(rule.interval) > 0 ? Number(rule.interval) : 86400,
             ...(usesTextList ? { format: 'text' } : {}),
             ...(usesMrs ? { format: 'mrs' } : {}),
         };

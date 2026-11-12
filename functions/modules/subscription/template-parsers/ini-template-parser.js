@@ -76,8 +76,12 @@ function parseAclRuleSetLine(line) {
     const policy = parts[0];
     let source = parts.slice(1).join(',');
 
-    // Clean up protocol prefixes like clash-classic:, surge:, etc.
-    source = source.replace(/^(clash-classic|surge|quanx|loon|sing-box|singbox):/i, '');
+    // Clean up protocol prefixes like clash-classic:, clash-domain:, surge:, etc.
+    // Aethersailor 模板大量使用 clash-domain: / clash-ipcidr: 前缀（issue #332）。
+    source = source.replace(
+        /^(clash-classic|clash-domain|clash-ipcidr|surge|quanx|loon|sing-box|singbox):/i,
+        ''
+    );
 
     if (source.startsWith('[]')) {
         const inlineValue = source.slice(2);
@@ -95,12 +99,22 @@ function parseAclRuleSetLine(line) {
         };
     }
 
+    // [兼容说明] 远程规则集行尾可带更新间隔参数（如 ,1800 / ,28800），这是
+    // subconverter 的 interval 选项而非 URL 的一部分；拼进 URL 会导致下载 404。
+    let interval;
+    const trailing = source.split(',').pop() || '';
+    if (source.includes(',') && /^\d+$/.test(trailing)) {
+        interval = Number(trailing);
+        source = source.slice(0, source.lastIndexOf(','));
+    }
+
     return {
         type: 'rule-set',
         value: pinRemoteRuleUrl(source),
         policy,
         source: 'remote',
         extras: [],
+        ...(interval ? { interval } : {}),
     };
 }
 

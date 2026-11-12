@@ -43,6 +43,15 @@ describe('pinRemoteRuleUrl - 规则源镜像重写', () => {
         expect(out).toContain('/rule/Clash/Claude/Claude.list');
     });
 
+    it('将 Aethersailor 规则链接重写为 jsDelivr 并锁定版本', () => {
+        const out = pinRemoteRuleUrl(
+            'https://raw.githubusercontent.com/Aethersailor/Custom_OpenClash_Rules/main/rule/Custom_Direct_Domain.mrs'
+        );
+        expect(out).toBe(
+            `https://cdn.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@${PINNED_RULE_REVISIONS.AETHERSAILOR}/rule/Custom_Direct_Domain.mrs`
+        );
+    });
+
     it('mirror=false 时仅锁定版本，仍使用 raw 域名', () => {
         const out = pinRemoteRuleUrl(
             'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list',
