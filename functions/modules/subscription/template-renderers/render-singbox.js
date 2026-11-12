@@ -392,8 +392,13 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
     );
-    // 关闭 DNS 出口组注入时，DNS 服务器与 rule-set 的 detour 同步降级为 DIRECT，保证配置仍然有效
-    const dnsDetour = options.injectDnsExitGroup === false ? 'DIRECT' : DNS_PROXY_GROUP;
+    // 关闭 DNS 出口组注入时，DNS 服务器与 rule-set 的 detour 同步降级为 DIRECT，保证配置仍然有效；
+    // 组不在模型中（如 explicit dns block 整块替换、组被修剪）时同样降级，避免悬空引用
+    const dnsExitGroupPresent = normalizedModel.groups.some(
+        (group) => group.name === DNS_PROXY_GROUP
+    );
+    const dnsDetour =
+        options.injectDnsExitGroup !== false && dnsExitGroupPresent ? DNS_PROXY_GROUP : 'DIRECT';
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')

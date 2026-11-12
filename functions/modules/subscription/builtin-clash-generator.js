@@ -7,7 +7,7 @@
 import { urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
-import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
+import { DNS_PROXY_GROUP, isExplicitDnsOverride, resolveSafeDnsConfig } from './safe-dns.js';
 import { normalizeGeneratorOptions } from './generator-options.js';
 import {
     POLICY_GROUPS,
@@ -208,8 +208,11 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
         }
 
         if (options.customDnsOverride && String(options.customDnsOverride).trim()) {
-            const hasDnsExit = String(options.customDnsOverride).includes(DNS_PROXY_GROUP);
-            if (!hasDnsExit) {
+            const overrideText = String(options.customDnsOverride);
+            const hasDnsExit = overrideText.includes(DNS_PROXY_GROUP);
+            // 只有「整块替换 Safe DNS」的 explicit dns block 且未引用该组时才移除；
+            // policy 型覆盖下 resolveSafeDnsConfig 仍会生成 #DNS 出口 引用，组必须保留
+            if (!hasDnsExit && isExplicitDnsOverride(overrideText)) {
                 proxyGroups = proxyGroups.filter((g) => g.name !== DNS_PROXY_GROUP);
             }
         }

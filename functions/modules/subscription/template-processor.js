@@ -1,6 +1,6 @@
 import { groupNodeLinesByRegion } from './region-groups.js';
 import { AI_SERVICE_RULES } from './builtin-rules-provider.js';
-import { DNS_PROXY_GROUP } from './safe-dns.js';
+import { DNS_PROXY_GROUP, isExplicitDnsOverride } from './safe-dns.js';
 
 /**
  * 解析并扩展策略组中的正则过滤器
@@ -345,14 +345,13 @@ export function applySmartModelOptimizations(model, options = {}) {
     resolveGroupFilters(model);
 
     // 2. DNS 出口策略组注入：
-    // 只要没用自定义 DNS（使用作者默认 Safe DNS），就保证注入 DNS 出口策略组；
-    // 只要自定义配置了 DNS，就不跟随注入 DNS 出口策略组。
+    // 只有「整块替换 Safe DNS」的 explicit dns block 覆盖才跳过注入（该形态下 Safe DNS
+    // 整体被替换，不再产生组引用）；仅提供解析器列表的 policy 型覆盖仍会生成
+    // #DNS 出口 引用，必须注入该组，否则渲染产物会引用不存在的策略组导致 mihomo 加载失败。
     // injectDnsExitGroup 开关（默认开启）提供手动关闭出口；关闭时渲染端会把
     // Safe DNS / rule-set 的 detour 同步降级为 DIRECT，保证配置仍然有效。
-    const hasCustomDns = Boolean(
-        model.settings?.customDnsOverride && String(model.settings.customDnsOverride).trim()
-    );
-    if (!hasCustomDns && injectDnsExitGroup) {
+    const hasExplicitDns = isExplicitDnsOverride(model.settings?.customDnsOverride);
+    if (!hasExplicitDns && injectDnsExitGroup) {
         ensureDnsProxyGroup(model);
     }
 

@@ -200,6 +200,15 @@ export function isExplicitDnsBlock(override) {
     );
 }
 
+/**
+ * 判断原始字符串/对象形式的自定义 DNS 覆盖是否为「整块替换 Safe DNS」的 explicit dns block。
+ * 仅提供解析器列表的 policy 型覆盖不算：该形态下 Safe DNS 结构保留，
+ * 境外解析仍会引用 DNS 出口策略组，调用方必须保证该组存在。
+ */
+export function isExplicitDnsOverride(raw) {
+    return isExplicitDnsBlock(parseOverride(raw));
+}
+
 export function resolveSafeDnsConfig(raw, options = {}) {
     const rawOverride = parseOverride(raw);
     if (isExplicitDnsBlock(rawOverride)) {
