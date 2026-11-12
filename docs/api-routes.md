@@ -339,15 +339,15 @@
 
 - `POST /api/cron/trigger`
     - Handler：api-router 内联 `handleCronTriggerRequest()`
-    - 行为：导入 `functions/_schedule.js` 执行同步。
-    - 写入：`cron_last_execution`；同步过程可能写订阅状态。
+    - 行为：强制触发 `modules/scheduled-task-runner.js` 的到期检查并等待完成（Pages 无原生 Cron）。
+    - 写入：`cron_last_execution`。
 
 ## 当前值得关注的边界
 
 - `GET /api/clients*` 是公开只读接口，但当前可能在图标迁移时写回 KV；如果未来要严格区分只读公开接口，可单独收敛这个副作用。
 - `POST /api/public/guestbook` 与 `POST /api/system/error_report` 是公开写接口，已有限制与节流，但仍是滥用风险点，后续可补更明确的速率限制/验证码/Turnstile 方案。
 - `/api/auth_debug` 与 `/api/auth_check` 不要求登录，但默认关闭；部署时必须保持 `ENABLE_AUTH_DIAGNOSTICS` 关闭，除非正在排查登录问题。
-- `/api/cron/trigger` 当前复用 `functions/_schedule.js`，而 `docs/codebase-review.md` 已标记 `_cron.js` / `_schedule.js` 为疑似遗留定时实现；后续应继续确认并收敛 cron 主实现。
+- `/api/cron/trigger` 已收敛到 `modules/scheduled-task-runner.js`；旧的 `_cron.js` / `_schedule.js` / `cron-dashboard.js` 遗留实现已删除。
 - `/api/system/export` 可导出脱敏数据；虽然需要登录，后续仍应通过测试固定脱敏字段覆盖。
 - 所有会主动拉取外部 URL 的接口应继续依赖 `validatePublicFetchUrl()` / `safeFetchPublicUrl()`，避免私网 SSRF 回归。
 

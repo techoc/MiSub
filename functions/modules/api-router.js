@@ -774,8 +774,8 @@ export async function handleExternalFetchRequest(request, env) {
             }
         );
     } catch (error) {
-        let errorMessage = 'Unknown error occurred';
-        let errorDetails = {};
+        let errorMessage;
+        let errorDetails;
 
         if (error.name === 'AbortError') {
             errorMessage = `Request timeout after ${timeout}ms`;
@@ -892,40 +892,9 @@ async function handleCronTriggerRequest(env) {
 
         // 获取Cron配置
         const cronType = env.CRON_TYPE || 'hourly-subscription-sync';
-        const maxSyncCount = parseInt(env.CRON_MAX_SYNC_COUNT) || 50;
-        const syncTimeout = parseInt(env.CRON_SYNC_TIMEOUT) || 30000;
-        const enableParallel = env.CRON_ENABLE_PARALLEL !== 'false';
 
-        // 调用 _schedule.js 中的同步逻辑
-        const scheduleModule = await import('../_schedule.js');
-        const result = await scheduleModule.performSubscriptionSync(env, {
-            maxSyncCount,
-            syncTimeout,
-            enableParallel,
-        });
-
-        // 保存执行状态
-        try {
-            const kv = StorageFactory.resolveKV(env);
-            if (kv) {
-                const executionStatus = {
-                    type: 'manual_trigger',
-                    cronType,
-                    timestamp: new Date().toISOString(),
-                    result: {
-                        totalSubscriptions: result.totalSubscriptions,
-                        successfulSyncs: result.successfulSyncs,
-                        failedSyncs: result.failedSyncs,
-                    },
-                };
-                await kv.put('cron_last_execution', JSON.stringify(executionStatus), {
-                    expirationTtl: 86400, // 24小时后过期
-                });
-            }
-        } catch (error) {
-            console.warn('[Cron Trigger] Failed to save execution status:', error);
-        }
-
+        // 真实的定时同步在 scheduled-task-runner.js（Pages 无原生 Cron，
+        // 该 runner 在请求触发时做到期检查）。这里强制触发一次检查并等待完成。
         const scheduledTasks = await maybeRunScheduledTasks(
             { env },
             {
@@ -935,11 +904,28 @@ async function handleCronTriggerRequest(env) {
             }
         ).catch((error) => ({ success: false, error: error?.message || String(error) }));
 
+        // 记录执行状态（供 /api/cron/status 展示）
+        try {
+            const kv = StorageFactory.resolveKV(env);
+            if (kv) {
+                const executionStatus = {
+                    type: 'manual_trigger',
+                    cronType,
+                    timestamp: new Date().toISOString(),
+                    result: scheduledTasks,
+                };
+                await kv.put('cron_last_execution', JSON.stringify(executionStatus), {
+                    expirationTtl: 86400, // 24小时后过期
+                });
+            }
+        } catch (error) {
+            console.warn('[Cron Trigger] Failed to save execution status:', error);
+        }
+
         return createJsonResponse({
             success: true,
             message: 'Cron triggered successfully',
-            result,
-            scheduledTasks,
+            result: scheduledTasks,
             timestamp: new Date().toISOString(),
         });
     } catch (error) {
@@ -948,118 +934,3 @@ async function handleCronTriggerRequest(env) {
     }
 }
 
-/**
- * 执行订阅同步（复用_cron.js的逻辑）
- * @param {Object} env - Cloudflare环境对象
- * @param {Object} config - 同步配置
- * @returns {Promise<Object>} 同步结果
- */
-async function performSubscriptionSync(env, config) {
-    const { maxSyncCount = 50, syncTimeout = 30000, enableParallel = true } = config;
-
-    const results = {
-        timestamp: new Date().toISOString(),
-        totalSubscriptions: 0,
-        successfulSyncs: 0,
-        failedSyncs: 0,
-        config: { maxSyncCount, syncTimeout, enableParallel },
-    };
-
-    try {
-        // 获取订阅列表
-        const subscriptions = await getAllSubscriptions(env);
-        results.totalSubscriptions = subscriptions.length;
-
-        // 限制同步数量
-        const subscriptionsToSync = subscriptions.slice(0, maxSyncCount);
-
-        if (enableParallel) {
-            // 并行同步
-            const syncPromises = subscriptionsToSync.map(async (sub) => {
-                try {
-                    await performSingleSubscriptionSync(sub, env, syncTimeout);
-                    return { success: true };
-                } catch (error) {
-                    console.error(`[Cron] Failed to sync ${sub.name}:`, error);
-                    return { success: false, error: error.message };
-                }
-            });
-
-            const syncResults = await Promise.allSettled(syncPromises);
-            syncResults.forEach((result) => {
-                if (result.status === 'fulfilled' && result.value.success) {
-                    results.successfulSyncs++;
-                } else {
-                    results.failedSyncs++;
-                }
-            });
-        } else {
-            // 串行同步
-            for (const sub of subscriptionsToSync) {
-                try {
-                    await performSingleSubscriptionSync(sub, env, syncTimeout);
-                    results.successfulSyncs++;
-                } catch (error) {
-                    console.error(`[Cron] Failed to sync ${sub.name}:`, error);
-                    results.failedSyncs++;
-                }
-            }
-        }
-    } catch (error) {
-        console.error('[Cron] Subscription sync error:', error);
-        results.error = error.message;
-    }
-
-    return results;
-}
-
-/**
- * 获取所有订阅
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Array>} 订阅列表
- */
-async function getAllSubscriptions(env) {
-    try {
-        const storageAdapter = StorageFactory.createAdapter(
-            env,
-            await StorageFactory.getStorageType(env)
-        );
-        const subscriptions = (await storageAdapter.get(KV_KEY_SUBS)) || [];
-        return Array.isArray(subscriptions) ? subscriptions : [];
-    } catch (error) {
-        console.error('[Cron] Failed to fetch subscriptions:', error);
-        return [];
-    }
-}
-
-/**
- * 执行单个订阅同步
- * @param {Object} subscription - 订阅对象
- * @param {Object} env - 环境变量
- * @param {number} timeout - 超时时间（毫秒）
- */
-async function performSingleSubscriptionSync(subscription, env, timeout) {
-    // 创建带超时的 AbortController
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-        // 这里应该调用实际的订阅同步逻辑
-        // 暂时使用模拟逻辑
-        console.log(
-            `[Single Sync] Processing ${subscription.name || subscription.url} with ${timeout}ms timeout`
-        );
-
-        // 模拟网络请求
-        await new Promise((resolve, reject) => {
-            controller.signal.addEventListener('abort', () => reject(new Error('Timeout')));
-            setTimeout(resolve, Math.random() * 2000); // 模拟1-2秒的处理时间
-        });
-
-        clearTimeout(timeoutId);
-        return { success: true };
-    } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-    }
-}

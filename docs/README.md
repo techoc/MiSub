@@ -26,7 +26,6 @@ MiSub 仓库文档索引。工程知识体系以本地思源笔记本 `MiSub 文
 
 ## 运维 / 迁移
 
-- [CRON_DASHBOARD_GUIDE.md](CRON_DASHBOARD_GUIDE.md) — cron 仪表盘指南。
 - [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) — 迁移指南。
 - [UPGRADE_V2.5.md](UPGRADE_V2.5.md) — v2.5 升级历史。
 - [plans/](plans/) — 历史规划文档。
