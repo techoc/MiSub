@@ -1,16 +1,22 @@
 <script setup>
-    import { computed } from 'vue';
+    import { computed, defineAsyncComponent, reactive, watch } from 'vue';
     import { useI18n } from '../../i18n/index.js';
     import SettingsLayout from '../layout/SettingsLayout.vue';
     import SettingsSidebar from './SettingsSidebar.vue';
-    import BasicSettings from './sections/BasicSettings.vue';
-    import HomeSettings from './sections/HomeSettings.vue';
-    import GlobalSettings from './sections/GlobalSettings.vue';
-    import ServiceSettings from './sections/ServiceSettings.vue';
-    import ClientSettings from './sections/ClientSettings.vue';
-    import CustomPageSettings from './sections/CustomPageSettings.vue';
-    import WebdavBackupSettings from './sections/WebdavBackupSettings.vue';
-    import SystemSettings from './sections/SystemSettings.vue';
+
+    // 设置分区体积大（如 ClientSettings 800+ 行），全部静态 import 曾让本 chunk 达 232KB。
+    // 改为异步加载 + lazy-mount：分区只在对应 tab 第一次被访问时才创建（并拉取自己的
+    // chunk），之后保留挂载、用 v-show 切换，保证用户在各分区里未保存的草稿不丢失。
+    const BasicSettings = defineAsyncComponent(() => import('./sections/BasicSettings.vue'));
+    const HomeSettings = defineAsyncComponent(() => import('./sections/HomeSettings.vue'));
+    const GlobalSettings = defineAsyncComponent(() => import('./sections/GlobalSettings.vue'));
+    const ServiceSettings = defineAsyncComponent(() => import('./sections/ServiceSettings.vue'));
+    const ClientSettings = defineAsyncComponent(() => import('./sections/ClientSettings.vue'));
+    const CustomPageSettings = defineAsyncComponent(() => import('./sections/CustomPageSettings.vue'));
+    const WebdavBackupSettings = defineAsyncComponent(() =>
+        import('./sections/WebdavBackupSettings.vue')
+    );
+    const SystemSettings = defineAsyncComponent(() => import('./sections/SystemSettings.vue'));
 
     /**
      * 设置界面的共享内容区。
@@ -117,6 +123,13 @@
     const saveDisabled = computed(
         () => props.isSaving || props.hasWhitespace || !props.isStorageTypeValid
     );
+
+    // lazy-mount 记录：tab 首次访问后永久保留挂载（配合下方 v-show）
+    const visitedTabs = reactive(new Set([props.activeTab]));
+    watch(
+        () => props.activeTab,
+        (tab) => visitedTabs.add(tab)
+    );
 </script>
 
 <template>
@@ -186,17 +199,22 @@
             </div>
 
             <BasicSettings
+                v-if="visitedTabs.has('basic')"
                 v-show="activeTab === 'basic'"
                 :settings="settings"
                 :disguiseConfig="disguiseConfig"
                 :highlighted-focus-id="highlightedFocusId"
             />
-            <HomeSettings v-show="activeTab === 'home'" :settings="settings" />
-            <GlobalSettings v-show="activeTab === 'global'" :settings="settings" />
-            <ServiceSettings v-show="activeTab === 'service'" :settings="settings" />
-            <ClientSettings v-show="activeTab === 'client'" />
-            <CustomPageSettings v-show="activeTab === 'custom-page'" :settings="settings" />
-            <div v-show="activeTab === 'system'" class="space-y-6">
+            <HomeSettings v-if="visitedTabs.has('home')" v-show="activeTab === 'home'" :settings="settings" />
+            <GlobalSettings v-if="visitedTabs.has('global')" v-show="activeTab === 'global'" :settings="settings" />
+            <ServiceSettings v-if="visitedTabs.has('service')" v-show="activeTab === 'service'" :settings="settings" />
+            <ClientSettings v-if="visitedTabs.has('client')" v-show="activeTab === 'client'" />
+            <CustomPageSettings
+                v-if="visitedTabs.has('custom-page')"
+                v-show="activeTab === 'custom-page'"
+                :settings="settings"
+            />
+            <div v-if="visitedTabs.has('system')" v-show="activeTab === 'system'" class="space-y-6">
                 <WebdavBackupSettings :settings="settings" />
                 <SystemSettings
                     :settings="settings"

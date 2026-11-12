@@ -22,7 +22,7 @@ const extractRenderedTabs = (source) =>
 
 /** currentTabLabel 的 switch 中所有 case 值 */
 const extractLabelCases = (source) => {
-    const block = source.match(/const currentTabLabel = computed\(\(\) => \{[\s\S]*?\n    \}\);/);
+    const block = source.match(/const currentTabLabel = computed\(\(\) => \{[\s\S]*?\n {4}\}\);/);
     if (!block) return [];
     return [...block[0].matchAll(/case\s+'([a-z-]+)'/g)].map((match) => match[1]);
 };
