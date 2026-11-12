@@ -1,4 +1,10 @@
 import { Storage } from 'happy-dom';
+import { registerLocaleMessages } from '../src/i18n/index.js';
+import enUS from '../src/i18n/locales/en-US.js';
+
+// 生产运行时 en-US 语言包是动态加载的，但大量测试同步断言英文文案，
+// 这里静态预注入，保证 setLocale('en-US') / t(key, params, 'en-US') 立即可用。
+registerLocaleMessages('en-US', enUS);
 
 // Node 22+ 暴露了实验性的 `localStorage` / `sessionStorage` 全局属性。
 // 由于这些键已存在于 Node 全局对象上，Vitest 的 DOM 环境（happy-dom/jsdom）

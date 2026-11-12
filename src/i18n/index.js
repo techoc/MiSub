@@ -1,6 +1,6 @@
 import { computed, inject, readonly, ref } from 'vue';
 import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
-import { messages } from './messages.js';
+import zhCN from './locales/zh-CN.js';
 
 export const DEFAULT_LOCALE = 'zh-CN';
 export const LOCALE_STORAGE_KEY = 'misub:locale';
@@ -11,6 +11,46 @@ export const SUPPORTED_LOCALES = [
 
 const supportedCodes = new Set(SUPPORTED_LOCALES.map((item) => item.code));
 const I18N_KEY = Symbol('misub-i18n');
+
+// zh-CN 是默认语言，静态打包进首屏；其余语言按需动态 import，
+// 不进首屏 bundle（约省一半文案体积）。t() 在模板渲染中调用时会读取
+// runtimeMessages ref，语言包加载完成后触发依赖它的组件重渲染；
+// 未加载完成期间 translate 的 ?? 回退到默认语言文案。
+const runtimeMessages = ref({ 'zh-CN': zhCN });
+const loadedLocales = new Set(['zh-CN']);
+const localeLoaders = new Map();
+
+/**
+ * 直接注入某个语言的文案（替换式覆盖）。
+ * 生产链路由 ensureLocaleMessages 使用；tests/setup.js 也用它静态预注入
+ * en-US，因为大量测试同步断言英文文案，无法等待异步加载。
+ */
+export function registerLocaleMessages(locale, messages) {
+    const normalized = normalizeLocale(locale);
+    loadedLocales.add(normalized);
+    runtimeMessages.value = { ...runtimeMessages.value, [normalized]: messages };
+}
+
+/**
+ * 确保某语言包已加载（已加载/正在加载时立即 resolve）。
+ * 失败时清除加载记录，下次切换可重试；期间 t() 回退默认语言。
+ */
+export function ensureLocaleMessages(locale) {
+    const normalized = normalizeLocale(locale);
+    if (loadedLocales.has(normalized)) return Promise.resolve();
+    if (!localeLoaders.has(normalized)) {
+        localeLoaders.set(
+            normalized,
+            import(`./locales/${normalized}.js`)
+                .then((mod) => registerLocaleMessages(normalized, mod.default))
+                .catch((error) => {
+                    console.warn(`[i18n] Failed to load locale ${normalized}:`, error);
+                    localeLoaders.delete(normalized);
+                })
+        );
+    }
+    return localeLoaders.get(normalized);
+}
 
 function readStoredLocale() {
     return readRawPreference(LOCALE_STORAGE_KEY) || '';
@@ -58,7 +98,7 @@ function lookupMessage(locale, key) {
     return key.split('.').reduce((current, part) => {
         if (!current || typeof current !== 'object') return undefined;
         return current[part];
-    }, messages[locale]);
+    }, runtimeMessages.value[locale]);
 }
 
 function interpolate(template, params = {}) {
@@ -68,6 +108,8 @@ function interpolate(template, params = {}) {
 
 export function createI18n(options = {}) {
     const locale = ref(normalizeLocale(options.initialLocale || detectInitialLocale()));
+    // 初始语言若非默认语言（例如浏览器语言/存储偏好是 en-US），立刻开始加载其语言包
+    ensureLocaleMessages(locale.value);
 
     const translate = (key, params = {}, forcedLocale) => {
         const targetLocale = normalizeLocale(forcedLocale || locale.value);
@@ -77,6 +119,7 @@ export function createI18n(options = {}) {
 
     const set = (nextLocale) => {
         const normalized = normalizeLocale(nextLocale);
+        ensureLocaleMessages(normalized);
         locale.value = normalized;
         writeStoredLocale(normalized);
         if (typeof document !== 'undefined') {
