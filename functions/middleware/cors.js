@@ -131,7 +131,7 @@ export async function csrfOriginMiddleware(request, next, options = {}) {
             ? options.origins
             : [requestOrigin];
     const allowed = new Set(origins);
-    let sourceOrigin = '';
+    let sourceOrigin;
     try {
         sourceOrigin = origin || (referer ? new URL(referer).origin : '');
     } catch (_) {
@@ -156,7 +156,7 @@ export async function securityHeadersMiddleware(request, next) {
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
         'Content-Security-Policy':
-            "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'self' https: http:; img-src 'self' data: blob: https: http:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: http:; worker-src 'self' blob:;",
+            "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'self' https: http:; img-src 'self' data: blob: https: http:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https: http:; worker-src 'self' blob:;",
     };
 
     try {
