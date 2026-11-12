@@ -1604,6 +1604,46 @@ export default {
                 description:
                     'Built-in full ACL4SSR routing template that can generate Clash and Sing-Box configs through the unified template model.',
             },
+            aethersailorStandard: {
+                name: 'Aethersailor Standard Routing',
+                description:
+                    'GEOSITE-based rules with six region groups and anti-DNS-leak design, fine-grained categories for mihomo/Clash.Meta kernels.',
+            },
+            aethersailorStandardFallback: {
+                name: 'Aethersailor Standard Routing (Fallback)',
+                description:
+                    'Same rules as the standard preset, with the main selector switched to a fallback group that auto-swaps failing proxies.',
+            },
+            aethersailorLite: {
+                name: 'Aethersailor Lite Routing',
+                description:
+                    'Keeps only basic routing and direct rules, for users without streaming-unlock or heavy routing needs.',
+            },
+            aethersailorLiteFallback: {
+                name: 'Aethersailor Lite Routing (Fallback)',
+                description:
+                    'Same rules as the lite preset, with the main selector switched to a fallback group.',
+            },
+            aethersailorGfw: {
+                name: 'Aethersailor Minimal GFW Routing',
+                description:
+                    'Only the GFW list and foreign IPs go through proxies while everything else stays direct — the leanest option.',
+            },
+            aethersailorGfwFallback: {
+                name: 'Aethersailor Minimal GFW Routing (Fallback)',
+                description:
+                    'Same rules as the minimal preset, with all nodes combined into one fallback group.',
+            },
+            aethersailorFull: {
+                name: 'Aethersailor Heavy Routing',
+                description:
+                    'The most complete categorization (Telegram/Zoom/e-commerce/streaming), with the most groups and rules.',
+            },
+            aethersailorFullFallback: {
+                name: 'Aethersailor Heavy Routing (Fallback)',
+                description:
+                    'Same rules as the heavy preset, with the main selector switched to a fallback group.',
+            },
             cmOnlineDefault: {
                 name: 'CM_Online Default — detects HK/US regions (synced with GitHub)',
                 description: 'Classic ACL4SSR rules, suited to Clash family clients.',

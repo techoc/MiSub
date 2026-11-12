@@ -1535,6 +1535,39 @@ export default {
                 description:
                     '内置完整 ACL4SSR 分流模板，可通过统一模板模型生成 Clash 与 Sing-Box 配置。',
             },
+            aethersailorStandard: {
+                name: 'Aethersailor 标准版分流',
+                description:
+                    'GEOSITE 规则 + 六地区分组，分类细致自带防 DNS 泄漏设计，适配 mihomo/Clash.Meta 内核。',
+            },
+            aethersailorStandardFallback: {
+                name: 'Aethersailor 标准版分流(故障转移)',
+                description: '规则与标准版一致，主选择组改为故障转移，代理异常时自动切换。',
+            },
+            aethersailorLite: {
+                name: 'Aethersailor 轻量版分流',
+                description: '仅保留基本分流与直连规则，适合不需要解锁和轻度分流需求的用户。',
+            },
+            aethersailorLiteFallback: {
+                name: 'Aethersailor 轻量版分流(故障转移)',
+                description: '规则与轻量版一致，主选择组改为故障转移。',
+            },
+            aethersailorGfw: {
+                name: 'Aethersailor 极简 GFW 分流',
+                description: '仅 GFW 列表与境外 IP 走代理、其余直连，最精简、开销最小。',
+            },
+            aethersailorGfwFallback: {
+                name: 'Aethersailor 极简 GFW 分流(故障转移)',
+                description: '规则与极简版一致，全部节点组成故障转移组。',
+            },
+            aethersailorFull: {
+                name: 'Aethersailor 重度分流版',
+                description: 'Telegram/Zoom/电商/流媒体等分类最全，分组最多，规则最细。',
+            },
+            aethersailorFullFallback: {
+                name: 'Aethersailor 重度分流版(故障转移)',
+                description: '规则与重度版一致，主选择组改为故障转移。',
+            },
             cmOnlineDefault: {
                 name: 'CM_Online 默认版 识别港美地区(与Github同步)',
                 description: '经典 ACL4SSR 规则，适合 Clash 系列客户端。',
