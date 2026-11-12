@@ -1,546 +1,90 @@
+/**
+ * MiSub 订阅请求编排器
+ *
+ * handleMisubRequest 的各阶段拆分在 ./main-handler/ 子模块：
+ *   request-helpers（基础工具）、user-info（流量/到期合并）、
+ *   template-url（模板与外部后端地址）、engine-flags（引擎选择）、
+ *   target-resolver（目标解析）、virtual-info（虚拟信息节点）、
+ *   node-refresh（节点刷新与缓存写入）。
+ * 本文件保留历史导出面（部分 helper 被测试直接从本路径引用）；
+ * 新增逻辑请放进对应子模块，编排器只负责串接阶段与输出分支。
+ */
+
 import { StorageFactory } from '../../storage-adapter.js';
-import {
-    migrateConfigSettings,
-    formatBytes,
-    migrateProfileIds,
-    base64EncodeUtf8,
-} from '../utils.js';
-import { generateCombinedNodeList } from '../../services/subscription-service.js';
+import { migrateConfigSettings, migrateProfileIds, base64EncodeUtf8 } from '../utils.js';
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import {
-    KV_KEY_SUBS,
     KV_KEY_PROFILES,
     KV_KEY_SETTINGS,
     DEFAULT_SETTINGS as defaultSettings,
-    DEFAULT_SUBCONVERTER_BACKEND,
 } from '../config.js';
 import { createDisguiseResponse } from '../disguise-page.js';
-import {
-    generateCacheKey,
-    setCache,
-    isSuspiciousNodeCountDrop,
-    isLikelyPartialAggregateNodeList,
-} from '../../services/node-cache-service.js';
+import { generateCacheKey } from '../../services/node-cache-service.js';
 import { resolveRequestContext } from './request-context.js';
 import { resolveNodeListWithCache } from './cache-manager.js';
 import { ProcessorService } from '../../services/processor-service.js';
 import { logAccessSuccess, shouldSkipLogging as shouldSkipAccessLog } from './access-logger.js';
-import {
-    isBrowserAgent,
-    determineTargetFormat,
-    isMetaCore,
-    isHiddifyAgent,
-} from './user-agent-utils.js'; // [Added] Import centralized util
+import { isBrowserAgent, determineTargetFormat, isMetaCore } from './user-agent-utils.js';
 import { authMiddleware } from '../auth-middleware.js';
-import { transformBuiltinSubscription } from './transformer-factory.js';
-import { fetchTransformTemplate } from './transform-template-cache.js';
+
+// —— 阶段子模块 ——
 import {
-    buildTransformTemplateContext,
-    renderTransformTemplate,
-} from './transform-template-renderer.js';
-import { groupNodeLinesByRegion } from './region-groups.js';
-import { groupNodeLinesByProtocol } from './protocol-groups.js';
-import { shouldApplyExternalTemplateForTarget } from './template-compatibility.js';
+    buildManagedConfigUrl,
+    extractProxySectionFromBuiltin,
+    maskSensitiveLogValue,
+} from './main-handler/request-helpers.js';
 import {
-    renderClashFromIniTemplate,
-    renderLoonFromIniTemplate,
-    renderQuanxFromIniTemplate,
-    renderSingboxFromIniTemplate,
-    renderSurgeFromIniTemplate,
-} from './template-pipeline.js';
-import { resolveGeneratorOptions } from './generator-options.js';
-import { handleProfileMode } from './profile-handler.js';
-import { getBuiltinTemplate } from './builtin-template-registry.js';
-import { assertPublicNetworkUrl } from '../security-utils.js';
+    buildUserInfoHeaderFromSubscriptions,
+    countSubscriptionNodes,
+    formatNotificationExpireStatus,
+    formatNotificationExpireTime,
+    mergeSubscriptionUserInfo,
+} from './main-handler/user-info.js';
+import {
+    buildExternalSubconverterUrl,
+    resolveTemplateSource,
+    resolveTemplateUrl,
+} from './main-handler/template-url.js';
+import {
+    resolveBuiltinRequestOptions,
+    shouldRenderClashYamlProfileTemplateLocally,
+} from './main-handler/engine-flags.js';
+import {
+    DEFAULT_EXPIRED_NODE,
+    resolveSubscriptionTargets,
+} from './main-handler/target-resolver.js';
+import { buildPrependedVirtualNodes } from './main-handler/virtual-info.js';
+import { refreshSubscriptionNodes } from './main-handler/node-refresh.js';
 
-function maskSensitiveLogValue(value) {
-    const text = String(value ?? '');
-    if (!text) return '';
-    if (text.length <= 8) return '***';
-    return `${text.slice(0, 4)}…${text.slice(-4)} (${text.length})`;
-}
-
-const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
-
-function getProfileDownloadCountKey(profile) {
-    return `${PROFILE_DOWNLOAD_COUNT_PREFIX}${profile.customId || profile.id}`;
-}
-
-function buildTemplateProxyBlock(nodeList) {
-    return nodeList
-        .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'))
-        .join('\n');
-}
-
-export function extractProxySectionFromBuiltin(content, targetFormat) {
-    if (typeof content !== 'string' || content.trim() === '') return '';
-
-    if (targetFormat === 'clash') {
-        const match = content.match(/proxies:\s*\n([\s\S]*?)\n\nproxy-groups:/i);
-        return match ? match[1].trim() : '';
-    }
-
-    if (targetFormat.startsWith('surge') || targetFormat === 'loon') {
-        const match = content.match(/\[Proxy\]\s*\n([\s\S]*?)(?:\n\n\[|$)/i);
-        if (!match) return '';
-        return match[1]
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line && !/^DIRECT\s*=\s*direct$/i.test(line))
-            .join('\n');
-    }
-
-    if (targetFormat === 'quanx') {
-        const match = content.match(/\[server_local\]\s*\n([\s\S]*?)(?:\n\n\[|$)/i);
-        if (!match) return '';
-        return match[1]
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line && !/^DIRECT\s*=\s*direct$/i.test(line))
-            .join('\n');
-    }
-
-    if (targetFormat === 'singbox' || targetFormat === 'sing-box') {
-        try {
-            const config = JSON.parse(content);
-            if (config.outbounds && Array.isArray(config.outbounds)) {
-                // 过滤掉 direct, block, dns-out 等元 outbound
-                const proxies = config.outbounds.filter(
-                    (o) => o.type !== 'direct' && o.type !== 'block' && o.type !== 'dns'
-                );
-                return JSON.stringify(proxies, null, 2);
-            }
-        } catch {
-            return '';
-        }
-    }
-
-    return '';
-}
-
-export function buildManagedConfigUrl(requestUrl) {
-    const managedUrl = new URL(requestUrl);
-    managedUrl.searchParams.delete('refresh');
-    managedUrl.searchParams.delete('nocache');
-    return managedUrl.toString();
-}
-
-function getCurrentRequestUserInfo(context, sub) {
-    const currentInfo = context?.currentSubscriptionRuntimeInfo || {};
-    const runtimeKey = [sub?.id, sub?.url].find(
-        (key) => key && Object.prototype.hasOwnProperty.call(currentInfo, key)
-    );
-    if (runtimeKey) {
-        return currentInfo[runtimeKey]?.userInfo || null;
-    }
-    return sub?.userInfo || null;
-}
-
-function mergeSubscriptionUserInfo(context, subscriptions) {
-    const strategy = context?.config?.mergeExpireStrategy || 'max';
-    return subscriptions.reduce(
-        (acc, sub) => {
-            const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;
-            if (!userInfo) return acc;
-
-            let nextExpire = acc.expire;
-            if (userInfo.expire > 0) {
-                if (acc.expire === 0) {
-                    nextExpire = userInfo.expire;
-                } else {
-                    nextExpire =
-                        strategy === 'min'
-                            ? Math.min(acc.expire, userInfo.expire)
-                            : Math.max(acc.expire, userInfo.expire);
-                }
-            }
-
-            if (sub?.excludeTraffic) {
-                return {
-                    ...acc,
-                    expire: nextExpire,
-                };
-            }
-
-            return {
-                upload: (acc.upload || 0) + (userInfo.upload || 0),
-                download: (acc.download || 0) + (userInfo.download || 0),
-                total: (acc.total || 0) + (userInfo.total || 0),
-                expire: nextExpire,
-            };
-        },
-        { upload: 0, download: 0, total: 0, expire: 0 }
-    );
-}
-
-function buildUserInfoHeaderFromSubscriptions(context, subscriptions, profileExpiresAt = '') {
-    const totalUserInfo = mergeSubscriptionUserInfo(context, subscriptions);
-
-    const profileExpireTimestamp = profileExpiresAt
-        ? Math.floor(new Date(profileExpiresAt).getTime() / 1000)
-        : 0;
-    const safeUserInfo = {
-        upload: isFinite(totalUserInfo.upload) ? totalUserInfo.upload : 0,
-        download: isFinite(totalUserInfo.download) ? totalUserInfo.download : 0,
-        total: isFinite(totalUserInfo.total) ? totalUserInfo.total : 0,
-        expire:
-            profileExpireTimestamp > 0
-                ? profileExpireTimestamp
-                : isFinite(totalUserInfo.expire)
-                  ? totalUserInfo.expire
-                  : 0,
-    };
-
-    return safeUserInfo.total > 0
-        ? `upload=${safeUserInfo.upload}; download=${safeUserInfo.download}; total=${safeUserInfo.total}; expire=${safeUserInfo.expire}`
-        : null;
-}
-
-function resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp = 0) {
-    let date = profileExpiresAt ? new Date(profileExpiresAt) : null;
-    if (!date || Number.isNaN(date.getTime())) {
-        const timestamp = Number(mergedExpireTimestamp);
-        date =
-            Number.isFinite(timestamp) && timestamp > 0
-                ? new Date(timestamp > 1e12 ? timestamp : timestamp * 1000)
-                : null;
-    }
-
-    return !date || Number.isNaN(date.getTime()) ? null : date;
-}
-
-export function formatNotificationExpireTime(profileExpiresAt, mergedExpireTimestamp = 0) {
-    const date = resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp);
-
-    if (!date) return '未设置';
-
-    return date.toLocaleString('zh-CN', {
-        timeZone: 'Asia/Shanghai',
-        hour12: false,
-    });
-}
-
-export function formatNotificationExpireStatus(
-    profileExpiresAt,
-    mergedExpireTimestamp = 0,
-    now = Date.now(),
-    thresholdDays = 3
-) {
-    const date = resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp);
-    if (!date) return '正常';
-    if (date.getTime() <= now) return '已到期';
-
-    const threshold = Number.isFinite(Number(thresholdDays))
-        ? Math.max(0, Number(thresholdDays))
-        : 3;
-    const remainingMs = date.getTime() - now;
-    if (remainingMs <= threshold * 24 * 60 * 60 * 1000) return '即将到期';
-    return '正常';
-}
-
-function formatSubscriptionExpireTime(expireTimestamp) {
-    const timestamp = Number(expireTimestamp);
-    if (!Number.isFinite(timestamp) || timestamp <= 0) return '';
-
-    const date = new Date(timestamp * 1000);
-    const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).formatToParts(date);
-    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-    return `${values.year}-${values.month}-${values.day}`;
-}
-
-function countSubscriptionNodes(nodeList, prependedContent = '') {
-    const lines = String(nodeList || '')
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'));
-    const prependedLines = String(prependedContent || '')
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean);
-
-    if (prependedLines.length > 0 && prependedLines.every((line, index) => lines[index] === line)) {
-        return Math.max(0, lines.length - prependedLines.length);
-    }
-
-    return lines.length;
-}
-
-export function resolveTemplateUrl(mode, value, fallbackUrl = '') {
-    const normalizedMode = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
-    const normalizedValue = typeof value === 'string' ? value.trim() : '';
-    const normalizedFallback = typeof fallbackUrl === 'string' ? fallbackUrl.trim() : '';
-
-    if (normalizedMode === 'builtin') return '';
-    if (normalizedMode === 'global') return normalizedFallback;
-    if (normalizedMode === 'custom_template') {
-        return normalizedValue.startsWith('custom:') ? normalizedValue : '';
-    }
-    if (normalizedMode === 'preset' || normalizedMode === 'custom') return normalizedValue;
-
-    return normalizedValue;
-}
-
-export function resolveTemplateSource(value) {
-    const normalizedValue = typeof value === 'string' ? value.trim() : '';
-    if (!normalizedValue) return { kind: 'none', value: '' };
-    if (normalizedValue.startsWith('builtin:')) {
-        return { kind: 'builtin', value: normalizedValue.slice('builtin:'.length) };
-    }
-    if (normalizedValue.startsWith('custom:')) {
-        return { kind: 'custom', value: normalizedValue.slice('custom:'.length) };
-    }
-    return { kind: 'remote', value: normalizedValue };
-}
-
-export function resolveExternalTemplateConfigUrl(templateSource) {
-    if (!templateSource || typeof templateSource !== 'object') return '';
-    if (templateSource.kind !== 'remote') return '';
-    return normalizeExternalTemplateConfigUrl(String(templateSource.value || '').trim());
-}
-
-export function normalizeExternalTemplateConfigUrl(input) {
-    const raw = typeof input === 'string' ? input.trim() : '';
-    if (!raw) return '';
-
-    try {
-        const parsed = new URL(raw);
-        if (parsed.hostname.toLowerCase() !== 'github.com') {
-            return raw;
-        }
-
-        const parts = parsed.pathname.split('/').filter(Boolean);
-        const markerIndex = parts.findIndex((part) => part === 'blob' || part === 'raw');
-        if (parts.length < 5 || markerIndex !== 2) {
-            return raw;
-        }
-
-        const [owner, repo, , branch, ...fileParts] = parts;
-        if (!owner || !repo || !branch || fileParts.length === 0) {
-            return raw;
-        }
-
-        const rawUrl = new URL(
-            `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fileParts.join('/')}`
-        );
-        rawUrl.search = parsed.search;
-        return rawUrl.toString();
-    } catch {
-        return raw;
-    }
-}
-
-export function normalizeSubconverterBackend(input, fallback = DEFAULT_SUBCONVERTER_BACKEND) {
-    let backend = String(input || fallback || DEFAULT_SUBCONVERTER_BACKEND).trim();
-
-    // 防止历史 UI 文案或标签被误保存为后端地址。
-    if (!backend || backend.includes('后端') || backend.includes('参数')) {
-        backend = fallback || DEFAULT_SUBCONVERTER_BACKEND;
-    }
-
-    // 用户只需填写 host，例如 subapi.cmliussss.net 或 api.v1.mk。
-    // 兼容历史完整 URL，但统一规范为 https://<host>/sub。
-    backend = backend.replace(/\s+/g, '');
-    if (!/^https?:\/\//i.test(backend)) {
-        backend = `https://${backend}`;
-    }
-
-    const externalUrl = assertPublicNetworkUrl(backend);
-    if (externalUrl.pathname === '/' || !externalUrl.pathname) {
-        externalUrl.pathname = '/sub';
-    }
-    if (externalUrl.pathname !== '/sub') {
-        externalUrl.pathname = '/sub';
-    }
-
-    // 历史默认值可能保存为 /sub?；URL 会自动消除空 query。
-    externalUrl.hash = '';
-    return externalUrl;
-}
-
-export function buildExternalSubconverterUrl({
-    backend,
-    targetFormat,
-    nodeList,
-    requestUrl,
-    profileSub = {},
-    globalSub = {},
-    userAgent = '',
-    searchParams,
-    templateSource,
-    subName = '',
-} = {}) {
-    const externalUrl = normalizeSubconverterBackend(backend);
-    const params = searchParams || new URLSearchParams('');
-
-    // [优化] 解析 targetFormat，支持带参数的格式（如 surge&ver=4）
-    const [targetBase, ...targetParams] = String(targetFormat || '').split('&');
-    externalUrl.searchParams.set('target', targetBase || 'clash');
-    targetParams.forEach((p) => {
-        const [k, v] = p.split('=');
-        if (k && v) externalUrl.searchParams.set(k, v);
-    });
-
-    if (requestUrl) {
-        const dataSourceUrl = new URL(requestUrl);
-        const paramsToClear = [
-            'target',
-            'engine',
-            'builtin',
-            'clash',
-            'singbox',
-            'surge',
-            'loon',
-            'quanx',
-            'egern',
-            'base64',
-            'v2ray',
-            'trojan',
-            'nodes',
-            'list',
-            'backend',
-            'refresh',
-            'nocache',
-            'debug',
-        ];
-        paramsToClear.forEach((p) => dataSourceUrl.searchParams.delete(p));
-        dataSourceUrl.searchParams.set('base64', '');
-        dataSourceUrl.searchParams.set('callback_token', 'external');
-        externalUrl.searchParams.set('url', dataSourceUrl.toString());
-    } else {
-        const normalizedNodeList = String(nodeList || '').trim();
-        if (normalizedNodeList) {
-            const inlineNodeList = normalizedNodeList
-                .split(/\r?\n+/)
-                .map((line) => line.trim())
-                .filter(Boolean)
-                .join('|');
-            externalUrl.searchParams.set('url', inlineNodeList);
-        }
-    }
-
-    const effectiveOptions = { ...(globalSub.defaultOptions || {}), ...(profileSub.options || {}) };
-    const flagMap = {
-        udp: 'udp',
-        emoji: 'emoji',
-        scv: 'scv',
-        sort: 'sort',
-        tfo: 'tfo',
-        list: 'list',
-    };
-
-    if (isMetaCore(userAgent, params)) {
-        externalUrl.searchParams.set('meta', 'true');
-    }
-
-    Object.entries(flagMap).forEach(([key, paramName]) => {
-        const val = params.has(paramName)
-            ? params.get(paramName) === 'true'
-            : effectiveOptions[key];
-        externalUrl.searchParams.set(paramName, val ? 'true' : 'false');
-    });
-
-    const externalTemplateConfigUrl = resolveExternalTemplateConfigUrl(templateSource);
-    if (externalTemplateConfigUrl) {
-        externalUrl.searchParams.set('config', externalTemplateConfigUrl);
-    }
-
-    externalUrl.searchParams.set('filename', subName);
-    return externalUrl;
-}
-
-export function resolveBuiltinEngineFlags(config = {}, isExternalMode = false) {
-    if (isExternalMode) {
-        return {
-            shouldSkipCertificateVerify: false,
-            shouldEnableUdp: false,
-        };
-    }
-
-    return {
-        shouldSkipCertificateVerify: Boolean(config.builtinSkipCertVerify),
-        shouldEnableUdp: Boolean(config.builtinEnableUdp),
-    };
-}
-
-export function resolveEffectiveEngine({
-    searchParams,
-    userAgent = '',
-    profileEngineMode = '',
-    globalEngineMode = '',
-} = {}) {
-    const params = searchParams || new URLSearchParams('');
-    const builtinParam = (params.get('builtin') || '').toLowerCase();
-    const engineParam = (params.get('engine') || '').toLowerCase();
-    const hasExplicitFormat = Boolean(
-        params.get('target') ||
-        params.has('clash') ||
-        params.has('singbox') ||
-        params.has('surge') ||
-        params.has('loon') ||
-        params.has('quanx') ||
-        params.has('egern') ||
-        params.has('base64') ||
-        params.has('v2ray') ||
-        params.has('trojan') ||
-        params.has('nodes')
-    );
-
-    if (engineParam) return engineParam;
-    if (builtinParam === 'external') return 'external';
-    if (builtinParam === 'true' || builtinParam === '1' || builtinParam === 'builtin')
-        return 'builtin';
-
-    if (!hasExplicitFormat && isHiddifyAgent(userAgent)) {
-        return 'builtin';
-    }
-
-    return profileEngineMode || globalEngineMode || 'builtin';
-}
-
-export function resolveBuiltinRequestOptions({
-    searchParams,
-    userAgent = '',
-    generatorOptions = {},
-} = {}) {
-    const params = searchParams || new URLSearchParams('');
-    const dnsMode = params.get('dns-mode') || params.get('dnsMode') || '';
-    return {
-        userAgent,
-        searchParams: params,
-        hiddifyCompatible: isHiddifyAgent(userAgent),
-        dnsMode: dnsMode.toLowerCase() === 'polluted' ? 'polluted' : 'clean',
-        generatorOptions: resolveGeneratorOptions(generatorOptions, params),
-    };
-}
-
-export function shouldRenderClashYamlProfileTemplateLocally({
-    isExternalMode = false,
-    targetFormat = '',
-    templateSource = {},
-} = {}) {
-    if (!isExternalMode || targetFormat !== 'clash' || templateSource?.kind !== 'remote')
-        return false;
-    try {
-        const parsed = new URL(String(templateSource.value || '').trim());
-        return /\.ya?ml$/i.test(parsed.pathname);
-    } catch {
-        return /\.ya?ml(?:[?#].*)?$/i.test(String(templateSource.value || '').trim());
-    }
-}
+// —— 兼容导出：测试与外部模块历史上直接从本路径引用这些 helper ——
+export {
+    buildManagedConfigUrl,
+    extractProxySectionFromBuiltin,
+} from './main-handler/request-helpers.js';
+export {
+    formatNotificationExpireTime,
+    formatNotificationExpireStatus,
+} from './main-handler/user-info.js';
+export {
+    buildExternalSubconverterUrl,
+    normalizeExternalTemplateConfigUrl,
+    normalizeSubconverterBackend,
+    resolveExternalTemplateConfigUrl,
+    resolveTemplateSource,
+    resolveTemplateUrl,
+} from './main-handler/template-url.js';
+export {
+    resolveBuiltinEngineFlags,
+    resolveBuiltinRequestOptions,
+    resolveEffectiveEngine,
+    shouldRenderClashYamlProfileTemplateLocally,
+} from './main-handler/engine-flags.js';
 
 /**
  * 处理MiSub订阅请求
  * @param {Object} context - Cloudflare上下文
  * @returns {Promise<Response>} HTTP响应
- */
-export async function handleMisubRequest(context) {
+ */ export async function handleMisubRequest(context) {
     const { request, env } = context;
     const url = new URL(request.url);
     const userAgentHeader = request.headers.get('User-Agent') || 'Unknown';
@@ -611,210 +155,25 @@ export async function handleMisubRequest(context) {
     );
     const shouldSkipLogging = shouldSkipAccessLog(userAgentHeader);
 
-    let targetMisubs;
-    let subName = config.FileName;
-    let isProfileExpired = false; // Moved declaration here
-
-    // Use a valid, non-routable Shadowsocks URL so clients can display the
-    // expiration notice as a node instead of dropping a comment line.
-    const DEFAULT_EXPIRED_NODE = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent('您的订阅已到期')}`;
-
-    let currentProfile = null;
-    let isExternalMode = false;
-    let useBuiltin = true;
-    let shouldSkipCertificateVerify = false;
-    let shouldEnableUdp = true;
-
-    const initEngineFlags = (targetProf) => {
-        const profileSub = targetProf?.subconverter || {};
-        const globalSub = config.subconverter || {};
-        const effectiveEngine = resolveEffectiveEngine({
-            searchParams: url.searchParams,
-            userAgent: userAgentHeader,
-            profileEngineMode: profileSub.engineMode,
-            globalEngineMode: globalSub.engineMode,
-        });
-        isExternalMode = effectiveEngine === 'external';
-        useBuiltin = !isExternalMode;
-        const flags = resolveBuiltinEngineFlags(config, isExternalMode);
-        shouldSkipCertificateVerify = flags.shouldSkipCertificateVerify;
-        shouldEnableUdp = flags.shouldEnableUdp;
-    };
-
-    if (profileIdentifier) {
-        // [修正] 使用 config 變量
-        if (!token || token !== config.profileToken) {
-            // [伪装加固] 不使用裸 403/403 文本响应：403 会暴露「该地址存在一个受保护的服务」，
-            // 与首页的伪装行为形成差异，可被扫描器识别。改为返回伪装页（或 404），
-            // 与未授权的 SPA 路由行为保持一致。
-            return (
-                createDisguiseResponse(settings?.disguise, request.url) ||
-                new Response('Not Found', { status: 404 })
-            );
-        }
-        currentProfile = allProfiles.find(
-            (p) => (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
-        );
-        initEngineFlags(currentProfile);
-        const profile = currentProfile;
-        if (profile && profile.enabled) {
-            // Check if the profile has an expiration date and if it's expired
-            if (profile.expiresAt) {
-                const expiryDate = new Date(profile.expiresAt);
-                const now = new Date();
-                if (now > expiryDate) {
-                    isProfileExpired = true;
-                }
-            }
-
-            if (isProfileExpired) {
-                subName = profile.name; // Still use profile name for filename
-                targetMisubs = [
-                    {
-                        id: 'expired-node',
-                        url: DEFAULT_EXPIRED_NODE,
-                        name: '您的订阅已到期',
-                        isExpiredNode: true,
-                    },
-                ]; // Set expired node as the only targetMisub
-            } else {
-                subName = profile.name;
-                targetMisubs = [];
-                const relatedIds = [
-                    ...(Array.isArray(profile.subscriptions)
-                        ? profile.subscriptions.map((item) =>
-                              typeof item === 'object' ? item.id : item
-                          )
-                        : []),
-                    ...(Array.isArray(profile.manualNodes) ? profile.manualNodes : []),
-                ].filter(Boolean);
-                const relatedSubs =
-                    typeof storageAdapter.getSubscriptionsByIds === 'function'
-                        ? await storageAdapter.getSubscriptionsByIds(
-                              Array.from(new Set(relatedIds))
-                          )
-                        : allMisubs;
-                const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
-
-                // 1. Add subscriptions in order defined by profile
-                const profileSubIds = profile.subscriptions || [];
-                if (Array.isArray(profileSubIds)) {
-                    profileSubIds.forEach((item) => {
-                        // 支持两种格式：纯字符串 ID 或 带有覆盖配置的对象 { id, exclude, operators, ... }
-                        const isObject = item && typeof item === 'object';
-                        const id = isObject ? item.id : item;
-
-                        const baseSub = misubMap.get(id);
-                        if (
-                            baseSub &&
-                            baseSub.enabled &&
-                            typeof baseSub.url === 'string' &&
-                            baseSub.url.startsWith('http')
-                        ) {
-                            // 如果是对象，则合并覆盖配置（Profile 级别的设置优先级更高）
-                            const sub = isObject ? { ...baseSub, ...item } : baseSub;
-                            targetMisubs.push(sub);
-                        }
-                    });
-                }
-
-                // 2. Add manual nodes in order defined by profile
-                const profileNodeIds = profile.manualNodes || [];
-                if (Array.isArray(profileNodeIds)) {
-                    profileNodeIds.forEach((id) => {
-                        const node = misubMap.get(id);
-                        if (
-                            node &&
-                            node.enabled &&
-                            typeof node.url === 'string' &&
-                            !node.url.startsWith('http')
-                        ) {
-                            targetMisubs.push(node);
-                        }
-                    });
-                }
-
-                // 3. Add sub-profiles in order defined by profile (嵌套组合订阅)
-                const profileSubProfileIds = profile.subProfiles || [];
-                if (Array.isArray(profileSubProfileIds) && profileSubProfileIds.length > 0) {
-                    for (const subProfileId of profileSubProfileIds) {
-                        if (
-                            !subProfileId ||
-                            subProfileId === profile.id ||
-                            subProfileId === profile.customId
-                        ) {
-                            continue;
-                        }
-                        try {
-                            const subResult = await handleProfileMode(
-                                request,
-                                env,
-                                subProfileId,
-                                userAgentHeader,
-                                true,
-                                shouldSkipCertificateVerify,
-                                1,
-                                new Set([profile.id, profile.customId].filter(Boolean))
-                            );
-                            if (subResult.success && Array.isArray(subResult.nodes)) {
-                                subResult.nodes.forEach((node) => {
-                                    targetMisubs.push({
-                                        id: `nested-${subProfileId}-${node.url}`,
-                                        name: node.name,
-                                        url: node.url,
-                                        group: subResult.profileName || '组合订阅',
-                                        isFromSubProfile: true,
-                                        enabled: true,
-                                    });
-                                });
-                            }
-                        } catch (err) {
-                            console.error(
-                                `[MainHandler] Failed to resolve sub-profile ${subProfileId}:`,
-                                err
-                            );
-                        }
-                    }
-                }
-            }
-            // [新增] 增加订阅组下载计数
-            // 仅在非回调请求时及非内部请求时增加计数(避免重复计数)
-            // 且仅当开启访问日志时才计数
-            if (
-                !url.searchParams.has('callback_token') &&
-                !shouldSkipLogging &&
-                config.enableAccessLog
-            ) {
-                try {
-                    const downloadCountKey = getProfileDownloadCountKey(profile);
-                    const currentCount = Number(await storageAdapter.get(downloadCountKey)) || 0;
-                    context.waitUntil(
-                        storageAdapter
-                            .put(downloadCountKey, currentCount + 1)
-                            .catch((err) =>
-                                console.error('[Download Count] Failed to update:', err)
-                            )
-                    );
-                } catch (err) {
-                    // 计数失败不影响订阅服务
-                    console.error('[Download Count] Error:', err);
-                }
-            }
-        } else {
-            return new Response('Profile not found or disabled', { status: 404 });
-        }
-    } else {
-        // [修正] 使用 config 變量
-        if (!token || token !== config.mytoken) {
-            // [伪装加固] 同 profile token：避免裸 403 暴露服务存在
-            return (
-                createDisguiseResponse(settings?.disguise, request.url) ||
-                new Response('Not Found', { status: 404 })
-            );
-        }
-        targetMisubs = allMisubs.filter((s) => s.enabled);
-        initEngineFlags(null);
-    }
+    const targetState = await resolveSubscriptionTargets({
+        context,
+        request,
+        url,
+        env,
+        config,
+        settings,
+        allProfiles,
+        allMisubs,
+        token,
+        profileIdentifier,
+        userAgentHeader,
+        shouldSkipLogging,
+        storageAdapter,
+    });
+    if (targetState.response) return targetState.response;
+    const { targetMisubs, subName, isProfileExpired, currentProfile } = targetState;
+    const { isExternalMode, useBuiltin, shouldSkipCertificateVerify, shouldEnableUdp } =
+        targetState.engineFlags;
 
     // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）
     let targetFormat = determineTargetFormat(userAgentHeader, url.searchParams);
@@ -827,48 +186,13 @@ export async function handleMisubRequest(context) {
         // to ensure we have the correct stats and avoid duplicates.
     }
 
-    let prependedContentForSubconverter = '';
-
-    if (isProfileExpired) {
-        // Use the flag set earlier
-        prependedContentForSubconverter = ''; // Expired node is now in targetMisubs
-    } else {
-        // Otherwise, add traffic and expiration info nodes if enabled.
-        if (config.enableTrafficNode !== false) {
-            const totalUserInfo = mergeSubscriptionUserInfo(context, targetMisubs);
-            const profileExpireTimestamp = currentProfile?.expiresAt
-                ? Math.floor(new Date(currentProfile.expiresAt).getTime() / 1000)
-                : 0;
-            const expireTimestamp =
-                profileExpireTimestamp > 0 ? profileExpireTimestamp : totalUserInfo.expire;
-            const virtualNodes = [];
-
-            const totalRemainingBytes = targetMisubs.reduce((acc, sub) => {
-                const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;
-                if (userInfo && userInfo.total > 0) {
-                    const used = (userInfo.upload || 0) + (userInfo.download || 0);
-                    return acc + Math.max(0, userInfo.total - used);
-                }
-                return acc;
-            }, 0);
-            if (totalRemainingBytes > 0) {
-                const fakeNodeName = `流量剩余 ≫ ${formatBytes(totalRemainingBytes)}`;
-                virtualNodes.push(
-                    `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent(fakeNodeName)}`
-                );
-            }
-
-            const expireText = formatSubscriptionExpireTime(expireTimestamp);
-            if (expireText) {
-                const fakeNodeName = `到期时间 ≫ ${expireText}`;
-                virtualNodes.push(
-                    `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent(fakeNodeName)}`
-                );
-            }
-
-            prependedContentForSubconverter = virtualNodes.join('\n');
-        }
-    }
+    const prependedContentForSubconverter = buildPrependedVirtualNodes({
+        context,
+        config,
+        targetMisubs,
+        currentProfile,
+        isProfileExpired,
+    });
 
     const profileSub = currentProfile?.subconverter || {};
     const globalSub = config.subconverter || {};
@@ -915,181 +239,30 @@ export async function handleMisubRequest(context) {
         url.searchParams.has('nocache') ||
         url.searchParams.has('debug');
 
-    // 定义刷新函数（用于后台刷新）
-    const refreshNodes = async (isBackground = false) => {
-        const isDebugToken = token === 'b0b422857bb46aba65da8234c84f38c6';
-        // 组合节点列表
-        // 传递 context 对象以获取请求信息用于日志记录
-        context.startTime = Date.now();
-
-        // Prepare log metadata to pass down
-        const clientIp =
-            request.headers.get('CF-Connecting-IP') ||
-            request.headers.get('X-Real-IP') ||
-            request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
-            'N/A';
-        const country = request.headers.get('CF-IPCountry') || 'N/A';
-        const domain = url.hostname;
-
-        context.logMetadata = {
-            clientIp,
-            geoInfo: {
-                country,
-                city: request.cf?.city,
-                isp: request.cf?.asOrganization,
-                asn: request.cf?.asn,
-            },
-            format: targetFormat,
-            token: profileIdentifier ? profileIdentifier : token,
-            type: profileIdentifier ? 'profile' : 'token',
-            domain,
-        };
-
-        const activeProfile = profileIdentifier
-            ? allProfiles.find(
-                  (p) =>
-                      (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
-              )
-            : null;
-
-        // 设置优先级：订阅组设置 > 全局设置 > 内置默认值
-        // prefixSettings 回退逻辑
-        const globalPrefixSettings = config.defaultPrefixSettings || {};
-        const profilePrefixSettings = activeProfile?.prefixSettings || null;
-        const effectivePrefixSettings = { ...globalPrefixSettings };
-
-        if (profilePrefixSettings && typeof profilePrefixSettings === 'object') {
-            if (
-                profilePrefixSettings.enableManualNodes !== null &&
-                profilePrefixSettings.enableManualNodes !== undefined
-            ) {
-                effectivePrefixSettings.enableManualNodes = profilePrefixSettings.enableManualNodes;
-            }
-            if (
-                profilePrefixSettings.enableSubscriptions !== null &&
-                profilePrefixSettings.enableSubscriptions !== undefined
-            ) {
-                effectivePrefixSettings.enableSubscriptions =
-                    profilePrefixSettings.enableSubscriptions;
-            }
-            if (
-                profilePrefixSettings.manualNodePrefix &&
-                profilePrefixSettings.manualNodePrefix.trim() !== ''
-            ) {
-                effectivePrefixSettings.manualNodePrefix = profilePrefixSettings.manualNodePrefix;
-            }
-        }
-
-        // nodeTransform 回退逻辑
-        const globalNodeTransform = config.defaultNodeTransform || {};
-        const globalNodeTransformPresets = Array.isArray(config.nodeTransformPresets)
-            ? config.nodeTransformPresets
-            : [];
-        const profileNodeTransform = activeProfile?.nodeTransform ?? null;
-        const profileNodeTransformPresetId = activeProfile?.nodeTransformPresetId || '';
-        const profilePresetNodeTransform = profileNodeTransformPresetId
-            ? globalNodeTransformPresets.find((item) => item?.id === profileNodeTransformPresetId)
-                  ?.config || null
-            : null;
-        const hasProfileNodeTransform =
-            profileNodeTransform && Object.keys(profileNodeTransform).length > 0;
-
-        // nodeTransform 使用整体覆盖逻辑
-        const effectiveNodeTransform = hasProfileNodeTransform
-            ? profileNodeTransform
-            : profilePresetNodeTransform || globalNodeTransform;
-
-        const generationSettings = {
-            ...effectivePrefixSettings,
-            nodeTransform: { ...effectiveNodeTransform },
-            name: subName,
-            operators: Array.isArray(activeProfile?.operators) ? [...activeProfile.operators] : [],
-            exclude: urlExclude || activeProfile?.exclude,
-            include: urlInclude || activeProfile?.include,
-            // [Issue #345] 透传 emoji 开关到内置生成器
-            addFlagEmoji: effectiveNodeTransform.addFlagEmoji,
-        };
-
-        // [Subconverter API] 动态注入更名算子 (rename=old@new|A@B)
-        if (urlRename) {
-            const renameGroups = urlRename.split('|');
-            renameGroups.forEach((group) => {
-                const [regex, replace] = group.split('@');
-                if (regex) {
-                    generationSettings.operators.push({
-                        type: 'rename',
-                        enabled: true,
-                        params: {
-                            regex: {
-                                enabled: true,
-                                rules: [
-                                    {
-                                        pattern: regex,
-                                        replacement: replace || '',
-                                        flags: 'gi',
-                                    },
-                                ],
-                            },
-                        },
-                    });
-                }
-            });
-        }
-
-        // [Subconverter API] 控制 Emoji 注入
-        if (urlEmoji === 'false') {
-            generationSettings.nodeTransform.addFlagEmoji = false;
-            generationSettings.nodeTransform.removeFlagEmoji = true;
-        } else if (urlEmoji === 'true') {
-            generationSettings.nodeTransform.addFlagEmoji = true;
-        }
-
-        const freshNodes = await generateCombinedNodeList(
-            context, // 传入完整 context
-            { ...config, enableAccessLog: false }, // [Deferred Logging] Disable service-side logging, we will log manually in handler
+    // 定义刷新函数（用于后台刷新；cache-manager 可能传入 isBackground=true，
+    // 刷新实现不依赖该标记，包装层直接忽略，与原闭包行为一致）
+    const refreshNodes = async () =>
+        refreshSubscriptionNodes({
+            context,
+            request,
+            url,
+            config,
+            allProfiles,
             userAgentHeader,
+            targetFormat,
+            profileIdentifier,
+            token,
+            subName,
             targetMisubs,
             prependedContentForSubconverter,
-            {
-                ...generationSettings,
-                // [强制透传] 确保 ruleLevel 在订阅组内能够生效
-                ruleLevel: ruleLevel || generationSettings.ruleLevel,
-            }
-        );
-        const sourceNames = targetMisubs
-            .filter((s) => typeof s?.url === 'string' && s.url.startsWith('http'))
-            .map((s) => s.name || s.url);
-        // 仅在至少一个订阅源真正从远程拉取成功时才刷新缓存时间
-        // 如果没有 HTTP 订阅源（纯手动节点/过期订阅组），则始终写入缓存
-        const stats = context.generationStats;
-        if (!stats?.sourceCount || stats.upstreamSuccessCount > 0) {
-            const cacheSaved = await setCache(storageAdapter, cacheKey, freshNodes, sourceNames);
-            const freshNodeCount = freshNodes.split('\n').filter((line) => line.trim()).length;
-            const existingCache = cacheSaved ? null : await storageAdapter.get(cacheKey);
-            const existingNodeCount =
-                existingCache?.nodeCount ||
-                String(existingCache?.nodes || '')
-                    .split('\n')
-                    .filter((line) => line.trim()).length;
-            if (
-                !cacheSaved &&
-                (isSuspiciousNodeCountDrop(existingNodeCount, freshNodeCount) ||
-                    isLikelyPartialAggregateNodeList(freshNodes))
-            ) {
-                if (
-                    existingCache?.nodes &&
-                    String(existingCache.nodes).trim() &&
-                    !isLikelyPartialAggregateNodeList(existingCache.nodes)
-                ) {
-                    console.warn(
-                        '[MiSub Cache] Serving preserved aggregate cache after rejecting a suspicious refresh'
-                    );
-                    return existingCache.nodes;
-                }
-            }
-        }
-        return freshNodes;
-    };
+            ruleLevel,
+            urlInclude,
+            urlExclude,
+            urlRename,
+            urlEmoji,
+            cacheKey,
+            storageAdapter,
+        });
 
     const expectedRemoteNodeCount =
         targetMisubs.reduce((total, sub) => {
