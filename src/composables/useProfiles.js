@@ -284,7 +284,6 @@ export function useProfiles(markDirty) {
         cleanupNodes,
         cleanupAllSubscriptions,
         cleanupAllNodes,
-        cleanupAllNodes,
         // Pagination exports
         profilesCurrentPage,
         profilesTotalPages,

@@ -14,6 +14,8 @@
     import { storeToRefs } from 'pinia';
     import { useI18n } from '@/i18n/index.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+    import { inferAirportRootDomain } from '@/utils/airport-domain.js';
+    import { rememberDomainName } from '@/utils/domain-name-memory.js';
 
     const isDev = import.meta.env.DEV;
 

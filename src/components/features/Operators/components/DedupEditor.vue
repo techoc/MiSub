@@ -18,9 +18,6 @@
         get: () => ({
             mode: 'serverPort',
             includeProtocol: true,
-            prefer: {
-                protocolOrder: [],
-            },
             ...props.modelValue,
             prefer: {
                 protocolOrder: [],
