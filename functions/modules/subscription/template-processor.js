@@ -325,7 +325,17 @@ function ensureAiPolicy(model) {
         })
     );
     // 保留模板作者已有的精确规则优先级；新服务规则只补缺失项。
-    model.rules = [...model.rules, ...aiRules];
+    // 插入位置在 MATCH/FINAL 兜底规则之前：mihomo/sing-box 按顺序匹配规则，
+    // 追加到兜底之后的规则永远不可达（死规则）。
+    const finalRuleIndex = model.rules.findIndex((rule) => {
+        const type = String(rule.type || '').toLowerCase();
+        return type === 'match' || type === 'final';
+    });
+    if (finalRuleIndex === -1) {
+        model.rules = [...model.rules, ...aiRules];
+    } else {
+        model.rules.splice(finalRuleIndex, 0, ...aiRules);
+    }
 }
 
 /**
