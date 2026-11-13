@@ -713,8 +713,15 @@ export function getBuiltinRules(level, format) {
  * 为特定的生成器提取远程源定义
  * @param {string} format
  * @param {Array} ruleLines (翻译后的规则行)
+ * @param {Object} [options]
+ * @param {string} [options.downloadDetour] sing-box rule-set 的 download_detour；
+ *   国内 DNS 模式下传入 DIRECT（DNS 出口组不存在时避免悬空引用）
  */
-export function getRemoteProviderDefinitions(format, ruleLines) {
+export function getRemoteProviderDefinitions(
+    format,
+    ruleLines,
+    { downloadDetour = DNS_PROXY_GROUP } = {}
+) {
     const providers = {};
     const usedTags = new Set();
 
@@ -749,7 +756,7 @@ export function getRemoteProviderDefinitions(format, ruleLines) {
                     : 'source',
                 url: pinRemoteRuleUrl(source.singbox),
                 update_interval: '24h',
-                download_detour: DNS_PROXY_GROUP,
+                download_detour: downloadDetour,
             };
         }
     });
@@ -757,8 +764,10 @@ export function getRemoteProviderDefinitions(format, ruleLines) {
     return providers;
 }
 
-export function getSingboxDnsRuleSet() {
-    return getRemoteProviderDefinitions('singbox', [
-        { type: 'rule_set', tag: SINGBOX_CN_RULE_SET },
-    ])[SINGBOX_CN_RULE_SET];
+export function getSingboxDnsRuleSet(downloadDetour = DNS_PROXY_GROUP) {
+    return getRemoteProviderDefinitions(
+        'singbox',
+        [{ type: 'rule_set', tag: SINGBOX_CN_RULE_SET }],
+        { downloadDetour }
+    )[SINGBOX_CN_RULE_SET];
 }

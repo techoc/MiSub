@@ -4,6 +4,7 @@
  */
 
 import { normalizeGeneratorOptions } from './subscription/generator-options.js';
+import { normalizeDnsMode } from './subscription/safe-dns.js';
 
 /**
  * 计算数据的简单哈希值，用于检测变更
@@ -592,12 +593,7 @@ export function migrateConfigSettings(config) {
         );
     }
     migratedConfig.generatorOptions = normalizeGeneratorOptions(migratedConfig.generatorOptions);
-    migratedConfig.dnsMode =
-        String(migratedConfig.dnsMode || 'clean')
-            .trim()
-            .toLowerCase() === 'polluted'
-            ? 'polluted'
-            : 'clean';
+    migratedConfig.dnsMode = normalizeDnsMode(migratedConfig.dnsMode);
 
     return migratedConfig;
 }

@@ -7,7 +7,12 @@
 import { urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
-import { DNS_PROXY_GROUP, isExplicitDnsOverride, resolveSafeDnsConfig } from './safe-dns.js';
+import {
+    DNS_PROXY_GROUP,
+    isDomesticDnsMode,
+    isExplicitDnsOverride,
+    resolveSafeDnsConfig,
+} from './safe-dns.js';
 import { normalizeGeneratorOptions } from './generator-options.js';
 import {
     POLICY_GROUPS,
@@ -207,14 +212,18 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
             proxyGroups = relayConfig.proxyGroups;
         }
 
-        if (options.customDnsOverride && String(options.customDnsOverride).trim()) {
-            const overrideText = String(options.customDnsOverride);
-            const hasDnsExit = overrideText.includes(DNS_PROXY_GROUP);
-            // 只有「整块替换 Safe DNS」的 explicit dns block 且未引用该组时才移除；
-            // policy 型覆盖下 resolveSafeDnsConfig 仍会生成 #DNS 出口 引用，组必须保留
-            if (!hasDnsExit && isExplicitDnsOverride(overrideText)) {
-                proxyGroups = proxyGroups.filter((g) => g.name !== DNS_PROXY_GROUP);
-            }
+        // 国内 DNS 模式整块直连阿里/腾讯，Safe DNS 不产生 #DNS 出口 引用：
+        // 除非覆盖文本显式引用该组（fail-closed），否则整组移除。
+        // 国外模式维持原逻辑：仅「整块替换 Safe DNS」的 explicit dns block 且未引用该组时才移除；
+        // policy 型覆盖下 resolveSafeDnsConfig 仍会生成 #DNS 出口 引用，组必须保留
+        const overrideText = String(options.customDnsOverride || '');
+        const hasDnsExit = overrideText.includes(DNS_PROXY_GROUP);
+        if (
+            !hasDnsExit &&
+            (isDomesticDnsMode(options.dnsMode) ||
+                (overrideText.trim() && isExplicitDnsOverride(overrideText)))
+        ) {
+            proxyGroups = proxyGroups.filter((g) => g.name !== DNS_PROXY_GROUP);
         }
 
         // 基础配置：安全默认值，不再依赖 KV 覆盖才能避免 DNS 递归。

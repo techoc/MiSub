@@ -15,7 +15,12 @@ import {
     DEFAULT_RELAY_GROUP,
     pruneProxyGroups,
 } from './builtin-rules-provider.js';
-import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';
+import {
+    buildSingboxDnsConfig,
+    DNS_PROXY_GROUP,
+    isDomesticDnsMode,
+    SINGBOX_CN_RULE_SET,
+} from './safe-dns.js';
 import { normalizeGeneratorOptions } from './generator-options.js';
 
 function cleanControlChars(str) {
@@ -339,6 +344,13 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
         proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
     }
 
+    // 国内 DNS 模式：整块 DNS 直连阿里/腾讯，不产生 #DNS 出口 引用；
+    // 除非自定义 DNS 覆盖文本显式引用该组（fail-closed），否则整组移除
+    const domesticDns = isDomesticDnsMode(options.dnsMode);
+    if (domesticDns && !String(options.customDnsOverride || '').includes(DNS_PROXY_GROUP)) {
+        proxyGroups = proxyGroups.filter((group) => group.name !== DNS_PROXY_GROUP);
+    }
+
     // 将抽象分组转换为 Sing-Box Outbounds
     const groupOutbounds = proxyGroups.map((group) => {
         let type = 'selector';
@@ -363,9 +375,13 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     const rawRules = getBuiltinRules(levelKey, 'singbox');
 
     // 提取远程 Rule Set 定义 (Sing-Box 格式)
-    const ruleSetsMap = getRemoteProviderDefinitions('singbox', rawRules);
+    // 国内 DNS 模式下 DNS 出口组已被移除，rule-set 下载 detour 降级 DIRECT
+    const dnsDetour = domesticDns ? 'DIRECT' : DNS_PROXY_GROUP;
+    const ruleSetsMap = getRemoteProviderDefinitions('singbox', rawRules, {
+        downloadDetour: dnsDetour,
+    });
     const ruleSets = [
-        getSingboxDnsRuleSet(),
+        getSingboxDnsRuleSet(dnsDetour),
         ...Object.values(ruleSetsMap).filter((ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET),
     ];
 

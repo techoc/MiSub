@@ -5,6 +5,7 @@
 
 import { isHiddifyAgent } from '../user-agent-utils.js';
 import { resolveGeneratorOptions } from '../generator-options.js';
+import { normalizeDnsMode } from '../safe-dns.js';
 
 export function resolveBuiltinEngineFlags(config = {}, isExternalMode = false) {
     if (isExternalMode) {
@@ -100,7 +101,7 @@ export function resolveBuiltinRequestOptions({
         userAgent,
         searchParams: params,
         hiddifyCompatible: isHiddifyAgent(userAgent),
-        dnsMode: dnsMode.toLowerCase() === 'polluted' ? 'polluted' : 'clean',
+        dnsMode: normalizeDnsMode(dnsMode),
         generatorOptions: resolveGeneratorOptions(generatorOptions, params),
     };
 }

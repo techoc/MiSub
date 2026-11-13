@@ -1241,9 +1241,12 @@ export default {
             generatorTunStrictRoute: 'TUN 严格路由',
             generatorTunStrictRouteHint: '阻止流量绕过 TUN。关闭后兼容性更好，但可能泄漏直连流量。',
             generatorDnsMode: 'DNS 模式',
-            generatorDnsModeHint: 'Clean 使用明文 UDP；Polluted 使用加密 DNS，适合污染环境。',
-            generatorDnsModeClean: 'Clean（明文优先）',
-            generatorDnsModePolluted: 'Polluted（加密 DNS）',
+            generatorDnsModeHint:
+                '国外：Clean 明文 UDP、Polluted 加密 DoH（8.8.8.8/1.1.1.1）；国内：Clean 阿里/腾讯明文 UDP、Polluted 阿里/腾讯加密 DoH（223.5.5.5/119.29.29.29），全部直连不经过代理。',
+            generatorDnsModeClean: '国外 · Clean（明文 UDP）',
+            generatorDnsModePolluted: '国外 · Polluted（加密 DoH）',
+            generatorDnsModeDomesticClean: '国内 · Clean（阿里/腾讯明文）',
+            generatorDnsModeDomesticPolluted: '国内 · Polluted（阿里/腾讯加密）',
             generatorOptionsHint:
                 '也可以在订阅 URL 后追加参数临时覆盖，例如 ?ipv6=true&dns-ipv6=true&allow-lan=false。自定义 DNS 覆写内容会优先于本页 DNS 开关。',
             ruleTemplatesRefreshing: '刷新中…',

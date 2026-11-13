@@ -1,6 +1,6 @@
 import { groupNodeLinesByRegion, isPlaceholderInfoNode } from './region-groups.js';
 import { AI_SERVICE_RULES } from './builtin-rules-provider.js';
-import { DNS_PROXY_GROUP, isExplicitDnsOverride } from './safe-dns.js';
+import { DNS_PROXY_GROUP, isDomesticDnsMode, isExplicitDnsOverride } from './safe-dns.js';
 import { withPolicyFallbacks } from './policy-fallbacks.js';
 
 /**
@@ -359,10 +359,16 @@ export function applySmartModelOptimizations(model, options = {}) {
     // 只有「整块替换 Safe DNS」的 explicit dns block 覆盖才跳过注入（该形态下 Safe DNS
     // 整体被替换，不再产生组引用）；仅提供解析器列表的 policy 型覆盖仍会生成
     // #DNS 出口 引用，必须注入该组，否则渲染产物会引用不存在的策略组导致 mihomo 加载失败。
+    // 国内 DNS 模式（domestic-clean / domestic-polluted）整块直连阿里/腾讯，Safe DNS
+    // 不产生组引用，同样跳过注入——除非覆盖文本显式引用了该组（fail-closed）。
     // injectDnsExitGroup 开关（默认开启）提供手动关闭出口；关闭时渲染端会把
     // Safe DNS / rule-set 的 detour 同步降级为 DIRECT，保证配置仍然有效。
     const hasExplicitDns = isExplicitDnsOverride(model.settings?.customDnsOverride);
-    if (!hasExplicitDns && injectDnsExitGroup) {
+    const referencesDnsGroup = String(model.settings?.customDnsOverride || '').includes(
+        DNS_PROXY_GROUP
+    );
+    const domesticDns = isDomesticDnsMode(model.settings?.dnsMode);
+    if (!hasExplicitDns && injectDnsExitGroup && (!domesticDns || referencesDnsGroup)) {
         ensureDnsProxyGroup(model);
     }
 

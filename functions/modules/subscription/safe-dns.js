@@ -4,6 +4,8 @@ import { applyDnsGeneratorOptions, normalizeGeneratorOptions } from './generator
 export const DNS_MODES = Object.freeze({
     CLEAN: 'clean',
     POLLUTED: 'polluted',
+    DOMESTIC_CLEAN: 'domestic-clean',
+    DOMESTIC_POLLUTED: 'domestic-polluted',
 });
 
 export const DNS_PROXY_GROUP = '🌐 DNS 出口';
@@ -11,6 +13,8 @@ export const SINGBOX_CN_RULE_SET = 'geosite-cn';
 
 export const DEFAULT_DNS_POLICY = Object.freeze({
     domestic: ['223.5.5.5', '119.29.29.29'],
+    // 国内加密形态：IP 直连 DoH（DNSPod 加密端点为 120.53.53.53），避免 sing-box 引导解析循环
+    domesticEncrypted: ['https://223.5.5.5/dns-query', 'https://120.53.53.53/dns-query'],
     foreign: ['udp://8.8.8.8:53', 'udp://1.1.1.1:53'],
     polluted: ['https://8.8.8.8/dns-query', 'https://1.1.1.1/dns-query'],
 });
@@ -52,12 +56,32 @@ function parseOverride(raw) {
     }
 }
 
-function normalizeMode(value) {
-    return String(value || '')
+/**
+ * 将任意 dnsMode 取值（含别名）归一化到 4 个规范值之一：
+ * clean / polluted（国外 DNS 对，历史行为）；domestic-clean / domestic-polluted（阿里+腾讯，国内 DNS 对）。
+ * 别名：domestic → domestic-clean；foreign-clean / foreign-polluted → clean / polluted；未知值一律回退 clean。
+ */
+export function normalizeDnsMode(value) {
+    const raw = String(value || '')
         .trim()
-        .toLowerCase() === DNS_MODES.POLLUTED
-        ? DNS_MODES.POLLUTED
-        : DNS_MODES.CLEAN;
+        .toLowerCase();
+    switch (raw) {
+        case DNS_MODES.POLLUTED:
+        case 'foreign-polluted':
+            return DNS_MODES.POLLUTED;
+        case DNS_MODES.DOMESTIC_CLEAN:
+        case 'domestic':
+            return DNS_MODES.DOMESTIC_CLEAN;
+        case DNS_MODES.DOMESTIC_POLLUTED:
+            return DNS_MODES.DOMESTIC_POLLUTED;
+        default:
+            return DNS_MODES.CLEAN;
+    }
+}
+
+export function isDomesticDnsMode(value) {
+    const mode = normalizeDnsMode(value);
+    return mode === DNS_MODES.DOMESTIC_CLEAN || mode === DNS_MODES.DOMESTIC_POLLUTED;
 }
 
 function resolverHost(value) {
@@ -99,6 +123,28 @@ function plainResolver(value) {
     }
 }
 
+/**
+ * 将解析器取值归一化到「加密 DoH（https）」形态：
+ * 明文主机 → https://<host>/dns-query；https/tls 保留原样；udp/tcp 等明文 scheme → https://<host>/dns-query。
+ * 仅用于国内 polluted 形态，IP 直连端点可避免 sing-box 引导解析循环。
+ */
+function encryptedResolver(value) {
+    const raw = String(value || '').trim();
+    if (!raw || raw === 'system') return '';
+
+    const candidate = DNS_SCHEME_PATTERN.test(raw) ? raw : `https://${raw}/dns-query`;
+    try {
+        const parsed = new URL(candidate);
+        const host = parsed.hostname.replace(/^\[|\]$/g, '');
+        if (!DNS_HOST_PATTERN.test(parsed.hostname)) return '';
+        if (parsed.protocol === 'https:' || parsed.protocol === 'tls:') return candidate;
+        // udp/tcp 等明文 scheme 统一降级为 https DoH 形态
+        return `https://${host}/dns-query`;
+    } catch {
+        return '';
+    }
+}
+
 function policyInput(override) {
     return isObject(override.policy) ? { ...override, ...override.policy } : override;
 }
@@ -106,8 +152,22 @@ function policyInput(override) {
 export function resolveDnsPolicy(raw, options = {}) {
     const override = parseOverride(raw);
     const input = policyInput(override);
-    const mode = normalizeMode(options.mode || input.mode || input['dns-mode']);
+    const mode = normalizeDnsMode(options.mode || input.mode || input['dns-mode']);
 
+    const domesticOverride =
+        input.domestic ||
+        input.domesticNameservers ||
+        input['domestic-nameserver'] ||
+        input['default-nameserver'];
+    const domestic = resolverList(domesticOverride, DEFAULT_DNS_POLICY.domestic);
+    // 默认加密对使用 DNSPod 官方 DoH IP（120.53.53.53），而非简单加密默认 UDP 列表；
+    // 用户显式覆盖国内列表时才按加密形态派生
+    const derivedEncrypted = domestic.map(encryptedResolver).filter(Boolean);
+    const domesticEncrypted = domesticOverride
+        ? derivedEncrypted.length > 0
+            ? derivedEncrypted
+            : [...DEFAULT_DNS_POLICY.domesticEncrypted]
+        : [...DEFAULT_DNS_POLICY.domesticEncrypted];
     const foreign = resolverList(
         input.foreign ||
             input.foreignNameservers ||
@@ -120,13 +180,8 @@ export function resolveDnsPolicy(raw, options = {}) {
 
     return {
         mode,
-        domestic: resolverList(
-            input.domestic ||
-                input.domesticNameservers ||
-                input['domestic-nameserver'] ||
-                input['default-nameserver'],
-            DEFAULT_DNS_POLICY.domestic
-        ),
+        domestic,
+        domesticEncrypted,
         foreign: plainForeign.length > 0 ? plainForeign : [...DEFAULT_DNS_POLICY.foreign],
         polluted: resolverList(
             input.polluted ||
@@ -148,6 +203,7 @@ function cloneResolverPolicy(policy) {
     return {
         mode: policy.mode,
         domestic: [...policy.domestic],
+        domesticEncrypted: [...(policy.domesticEncrypted || [])],
         foreign: [...policy.foreign],
         polluted: [...policy.polluted],
     };
@@ -217,12 +273,23 @@ export function resolveSafeDnsConfig(raw, options = {}) {
 
     const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
     const policy = resolveDnsPolicy(raw, options);
+    const isDomestic = isDomesticDnsMode(policy.mode);
+    // 国外形态沿用既有语义：clean=明文 UDP、polluted=加密 DoH，均带 #DNS 出口 后缀；
+    // 国内形态整块走阿里/腾讯直连（clean=明文 UDP、polluted=加密 DoH），绝不引用出口策略组。
+    const foreign = !isDomestic
+        ? policy.mode === DNS_MODES.POLLUTED
+            ? policy.polluted
+            : policy.foreign
+        : policy.mode === DNS_MODES.DOMESTIC_POLLUTED
+          ? policy.domesticEncrypted
+          : policy.domestic.map(plainResolver).filter(Boolean);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
-    const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
     const dns = clone(DEFAULT_DNS_CONFIG);
 
     dns['default-nameserver'] = [...policy.domestic];
-    dns.nameserver = foreign.map((value) => withProxy(value, proxyGroup));
+    dns.nameserver = isDomestic
+        ? [...foreign]
+        : foreign.map((value) => withProxy(value, proxyGroup));
     dns['nameserver-policy'] = {
         'geosite:private': [...policy.domestic],
         'geosite:cn': [...policy.domestic],
@@ -234,7 +301,9 @@ export function resolveSafeDnsConfig(raw, options = {}) {
             }
             return acc;
         }, {}),
-        'geosite:geolocation-!cn': foreign.map((value) => withProxy(value, proxyGroup)),
+        'geosite:geolocation-!cn': isDomestic
+            ? [...foreign]
+            : foreign.map((value) => withProxy(value, proxyGroup)),
     };
     dns['proxy-server-nameserver'] = [...policy.domestic];
     dns['direct-nameserver'] = [...policy.domestic];
@@ -290,13 +359,20 @@ export function buildSingboxDnsConfig(raw, options = {}) {
     const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
     const policy = resolveDnsPolicy(raw, options);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
-    const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
-    const domesticServers = policy.domestic.map((value, index) =>
+    const isDomestic = isDomesticDnsMode(policy.mode);
+    // 国内形态：全部解析器都是 dns-cn-* 直连（clean=UDP / polluted=加密 DoH），
+    // 不产生 dns-foreign-*，final 直接落在国内解析器上。
+    const domesticResolvers =
+        policy.mode === DNS_MODES.DOMESTIC_POLLUTED ? policy.domesticEncrypted : policy.domestic;
+    const domesticServers = domesticResolvers.map((value, index) =>
         parseSingboxResolver(value, `dns-cn-${index + 1}`, 'DIRECT')
     );
-    const foreignServers = foreign.map((value, index) =>
-        parseSingboxResolver(value, `dns-foreign-${index + 1}`, proxyGroup)
-    );
+    const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
+    const foreignServers = isDomestic
+        ? []
+        : foreign.map((value, index) =>
+              parseSingboxResolver(value, `dns-foreign-${index + 1}`, proxyGroup)
+          );
     const domesticTag = domesticServers[0]?.tag || 'dns-cn-1';
     const foreignTag = foreignServers[0]?.tag || 'dns-foreign-1';
 
@@ -307,7 +383,7 @@ export function buildSingboxDnsConfig(raw, options = {}) {
             { rule_set: [SINGBOX_CN_RULE_SET], action: 'route', server: domesticTag },
             { domain_suffix: ['.cn', '.lan', '.local'], action: 'route', server: domesticTag },
         ],
-        final: foreignTag,
+        final: isDomestic ? domesticTag : foreignTag,
     };
 }
 

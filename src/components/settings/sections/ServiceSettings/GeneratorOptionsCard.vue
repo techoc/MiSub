@@ -179,10 +179,16 @@
                 </div>
                 <select
                     v-model="settings.dnsMode"
-                    class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 focus:border-emerald-500 focus-visible:ring-emerald-500 sm:w-44 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 focus:border-emerald-500 focus-visible:ring-emerald-500 sm:w-52 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                 >
                     <option value="clean">{{ t('settings.generatorDnsModeClean') }}</option>
                     <option value="polluted">{{ t('settings.generatorDnsModePolluted') }}</option>
+                    <option value="domestic-clean">
+                        {{ t('settings.generatorDnsModeDomesticClean') }}
+                    </option>
+                    <option value="domestic-polluted">
+                        {{ t('settings.generatorDnsModeDomesticPolluted') }}
+                    </option>
                 </select>
             </div>
 

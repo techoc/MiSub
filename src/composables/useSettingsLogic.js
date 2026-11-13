@@ -5,6 +5,7 @@ import { fetchSettings, saveSettings, resetSettings } from '../lib/api.js';
 import { useBackupLogic } from './useBackupLogic.js';
 import { t, setLocale } from '../i18n/index.js';
 import { confirmAction } from './useConfirm.js';
+import { normalizeDnsMode } from '../../functions/modules/subscription/safe-dns.js';
 
 function normalizeExternalApiConfig(value) {
     const defaults = DEFAULT_SETTINGS.externalApi;
@@ -58,8 +59,7 @@ function normalizeSettingsObject(source = {}) {
             ...singbox,
         },
     };
-    merged.dnsMode =
-        String(merged.dnsMode || 'clean').toLowerCase() === 'polluted' ? 'polluted' : 'clean';
+    merged.dnsMode = normalizeDnsMode(merged.dnsMode);
     return merged;
 }
 
