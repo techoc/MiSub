@@ -257,7 +257,7 @@ export function renderClashFromTemplateModel(model, options = {}) {
     const renderedGroups = normalizedModel.groups.map((group) => ({
         name: group.name,
         type: mapGroupType(group.type),
-        proxies: withPolicyFallbacks(filterAutoSelectMembers(group)),
+        proxies: withPolicyFallbacks(filterAutoSelectMembers(group), mapGroupType(group.type)),
         filter:
             Array.isArray(group.filters) && group.filters.length > 0
                 ? group.filters.join('|')

@@ -183,7 +183,7 @@ export function pruneProxyGroups(proxyGroups, proxies) {
         // 组永不落空、组间引用永不悬空
         return {
             ...group,
-            proxies: withPolicyFallbacks(newProxies),
+            proxies: withPolicyFallbacks(newProxies, group.type),
         };
     });
 }

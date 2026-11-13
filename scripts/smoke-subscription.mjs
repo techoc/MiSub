@@ -36,15 +36,19 @@ function assertNoLoopbackNodes(nodes, label) {
     }
 }
 
-function hasUniversalFallbacks(members) {
-    const names = array(members).map((member) => String(member).toUpperCase());
-    return names.includes('REJECT') && names.includes('DIRECT');
+function hasRequiredFallbacks(group, memberKey) {
+    const names = array(group?.[memberKey]).map((member) => String(member).toUpperCase());
+    if (!names.includes('REJECT')) return false;
+    // 自动测速组只补 REJECT（fail-closed，不引入测速延迟偏差），手动选择组才要求 DIRECT
+    const type = String(group?.type || '').toLowerCase();
+    if (['url-test', 'urltest', 'fallback', 'load-balance'].includes(type)) return true;
+    return names.includes('DIRECT');
 }
 
 function assertUniversalGroupFallbacks(groups, memberKey, label) {
     assert(
-        array(groups).every((group) => hasUniversalFallbacks(group?.[memberKey])),
-        `${label} proxy group is missing universal REJECT/DIRECT fallbacks`
+        array(groups).every((group) => hasRequiredFallbacks(group, memberKey)),
+        `${label} proxy group is missing required REJECT/DIRECT fallbacks`
     );
 }
 

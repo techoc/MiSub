@@ -61,9 +61,11 @@ describe('Built-in Sing-box generator', () => {
                 expect.objectContaining({ tag: 'geosite-cn', type: 'remote', format: 'binary' }),
             ])
         );
-        expect(
-            parsed.outbounds.find((outbound) => outbound.tag === '🌐 DNS 出口')?.outbounds
-        ).toEqual(expect.arrayContaining(['REJECT', 'DIRECT']));
+        const dnsExitOutbounds = parsed.outbounds.find(
+            (outbound) => outbound.tag === '🌐 DNS 出口'
+        )?.outbounds;
+        expect(dnsExitOutbounds).toContain('REJECT');
+        expect(dnsExitOutbounds).not.toContain('DIRECT');
     });
 
     it('should enable TLS for https and socks5-tls', () => {

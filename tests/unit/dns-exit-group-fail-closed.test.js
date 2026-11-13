@@ -24,7 +24,7 @@ const minimalIniTemplate = [
 ].join('\n');
 
 describe('DNS exit group fail-closed behavior across renderers', () => {
-    it('template clash: zero nodes keeps the DNS exit group as a REJECT+DIRECT stub (never dropped, never #DIRECT)', () => {
+    it('template clash: zero nodes keeps the DNS exit group as a REJECT stub (never dropped, never #DIRECT)', () => {
         const output = renderClashFromIniTemplate(minimalIniTemplate, {
             nodeList: '',
             ruleLevel: 'none',
@@ -34,7 +34,7 @@ describe('DNS exit group fail-closed behavior across renderers', () => {
 
         const dnsGroup = (parsed['proxy-groups'] || []).find((g) => g.name === DNS_PROXY_GROUP);
         expect(dnsGroup, '零节点时 🌐 DNS 出口 组不应被整组丢弃').toBeTruthy();
-        expect(dnsGroup.proxies).toEqual(['REJECT', 'DIRECT']);
+        expect(dnsGroup.proxies).toEqual(['REJECT']);
 
         const policy = parsed.dns?.['nameserver-policy']?.['geosite:geolocation-!cn'] || [];
         expect(policy.length).toBeGreaterThan(0);
@@ -43,7 +43,7 @@ describe('DNS exit group fail-closed behavior across renderers', () => {
         }
     });
 
-    it('template singbox: zero nodes keeps the DNS exit outbound as a REJECT+DIRECT stub', () => {
+    it('template singbox: zero nodes keeps the DNS exit outbound as a REJECT stub', () => {
         const output = renderSingboxFromIniTemplate(minimalIniTemplate, {
             nodeList: '',
             ruleLevel: 'none',
@@ -53,7 +53,7 @@ describe('DNS exit group fail-closed behavior across renderers', () => {
 
         const dnsOutbound = (config.outbounds || []).find((o) => o.tag === DNS_PROXY_GROUP);
         expect(dnsOutbound, '零节点时 🌐 DNS 出口 出站不应被整组丢弃').toBeTruthy();
-        expect(dnsOutbound.outbounds).toEqual(['REJECT', 'DIRECT']);
+        expect(dnsOutbound.outbounds).toEqual(['REJECT']);
 
         const foreignServer = (config.dns?.servers || []).find((s) =>
             String(s.tag || '').startsWith('dns-foreign')
@@ -79,7 +79,7 @@ describe('DNS exit group fail-closed behavior across renderers', () => {
 
         const dnsOutbound = (config.outbounds || []).find((o) => o.tag === DNS_PROXY_GROUP);
         expect(dnsOutbound).toBeTruthy();
-        expect(dnsOutbound.outbounds).toEqual(['REJECT', 'DIRECT']);
+        expect(dnsOutbound.outbounds).toEqual(['REJECT']);
 
         const foreignServer = (config.dns?.servers || []).find((s) =>
             String(s.tag || '').startsWith('dns-foreign')
@@ -98,9 +98,9 @@ describe('DNS exit group fail-closed behavior across renderers', () => {
 
         const dnsGroup = (parsed['proxy-groups'] || []).find((g) => g.name === DNS_PROXY_GROUP);
         expect(dnsGroup).toBeTruthy();
-        expect(dnsGroup.proxies.length).toBeGreaterThan(2);
-        expect(dnsGroup.proxies.slice(-2)).toEqual(['REJECT', 'DIRECT']);
-        expect(dnsGroup.proxies.slice(0, -2)).not.toContain('REJECT');
-        expect(dnsGroup.proxies.slice(0, -2)).not.toContain('DIRECT');
+        expect(dnsGroup.proxies.length).toBeGreaterThan(1);
+        expect(dnsGroup.proxies.slice(-1)).toEqual(['REJECT']);
+        expect(dnsGroup.proxies.slice(0, -1)).not.toContain('REJECT');
+        expect(dnsGroup.proxies.slice(0, -1)).not.toContain('DIRECT');
     });
 });

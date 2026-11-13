@@ -146,7 +146,7 @@ MATCH,节点选择
         expect(parsed.profile['subscription-url']).toBe('https://example.com/sub');
     });
 
-    it('keeps auto-select groups on real nodes with universal REJECT/DIRECT fallbacks', () => {
+    it('keeps auto-select groups on real nodes with REJECT fallback', () => {
         const rendered = renderClashFromIniTemplate(
             `
 [Proxy Group]
@@ -178,7 +178,7 @@ MATCH,节点选择
 
         const parsed = yaml.load(rendered);
         const autoSelectGroup = parsed['proxy-groups'].find((group) => group.name === '自动选择');
-        expect(autoSelectGroup.proxies).toEqual(['HK-01', 'JP-01', 'REJECT', 'DIRECT']);
+        expect(autoSelectGroup.proxies).toEqual(['HK-01', 'JP-01', 'REJECT']);
     });
 
     it('adds AI service groups with universal fallbacks without changing a normal Main group', () => {
@@ -208,9 +208,13 @@ MATCH,Main
             String(group.name).startsWith('🤖')
         );
         expect(aiGroups.length).toBeGreaterThan(3);
+        // 所有 AI 组统一补 REJECT；手动选择类 AI 组（select）才要求 DIRECT
+        expect(aiGroups.every((group) => group.proxies.includes('REJECT'))).toBe(true);
         expect(
             aiGroups.every(
-                (group) => group.proxies.includes('REJECT') && group.proxies.includes('DIRECT')
+                (group) =>
+                    ['url-test', 'fallback', 'load-balance'].includes(group.type) ||
+                    group.proxies.includes('DIRECT')
             )
         ).toBe(true);
         expect(parsed['proxy-groups'].find((group) => group.name === 'Main').proxies).toContain(

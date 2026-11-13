@@ -433,7 +433,7 @@ export function applySmartModelOptimizations(model, options = {}) {
     // 整组丢弃或引发级联删除，下游渲染产物不再出现悬空引用。
     model.groups.forEach((group) => {
         if (Array.isArray(group.members)) {
-            group.members = withPolicyFallbacks(group.members);
+            group.members = withPolicyFallbacks(group.members, group.type);
         }
     });
     pruneEmptyGroups(model);

@@ -45,7 +45,7 @@ function expectNoEmptyClashGroups(config) {
 }
 
 describe('Renderer never emits proxy groups without members (clash)', () => {
-    it('zero-proxy pipeline render keeps stub groups with universal REJECT/DIRECT fallbacks', () => {
+    it('zero-proxy pipeline render keeps stub groups with REJECT fallbacks', () => {
         const template = getBuiltinTemplate('clash_aethersailor_full').content;
         const config = yaml.load(
             renderClashFromIniTemplate(template, {
@@ -59,10 +59,10 @@ describe('Renderer never emits proxy groups without members (clash)', () => {
         const groups = expectNoEmptyClashGroups(config);
         const groupNames = new Set(groups.map((group) => group.name));
 
-        // 纯 REJECT/DIRECT 存根组不再被剥离/丢弃
+        // 纯 REJECT/DIRECT 存根组不再被剥离/丢弃（自动测速组只补 REJECT，不补 DIRECT）
         expect(groupNames.has(DNS_PROXY_GROUP)).toBe(true);
         const dnsGroup = groups.find((group) => group.name === DNS_PROXY_GROUP);
-        expect(dnsGroup.proxies).toEqual(['REJECT', 'DIRECT']);
+        expect(dnsGroup.proxies).toEqual(['REJECT']);
 
         // DNS 出口引用真实存在的组，不降级 #DIRECT
         const referenced = [
@@ -100,7 +100,7 @@ describe('Renderer never emits proxy groups without members (clash)', () => {
         });
     });
 
-    it('filter-empty and REJECT-only url-test groups are kept with REJECT/DIRECT fallbacks, rules stay valid', () => {
+    it('filter-empty and REJECT-only url-test groups are kept with REJECT fallbacks, rules stay valid', () => {
         const config = yaml.load(
             renderClashFromIniTemplate(TEMPLATE_WITH_DEGENERATE_GROUPS, {
                 proxies,
@@ -111,18 +111,12 @@ describe('Renderer never emits proxy groups without members (clash)', () => {
         const groups = expectNoEmptyClashGroups(config);
         const groupNames = groups.map((group) => group.name);
         expect(groupNames).toContain('🚀 节点选择');
-        // 纯 REJECT 存根组不再被丢弃，统一补 REJECT/DIRECT 兜底
+        // 纯 REJECT 存根组不再被丢弃，统一补 REJECT 兜底（自动测速组不补 DIRECT）
         expect(groupNames).toContain('🗑️ 废弃组');
-        expect(groups.find((group) => group.name === '🗑️ 废弃组').proxies).toEqual([
-            'REJECT',
-            'DIRECT',
-        ]);
+        expect(groups.find((group) => group.name === '🗑️ 废弃组').proxies).toEqual(['REJECT']);
         // filter 无匹配的组同样保留兜底成员
         expect(groupNames).toContain('🌍 其他节点');
-        expect(groups.find((group) => group.name === '🌍 其他节点').proxies).toEqual([
-            'REJECT',
-            'DIRECT',
-        ]);
+        expect(groups.find((group) => group.name === '🌍 其他节点').proxies).toEqual(['REJECT']);
 
         const validPolicies = new Set([
             ...groupNames,
@@ -140,7 +134,7 @@ describe('Renderer never emits proxy groups without members (clash)', () => {
 });
 
 describe('Renderer never emits proxy groups without members (sing-box)', () => {
-    it('zero-proxy pipeline render keeps stub groups with universal REJECT/DIRECT fallbacks', () => {
+    it('zero-proxy pipeline render keeps stub groups with REJECT fallbacks', () => {
         const template = getBuiltinTemplate('clash_aethersailor_full').content;
         const config = JSON.parse(
             renderSingboxFromIniTemplate(template, {
@@ -162,10 +156,10 @@ describe('Renderer never emits proxy groups without members (sing-box)', () => {
         });
 
         const tags = new Set(outbounds.map((outbound) => outbound.tag));
-        // DNS 出口存根组保留（fail-closed），且带统一兜底成员
+        // DNS 出口存根组保留（fail-closed，自动测速组只补 REJECT）
         expect(tags.has(DNS_PROXY_GROUP)).toBe(true);
         const dnsOutbound = outbounds.find((outbound) => outbound.tag === DNS_PROXY_GROUP);
-        expect(dnsOutbound.outbounds).toEqual(['REJECT', 'DIRECT']);
+        expect(dnsOutbound.outbounds).toEqual(['REJECT']);
 
         // detour/download_detour 引用真实存在的组，不降级 DIRECT
         const detours = [

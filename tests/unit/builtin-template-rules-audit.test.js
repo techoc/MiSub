@@ -219,6 +219,9 @@ describe('Builtin template rule audit', () => {
         expect(singbox.dns.final).toBe('dns-foreign-1');
         expect(
             singbox.outbounds.find((outbound) => outbound.tag === '🌐 DNS 出口')?.outbounds
-        ).toEqual(expect.arrayContaining(['REJECT', 'DIRECT']));
+        ).toContain('REJECT');
+        expect(
+            singbox.outbounds.find((outbound) => outbound.tag === '🌐 DNS 出口')?.outbounds
+        ).not.toContain('DIRECT');
     });
 });

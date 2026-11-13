@@ -273,7 +273,7 @@ function buildGroupOutbounds(groups) {
         const outbound = {
             tag: sanitizeTag(group.name),
             type: mappedType,
-            outbounds: withPolicyFallbacks(members),
+            outbounds: withPolicyFallbacks(members, mappedType),
         };
 
         if (mappedType === 'urltest') {
