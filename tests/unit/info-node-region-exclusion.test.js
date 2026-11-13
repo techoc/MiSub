@@ -59,7 +59,7 @@ describe('Placeholder info nodes are excluded from region bucketing (template pa
 
         const otherGroup = optimized.groups.find((group) => group.name === '🌍 其他节点');
         expect(otherGroup).toBeDefined();
-        expect(otherGroup.members).toEqual(['🇻🇳 VNM-Proxy 01']);
+        expect(otherGroup.members).toEqual(['🇻🇳 VNM-Proxy 01', 'REJECT', 'DIRECT']);
         expect(otherGroup.members.some((member) => member.includes('流量剩余'))).toBe(false);
     });
 

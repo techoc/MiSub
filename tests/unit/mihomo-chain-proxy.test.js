@@ -43,7 +43,7 @@ describe('Mihomo chain proxy', () => {
         expect(parsed.proxies.every((proxy) => proxy['dialer-proxy'] === undefined)).toBe(true);
 
         const landing = parsed['proxy-groups'].find((item) => item.name === '🔗 链式落地');
-        expect(landing.proxies).toEqual(['🔗 链式前置']);
+        expect(landing.proxies).toEqual(['🔗 链式前置', 'REJECT', 'DIRECT']);
     });
 
     it('creates plain fallback groups for non-Meta clients when groups are omitted', () => {
@@ -62,10 +62,14 @@ describe('Mihomo chain proxy', () => {
         expect(parsed['proxy-groups'].find((item) => item.name === '🔗 落地').proxies).toEqual([
             'HK-01',
             'JP-01',
+            'REJECT',
+            'DIRECT',
         ]);
         expect(parsed['proxy-groups'].find((item) => item.name === '🔗 入口').proxies).toEqual([
             'HK-01',
             'JP-01',
+            'REJECT',
+            'DIRECT',
         ]);
     });
 
@@ -84,7 +88,12 @@ describe('Mihomo chain proxy', () => {
 
         const landing = parsed['proxy-groups'].find((item) => item.name === '🔗 链式落地');
         expect(landing.type).toBe('select');
-        expect(landing.proxies).toEqual(['🔗 链式落地 - HK-01', '🔗 链式落地 - JP-01']);
+        expect(landing.proxies).toEqual([
+            '🔗 链式落地 - HK-01',
+            '🔗 链式落地 - JP-01',
+            'REJECT',
+            'DIRECT',
+        ]);
     });
 
     it('does not mutate the source model when rendered repeatedly', () => {
@@ -110,7 +119,7 @@ describe('Mihomo chain proxy', () => {
         const parsed = render(CHAIN_TEMPLATE, { isMeta: true });
 
         const entry = parsed['proxy-groups'].find((item) => item.name === '🔗 链式前置');
-        expect(entry.proxies).toEqual(['HK-01', 'JP-01']);
+        expect(entry.proxies).toEqual(['HK-01', 'JP-01', 'REJECT', 'DIRECT']);
         expect(entry.proxies.some((name) => String(name).startsWith('🔗 链式落地'))).toBe(false);
     });
 
@@ -131,7 +140,7 @@ describe('Mihomo chain proxy', () => {
         );
 
         const entry = parsed['proxy-groups'].find((item) => item.name === '入口');
-        expect(entry.proxies).toEqual(['HK-01', 'JP-01']);
+        expect(entry.proxies).toEqual(['HK-01', 'JP-01', 'REJECT', 'DIRECT']);
         expect(entry['include-all']).toBeUndefined();
     });
 
@@ -160,10 +169,10 @@ describe('Mihomo chain proxy', () => {
         );
 
         const landing = parsed['proxy-groups'].find((item) => item.name === '🔗 落地');
-        expect(landing.proxies).toEqual(['🔗 落地 - HK-01', '🔗 落地 - JP-01']);
+        expect(landing.proxies).toEqual(['🔗 落地 - HK-01', '🔗 落地 - JP-01', 'REJECT', 'DIRECT']);
 
         const entry = parsed['proxy-groups'].find((item) => item.name === '🔗 入口');
-        expect(entry.proxies).toEqual(['HK-01', 'JP-01']);
+        expect(entry.proxies).toEqual(['HK-01', 'JP-01', 'REJECT', 'DIRECT']);
     });
 
     it('supports a custom landing copy prefix', () => {

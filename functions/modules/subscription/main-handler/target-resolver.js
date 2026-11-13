@@ -8,6 +8,7 @@ import { createDisguiseResponse } from '../../disguise-page.js';
 import { resolveBuiltinEngineFlags, resolveEffectiveEngine } from './engine-flags.js';
 import { handleProfileMode } from '../profile-handler.js';
 import { getProfileDownloadCountKey } from './request-helpers.js';
+import { setOutputCacheHints } from './output-cache.js';
 
 // Use a valid, non-routable Shadowsocks URL so clients can display the
 // expiration notice as a node instead of dropping a comment line.
@@ -200,6 +201,11 @@ export async function resolveSubscriptionTargets({
             // [新增] 增加订阅组下载计数
             // 仅在非回调请求时及非内部请求时增加计数(避免重复计数)
             // 且仅当开启访问日志时才计数
+            //
+            // [性能] 读取+自增整体放进 waitUntil：此前这里的 KV get 是在
+            // 主响应路径上 await 的，每次订阅拉取都被计数读阻塞一次往返。
+            // read-modify-write 仍有并发丢计数窗口（KV 无原子自增），计数
+            // 场景可接受；不再阻塞订阅下发。
             if (
                 !url.searchParams.has('callback_token') &&
                 !shouldSkipLogging &&
@@ -207,13 +213,15 @@ export async function resolveSubscriptionTargets({
             ) {
                 try {
                     const downloadCountKey = getProfileDownloadCountKey(profile);
-                    const currentCount = Number(await storageAdapter.get(downloadCountKey)) || 0;
+                    setOutputCacheHints(context, { downloadCountKey });
                     context.waitUntil(
-                        storageAdapter
-                            .put(downloadCountKey, currentCount + 1)
-                            .catch((err) =>
-                                console.error('[Download Count] Failed to update:', err)
-                            )
+                        (async () => {
+                            const currentCount =
+                                Number(await storageAdapter.get(downloadCountKey)) || 0;
+                            await storageAdapter.put(downloadCountKey, currentCount + 1);
+                        })().catch((err) =>
+                            console.error('[Download Count] Failed to update:', err)
+                        )
                     );
                 } catch (err) {
                     // 计数失败不影响订阅服务

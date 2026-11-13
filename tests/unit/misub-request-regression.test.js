@@ -10,6 +10,12 @@ vi.mock('../../functions/storage-adapter.js', () => ({
         resolveKV: (env) => env?.MISUB_KV || null,
     },
     STORAGE_TYPES: { KV: 'kv', D1: 'd1' },
+    SettingsCache: {
+        // 与真实实现语义一致：按传入的 adapter 直读 settings（无 memo，测试可控）
+        get: async (_env, adapter) =>
+            adapter && typeof adapter.get === 'function' ? adapter.get('worker_settings_v1') : null,
+        clear: () => {},
+    },
 }));
 
 function createStorageAdapter({ settings = {}, subscriptions = [], profiles = [] } = {}) {

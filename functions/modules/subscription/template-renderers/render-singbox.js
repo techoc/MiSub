@@ -3,6 +3,7 @@ import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../safe-dns.js';
 import { normalizeGeneratorOptions } from '../generator-options.js';
 import { getSingboxDnsRuleSet, pinRemoteRuleUrl } from '../builtin-rules-provider.js';
+import { stripPolicyMembersForAutoGroup, withPolicyFallbacks } from '../policy-fallbacks.js';
 
 function sanitizeTag(value) {
     return String(value || '').trim() || 'Untitled';
@@ -264,17 +265,15 @@ function buildGroupOutbounds(groups) {
     return groups.map((group) => {
         const mappedType = mapGroupType(group.type);
         const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
+        // urltest 剥离内置策略成员；纯 REJECT/DIRECT 存根组（剥后为空）原样保留，
+        // 随后所有组统一补 REJECT/DIRECT 兜底
+        const members = ['urltest'].includes(mappedType)
+            ? stripPolicyMembersForAutoGroup(rawMembers)
+            : rawMembers;
         const outbound = {
             tag: sanitizeTag(group.name),
             type: mappedType,
-            outbounds: ['urltest'].includes(mappedType)
-                ? rawMembers.filter(
-                      (member) =>
-                          !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(
-                              String(member).toUpperCase()
-                          )
-                  )
-                : rawMembers,
+            outbounds: withPolicyFallbacks(members),
         };
 
         if (mappedType === 'urltest') {
@@ -414,15 +413,17 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
             ? normalizedModel.proxies
             : urlsToClashProxies(proxyUrls);
     const proxyOutbounds = proxies.map(buildOutbound).filter(Boolean);
-    // 渲染组集合：成员被剥空（如 fail-closed 的 REJECT/DIRECT）的 urltest 组不输出——
-    // sing-box 对空 outbounds 的 urltest/selector 直接解析失败
-    const groupOutbounds = buildGroupOutbounds(
-        normalizedModel.groups.filter((g) => Array.isArray(g.members) && g.members.length > 0)
-    ).filter((outbound) => (outbound.outbounds || []).length > 0);
+    // 渲染组集合：每个组统一补 REJECT/DIRECT 兜底（纯 REJECT/DIRECT 存根组原样保留，
+    // 不再剥离），因此任何组都不会为空——sing-box 对空 outbounds 的 urltest/selector
+    // 直接解析失败
+    const groupOutbounds = buildGroupOutbounds(normalizedModel.groups).filter(
+        (outbound) => (outbound.outbounds || []).length > 0
+    );
     const renderedGroupTags = new Set(groupOutbounds.map((outbound) => outbound.tag));
     const renderedProxyTags = new Set(proxyOutbounds.map((outbound) => outbound.tag));
-    // DNS 出口 detour 只能引用真实渲染出来的组；组被丢弃（如零节点）时降级为 DIRECT，
-    // 保证 detour / download_detour / route.final 不产生悬空引用
+    // DNS 出口 detour 只能引用真实渲染出来的组；组已不再因空成员被丢弃，
+    // 降级只剩两种来源：injectDnsExitGroup=false 显式关闭，或 explicit DNS
+    // 覆盖跳过注入导致模型中没有该组
     const dnsDetour =
         options.injectDnsExitGroup !== false && renderedGroupTags.has(DNS_PROXY_GROUP)
             ? DNS_PROXY_GROUP

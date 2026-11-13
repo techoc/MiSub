@@ -455,7 +455,7 @@ export async function handleNodeCountRequest(request, env) {
                             lastUpdate: new Date().toISOString(),
                         }));
                     } else {
-                        const allSubs = JSON.parse(JSON.stringify(originalSubs));
+                        const allSubs = structuredClone(originalSubs);
                         const target = allSubs.find((s) => s.url === subUrl);
                         if (target) {
                             target.nodeCount = result.count;

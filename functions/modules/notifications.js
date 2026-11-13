@@ -119,7 +119,7 @@ export async function handleCronTrigger(env) {
         await StorageFactory.getStorageType(env)
     );
     const originalSubs = await loadSubscriptionsForCron(storageAdapter);
-    const allSubs = JSON.parse(JSON.stringify(originalSubs));
+    const allSubs = structuredClone(originalSubs);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || DEFAULT_SETTINGS;
 
     const httpSubscriptions = allSubs.filter((sub) => sub.url.startsWith('http') && sub.enabled);

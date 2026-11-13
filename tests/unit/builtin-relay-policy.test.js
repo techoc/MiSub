@@ -59,7 +59,11 @@ describe('内置 Relay 分流等级', () => {
 
         const relayGroup = parsed['proxy-groups'].find((group) => group.name === '🔗 链式代理');
         expect(relayGroup?.type).toBe('select');
-        expect(relayGroup?.proxies.every((name) => name.startsWith('🔗 链式代理 - '))).toBe(true);
+        expect(
+            relayGroup?.proxies.every(
+                (name) => name.startsWith('🔗 链式代理 - ') || ['REJECT', 'DIRECT'].includes(name)
+            )
+        ).toBe(true);
         expect(relayGroup?.proxies.some((name) => name.includes('美国落地-US-01'))).toBe(true);
 
         expect(parsed['proxy-groups'].some((group) => group.name === '落地节点')).toBe(false);
@@ -86,9 +90,11 @@ describe('内置 Relay 分流等级', () => {
         ).toBe(true);
         const relaySelector = parsed.outbounds.find((outbound) => outbound.tag === '🔗 链式代理');
         expect(relaySelector?.type).toBe('selector');
-        expect(relaySelector?.outbounds.every((tag) => tag.startsWith('🔗 链式代理 - '))).toBe(
-            true
-        );
+        expect(
+            relaySelector?.outbounds.every(
+                (tag) => tag.startsWith('🔗 链式代理 - ') || ['REJECT', 'DIRECT'].includes(tag)
+            )
+        ).toBe(true);
         expect(relaySelector?.outbounds.some((tag) => tag.includes('美国落地-US-01'))).toBe(true);
 
         expect(parsed.outbounds.some((outbound) => outbound.tag === '落地节点')).toBe(false);

@@ -101,7 +101,7 @@ describe('Builtin template rule audit', () => {
         expect(mainGroup?.members).not.toContain('🚀 节点选择');
     });
 
-    it('keeps AI service choices proxy-only and preserves United States region choice', () => {
+    it('keeps AI service group anchored to proxy choices and preserves United States region choice', () => {
         const model = getOptimizedTemplateModel('clash_misub_media_ai');
         const aiGroup = findGroup(model, '🤖 AI 服务');
 
@@ -109,7 +109,7 @@ describe('Builtin template rule audit', () => {
         expect(aiGroup?.members).toContain('♻️ 自动选择');
         expect(aiGroup?.members).toContain('🇺🇸 美国节点');
         expect(aiGroup?.members).toContain('🇯🇵 日本节点');
-        expect(aiGroup?.members).not.toContain('DIRECT');
+        expect(aiGroup?.members).toEqual(expect.arrayContaining(['REJECT', 'DIRECT']));
         expect(aiGroup?.members).not.toContain('🇺🇲 美国节点');
     });
 
@@ -219,6 +219,6 @@ describe('Builtin template rule audit', () => {
         expect(singbox.dns.final).toBe('dns-foreign-1');
         expect(
             singbox.outbounds.find((outbound) => outbound.tag === '🌐 DNS 出口')?.outbounds
-        ).not.toContain('DIRECT');
+        ).toEqual(expect.arrayContaining(['REJECT', 'DIRECT']));
     });
 });

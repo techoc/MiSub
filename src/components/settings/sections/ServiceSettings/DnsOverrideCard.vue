@@ -1,7 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
     import { useI18n } from '@/i18n/index.js';
-    import yaml from 'js-yaml';
 
     const { t } = useI18n();
 
@@ -28,7 +27,7 @@
         return 'yaml';
     }
 
-    function validateInput() {
+    async function validateInput() {
         const raw = inputValue.value.trim();
         if (!raw) {
             jsonError.value = '';
@@ -40,6 +39,9 @@
             if (format === 'json') {
                 parsed = JSON.parse(raw);
             } else {
+                // js-yaml 按需加载：只有真正提交 YAML 时才拉取（~24KB chunk），
+                // 避免静态打进 ServiceSettings 设置页 chunk
+                const { default: yaml } = await import('js-yaml');
                 parsed = yaml.load(raw);
             }
             if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {

@@ -10,6 +10,8 @@
  * 渲染层在所有客户端调用；仅 Mihomo/Meta 生成 dialer-proxy，其他客户端保留普通策略组。
  */
 
+import { hasRealPolicyMembers } from './policy-fallbacks.js';
+
 /**
  * 查找策略组，不存在时创建。
  * @param {Object} model - 统一模板模型
@@ -99,9 +101,11 @@ export function applyMihomoChainProxy(model, { enableDialerProxy = true } = {}) 
         const entryGroup = ensureGroup(model, entryName, baseNames);
         const landingGroup = ensureGroup(model, landingName, []);
 
-        if (entryGroup.members.length === 0) entryGroup.members = [...baseNames];
+        // 用「真实成员」判断而不是 length：模型层统一追加的 REJECT/DIRECT 兜底
+        // 不应被当成真实成员而跳过引导填充
+        if (!hasRealPolicyMembers(entryGroup.members)) entryGroup.members = [...baseNames];
         if (!enableDialerProxy) {
-            if (landingGroup.members.length === 0) landingGroup.members = [...baseNames];
+            if (!hasRealPolicyMembers(landingGroup.members)) landingGroup.members = [...baseNames];
             return;
         }
 

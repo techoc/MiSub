@@ -10,14 +10,10 @@
  * 新增逻辑请放进对应子模块，编排器只负责串接阶段与输出分支。
  */
 
-import { StorageFactory } from '../../storage-adapter.js';
+import { StorageFactory, SettingsCache } from '../../storage-adapter.js';
 import { migrateConfigSettings, migrateProfileIds, base64EncodeUtf8 } from '../utils.js';
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
-import {
-    KV_KEY_PROFILES,
-    KV_KEY_SETTINGS,
-    DEFAULT_SETTINGS as defaultSettings,
-} from '../config.js';
+import { KV_KEY_PROFILES, DEFAULT_SETTINGS as defaultSettings } from '../config.js';
 import { createDisguiseResponse } from '../disguise-page.js';
 import { generateCacheKey } from '../../services/node-cache-service.js';
 import { resolveRequestContext } from './request-context.js';
@@ -56,6 +52,12 @@ import {
 } from './main-handler/target-resolver.js';
 import { buildPrependedVirtualNodes } from './main-handler/virtual-info.js';
 import { refreshSubscriptionNodes } from './main-handler/node-refresh.js';
+import {
+    isCacheableRequest,
+    matchCachedOutput,
+    setOutputCacheHints,
+    storeOutput,
+} from './main-handler/output-cache.js';
 
 // —— 兼容导出：测试与外部模块历史上直接从本路径引用这些 helper ——
 export {
@@ -83,10 +85,10 @@ export {
 } from './main-handler/engine-flags.js';
 
 /**
- * 处理MiSub订阅请求
- * @param {Object} context - Cloudflare上下文
- * @returns {Promise<Response>} HTTP响应
- */ export async function handleMisubRequest(context) {
+ * 订阅管线主体：settings/订阅/分组读取 → 目标解析 → 节点聚合 → 渲染输出。
+ * 由 handleMisubRequest 包装：外层负责渲染输出缓存（./main-handler/output-cache.js）。
+ */
+async function runSubscriptionPipeline(context) {
     const { request, env } = context;
     const url = new URL(request.url);
     const userAgentHeader = request.headers.get('User-Agent') || 'Unknown';
@@ -96,13 +98,14 @@ export {
     );
     console.log(`[MiSub UA] ${userAgentHeader}`);
 
-    const storageAdapter = StorageFactory.createAdapter(
-        env,
-        await StorageFactory.getStorageType(env)
-    );
+    const storageAdapter =
+        context.storage ||
+        StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
     context.storage = storageAdapter;
+    // [性能] settings 走 SettingsCache（10s isolate 内缓存，写入路径会主动失效）。
+    // 显式传入 adapter 以保证与 storageType 选择一致的读取来源。
     const [settingsData, allMisubs, allProfiles] = await Promise.all([
-        storageAdapter.get(KV_KEY_SETTINGS),
+        SettingsCache.get(env, storageAdapter),
         storageAdapter.getAllSubscriptions(),
         storageAdapter.getAllProfiles(),
     ]);
@@ -136,6 +139,8 @@ export {
     console.log(`[MiSub Logic] isBrowser: ${isBrowser}, Disguise: ${config.disguise?.enabled}`);
 
     const isAuthenticated = await authMiddleware(request, env);
+    // 暴露给外层输出缓存：登录态响应永不写入缓存（伪装页与匿名视图可能不同）
+    context.isAuthenticated = isAuthenticated;
 
     if (
         config.disguise?.enabled &&
@@ -179,6 +184,16 @@ export {
 
     // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）
     let targetFormat = determineTargetFormat(userAgentHeader, url.searchParams);
+
+    // 记录命中路径补记所需的最小上下文（缓存命中时不再重跑管线，
+    // 但仍要按相同口径补下载计数与访问日志，见 output-cache.js）
+    setOutputCacheHints(context, {
+        targetFormat,
+        subName,
+        token,
+        profileIdentifier,
+        enableAccessLog: !!config.enableAccessLog,
+    });
 
     // [Access Log] Record access log and stats if enabled
     if (!url.searchParams.has('callback_token') && !shouldSkipLogging && config.enableAccessLog) {
@@ -512,6 +527,7 @@ export {
 
             // 访问日志（需要 enableAccessLog 开关）
             if (config.enableAccessLog) {
+                setOutputCacheHints(context, { loggable: true });
                 logAccessSuccess({
                     context,
                     env,
@@ -656,6 +672,7 @@ export {
                 );
 
                 if (config.enableAccessLog) {
+                    setOutputCacheHints(context, { loggable: true });
                     logAccessSuccess({
                         context,
                         env,
@@ -694,4 +711,81 @@ export {
     });
 
     return new Response(base64EncodeUtf8(combinedNodeList), { headers: base64Headers });
+}
+
+/**
+ * 缓存命中路径的补记：与管线内分支保持相同口径的下载计数与访问日志。
+ * 刻意不复发 Telegram 访问通知 —— 高频轮询下命中缓存时重发就是通知风暴，
+ * 且通知内容（节点数/到期时间）与首次下发一致，重复价值低。
+ */
+async function runHitBookkeeping(context, entry) {
+    const { request, env } = context;
+    let url;
+    try {
+        url = new URL(request.url);
+    } catch {
+        return;
+    }
+    const userAgentHeader = request.headers.get('User-Agent') || 'Unknown';
+    if (url.searchParams.has('callback_token') || shouldSkipAccessLog(userAgentHeader)) return;
+
+    const hints = entry.hints || {};
+    const storageAdapter =
+        context.storage ||
+        StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+    context.storage = storageAdapter;
+
+    if (hints.downloadCountKey) {
+        try {
+            const currentCount = Number(await storageAdapter.get(hints.downloadCountKey)) || 0;
+            await storageAdapter.put(hints.downloadCountKey, currentCount + 1);
+        } catch (err) {
+            console.error('[Download Count] Failed to update (cache hit):', err);
+        }
+    }
+    if (hints.loggable && hints.enableAccessLog) {
+        logAccessSuccess({
+            context,
+            env,
+            request,
+            userAgentHeader,
+            targetFormat: hints.targetFormat,
+            token: hints.token,
+            profileIdentifier: hints.profileIdentifier,
+            subName: hints.subName,
+            domain: url.hostname,
+        });
+    }
+}
+
+/**
+ * 处理MiSub订阅请求（带渲染输出缓存的外层包装）
+ *
+ * - 命中：直接复用上次渲染结果（60s TTL），ETag/304 协商减少流量；
+ *   补记下载计数与访问日志，但不重发 TG 通知。
+ * - 未命中：跑完整管线，把可缓存的 200 输出写入 isolate 内缓存。
+ * - 登录态/refresh/nocache/debug/callback_token/text/html 响应永不入缓存。
+ * @param {Object} context - Cloudflare上下文
+ * @returns {Promise<Response>} HTTP响应
+ */
+export async function handleMisubRequest(context) {
+    if (isCacheableRequest(context.request)) {
+        const cached = matchCachedOutput(context.request, {
+            onHit: (entry) => {
+                const task = runHitBookkeeping(context, entry).catch((err) =>
+                    console.error('[Output Cache] Hit bookkeeping failed:', err)
+                );
+                if (typeof context.waitUntil === 'function') context.waitUntil(task);
+            },
+        });
+        if (cached) return cached;
+    }
+
+    const response = await runSubscriptionPipeline(context);
+    try {
+        return await storeOutput(context, response);
+    } catch (err) {
+        console.warn('[Output Cache] Failed to store output:', err?.message || err);
+        return response;
+    }
 }

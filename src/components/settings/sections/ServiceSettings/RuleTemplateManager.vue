@@ -66,7 +66,7 @@ overwrite_original_rules=true`;
         }
     }
 
-    watch(() => dataStore.ruleTemplates, syncFromStore, { immediate: true, deep: true });
+    watch(() => dataStore.ruleTemplates, syncFromStore, { immediate: true });
 
     function createTemplate() {
         const now = Date.now().toString(36);

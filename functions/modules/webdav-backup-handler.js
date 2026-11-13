@@ -46,7 +46,8 @@ const DEFAULT_WEBDAV_CONFIG = {
 };
 
 function cloneJson(value) {
-    return value == null ? value : JSON.parse(JSON.stringify(value));
+    // structuredClone：Workers 原生支持，比 JSON 往返更快且保序保类型
+    return value == null ? value : structuredClone(value);
 }
 
 function normalizeScope(scope) {
