@@ -63,7 +63,7 @@ describe('Built-in Sing-box generator', () => {
         );
         expect(
             parsed.outbounds.find((outbound) => outbound.tag === '🌐 DNS 出口')?.outbounds
-        ).not.toContain('DIRECT');
+        ).toEqual(expect.arrayContaining(['REJECT', 'DIRECT']));
     });
 
     it('should enable TLS for https and socks5-tls', () => {
@@ -78,7 +78,9 @@ describe('Built-in Sing-box generator', () => {
         const parsed = JSON.parse(result);
         const httpsNode = parsed.outbounds.find((outbound) => outbound.tag.endsWith('HttpsNode'));
         const socksNode = parsed.outbounds.find((outbound) => outbound.tag.endsWith('TlsSocks'));
-        const tlsHttpNode = parsed.outbounds.find((outbound) => outbound.tag.endsWith('TlsHttpNode'));
+        const tlsHttpNode = parsed.outbounds.find((outbound) =>
+            outbound.tag.endsWith('TlsHttpNode')
+        );
 
         expect(httpsNode?.tls?.enabled).toBe(true);
         expect(socksNode?.tls?.enabled).toBe(true);

@@ -297,6 +297,10 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     }
 
     const proxyOutboundTags = outbounds.map((item) => item.tag);
+    // 占位 DIRECT 只用于保证 outbounds 非空，不作为「节点」传给策略组工厂：
+    // 零节点时工厂自身的 fail-closed 兜底（['REJECT']）+ 统一 REJECT/DIRECT 追加，
+    // 才能与模板渲染路径保持一致
+    const nodeOutbounds = [...outbounds];
     if (outbounds.length === 0) {
         outbounds.push({ tag: 'DIRECT', type: 'direct' });
     }
@@ -304,7 +308,7 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     const levelKey = (ruleLevel || 'std').toUpperCase();
     // 获取内置策略组
     const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
-    let proxyGroups = policyGroupsFactory(outbounds, options);
+    let proxyGroups = policyGroupsFactory(nodeOutbounds, options);
     proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
 
     if (levelKey === 'RELAY') {

@@ -1,5 +1,6 @@
 import { groupNodeLinesByRegion, isPlaceholderInfoNode } from './region-groups.js';
 import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';
+import { withPolicyFallbacks } from './policy-fallbacks.js';
 
 /**
  * 策略组标准名称常量
@@ -178,12 +179,11 @@ export function pruneProxyGroups(proxyGroups, proxies) {
             return validTargetNames.has(member);
         });
 
-        // 兜底逻辑
-        const failClosed =
-            String(group.name || '').startsWith('🤖') || group.name === DNS_PROXY_GROUP;
+        // 兜底逻辑：不再按 failClosed 塞单成员——所有组统一补 REJECT/DIRECT，
+        // 组永不落空、组间引用永不悬空
         return {
             ...group,
-            proxies: newProxies.length > 0 ? newProxies : [failClosed ? 'REJECT' : 'DIRECT'],
+            proxies: withPolicyFallbacks(newProxies),
         };
     });
 }

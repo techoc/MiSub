@@ -136,7 +136,7 @@ describe('Clash 内置生成器', () => {
         expect(sgGroup).toBeUndefined();
     });
 
-    it('应为主要 AI 服务生成独立的代理组且不允许 DIRECT', () => {
+    it('应为主要 AI 服务生成独立的代理组并带统一 REJECT/DIRECT 兜底', () => {
         const parsed = yaml.load(
             generateBuiltinClashConfig('trojan://password@example.com:443#US-01')
         );
@@ -152,7 +152,8 @@ describe('Clash 内置生成器', () => {
         ]) {
             const group = parsed['proxy-groups'].find((item) => item.name === name);
             expect(group, `${name} should exist`).toBeTruthy();
-            expect(group.proxies).not.toContain('DIRECT');
+            expect(group.proxies).toContain('REJECT');
+            expect(group.proxies).toContain('DIRECT');
         }
         expect(parsed.rules).toContain('DOMAIN-SUFFIX,claude.ai,🤖 Claude');
         expect(parsed.rules).toContain('DOMAIN-SUFFIX,grok.com,🤖 Grok');

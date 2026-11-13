@@ -146,7 +146,7 @@ MATCH,节点选择
         expect(parsed.profile['subscription-url']).toBe('https://example.com/sub');
     });
 
-    it('should exclude DIRECT from auto-select groups when rendering templates', () => {
+    it('keeps auto-select groups on real nodes with universal REJECT/DIRECT fallbacks', () => {
         const rendered = renderClashFromIniTemplate(
             `
 [Proxy Group]
@@ -178,11 +178,10 @@ MATCH,节点选择
 
         const parsed = yaml.load(rendered);
         const autoSelectGroup = parsed['proxy-groups'].find((group) => group.name === '自动选择');
-        expect(autoSelectGroup.proxies).toEqual(['HK-01', 'JP-01']);
-        expect(autoSelectGroup.proxies).not.toContain('DIRECT');
+        expect(autoSelectGroup.proxies).toEqual(['HK-01', 'JP-01', 'REJECT', 'DIRECT']);
     });
 
-    it('adds fail-closed AI service groups without changing a normal Main group', () => {
+    it('adds AI service groups with universal fallbacks without changing a normal Main group', () => {
         const rendered = renderClashFromIniTemplate(
             `
 [Proxy Group]
@@ -209,7 +208,11 @@ MATCH,Main
             String(group.name).startsWith('🤖')
         );
         expect(aiGroups.length).toBeGreaterThan(3);
-        expect(aiGroups.every((group) => !group.proxies.includes('DIRECT'))).toBe(true);
+        expect(
+            aiGroups.every(
+                (group) => group.proxies.includes('REJECT') && group.proxies.includes('DIRECT')
+            )
+        ).toBe(true);
         expect(parsed['proxy-groups'].find((group) => group.name === 'Main').proxies).toContain(
             'DIRECT'
         );
@@ -242,7 +245,7 @@ MATCH,🔗 链式代理
         const parsed = yaml.load(rendered);
         const relayLikeGroup = parsed['proxy-groups'].find((group) => group.name === '🔗 链式代理');
         expect(relayLikeGroup.type).toBe('select');
-        expect(relayLikeGroup.proxies).toEqual(['入口节点', 'HK-01', 'DIRECT']);
+        expect(relayLikeGroup.proxies).toEqual(['入口节点', 'HK-01', 'DIRECT', 'REJECT']);
         expect(relayLikeGroup['dialer-proxy']).toBeUndefined();
     });
 

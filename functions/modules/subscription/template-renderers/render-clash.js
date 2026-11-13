@@ -4,6 +4,7 @@ import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
 import { normalizeGeneratorOptions } from '../generator-options.js';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.js';
+import { stripPolicyMembersForAutoGroup, withPolicyFallbacks } from '../policy-fallbacks.js';
 
 function mapGroupType(type) {
     const normalized = String(type || '')
@@ -34,14 +35,11 @@ function isRenderableRulePolicy(policy, groupNames, proxyNames) {
 
 function filterAutoSelectMembers(group) {
     const type = mapGroupType(group.type);
-    const members = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     if (!['url-test', 'fallback', 'load-balance'].includes(type)) {
-        return members;
+        return Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     }
-    return members.filter(
-        (member) =>
-            !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase())
-    );
+    // 自动测速组剥离内置策略成员；纯 REJECT/DIRECT 存根组（剥后为空）原样保留
+    return stripPolicyMembersForAutoGroup(group.members);
 }
 
 const ACL4SSR_ROOT_PROVIDER_FILES = new Set([
@@ -253,37 +251,27 @@ export function renderClashFromTemplateModel(model, options = {}) {
         };
     });
 
-    // 渲染组集合：成员被 filterAutoSelectMembers 剥空（如 fail-closed 的 REJECT/DIRECT）
-    // 或 filter 无匹配的组不输出——mihomo 对空 proxies 且无 use 的组直接解析失败
+    // 渲染组集合：每个组统一补 REJECT/DIRECT 兜底（纯 REJECT/DIRECT 存根组原样保留，
+    // 不再剥离），因此任何组都不会为空——mihomo 对空 proxies 且无 use 的组直接解析失败
     // （`use` or `proxies` missing），这是 OpenClash 启动报错的根源。
-    const renderedGroups = normalizedModel.groups
-        .filter(
-            (group) =>
-                (Array.isArray(group.members) && group.members.length > 0) ||
-                (Array.isArray(group.filters) && group.filters.length > 0)
-        )
-        .map((group) => {
-            const proxies = filterAutoSelectMembers(group);
-            const use = group.options?.use;
-            if (proxies.length === 0 && !use) return null;
-            return {
-                name: group.name,
-                type: mapGroupType(group.type),
-                proxies,
-                filter:
-                    Array.isArray(group.filters) && group.filters.length > 0
-                        ? group.filters.join('|')
-                        : undefined,
-                ...group.options,
-            };
-        })
-        .filter(Boolean);
+    const renderedGroups = normalizedModel.groups.map((group) => ({
+        name: group.name,
+        type: mapGroupType(group.type),
+        proxies: withPolicyFallbacks(filterAutoSelectMembers(group)),
+        filter:
+            Array.isArray(group.filters) && group.filters.length > 0
+                ? group.filters.join('|')
+                : undefined,
+        ...group.options,
+    }));
     const renderedGroupNames = new Set(renderedGroups.map((group) => group.name));
     const renderedProxyNames = new Set(
         normalizedModel.proxies.map((proxy) => proxy.name || proxy.tag).filter(Boolean)
     );
 
-    // DNS 出口 detour 只能引用真实渲染出来的组；组被丢弃（如零节点）时降级为 DIRECT
+    // DNS 出口 detour 只能引用真实渲染出来的组；组已不再因空成员被丢弃，
+    // 降级只剩两种来源：injectDnsExitGroup=false 显式关闭，或 explicit DNS
+    // 覆盖跳过注入导致模型中没有该组。
     const dnsDetour =
         options.injectDnsExitGroup !== false && renderedGroupNames.has(DNS_PROXY_GROUP)
             ? DNS_PROXY_GROUP

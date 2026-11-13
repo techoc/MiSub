@@ -1,6 +1,7 @@
 import { groupNodeLinesByRegion, isPlaceholderInfoNode } from './region-groups.js';
 import { AI_SERVICE_RULES } from './builtin-rules-provider.js';
 import { DNS_PROXY_GROUP, isExplicitDnsOverride } from './safe-dns.js';
+import { withPolicyFallbacks } from './policy-fallbacks.js';
 
 /**
  * 解析并扩展策略组中的正则过滤器
@@ -427,6 +428,14 @@ export function applySmartModelOptimizations(model, options = {}) {
     // 7. 最后进行全局修剪与去重 (始终执行，保证输出质量)
     dedupeGroupsByName(model);
     pruneInvalidMembers(model);
+    // 指令兜底：所有组统一补 REJECT/DIRECT——成员只有 REJECT/DIRECT 的存根组
+    // （如零节点的 🌐 DNS 出口）原样保留，任何组都不会再因成员为空被 pruneEmptyGroups
+    // 整组丢弃或引发级联删除，下游渲染产物不再出现悬空引用。
+    model.groups.forEach((group) => {
+        if (Array.isArray(group.members)) {
+            group.members = withPolicyFallbacks(group.members);
+        }
+    });
     pruneEmptyGroups(model);
 
     return model;
