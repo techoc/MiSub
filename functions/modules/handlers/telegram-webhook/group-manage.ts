@@ -257,7 +257,14 @@ export async function applyGroupOperation(
  * 解析目标参数（支持序号、ID、all）
  * @returns {Object} { type: 'index'|'id'|'all'|'range', values: [] }
  */
-export function parseTargetArgs(args: any) {
+export type ParsedTarget =
+    | { type: 'none'; values: number[] }
+    | { type: 'all'; values: number[] }
+    | { type: 'index'; values: number[] }
+    | { type: 'id'; values: string[] }
+    | { type: 'mixed'; indices: number[]; ids: string[] };
+
+export function parseTargetArgs(args: string[]): ParsedTarget {
     if (!args || args.length === 0) {
         return { type: 'none', values: [] };
     }
@@ -271,7 +278,7 @@ export function parseTargetArgs(args: any) {
     // 支持逗号分隔的多个值
     const parts = arg.split(/[,，\s]+/).filter((p: any) => p);
     const indices: number[] = [];
-    const ids: any[] = [];
+    const ids: string[] = [];
 
     for (const part of parts) {
         const num = parseInt(part);

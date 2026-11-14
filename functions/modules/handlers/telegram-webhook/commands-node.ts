@@ -10,11 +10,11 @@ import { parseTargetArgs } from './group-manage.ts';
 import { sendTelegramMessage } from './telegram-api.ts';
 import { getNodesWithMapping, getUserNodes } from './user-access.ts';
 
-import type { KvRecord } from '../../../../types/models.ts';
+import type { KvRecord, ProfileItem, SubscriptionItem } from '../../../../types/models.ts';
 /**
  * 处理 /delete 命令
  */
-export async function handleDeleteCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleDeleteCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     try {
         const target = parseTargetArgs(args);
 
@@ -39,7 +39,7 @@ export async function handleDeleteCommand(chatId: any, userId: any, args: any, e
             return;
         }
 
-        let indicesToDelete: any[] = [];
+        let indicesToDelete: number[] = [];
 
         if (target.type === 'all') {
             indicesToDelete = indexMapping;
@@ -51,7 +51,9 @@ export async function handleDeleteCommand(chatId: any, userId: any, args: any, e
             }
         } else if (target.type === 'id') {
             for (const id of target.values!) {
-                const foundIdx = allSubscriptions.findIndex((s: any) => s.id === id);
+                const foundIdx = allSubscriptions.findIndex(
+                    (s: SubscriptionItem) => s.id === id
+                );
                 if (foundIdx !== -1 && indexMapping.includes(foundIdx)) {
                     indicesToDelete.push(foundIdx);
                 }
@@ -64,7 +66,7 @@ export async function handleDeleteCommand(chatId: any, userId: any, args: any, e
         }
 
         // 收集要删除的 ID
-        const deletedIds: any[] = [];
+        const deletedIds: string[] = [];
         for (const idx of indicesToDelete) {
             if (allSubscriptions[idx]) {
                 deletedIds.push(allSubscriptions[idx].id);
@@ -73,7 +75,7 @@ export async function handleDeleteCommand(chatId: any, userId: any, args: any, e
 
         // 删除节点（从后往前删除以保持索引正确）
         indicesToDelete.sort((a, b) => b - a);
-        const deletedNames: any[] = [];
+        const deletedNames: string[] = [];
         for (const idx of indicesToDelete) {
             deletedNames.push(allSubscriptions[idx].name);
             allSubscriptions.splice(idx, 1);
@@ -88,12 +90,12 @@ export async function handleDeleteCommand(chatId: any, userId: any, args: any, e
                 let profilesUpdated = false;
                 const idsToRemove = new Set(deletedIds);
 
-                profiles.forEach((profile: any) => {
+                profiles.forEach((profile: ProfileItem) => {
                     // 清理 manualNodes
                     if (Array.isArray(profile.manualNodes)) {
                         const prevLen = profile.manualNodes.length;
                         profile.manualNodes = profile.manualNodes.filter(
-                            (id: any) => !idsToRemove.has(id)
+                            (id) => !idsToRemove.has(String(id))
                         );
                         if (profile.manualNodes.length !== prevLen) profilesUpdated = true;
                     }
@@ -101,7 +103,7 @@ export async function handleDeleteCommand(chatId: any, userId: any, args: any, e
                     if (Array.isArray(profile.subscriptions)) {
                         const prevLen = profile.subscriptions.length;
                         profile.subscriptions = profile.subscriptions.filter(
-                            (id: any) => !idsToRemove.has(id)
+                            (id) => !idsToRemove.has(String(id))
                         );
                         if (profile.subscriptions.length !== prevLen) profilesUpdated = true;
                     }
@@ -136,14 +138,14 @@ export async function handleDeleteCommand(chatId: any, userId: any, args: any, e
 /**
  * 处理 /enable 命令
  */
-export async function handleEnableCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleEnableCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     await handleToggleCommand(chatId, userId, args, env, true);
 }
 
 /**
  * 处理 /disable 命令
  */
-export async function handleDisableCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleDisableCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     await handleToggleCommand(chatId, userId, args, env, false);
 }
 
@@ -151,11 +153,11 @@ export async function handleDisableCommand(chatId: any, userId: any, args: any, 
  * 切换节点启用状态
  */
 export async function handleToggleCommand(
-    chatId: any,
-    userId: any,
-    args: any,
-    env: any,
-    enable: any
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env,
+    enable: boolean
 ) {
     try {
         const target = parseTargetArgs(args);
@@ -183,7 +185,7 @@ export async function handleToggleCommand(
             return;
         }
 
-        let indicesToToggle: any[] = [];
+        let indicesToToggle: number[] = [];
 
         if (target.type === 'all') {
             indicesToToggle = [...indexMapping];
@@ -200,7 +202,7 @@ export async function handleToggleCommand(
             return;
         }
 
-        const toggledNames: any[] = [];
+        const toggledNames: string[] = [];
         for (const idx of indicesToToggle) {
             allSubscriptions[idx].enabled = enable;
             toggledNames.push(allSubscriptions[idx].name);
@@ -229,7 +231,7 @@ export async function handleToggleCommand(
 /**
  * 处理 /search 命令
  */
-export async function handleSearchCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleSearchCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     try {
         const keyword = args.join(' ').trim();
 
@@ -286,10 +288,10 @@ export async function handleSearchCommand(chatId: any, userId: any, args: any, e
  * 处理 /sub 命令 - 获取订阅链接
  */
 export async function handleSubCommand(
-    chatId: any,
-    args: any,
-    env: any,
-    request: any,
+    chatId: string | number,
+    args: string[],
+    env: Env,
+    request: Request | null,
     requestCache: KvRecord | null = null
 ) {
     try {
@@ -298,7 +300,7 @@ export async function handleSubCommand(
         const settings = await getCachedSettings(env, cache);
 
         // 获取公开的订阅组
-        const publicProfiles = profiles.filter((p: any) => p.isPublic);
+        const publicProfiles = profiles.filter((p: ProfileItem) => p.isPublic);
 
         if (publicProfiles.length === 0) {
             await sendTelegramMessage(
@@ -324,7 +326,7 @@ export async function handleSubCommand(
             // 查找指定订阅组
             const targetName = args.join(' ').trim().toLowerCase();
             const profile = publicProfiles.find(
-                (p: any) =>
+                (p: ProfileItem) =>
                     p.name.toLowerCase().includes(targetName) || p.id.toLowerCase() === targetName
             );
 
@@ -351,7 +353,7 @@ export async function handleSubCommand(
             // 列出所有公开订阅组
             let message = `🔗 <b>订阅组列表</b>\n\n`;
 
-            publicProfiles.forEach((profile: any, i: any) => {
+            publicProfiles.forEach((profile: ProfileItem, i: number) => {
                 message += `<b>${i + 1}. ${profile.name}</b>\n`;
                 if (baseUrl) {
                     message += `<code>${baseUrl}/sub/${profile.id}</code>\n\n`;
@@ -382,8 +384,8 @@ export async function handleSubCommand(
  * 处理订阅获取 - 简化版（用于快捷菜单，不需要 request）
  */
 export async function handleSubCommandSimple(
-    chatId: any,
-    env: any,
+    chatId: string | number,
+    env: Env,
     requestCache: KvRecord | null = null
 ) {
     try {
@@ -392,7 +394,7 @@ export async function handleSubCommandSimple(
         const settings = await getCachedSettings(env, cache);
 
         // 获取公开的订阅组
-        const publicProfiles = profiles.filter((p: any) => p.isPublic);
+        const publicProfiles = profiles.filter((p: ProfileItem) => p.isPublic);
 
         if (publicProfiles.length === 0) {
             await sendTelegramMessage(
@@ -408,7 +410,7 @@ export async function handleSubCommandSimple(
 
         let message = '🔗 <b>订阅组列表</b>\n\n';
 
-        publicProfiles.forEach((profile: any, i: any) => {
+        publicProfiles.forEach((profile: ProfileItem, i: number) => {
             message += `<b>${i + 1}. ${profile.name}</b>\n`;
             message += `ID: <code>${profile.id}</code>\n`;
             if (customDomain) {
@@ -435,7 +437,7 @@ export async function handleSubCommandSimple(
 /**
  * 处理 /rename 命令
  */
-export async function handleRenameCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleRenameCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     try {
         if (args.length < 2) {
             await sendTelegramMessage(
@@ -497,7 +499,7 @@ export async function handleRenameCommand(chatId: any, userId: any, args: any, e
 /**
  * 处理 /info 命令 - 节点详情
  */
-export async function handleInfoCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleInfoCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     try {
         if (args.length === 0) {
             await sendTelegramMessage(
@@ -583,7 +585,7 @@ export async function handleInfoCommand(chatId: any, userId: any, args: any, env
 /**
  * 处理 /copy 命令 - 复制节点链接
  */
-export async function handleCopyCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleCopyCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     try {
         const target = parseTargetArgs(args);
 
@@ -606,12 +608,12 @@ export async function handleCopyCommand(chatId: any, userId: any, args: any, env
             return;
         }
 
-        let indicesToCopy: any[] = [];
+        let indicesToCopy: number[] = [];
 
         if (target.type === 'all') {
             indicesToCopy = userNodes.map((_, i) => i);
         } else if (target.type === 'index') {
-            indicesToCopy = (target.values as any[]).filter(
+            indicesToCopy = target.values.filter(
                 (idx) => idx >= 0 && idx < userNodes.length
             );
         }
@@ -651,7 +653,7 @@ export async function handleCopyCommand(chatId: any, userId: any, args: any, env
 /**
  * 处理 /export 命令 - 导出节点
  */
-export async function handleExportCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleExportCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
     try {
         const userNodes = await getUserNodes(userId, env);
 
