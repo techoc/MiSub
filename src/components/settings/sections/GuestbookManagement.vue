@@ -15,10 +15,24 @@
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const messages = ref<any[]>([]);
+    /** 留言条目 */
+    interface GuestbookMessage {
+        id: string;
+        nickname?: string;
+        content?: string;
+        type?: string;
+        status?: string;
+        createdAt?: string | number;
+        reply?: string;
+        replyAt?: string | number;
+        isVisible?: boolean;
+        [key: string]: unknown;
+    }
+
+    const messages = ref<GuestbookMessage[]>([]);
     const loading = ref(false);
     const filterStatus = ref('all'); // all, pending, approved, replied
-    const replyingId = ref<any>(null);
+    const replyingId = ref<string | null>(null);
     const replyContent = ref('');
 
     const defaultGuestbookConfig = {
@@ -64,17 +78,18 @@
     const filteredMessages = computed(() => {
         if (filterStatus.value === 'all') return messages.value;
         return messages.value.filter((m) => {
-            if (filterStatus.value === 'pending')
-                return (m as { status?: string }).status === 'pending';
-            if (filterStatus.value === 'approved')
-                return (m as { status?: string }).status === 'approved';
-            if (filterStatus.value === 'replied')
-                return (m as { status?: string }).status === 'replied';
+            if (filterStatus.value === 'pending') return m.status === 'pending';
+            if (filterStatus.value === 'approved') return m.status === 'approved';
+            if (filterStatus.value === 'replied') return m.status === 'replied';
             return true;
         });
     });
 
-    const handleAction = async (action: any, id: any, payload = {}) => {
+    const handleAction = async (
+        action: string,
+        id: string,
+        payload: Record<string, unknown> = {}
+    ) => {
         try {
             const data = await api.post('/api/guestbook/manage', { action, id, ...payload });
 
@@ -82,13 +97,9 @@
                 showToast(t('settings.guestbookActionSuccess'), 'success');
                 // Update local state
                 if (action === 'delete') {
-                    messages.value = messages.value.filter(
-                        (m) => (m as Record<string, any>).id !== id
-                    );
+                    messages.value = messages.value.filter((m) => m.id !== id);
                 } else {
-                    const index = messages.value.findIndex(
-                        (m) => (m as Record<string, any>).id === id
-                    );
+                    const index = messages.value.findIndex((m) => m.id === id);
                     if (index !== -1) {
                         messages.value[index] = data.data;
                     }
@@ -107,7 +118,7 @@
         }
     };
 
-    const startReply = (msg: any) => {
+    const startReply = (msg: GuestbookMessage) => {
         replyingId.value = msg.id;
         replyContent.value = msg.reply || '';
     };
@@ -117,17 +128,17 @@
         replyContent.value = '';
     };
 
-    const submitReply = (id: any) => {
+    const submitReply = (id: string) => {
         if (!replyContent.value.trim()) return;
         handleAction('reply', id, { replyContent: replyContent.value });
     };
 
-    const formatDate = (isoString: any) => {
+    const formatDate = (isoString: string | number | null | undefined): string => {
         if (!isoString) return '-';
         return new Date(isoString).toLocaleString();
     };
 
-    const getStatusBadgeClass = (status: any) => {
+    const getStatusBadgeClass = (status: string | undefined): string => {
         switch (status) {
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
@@ -140,7 +151,7 @@
         }
     };
 
-    const getStatusLabel = (status: any) => {
+    const getStatusLabel = (status: string | undefined): string => {
         switch (status) {
             case 'pending':
                 return t('settings.guestbookPending');
@@ -149,11 +160,11 @@
             case 'replied':
                 return t('settings.guestbookReplied');
             default:
-                return status;
+                return status ?? '';
         }
     };
 
-    const getTypeLabel = (type: any) => {
+    const getTypeLabel = (type: string | undefined): string => {
         switch (type) {
             case 'bug':
                 return t('settings.guestbookBug');
