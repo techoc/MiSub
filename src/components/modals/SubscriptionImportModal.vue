@@ -3,6 +3,7 @@
 
     const { t } = useI18n();
     import { ref, watch } from 'vue';
+    import type { PropType } from 'vue';
     import { useToastStore } from '../../stores/toast.ts';
     import Modal from '../forms/Modal.vue';
     import { handleError } from '../../utils/errorHandler.ts';
@@ -16,11 +17,28 @@
     import { readFilesAsText } from '../../utils/importFile.ts';
     import { buildAutoGroupName } from '../../utils/auto-group-name.ts';
 
+    import type { SubscriptionDraft } from '../../../types/models.ts';
+
     const isDev = import.meta.env.DEV;
+
+    /** 后端解析出的节点（写入手动节点列表前的形状） */
+    interface ImportedNode {
+        id: string;
+        name: string;
+        url: string;
+        enabled: boolean;
+        protocol: string;
+        source: string;
+    }
+
+    /** 本地文件列表（FileImport 事件载荷） */
+    type ImportFileList = FileList | File[] | null | undefined;
 
     const props = defineProps({
         show: Boolean,
-        addNodesFromBulk: Function as any,
+        addNodesFromBulk: {
+            type: Function as PropType<(nodes: SubscriptionDraft[], groupName?: string) => void>,
+        },
         groups: {
             // Added
             type: Array,
@@ -60,22 +78,30 @@
      * 把后端返回的节点写入手动节点列表（URL 导入与文件导入共用）。
      * @returns {boolean} 是否至少写入了一个节点
      */
-    const commitParsedNodes = (backendNodes: any, targetGroupName: any, sourceLabel: any) => {
-        const nodes = (backendNodes || []).map((node: any) => ({
-            id: generateNodeId(),
-            name: node.name || 'Unknown',
-            url: node.url,
-            enabled: true,
-            protocol: node.protocol || 'unknown',
-            source: 'import',
-        }));
+    const commitParsedNodes = (
+        backendNodes: unknown,
+        targetGroupName: string,
+        sourceLabel: string
+    ): boolean => {
+        const nodes: ImportedNode[] = (Array.isArray(backendNodes) ? backendNodes : []).map(
+            (node: unknown) => {
+                const record = (node || {}) as Record<string, unknown>;
+                return {
+                    id: generateNodeId(),
+                    name: (record.name as string) || 'Unknown',
+                    url: record.url as string,
+                    enabled: true,
+                    protocol: (record.protocol as string) || 'unknown',
+                    source: 'import',
+                };
+            }
+        );
 
         if (nodes.length === 0) return false;
 
         // 去重处理
         const uniqueNodes = nodes.filter(
-            (node: any, index: any, self: any) =>
-                index === self.findIndex((n: any) => n.url === node.url)
+            (node, index, self) => index === self.findIndex((n) => n.url === node.url)
         );
         const duplicateCount = nodes.length - uniqueNodes.length;
 
@@ -103,10 +129,11 @@
     /**
      * 上传本地文件导入：读取文件文本 → 后端解析 → 入库。
      */
-    const importFiles = async (fileList: any) => {
+    const importFiles = async (fileList: unknown) => {
+        const files = fileList as ImportFileList;
         // 用户未填分组时，用文件名自动生成，免去手填
-        if (!groupName.value.trim() && fileList?.length) {
-            groupName.value = buildAutoGroupName({ fileName: fileList[0].name });
+        if (!groupName.value.trim() && files?.length) {
+            groupName.value = buildAutoGroupName({ fileName: files[0]?.name || '' });
         }
         const targetGroupName = groupName.value;
         errorMessage.value = '';
@@ -115,7 +142,7 @@
 
         try {
             parseStatus.value = t('importNodes.readingFile');
-            const { text, fileCount } = await readFilesAsText(fileList);
+            const { text, fileCount } = await readFilesAsText(files);
 
             if (!text.trim()) {
                 throw new Error(t('importNodes.emptyFile'));
@@ -155,9 +182,9 @@
     /**
      * 验证URL格式
      */
-    const isValidUrl = (url: any) => {
+    const isValidUrl = (url: unknown): boolean => {
         try {
-            const u = new URL(url);
+            const u = new URL(String(url || ''));
             return u.protocol === 'http:' || u.protocol === 'https:';
         } catch {
             return false;
