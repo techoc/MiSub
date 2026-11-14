@@ -10,11 +10,30 @@ import { isNetworkErrorMessage } from '@/utils/network-error.ts';
 
 const isDev = import.meta.env.DEV;
 
-export function useNodePreview(props: any) {
+/** /api/subscription_nodes 返回的预览节点 */
+interface PreviewNode {
+    name: string;
+    protocol: string;
+    region: string;
+    url: string;
+    [key: string]: unknown;
+}
+
+/** 节点预览组件 props（本 composable 用到的字段） */
+interface NodePreviewProps {
+    show?: boolean;
+    profileName?: string;
+    subscriptionName?: string;
+    profileId?: string;
+    subscriptionId?: string;
+    subscriptionUrl?: string;
+}
+
+export function useNodePreview(props: NodePreviewProps) {
     // 响应式数据
     const loading = ref(false);
     const error = ref('');
-    const allNodes = ref([]); // 存储所有节点
+    const allNodes = ref<PreviewNode[]>([]); // 存储所有节点
     const currentPage = ref(1);
     const pageSize = ref(20);
     const viewMode = ref('list'); // 'list' 或 'card'
@@ -37,8 +56,8 @@ export function useNodePreview(props: any) {
     const searchQuery = ref('');
 
     // 统计信息
-    const protocolStats = ref({});
-    const regionStats = ref({});
+    const protocolStats = ref<Record<string, number>>({});
+    const regionStats = ref<Record<string, number>>({});
     const availableProtocols = ref<string[]>([]);
     const availableRegions = ref<string[]>([]);
 
@@ -61,16 +80,12 @@ export function useNodePreview(props: any) {
 
         // 协议过滤
         if (protocolFilter.value && protocolFilter.value !== 'all') {
-            result = result.filter(
-                (node) => (node as Record<string, any>).protocol === protocolFilter.value
-            );
+            result = result.filter((node) => node.protocol === protocolFilter.value);
         }
 
         // 地区过滤
         if (regionFilter.value && regionFilter.value !== 'all') {
-            result = result.filter(
-                (node) => (node as Record<string, any>).region === regionFilter.value
-            );
+            result = result.filter((node) => node.region === regionFilter.value);
         }
 
         // 搜索过滤
@@ -78,9 +93,9 @@ export function useNodePreview(props: any) {
             const query = searchQuery.value.toLowerCase().trim();
             result = result.filter(
                 (node) =>
-                    (node as Error).name.toLowerCase().includes(query) ||
-                    (node as Record<string, any>).protocol.toLowerCase().includes(query) ||
-                    (node as Record<string, any>).region.toLowerCase().includes(query)
+                    node.name.toLowerCase().includes(query) ||
+                    node.protocol.toLowerCase().includes(query) ||
+                    node.region.toLowerCase().includes(query)
             );
         }
 
@@ -113,7 +128,7 @@ export function useNodePreview(props: any) {
         error.value = '';
 
         try {
-            const requestData: Record<string, any> = {
+            const requestData: Record<string, unknown> = {
                 userAgent: 'MiSub-Node-Preview/1.0',
             };
 
@@ -169,7 +184,7 @@ export function useNodePreview(props: any) {
     };
 
     // 复制节点链接
-    const copyNodeUrl = async (node: any, nodeId: any) => {
+    const copyNodeUrl = async (node: PreviewNode, nodeId: string): Promise<void> => {
         try {
             await navigator.clipboard.writeText(node.url);
             copiedNodeId.value = nodeId;
@@ -212,14 +227,14 @@ export function useNodePreview(props: any) {
         }
     };
 
-    const goToPage = (page: any) => {
+    const goToPage = (page: number): void => {
         if (page >= 1 && page <= totalPages.value) {
             currentPage.value = page;
         }
     };
 
     // 更新视图模式
-    const updateViewMode = (mode: any) => {
+    const updateViewMode = (mode: string): void => {
         viewMode.value = mode;
     };
 
