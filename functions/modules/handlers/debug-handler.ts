@@ -24,13 +24,25 @@ import {
     validatePublicFetchUrl,
 } from '../security-utils.ts';
 
+/** 从错误对象提取 HTTP 状态码 */
+function getErrorStatus(error: unknown, fallback: number): number {
+    const status = (error as { status?: number } | undefined)?.status;
+    return typeof status === 'number' ? status : fallback;
+}
+
+/** 调试导出数据结构 */
+interface DebugExportData {
+    exportInfo: { timestamp: string; version: string; storageType: string };
+    data: Record<string, unknown>;
+}
+
 /**
  * 调试订阅信息和节点内容
  * @param {Object} request - HTTP请求对象
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleDebugSubscriptionRequest(request: any, env: any) {
+export async function handleDebugSubscriptionRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -69,6 +81,15 @@ export async function handleDebugSubscriptionRequest(request: any, env: any) {
         }
 
         // 生成详细的调试信息
+        const subscriptions: Array<Record<string, unknown>> = Array.isArray(
+            nodeResult.subscriptions
+        )
+            ? nodeResult.subscriptions
+            : [];
+        const nodes: Array<Record<string, unknown>> = Array.isArray(nodeResult.nodes)
+            ? nodeResult.nodes
+            : [];
+
         const debugInfo = {
             requestInfo: {
                 providedUrl: !!subscriptionUrl,
@@ -77,34 +98,29 @@ export async function handleDebugSubscriptionRequest(request: any, env: any) {
                 userAgent: userAgent,
             },
             subscriptionInfo: {
-                totalSubscriptions:
-                    (nodeResult.subscriptions as Record<string, any> | undefined)?.length || 0,
-                successfulSubscriptions:
-                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter(
-                        (s: any) => s.success
-                    ).length || 0,
-                failedSubscriptions:
-                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter(
-                        (s: any) => !s.success
-                    ).length || 0,
+                totalSubscriptions: subscriptions.length,
+                successfulSubscriptions: subscriptions.filter((s) => s.success).length,
+                failedSubscriptions: subscriptions.filter((s) => !s.success).length,
             },
             nodeInfo: {
                 totalNodes: nodeResult.totalCount || 0,
                 protocols: nodeResult.stats?.protocols || {},
                 regions: nodeResult.stats?.regions || {},
             },
-            detailedSubscriptions:
-                (nodeResult.subscriptions as Record<string, any> | undefined)?.map((sub: any) => ({
+            detailedSubscriptions: subscriptions.map((sub) => {
+                const subNodes = Array.isArray(sub.nodes) ? sub.nodes : [];
+                return {
                     name: sub.subscriptionName,
                     url: redactUrl(sub.url),
                     success: sub.success,
-                    nodeCount: sub.nodes?.length || 0,
+                    nodeCount: subNodes.length,
                     error: sub.error,
                     isManualNode: sub.isManualNode || false,
-                    protocols: sub.success ? calculateProtocolStats(sub.nodes || []) : {},
-                    regions: sub.success ? calculateRegionStats(sub.nodes || []) : {},
-                })) || [],
-            sampleNodes: (nodeResult.nodes || []).slice(0, 5).map((node: any) => ({
+                    protocols: sub.success ? calculateProtocolStats(subNodes) : {},
+                    regions: sub.success ? calculateRegionStats(subNodes) : {},
+                };
+            }),
+            sampleNodes: nodes.slice(0, 5).map((node) => ({
                 name: node.name,
                 protocol: node.protocol,
                 region: node.region,
@@ -133,7 +149,7 @@ export async function handleDebugSubscriptionRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSystemInfoRequest(request: any, env: any) {
+export async function handleSystemInfoRequest(request: Request, env: Env) {
     if (request.method !== 'GET') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -152,8 +168,10 @@ export async function handleSystemInfoRequest(request: any, env: any) {
                 : storageAdapter.get('misub_profiles_v1').then((res) => res || []),
         ]);
 
-        const activeSubscriptions = allSubscriptions.filter((sub: any) => sub.enabled).length;
-        const activeProfiles = allProfiles.filter((profile: any) => profile.enabled).length;
+        const subscriptionList = Array.isArray(allSubscriptions) ? allSubscriptions : [];
+        const profileList = Array.isArray(allProfiles) ? allProfiles : [];
+        const activeSubscriptions = subscriptionList.filter((sub) => sub.enabled).length;
+        const activeProfiles = profileList.filter((profile) => profile.enabled).length;
 
         const systemInfo = {
             environment: {
@@ -173,14 +191,14 @@ export async function handleSystemInfoRequest(request: any, env: any) {
             },
             statistics: {
                 subscriptions: {
-                    total: allSubscriptions.length,
+                    total: subscriptionList.length,
                     active: activeSubscriptions,
-                    inactive: allSubscriptions.length - activeSubscriptions,
+                    inactive: subscriptionList.length - activeSubscriptions,
                 },
                 profiles: {
-                    total: allProfiles.length,
+                    total: profileList.length,
                     active: activeProfiles,
-                    inactive: allProfiles.length - activeProfiles,
+                    inactive: profileList.length - activeProfiles,
                 },
             },
             timestamp: new Date().toISOString(),
@@ -202,7 +220,7 @@ export async function handleSystemInfoRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleStorageTestRequest(request: any, env: any) {
+export async function handleStorageTestRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -279,7 +297,7 @@ export async function handleStorageTestRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleExportDataRequest(request: any, env: any) {
+export async function handleExportDataRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -296,7 +314,7 @@ export async function handleExportDataRequest(request: any, env: any) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const exportData: Record<string, any> = {
+        const exportData: DebugExportData = {
             exportInfo: {
                 timestamp: new Date().toISOString(),
                 version: '2.0.0',
@@ -327,10 +345,12 @@ export async function handleExportDataRequest(request: any, env: any) {
             exportData,
             metadata: {
                 size: exportSize,
-                subscriptionsCount:
-                    (exportData.data.subscriptions as Record<string, any> | undefined)?.length || 0,
-                profilesCount:
-                    (exportData.data.profiles as Record<string, any> | undefined)?.length || 0,
+                subscriptionsCount: Array.isArray(exportData.data.subscriptions)
+                    ? exportData.data.subscriptions.length
+                    : 0,
+                profilesCount: Array.isArray(exportData.data.profiles)
+                    ? exportData.data.profiles.length
+                    : 0,
                 settingsCount: Object.keys(exportData.data.settings || {}).length,
             },
         });
@@ -345,7 +365,7 @@ export async function handleExportDataRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePreviewContentRequest(request: any, env: any) {
+export async function handlePreviewContentRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -387,7 +407,7 @@ export async function handlePreviewContentRequest(request: any, env: any) {
         // 检测内容类型
         const isBase64 = /^[A-Za-z0-9+/=]+$/s.test(rawContent.replace(/\s/g, ''));
         let decodedContent = rawContent;
-        let contentInfo: Record<string, any> = {
+        const contentInfo: Record<string, unknown> = {
             originalLength: contentLength,
             isBase64,
             contentType: 'unknown',
@@ -433,13 +453,10 @@ export async function handlePreviewContentRequest(request: any, env: any) {
             success: true,
             contentInfo,
             previewContent,
-            fullContent: request.fullExport ? decodedContent : null,
+            fullContent: requestData.fullExport === true ? decodedContent : null,
         });
     } catch (e) {
-        return createErrorResponse(
-            `内容预览失败: ${(e as Error).message}`,
-            (e as Record<string, any>).status || 500
-        );
+        return createErrorResponse(`内容预览失败: ${(e as Error).message}`, getErrorStatus(e, 500));
     }
 }
 
@@ -449,7 +466,7 @@ export async function handlePreviewContentRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleTestNotificationRequest(request: any, env: any) {
+export async function handleTestNotificationRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -472,6 +489,6 @@ export async function handleTestNotificationRequest(request: any, env: any) {
             );
         }
     } catch (e) {
-        return createErrorResponse((e as Error).message, (e as Record<string, any>).status || 500);
+        return createErrorResponse((e as Error).message, getErrorStatus(e, 500));
     }
 }

@@ -697,4 +697,27 @@ describe('security hardening', () => {
         expect(text).not.toContain('debug-token-secret');
         expect(text).not.toContain('debug-node-password@server.example');
     });
+
+    it('returns preview fullContent only when fullExport is requested', async () => {
+        const content = 'ss://YWVzLTI1Ni1nY206cGFzcw==@example.com:8388#Node';
+        vi.spyOn(globalThis, 'fetch').mockImplementation(
+            async () => new Response(content, { status: 200 })
+        );
+
+        const makeRequest = (fullExport) =>
+            new Request('https://example.com/api/preview/content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: 'https://raw.githubusercontent.com/example/repo/main/sub.txt',
+                    fullExport,
+                }),
+            });
+
+        const without = await (await handlePreviewContentRequest(makeRequest(false), {})).json();
+        expect(without.fullContent).toBeNull();
+
+        const withFull = await (await handlePreviewContentRequest(makeRequest(true), {})).json();
+        expect(withFull.fullContent).toBe(content);
+    });
 });
