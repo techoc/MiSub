@@ -3,30 +3,45 @@
  * @author MiSub Team
  */
 
+import type { MisubSettings } from '../../types/models.ts';
+
+/** IP 地理位置信息（外部 JSON/HTML 解析产物） */
+interface GeoLocationInfo {
+    country?: unknown;
+    city?: unknown;
+    isp?: unknown;
+    asn?: unknown;
+}
+
+/** 普通对象归一化 */
+function asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
 /**
  * 转义 Telegram HTML 模式下的特殊字符
  * @param {string} text - 待转义的文本
  * @returns {string} - 转义后的文本
  */
-export function tgEscape(text: any) {
+export function tgEscape(text: unknown): string {
     if (typeof text !== 'string') return String(text || '');
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function splitIpCnLocation(value: any) {
+function splitIpCnLocation(value: unknown): string[] {
     return String(value || '')
         .trim()
         .split(/\s+/)
         .filter(Boolean);
 }
 
-function isLikelyCarrier(value: any) {
+function isLikelyCarrier(value: unknown): boolean {
     return /(?:移动|联通|电信|電信|广电|廣電|铁通|鐵通|教育网|教育網|宽带|寬帶|通信|通訊|网络|網絡|中华电信|中華電信|台湾大哥大|台灣大哥大|远传|遠傳|台湾之星|台灣之星|亚太电信|亞太電信)$/i.test(
         String(value || '').trim()
     );
 }
 
-function parseIpCnHtml(html: any) {
+function parseIpCnHtml(html: unknown): GeoLocationInfo | null {
     const text = String(html || '');
     const description = text
         .match(
@@ -40,7 +55,7 @@ function parseIpCnHtml(html: any) {
     const descriptionParts = splitIpCnLocation(description);
 
     if (tableParts.length > 0) {
-        const result: Record<string, any> = {
+        const result: GeoLocationInfo = {
             country: tableParts[0],
             city: tableParts.slice(1).join(' '),
         };
@@ -72,11 +87,21 @@ function parseIpCnHtml(html: any) {
     };
 }
 
-const IP_GEOLOCATION_PROVIDERS = [
+/** 地理位置查询 provider */
+interface GeoProvider {
+    name: string;
+    supports?: (ip: string) => boolean;
+    buildUrl: (ip: string) => string;
+    requestInit?: RequestInit;
+    read?: (response: Response) => Promise<string>;
+    parse: (data: unknown) => GeoLocationInfo | null;
+}
+
+const IP_GEOLOCATION_PROVIDERS: GeoProvider[] = [
     {
         name: 'ip.cn',
-        supports: (ip: any) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(ip),
-        buildUrl: (ip: any) => `https://ip.cn/ip/${encodeURIComponent(ip)}.html`,
+        supports: (ip) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(ip),
+        buildUrl: (ip) => `https://ip.cn/ip/${encodeURIComponent(ip)}.html`,
         requestInit: {
             redirect: 'manual',
             headers: {
@@ -86,68 +111,74 @@ const IP_GEOLOCATION_PROVIDERS = [
                 Referer: 'https://ip.cn/',
             },
         },
-        read: (response: any) => response.text(),
+        read: (response) => response.text(),
         parse: parseIpCnHtml,
     },
     {
         name: 'ipwho.is',
-        buildUrl: (ip: any) => `https://ipwho.is/${encodeURIComponent(ip)}`,
-        parse: (data: any) =>
-            data?.success
-                ? {
-                      country: data.country,
-                      city: data.city,
-                      isp: data.connection?.org || data.connection?.isp,
-                      asn: data.connection?.asn,
-                  }
-                : null,
+        buildUrl: (ip) => `https://ipwho.is/${encodeURIComponent(ip)}`,
+        parse: (data) => {
+            const payload = asRecord(data);
+            if (!payload.success) return null;
+            const connection = asRecord(payload.connection);
+            return {
+                country: payload.country,
+                city: payload.city,
+                isp: connection.org || connection.isp,
+                asn: connection.asn,
+            };
+        },
     },
     {
         name: 'ipapi.co',
-        buildUrl: (ip: any) => `https://ipapi.co/${encodeURIComponent(ip)}/json/`,
-        parse: (data: any) =>
-            data?.error
-                ? null
-                : {
-                      country: data.country_name || data.country,
-                      city: data.city,
-                      isp: data.org || data.network,
-                      asn: data.asn,
-                  },
+        buildUrl: (ip) => `https://ipapi.co/${encodeURIComponent(ip)}/json/`,
+        parse: (data) => {
+            const payload = asRecord(data);
+            if (payload.error) return null;
+            return {
+                country: payload.country_name || payload.country,
+                city: payload.city,
+                isp: payload.org || payload.network,
+                asn: payload.asn,
+            };
+        },
     },
     {
         name: 'ipinfo.io',
-        buildUrl: (ip: any) => `https://ipinfo.io/${encodeURIComponent(ip)}/json`,
-        parse: (data: any) =>
-            data?.bogon || data?.error
-                ? null
-                : {
-                      country: data.country,
-                      city: data.city,
-                      isp: data.org,
-                      asn: data.asn || String(data.org || '').match(/^AS\d+/)?.[0],
-                  },
+        buildUrl: (ip) => `https://ipinfo.io/${encodeURIComponent(ip)}/json`,
+        parse: (data) => {
+            const payload = asRecord(data);
+            if (payload.bogon || payload.error) return null;
+            return {
+                country: payload.country,
+                city: payload.city,
+                isp: payload.org,
+                asn: payload.asn || String(payload.org || '').match(/^AS\d+/)?.[0],
+            };
+        },
     },
 ];
 
-function hasGeolocationValue(info: any) {
-    return (
-        info &&
-        Object.values(info).some(
-            (value) => value !== undefined && value !== null && String(value).trim() !== ''
-        )
+function hasGeolocationValue(info: GeoLocationInfo | null): boolean {
+    if (!info) return false;
+    return Object.values(info).some(
+        (value) => value !== undefined && value !== null && String(value).trim() !== ''
     );
 }
 
-function mergeMissingGeolocationValues(current: any = {}, incoming: any = {}) {
-    const merged = { ...current };
-    for (const key of ['country', 'city', 'isp', 'asn']) {
-        if (!merged[key] && incoming?.[key]) merged[key] = incoming[key];
+function mergeMissingGeolocationValues(
+    current: GeoLocationInfo = {},
+    incoming: unknown = {}
+): GeoLocationInfo {
+    const merged: GeoLocationInfo = { ...current };
+    const source = asRecord(incoming);
+    for (const key of ['country', 'city', 'isp', 'asn'] as const) {
+        if (!merged[key] && source[key]) merged[key] = source[key];
     }
     return merged;
 }
 
-async function fetchIpGeolocation(clientIp: any) {
+async function fetchIpGeolocation(clientIp: string): Promise<GeoLocationInfo | null> {
     if (
         !clientIp ||
         clientIp === 'N/A' ||
@@ -156,14 +187,15 @@ async function fetchIpGeolocation(clientIp: any) {
     )
         return null;
 
-    let result: Record<string, any> = {};
+    let result: GeoLocationInfo = {};
     for (const provider of IP_GEOLOCATION_PROVIDERS) {
         if (provider.supports && !provider.supports(clientIp)) continue;
         try {
-            const response = await fetch(provider.buildUrl(clientIp), {
+            const init: RequestInit & { cf?: Record<string, unknown> } = {
                 cf: { timeout: 3000 },
                 ...(provider.requestInit || {}),
-            });
+            };
+            const response = await fetch(provider.buildUrl(clientIp), init);
             if (!response.ok) continue;
             const body = provider.read ? await provider.read(response) : await response.json();
             const info = provider.parse(body);
@@ -185,7 +217,10 @@ async function fetchIpGeolocation(clientIp: any) {
  * @param {string} message - 消息内容 (支持部分 HTML 标签: <b>, <i>, <code>, <a>)
  * @returns {Promise<boolean>} - 是否发送成功
  */
-export async function sendTgNotification(settings: any, message: any) {
+export async function sendTgNotification(
+    settings: MisubSettings,
+    message: string
+): Promise<boolean> {
     if (!settings.BotToken || !settings.ChatID) {
         return false;
     }
@@ -230,11 +265,11 @@ export async function sendTgNotification(settings: any, message: any) {
  * @returns {Promise<boolean>} - 是否发送成功
  */
 export async function sendEnhancedTgNotification(
-    settings: any,
-    type: any,
-    clientIp: any,
+    settings: MisubSettings,
+    type: string,
+    clientIp: string,
     additionalData = ''
-) {
+): Promise<boolean> {
     if (!settings.BotToken || !settings.ChatID) {
         return false;
     }
@@ -299,7 +334,10 @@ ${additionalData}
 /**
  * 调试发送Telegram通知（返回详细错误信息）
  */
-export async function debugTgNotification(settings: any, message: any) {
+export async function debugTgNotification(
+    settings: MisubSettings,
+    message: string
+): Promise<{ success: boolean; response?: unknown; error?: string }> {
     if (!settings.BotToken || !settings.ChatID) {
         return { success: false, error: 'BotToken or ChatID not configured' };
     }
