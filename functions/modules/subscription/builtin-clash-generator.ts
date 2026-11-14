@@ -24,13 +24,33 @@ import {
     pruneProxyGroups,
 } from './builtin-rules-provider.ts';
 import yaml from 'js-yaml';
+import type { ProxyNode } from '../../../types/models.ts';
+
+/** Clash 生成器选项 */
+interface ClashGeneratorOptions {
+    fileName?: string;
+    enableUdp?: boolean;
+    enableTfo?: boolean;
+    skipCertVerify?: boolean;
+    ruleLevel?: string;
+    userAgent?: string;
+    hiddifyCompatible?: boolean;
+    generatorOptions?: Record<string, unknown>;
+    isMeta?: boolean;
+    searchParams?: unknown;
+    customDnsOverride?: unknown;
+    dnsMode?: unknown;
+    subscriptionDnsPolicies?: unknown;
+    managedConfigUrl?: string;
+    [key: string]: unknown;
+}
 
 /**
  * 清理字符串中的控制字符（保留换行和制表符）
  * @param {string} str - 输入字符串
  * @returns {string} 清理后的字符串
  */
-function cleanControlChars(str: any) {
+function cleanControlChars(str: string): string {
     if (typeof str !== 'string') return str;
     // 移除控制字符，但保留换行(\n)、回车(\r)、制表符(\t)
     // eslint-disable-next-line no-control-regex
@@ -42,23 +62,23 @@ function cleanControlChars(str: any) {
  * @param {any} obj - 输入对象
  * @returns {any} 清理后的对象
  */
-function deepCleanControlChars(obj: any): any {
+function deepCleanControlChars<T>(obj: T): T {
     if (obj === null || obj === undefined) return obj;
 
     if (typeof obj === 'string') {
-        return cleanControlChars(obj);
+        return cleanControlChars(obj) as unknown as T;
     }
 
     if (Array.isArray(obj)) {
-        return obj.map((item) => deepCleanControlChars(item));
+        return obj.map((item) => deepCleanControlChars(item)) as unknown as T;
     }
 
     if (typeof obj === 'object') {
-        const cleaned = {};
+        const cleaned: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
-            (cleaned as Record<string, any>)[cleanControlChars(key)] = deepCleanControlChars(value);
+            cleaned[cleanControlChars(key)] = deepCleanControlChars(value);
         }
-        return cleaned;
+        return cleaned as unknown as T;
     }
 
     return obj;
@@ -68,9 +88,9 @@ function deepCleanControlChars(obj: any): any {
  * 处理重名节点，确保每个节点名称唯一
  * @param {Object[]} proxies - 代理对象数组
  */
-function deduplicateNames(proxies: any) {
-    const usedNames = new Map();
-    proxies.forEach((proxy: any) => {
+function deduplicateNames(proxies: ProxyNode[]) {
+    const usedNames = new Map<string, number>();
+    proxies.forEach((proxy) => {
         proxy.name = getUniqueName(proxy.name, usedNames);
     });
 }
@@ -80,8 +100,8 @@ function deduplicateNames(proxies: any) {
  * @param {Object[]} proxies
  * @returns {Object[]}
  */
-function stripInternalProxyFields(proxies: any) {
-    return proxies.map((proxy: any) => {
+function stripInternalProxyFields(proxies: ProxyNode[]): Array<Record<string, unknown>> {
+    return proxies.map((proxy) => {
         const { metadata, ...publicProxy } = proxy;
         return publicProxy;
     });
@@ -95,21 +115,28 @@ function stripInternalProxyFields(proxies: any) {
  * @param {Object[]} proxyGroups 策略组定义
  * @returns {{proxies: Object[], proxyGroups: Object[]}}
  */
-function applyMihomoRelayDialerProxy(proxies: any, publicProxies: any, proxyGroups: any) {
-    const relayGroup = proxyGroups.find((group: any) => group.name === '🔗 链式代理');
+function applyMihomoRelayDialerProxy(
+    proxies: ProxyNode[],
+    publicProxies: Array<Record<string, unknown>>,
+    proxyGroups: Array<Record<string, unknown>>
+): {
+    proxies: Array<Record<string, unknown>>;
+    proxyGroups: Array<Record<string, unknown>>;
+} {
+    const relayGroup = proxyGroups.find((group) => group.name === '🔗 链式代理');
     if (!relayGroup) {
         return { proxies: publicProxies, proxyGroups };
     }
 
-    const chainProxies = publicProxies.map((proxy: any) => ({
+    const chainProxies = publicProxies.map((proxy) => ({
         ...proxy,
-        name: `🔗 链式代理 - ${proxy.name}`,
+        name: `🔗 链式代理 - ${String(proxy.name)}`,
         'dialer-proxy': '入口节点',
     }));
-    const chainNames = chainProxies.map((proxy: any) => proxy.name);
+    const chainNames = chainProxies.map((proxy) => proxy.name);
 
     const nextProxyGroups = proxyGroups
-        .map((group: any) => {
+        .map((group) => {
             if (group.name === '🔗 链式代理') {
                 return {
                     ...group,
@@ -124,7 +151,7 @@ function applyMihomoRelayDialerProxy(proxies: any, publicProxies: any, proxyGrou
             }
             return group;
         })
-        .filter(Boolean);
+        .filter((group): group is Record<string, unknown> => group !== null);
 
     return {
         proxies: [...publicProxies, ...chainProxies],
@@ -138,7 +165,7 @@ function applyMihomoRelayDialerProxy(proxies: any, publicProxies: any, proxyGrou
  * @param {Object} options - 配置选项
  * @returns {string} Clash YAML 配置
  */
-export function generateBuiltinClashConfig(nodeList: any, options: Record<string, any> = {}) {
+export function generateBuiltinClashConfig(nodeList: string, options: ClashGeneratorOptions = {}) {
     const {
         fileName = 'MiSub',
         enableUdp = true,
@@ -148,7 +175,12 @@ export function generateBuiltinClashConfig(nodeList: any, options: Record<string
         userAgent = '',
         hiddifyCompatible = false,
     } = options;
-    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
+    const rawGeneratorOptions = options.generatorOptions;
+    const generatorOptions = normalizeGeneratorOptions(
+        rawGeneratorOptions && typeof rawGeneratorOptions === 'object'
+            ? (rawGeneratorOptions as Record<string, unknown>)
+            : {}
+    );
     const enableMihomoSyntax =
         Boolean(options.isMeta) || isMetaCore(userAgent, options.searchParams);
     const isHiddifyClient = hiddifyCompatible || /hiddify/i.test(userAgent || '');
@@ -163,7 +195,7 @@ export function generateBuiltinClashConfig(nodeList: any, options: Record<string
         .filter((line) => line && !line.startsWith('#'));
 
     // URL 输入继续走既有转换逻辑。
-    let proxies = urlsToClashProxies(nodeUrls, options);
+    let proxies = urlsToClashProxies(nodeUrls, options) as unknown as ProxyNode[];
 
     // 清理控制字符
     proxies = deepCleanControlChars(proxies);
@@ -187,8 +219,8 @@ export function generateBuiltinClashConfig(nodeList: any, options: Record<string
 
         // 生成策略组并执行引用修剪
         const policyGroupsFactory =
-            (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
-        let proxyGroups = policyGroupsFactory(proxies, options);
+            POLICY_GROUPS[levelKey as keyof typeof POLICY_GROUPS] || POLICY_GROUPS.STD;
+        let proxyGroups: Array<Record<string, unknown>> = policyGroupsFactory(proxies, options);
         proxyGroups = pruneProxyGroups(proxyGroups, proxies);
 
         // 提取远程 Provider 定义。Hiddify 4.x 的 Clash 转 sing-box 解析对 rule-providers 兼容性较差，
@@ -199,7 +231,7 @@ export function generateBuiltinClashConfig(nodeList: any, options: Record<string
 
         // 转换规则行为最终字符串
         const clashRules = rawRules
-            .map((r: any) => {
+            .map((r) => {
                 if (typeof r === 'string') return r;
                 if (r.type === 'rule-provider') return `RULE-SET,${r.provider},${r.target}`;
                 return null;
@@ -224,7 +256,7 @@ export function generateBuiltinClashConfig(nodeList: any, options: Record<string
             (isDomesticDnsMode(options.dnsMode) ||
                 (overrideText.trim() && isExplicitDnsOverride(overrideText)))
         ) {
-            proxyGroups = proxyGroups.filter((g: any) => g.name !== DNS_PROXY_GROUP);
+            proxyGroups = proxyGroups.filter((g) => g.name !== DNS_PROXY_GROUP);
         }
 
         // 基础配置：安全默认值，不再依赖 KV 覆盖才能避免 DNS 递归。
@@ -281,8 +313,8 @@ export function generateBuiltinClashConfig(nodeList: any, options: Record<string
                 ? DEFAULT_RELAY_GROUP
                 : DEFAULT_SELECT_GROUP;
         const fallbackYaml =
-            `proxies:\n${fallbackProxies.map((p: any) => `  - ${JSON.stringify(p)}`).join('\n')}\n` +
-            `proxy-groups:\n  - name: ${selectGroup}\n    type: select\n    proxies: ${JSON.stringify(fallbackProxies.map((p: any) => p.name))}\n` +
+            `proxies:\n${fallbackProxies.map((p) => `  - ${JSON.stringify(p)}`).join('\n')}\n` +
+            `proxy-groups:\n  - name: ${selectGroup}\n    type: select\n    proxies: ${JSON.stringify(fallbackProxies.map((p) => p.name))}\n` +
             `rules:\n  - MATCH,${selectGroup}\n`;
         return fallbackYaml;
     }
@@ -293,14 +325,14 @@ export function generateBuiltinClashConfig(nodeList: any, options: Record<string
  * @param {string} nodeList - 节点列表
  * @returns {string} 仅包含 proxies 部分的 YAML
  */
-export function generateProxiesOnly(nodeList: any) {
+export function generateProxiesOnly(nodeList: string): string {
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line: any) => line.trim())
-        .filter((line: any) => line && !line.startsWith('#'));
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('#'));
 
-    let proxies = urlsToClashProxies(nodeUrls);
+    let proxies = urlsToClashProxies(nodeUrls) as unknown as ProxyNode[];
 
     // 清理控制字符
     proxies = deepCleanControlChars(proxies);
@@ -322,6 +354,6 @@ export function generateProxiesOnly(nodeList: any) {
         return cleanControlChars(yamlStr);
     } catch (e) {
         const fallbackProxies = Array.isArray(proxies) ? stripInternalProxyFields(proxies) : [];
-        return `proxies:\n${fallbackProxies.map((p: any) => `  - ${JSON.stringify(p)}`).join('\n')}\n`;
+        return `proxies:\n${fallbackProxies.map((p) => `  - ${JSON.stringify(p)}`).join('\n')}\n`;
     }
 }
