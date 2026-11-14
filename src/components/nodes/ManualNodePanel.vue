@@ -4,6 +4,7 @@
     import NodeActions from './ManualNodePanel/NodeActions.vue';
     import NodeTable from './ManualNodePanel/NodeTable.vue';
     import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.ts';
+    import type { SearchableNode } from '@/composables/manual-nodes/useManualNodeSearchPagination.ts';
     import {
         normalizeManualNodeGroupName,
         DEFAULT_GROUP_KEY,
@@ -69,8 +70,10 @@
         totalSearchPages,
         handlePageChange,
     } = useManualNodeSearchPagination({
-        manualNodes: computed(() => props.manualNodes),
-        paginatedManualNodes: computed(() => props.paginatedManualNodes || []),
+        manualNodes: computed(() => (props.manualNodes || []) as SearchableNode[]),
+        paginatedManualNodes: computed(
+            () => (props.paginatedManualNodes || []) as SearchableNode[]
+        ),
         initialSearchTerm: computed(() => props.searchTerm || ''),
         onBasePageChange: (page: number) => emit('changePage', page),
         onSearchTermChange: (value: string) => emit('update:searchTerm', value),

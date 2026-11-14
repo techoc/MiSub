@@ -1,8 +1,13 @@
-export function buildAutoSortedSubscriptions(allSubscriptions: any, manualNodes: any) {
-    const subs = allSubscriptions.filter((s: any) => s.url && /^https?:\/\//.test(s.url));
+import type { KvRecord } from '../../../types/models.ts';
+
+export function buildAutoSortedSubscriptions<T extends KvRecord>(
+    allSubscriptions: T[],
+    manualNodes: T[]
+): T[] {
+    const subs = allSubscriptions.filter((s) => s.url && /^https?:\/\//.test(s.url));
     const nodes = [...manualNodes];
 
-    const regionKeywords = {
+    const regionKeywords: Record<string, RegExp[]> = {
         HK: [/香港/, /HK/, /Hong Kong/i],
         TW: [/台湾/, /TW/, /Taiwan/i],
         SG: [/新加坡/, /SG/, /狮城/, /Singapore/i],
@@ -16,10 +21,10 @@ export function buildAutoSortedSubscriptions(allSubscriptions: any, manualNodes:
         AU: [/澳大利亚/, /AU/, /Australia/i],
     };
     const regionOrder = ['HK', 'TW', 'SG', 'JP', 'US', 'KR', 'GB', 'DE', 'FR', 'CA', 'AU'];
-    const getRegionCode = (name: any) => {
+    const getRegionCode = (name: unknown): string => {
         for (const code in regionKeywords) {
-            for (const keyword of (regionKeywords as Record<string, any>)[code]) {
-                if (keyword.test(name)) return code;
+            for (const keyword of regionKeywords[code]) {
+                if (keyword.test(String(name))) return code;
             }
         }
         return 'ZZ';

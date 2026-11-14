@@ -4,13 +4,21 @@ import { extractNodeName } from '../lib/utils.ts';
 import { generateNodeId } from '../utils/id.ts';
 import { t } from '../i18n/index.ts';
 
+import type { SubscriptionItem } from '../../types/models.ts';
+
 const isDev = import.meta.env.DEV;
 
-export function useNodeForms({ addNode, updateNode }: any) {
+/** 手动节点编辑弹窗需要的写入回调 */
+interface NodeFormsHandlers {
+    addNode: (node: SubscriptionItem) => void | Promise<void>;
+    updateNode: (node: SubscriptionItem) => void;
+}
+
+export function useNodeForms({ addNode, updateNode }: NodeFormsHandlers) {
     const { showToast } = useToastStore();
     const showModal = ref(false);
     const isNew = ref(false);
-    const editingNode = ref<any>(null);
+    const editingNode = ref<SubscriptionItem | undefined>(undefined);
 
     const openAdd = () => {
         isNew.value = true;
@@ -24,7 +32,7 @@ export function useNodeForms({ addNode, updateNode }: any) {
         showModal.value = true;
     };
 
-    const openEdit = (node: any) => {
+    const openEdit = (node: SubscriptionItem | undefined) => {
         if (!node) {
             console.error('UseNodeForms: openEdit called with null');
             return;
@@ -40,16 +48,16 @@ export function useNodeForms({ addNode, updateNode }: any) {
         showModal.value = true;
     };
 
-    const handleUrlInput = (event: any) => {
+    const handleUrlInput = (event: Event) => {
         if (!editingNode.value) return;
-        const newUrl = event.target.value;
-        if (newUrl && !(editingNode.value as Error).name) {
-            (editingNode.value as Error).name = extractNodeName(newUrl);
+        const newUrl = (event.target as HTMLInputElement | null)?.value ?? '';
+        if (newUrl && !editingNode.value.name) {
+            editingNode.value.name = extractNodeName(newUrl);
         }
     };
 
     const handleSave = () => {
-        if (!editingNode.value || !(editingNode.value as Record<string, any>).url) {
+        if (!editingNode.value || !editingNode.value.url) {
             showToast(t('manualNodes.urlRequired'), 'error');
             return;
         }

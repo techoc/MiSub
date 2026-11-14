@@ -3,17 +3,29 @@ import { useToastStore } from '../stores/toast.ts';
 import { generateSubscriptionId } from '../utils/id.ts';
 import { t } from '../i18n/index.ts';
 
+import type { SubscriptionItem } from '../../types/models.ts';
+
 const isDev = import.meta.env.DEV;
 
-export function useSubscriptionForms({ addSubscription, updateSubscription }: any) {
+/** 订阅编辑弹窗需要的写入回调 */
+interface SubscriptionFormsHandlers {
+    addSubscription: (sub: SubscriptionItem) => void | Promise<void>;
+    updateSubscription: (sub: SubscriptionItem) => void;
+}
+
+export function useSubscriptionForms({
+    addSubscription,
+    updateSubscription,
+}: SubscriptionFormsHandlers) {
     const { showToast } = useToastStore();
     const showModal = ref(false);
     const isNew = ref(false);
-    const editingSubscription = ref<any>(null);
+    const editingSubscription = ref<SubscriptionItem | undefined>(undefined);
 
     const openAdd = () => {
         isNew.value = true;
         editingSubscription.value = {
+            id: '',
             name: '',
             url: '',
             enabled: true,
@@ -29,7 +41,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }: an
         showModal.value = true;
     };
 
-    const openEdit = (sub: any) => {
+    const openEdit = (sub: SubscriptionItem | undefined) => {
         if (!sub) {
             console.error('UseSubscriptionForms: openEdit called with null/undefined');
             return;
@@ -56,11 +68,11 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }: an
     };
 
     const handleSave = () => {
-        if (!editingSubscription.value || !(editingSubscription.value as Record<string, any>).url) {
+        if (!editingSubscription.value || !editingSubscription.value.url) {
             showToast(t('subscriptions.urlRequired'), 'error');
             return;
         }
-        if (!/^https?:\/\//i.test((editingSubscription.value as Record<string, any>).url)) {
+        if (!/^https?:\/\//i.test(editingSubscription.value.url)) {
             showToast(t('subscriptions.invalidUrl'), 'error');
             return;
         }

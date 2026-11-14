@@ -1,9 +1,26 @@
 import { computed, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 import { MANUAL_NODE_COUNTRY_ALIAS_MAP } from '@/constants/manualNodeCountryAliases.ts';
 
 const SEARCH_NODES_PER_PAGE = 24;
 
-export function useManualNodeSearchPagination(options: any) {
+/** 搜索分页可处理的节点条目 */
+export interface SearchableNode {
+    id: string;
+    name?: string;
+    [key: string]: unknown;
+}
+
+/** useManualNodeSearchPagination 入参 */
+interface SearchPaginationOptions {
+    manualNodes: Ref<SearchableNode[]>;
+    paginatedManualNodes: Ref<SearchableNode[]>;
+    initialSearchTerm: Ref<string>;
+    onBasePageChange?: (page: number) => void;
+    onSearchTermChange?: (value: string) => void;
+}
+
+export function useManualNodeSearchPagination(options: SearchPaginationOptions) {
     const {
         manualNodes,
         paginatedManualNodes,
@@ -36,7 +53,7 @@ export function useManualNodeSearchPagination(options: any) {
 
         const searchQuery = localSearchTerm.value.toLowerCase().trim();
 
-        return manualNodes.value.filter((node: any) => {
+        return manualNodes.value.filter((node) => {
             if (!node.name) return false;
 
             const nodeName = node.name.toLowerCase();
@@ -45,8 +62,8 @@ export function useManualNodeSearchPagination(options: any) {
             }
 
             const alternativeTerms =
-                (MANUAL_NODE_COUNTRY_ALIAS_MAP as Record<string, any>)[searchQuery] || [];
-            return alternativeTerms.some((term: any) => nodeName.includes(term.toLowerCase()));
+                (MANUAL_NODE_COUNTRY_ALIAS_MAP as Record<string, string[]>)[searchQuery] || [];
+            return alternativeTerms.some((term) => nodeName.includes(term.toLowerCase()));
         });
     });
 
@@ -65,8 +82,8 @@ export function useManualNodeSearchPagination(options: any) {
         return filteredNodes.value.slice(start, end);
     });
 
-    function handlePageChange(page: any) {
-        const parsed = parseInt(page, 10);
+    function handlePageChange(page: number | string) {
+        const parsed = parseInt(String(page), 10);
         if (Number.isNaN(parsed)) return;
 
         if (localSearchTerm.value) {
