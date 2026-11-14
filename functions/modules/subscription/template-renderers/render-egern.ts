@@ -1,24 +1,38 @@
 import yaml from 'js-yaml';
 import { normalizeGeneratorOptions } from '../generator-options.ts';
 import { normalizeUnifiedTemplateModel } from '../template-model.ts';
+import type { KvRecord, ProxyNode } from '../../../../types/models.ts';
+
+/** Egern TLS 配置 */
+interface EgernTlsConfig {
+    skip_tls_verify: boolean;
+    sni: string;
+    reality?: { public_key: string; short_id: string };
+}
+
+/** Egern 传输层配置 */
+type EgernTransportConfig = Record<string, Record<string, unknown> | EgernTlsConfig>;
+
+/** Egern 代理段（<类型>: { ... }) */
+type EgernProxyMapping = Record<string, Record<string, unknown>>;
 
 /**
  * Sanitize string: trim and remove carriage returns/newlines which break YAML indentation
  * @param {any} val
  * @returns {string}
  */
-function s(val: any) {
+function s(val: unknown): string {
     if (val === undefined || val === null) return '';
     return String(val)
         .replace(/[\r\n]/g, '')
         .trim();
 }
 
-function mapTransport(proxy: any) {
+function mapTransport(proxy: ProxyNode): EgernTransportConfig | undefined {
     const network = String(proxy.network || 'tcp').toLowerCase();
-    const transport: Record<string, any> = {};
+    const transport: EgernTransportConfig = {};
 
-    const tls =
+    const tls: EgernTlsConfig | null =
         proxy.tls || !!proxy['reality-opts']
             ? {
                   skip_tls_verify: Boolean(proxy['skip-cert-verify'] || proxy.skipCertVerify),
@@ -53,7 +67,7 @@ function mapTransport(proxy: any) {
         transport.h2 = {
             path: s(proxy['h2-opts']?.path || '/'),
             host: Array.isArray(proxy['h2-opts']?.host)
-                ? proxy['h2-opts'].host.map((h: any) => s(h))
+                ? proxy['h2-opts'].host.map((h: unknown) => s(h))
                 : [s(proxy['h2-opts']?.host || proxy.server)],
         };
         if (tls) transport.tls = tls;
@@ -61,8 +75,8 @@ function mapTransport(proxy: any) {
         if (tls) transport.tls = tls;
     }
 
-    if (transport.tls && proxy['reality-opts']) {
-        (transport.tls as Record<string, any>).reality = {
+    if (tls && transport.tls && proxy['reality-opts']) {
+        tls.reality = {
             public_key: s(
                 proxy['reality-opts']?.['public-key'] || proxy['reality-opts']?.publicKey
             ),
@@ -73,7 +87,8 @@ function mapTransport(proxy: any) {
     return Object.keys(transport).length > 0 ? transport : undefined;
 }
 
-function mapProxy(proxy: any) {
+function mapProxy(proxyInput: unknown): EgernProxyMapping {
+    const proxy = proxyInput as ProxyNode;
     const type = s(proxy.type).toLowerCase();
     const name = s(proxy.name);
     const server = s(proxy.server);
@@ -81,7 +96,7 @@ function mapProxy(proxy: any) {
     const uuid = s(proxy.uuid);
 
     if (type === 'trojan') {
-        const mapped: Record<string, any> = {
+        const mapped: EgernProxyMapping = {
             trojan: {
                 name,
                 server,
@@ -96,12 +111,13 @@ function mapProxy(proxy: any) {
         // Egern Trojan 特殊处理: 使用 websocket 对象而非 transport
         if (proxy.network === 'ws' || proxy.network === 'websocket') {
             const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
-            mapped.trojan.websocket = {
+            const websocket: Record<string, unknown> = {
                 enabled: true,
                 path: s(wsOpts?.path || '/'),
             };
             const host = s(wsOpts?.headers?.Host || wsOpts?.host);
-            if (host) (mapped.trojan.websocket as Record<string, any>).host = host;
+            if (host) websocket.host = host;
+            mapped.trojan.websocket = websocket;
         } else {
             const transport = mapTransport(proxy);
             if (transport) mapped.trojan.transport = transport;
@@ -110,7 +126,7 @@ function mapProxy(proxy: any) {
     }
 
     if (type === 'vless') {
-        const mapped: Record<string, any> = {
+        const mapped: EgernProxyMapping = {
             vless: {
                 name,
                 server,
@@ -127,7 +143,7 @@ function mapProxy(proxy: any) {
     }
 
     if (type === 'vmess') {
-        const mapped: Record<string, any> = {
+        const mapped: EgernProxyMapping = {
             vmess: {
                 name,
                 server,
@@ -142,7 +158,7 @@ function mapProxy(proxy: any) {
     }
 
     if (type === 'ss' || type === 'shadowsocks') {
-        const mapped: Record<string, any> = {
+        const mapped: EgernProxyMapping = {
             shadowsocks: {
                 name,
                 server,
@@ -179,7 +195,7 @@ function mapProxy(proxy: any) {
     }
 
     if (type === 'hysteria2' || type === 'hy2') {
-        const mapped: Record<string, any> = {
+        const mapped: EgernProxyMapping = {
             hysteria2: {
                 name,
                 server,
@@ -194,7 +210,7 @@ function mapProxy(proxy: any) {
     }
 
     if (type === 'tuic') {
-        const mapped: Record<string, any> = {
+        const mapped: EgernProxyMapping = {
             tuic: {
                 name,
                 server,
@@ -221,7 +237,7 @@ function mapProxy(proxy: any) {
     }
 
     if (type === 'anytls') {
-        const mapped: Record<string, any> = {
+        const mapped: EgernProxyMapping = {
             anytls: {
                 name,
                 server,
@@ -235,7 +251,7 @@ function mapProxy(proxy: any) {
         return mapped;
     }
 
-    const mapped = {
+    const mapped: EgernProxyMapping = {
         [type]: {
             name,
             server,
@@ -245,16 +261,16 @@ function mapProxy(proxy: any) {
 
     // TCP Fast Open
     if (proxy.tfo) {
-        (Object.values(mapped)[0] as Record<string, any>).tcp_fast_open = true;
+        Object.values(mapped)[0].tcp_fast_open = true;
     }
 
     return mapped;
 }
 
-function mapPolicyGroup(group: any) {
+function mapPolicyGroup(group: KvRecord) {
     const type = s(group.type || 'select').toLowerCase();
     const policies = Array.isArray(group.members)
-        ? group.members.filter(Boolean).map((p: any) => s(p))
+        ? group.members.filter(Boolean).map((p) => s(p))
         : [];
 
     if (type === 'url-test' || type === 'urltest' || type === 'auto-test') {
@@ -286,7 +302,7 @@ function mapPolicyGroup(group: any) {
     };
 }
 
-function mapRule(rule: any) {
+function mapRule(rule: KvRecord) {
     const type = s(rule.type).toLowerCase();
     const policy = s(rule.policy || 'DIRECT');
     const value = s(rule.value);
@@ -315,10 +331,17 @@ function mapRule(rule: any) {
     };
 }
 
-export function renderEgernFromTemplateModel(model: any, options: Record<string, any> = {}) {
-    const normalizedModel = normalizeUnifiedTemplateModel(model);
+export function renderEgernFromTemplateModel(
+    model: unknown,
+    options: Record<string, unknown> = {}
+) {
+    const normalizedModel = normalizeUnifiedTemplateModel(model as Record<string, unknown>);
+    const rawGeneratorOptions =
+        options.generatorOptions || normalizedModel.settings?.generatorOptions;
     const generatorOptions = normalizeGeneratorOptions(
-        options.generatorOptions || normalizedModel.settings?.generatorOptions
+        rawGeneratorOptions && typeof rawGeneratorOptions === 'object'
+            ? (rawGeneratorOptions as Record<string, unknown>)
+            : {}
     );
 
     const proxies = normalizedModel.proxies.map(mapProxy).filter(Boolean);
@@ -329,7 +352,7 @@ export function renderEgernFromTemplateModel(model: any, options: Record<string,
 
     const rules = normalizedModel.rules.map(mapRule).filter(Boolean);
 
-    const config = {
+    const config: Record<string, unknown> = {
         general: {
             dns_server: ['223.5.5.5', '114.114.114.114'],
             ipv6: generatorOptions.ipv6,
@@ -340,7 +363,7 @@ export function renderEgernFromTemplateModel(model: any, options: Record<string,
     };
 
     if (normalizedModel.settings.managedConfigUrl) {
-        (config as Record<string, any>).auto_update = {
+        config.auto_update = {
             url: s(normalizedModel.settings.managedConfigUrl),
             interval: normalizedModel.settings.interval || 86400,
         };
