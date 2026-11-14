@@ -48,6 +48,7 @@ import {
 } from './subscription-service/filter-rules.ts';
 
 import type { KvRecord } from '../../types/models.ts';
+import type { SubscriptionNodeCacheEntry } from './subscription-service/runtime-cache.ts';
 // —— 兼容导出：测试与外部模块历史上直接从本路径引用这些 helper ——
 export {
     fetchAirportSiteTitle,
@@ -233,10 +234,13 @@ export async function generateCombinedNodeList(
             return readSubscriptionNodeCache(storage, sub);
         };
         // 旧缓存没有指纹时视为"配置未变化"，保持原有的截断保护行为
-        const hasFilterConfigChanged = (cached: any) =>
-            Boolean(cached) &&
-            typeof cached.filterFingerprint === 'string' &&
-            cached.filterFingerprint !== buildSubscriptionFilterFingerprint(sub);
+        const hasFilterConfigChanged = (cached: SubscriptionNodeCacheEntry | null): boolean => {
+            if (!cached) return false;
+            return (
+                typeof cached.filterFingerprint === 'string' &&
+                cached.filterFingerprint !== buildSubscriptionFilterFingerprint(sub)
+            );
+        };
 
         try {
             const customUserAgent =
@@ -334,8 +338,9 @@ export async function generateCombinedNodeList(
             } else if (cacheEnabled) {
                 const cached = await readCacheEntry();
                 if (
+                    cached &&
                     !hasFilterConfigChanged(cached) &&
-                    isSuspiciousNodeCountDrop(cached?.nodes?.length || 0, realNodes.length)
+                    isSuspiciousNodeCountDrop(cached.nodes.length, realNodes.length)
                 ) {
                     console.warn(
                         `[SubscriptionCache] Refusing suspicious node-count drop for ${sub.id || sub.url} (${cached.nodes.length} -> ${realNodes.length})`
