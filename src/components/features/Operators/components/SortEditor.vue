@@ -11,38 +11,68 @@
         },
     });
 
+    /** 单条排序条件 */
+    interface SortKeyItem {
+        key: string;
+        order: string;
+        customOrder: string[];
+    }
+
+    /** 排序算子参数 */
+    interface SortParams {
+        keys?: SortKeyItem[];
+        [key: string]: unknown;
+    }
+
     const emit = defineEmits(['update:modelValue']);
     const { t } = useI18n();
 
+    const REGION_DEFAULT_ORDER = [
+        '香港',
+        '台湾',
+        '日本',
+        '新加坡',
+        '美国',
+        '韩国',
+        '英国',
+        '德国',
+        '法国',
+        '加拿大',
+    ];
+    const PROTOCOL_DEFAULT_ORDER = ['vless', 'trojan', 'vmess', 'hysteria2', 'ss', 'ssr', 'anytls'];
+
     const params = computed({
-        get: () => ({
+        get: (): SortParams => ({
             keys: [],
-            ...props.modelValue,
+            ...(props.modelValue as SortParams),
         }),
-        set: (val) => emit('update:modelValue', val),
+        set: (val: SortParams) => emit('update:modelValue', val),
     });
 
-    const updateKeys = (updater: any) => {
-        const currentKeys = Array.isArray(params.value.keys) ? params.value.keys : [];
+    const sortKeys = computed<SortKeyItem[]>(() =>
+        Array.isArray(params.value.keys) ? params.value.keys : []
+    );
+
+    const updateKeys = (updater: (keys: SortKeyItem[]) => SortKeyItem[]) => {
         params.value = {
             ...params.value,
-            keys: updater([...currentKeys]),
+            keys: updater([...sortKeys.value]),
         };
     };
 
     const addKey = () => {
-        updateKeys((keys: any) => [...keys, { key: 'name', order: 'asc', customOrder: [] }]);
+        updateKeys((keys) => [...keys, { key: 'name', order: 'asc', customOrder: [] }]);
     };
 
-    const removeKey = (index: any) => {
-        updateKeys((keys: any) => {
+    const removeKey = (index: number) => {
+        updateKeys((keys) => {
             keys.splice(index, 1);
             return keys;
         });
     };
 
-    const moveKey = (index: any, dir: any) => {
-        updateKeys((keys: any) => {
+    const moveKey = (index: number, dir: number) => {
+        updateKeys((keys) => {
             const target = index + dir;
             if (target < 0 || target >= keys.length) return keys;
             [keys[index], keys[target]] = [keys[target], keys[index]];
@@ -50,84 +80,59 @@
         });
     };
 
-    const updateKeyField = (index: any, field: any, value: any) => {
-        updateKeys((keys: any) => {
+    const updateKeyField = (index: number, field: 'key' | 'order', value: string) => {
+        updateKeys((keys) => {
             const current = keys[index];
             if (!current) return keys;
-            let next = { ...current, [field]: value };
+            const next: SortKeyItem = { ...current };
             if (field === 'key') {
+                next.key = value;
                 if (value === 'region') {
-                    next.customOrder = [
-                        '香港',
-                        '台湾',
-                        '日本',
-                        '新加坡',
-                        '美国',
-                        '韩国',
-                        '英国',
-                        '德国',
-                        '法国',
-                        '加拿大',
-                    ];
+                    next.customOrder = [...REGION_DEFAULT_ORDER];
                 } else if (value === 'protocol') {
-                    next.customOrder = [
-                        'vless',
-                        'trojan',
-                        'vmess',
-                        'hysteria2',
-                        'ss',
-                        'ssr',
-                        'anytls',
-                    ];
+                    next.customOrder = [...PROTOCOL_DEFAULT_ORDER];
                 } else {
                     next.customOrder = [];
                 }
+            } else {
+                next.order = value;
             }
             keys[index] = next;
             return keys;
         });
     };
 
-    const getRegionEmoji = (region: any) => {
+    const getRegionEmoji = (region: string): string => {
         if (!region) return '🌐';
-        return (REGION_EMOJI as Record<string, any>)[region] || '🌍';
+        return (REGION_EMOJI as Record<string, string>)[region] || '🌍';
     };
 
-    const getTagsList = (item: any) => {
-        return (item.customOrder || []).map((val: any) => ({ id: val, name: val }));
+    const getTagsList = (item: SortKeyItem) => {
+        return (item.customOrder || []).map((val) => ({ id: val, name: val }));
     };
 
-    const handleDragEnd = (idx: any, newOrder: any) => {
-        updateKeys((keys: any) => {
+    const handleDragEnd = (idx: number, newOrder: Array<{ name: string }>) => {
+        updateKeys((keys) => {
             const current = keys[idx];
             if (!current) return keys;
             keys[idx] = {
                 ...current,
-                customOrder: newOrder.map((item: any) => item.name),
+                customOrder: newOrder.map((entry) => entry.name),
             };
             return keys;
         });
     };
 
-    const resetToDefaultOrder = (idx: any, keyType: any) => {
-        updateKeys((keys: any) => {
+    /** draggable 的 update 回调（避免模板内联类型标注） */
+    const handleDragEndFor = (idx: number) => (newOrder: Array<{ name: string }>) =>
+        handleDragEnd(idx, newOrder);
+
+    const resetToDefaultOrder = (idx: number, keyType: string) => {
+        updateKeys((keys) => {
             const current = keys[idx];
             if (!current) return keys;
             const defaults =
-                keyType === 'region'
-                    ? [
-                          '香港',
-                          '台湾',
-                          '日本',
-                          '新加坡',
-                          '美国',
-                          '韩国',
-                          '英国',
-                          '德国',
-                          '法国',
-                          '加拿大',
-                      ]
-                    : ['vless', 'trojan', 'vmess', 'hysteria2', 'ss', 'ssr', 'anytls'];
+                keyType === 'region' ? [...REGION_DEFAULT_ORDER] : [...PROTOCOL_DEFAULT_ORDER];
             keys[idx] = { ...current, customOrder: defaults };
             return keys;
         });
@@ -142,7 +147,7 @@
         { value: 'port', labelKey: 'operators.sortKeyPort' },
     ];
 
-    const regionLabels = {
+    const regionLabels: Record<string, string> = {
         香港: 'Hong Kong',
         台湾: 'Taiwan',
         日本: 'Japan',
@@ -154,9 +159,9 @@
         法国: 'France',
         加拿大: 'Canada',
     };
-    const displayTagName = (item: any, name: any) =>
+    const displayTagName = (item: SortKeyItem, name: string) =>
         item.key === 'region'
-            ? `${getRegionEmoji(name)} ${t('operators.regionLabel', { region: (regionLabels as Record<string, any>)[name] || name })}`
+            ? `${getRegionEmoji(name)} ${t('operators.regionLabel', { region: regionLabels[name] || name })}`
             : name;
 </script>
 
@@ -174,7 +179,7 @@
 
         <div class="space-y-1.5">
             <div
-                v-for="(item, idx) in params.keys as any[]"
+                v-for="(item, idx) in sortKeys"
                 :key="idx"
                 class="flex flex-col gap-2 p-2 bg-gray-50/50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800 transition-all"
             >
@@ -199,7 +204,7 @@
                         <button
                             @click="moveKey(idx, 1)"
                             class="text-gray-500 dark:text-gray-400 hover:text-indigo-500 disabled:opacity-20"
-                            :disabled="idx === params.keys.length - 1"
+                            :disabled="idx === sortKeys.length - 1"
                             :aria-label="t('actions.moveDown')"
                         >
                             <svg
@@ -299,7 +304,7 @@
                     <!-- Drag and Drop Tags List -->
                     <draggable
                         :model-value="getTagsList(item)"
-                        @update:model-value="(newOrder: any) => handleDragEnd(idx, newOrder)"
+                        @update:model-value="handleDragEndFor(idx)"
                         item-key="id"
                         animation="200"
                         class="flex flex-wrap gap-1.5"
@@ -323,7 +328,7 @@
             </div>
 
             <div
-                v-if="params.keys.length === 0"
+                v-if="sortKeys.length === 0"
                 class="text-center py-2 text-[10px] text-gray-500 dark:text-gray-400 italic"
             >
                 {{ t('operators.emptySortConditions') }}
