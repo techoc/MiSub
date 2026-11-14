@@ -33,7 +33,7 @@
         confirmVariant: {
             type: String,
             default: 'primary',
-            validator: (value) => ['primary', 'danger'].includes(value as any),
+            validator: (value: unknown) => value === 'primary' || value === 'danger',
         },
     });
 
@@ -44,11 +44,11 @@
     const confirmTitle = computed(() => props.confirmButtonTitle || t('actions.confirm'));
 
     const confirmInput = ref('');
-    const modalPanelRef = ref<any>(null);
+    const modalPanelRef = ref<HTMLElement | null>(null);
     const titleId = `modal-title-${Math.random().toString(36).slice(2, 10)}`;
 
     // 记录打开弹窗前的焦点元素，关闭时还原
-    let previouslyFocused: any = null;
+    let previouslyFocused: HTMLElement | null = null;
 
     const FOCUSABLE = [
         'a[href]',
@@ -59,14 +59,14 @@
         '[tabindex]:not([tabindex="-1"])',
     ].join(', ');
 
-    function getFocusableElements() {
+    function getFocusableElements(): HTMLElement[] {
         return modalPanelRef.value
-            ? Array.from((modalPanelRef.value as Record<string, any>).querySelectorAll(FOCUSABLE))
+            ? Array.from(modalPanelRef.value.querySelectorAll<HTMLElement>(FOCUSABLE))
             : [];
     }
 
     // Focus trap：Tab / Shift+Tab 循环限制在弹窗内，Escape 关闭
-    const handleKeydown = (e: any) => {
+    const handleKeydown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
             emit('update:show', false);
             return;
@@ -85,12 +85,12 @@
         if (e.shiftKey) {
             if (document.activeElement === first) {
                 e.preventDefault();
-                (last as Record<string, any>).focus();
+                last.focus();
             }
         } else {
             if (document.activeElement === last) {
                 e.preventDefault();
-                (first as Record<string, any>).focus();
+                first.focus();
             }
         }
     };
@@ -99,24 +99,21 @@
         () => props.show,
         async (val) => {
             if (val) {
-                previouslyFocused = document.activeElement as any;
+                previouslyFocused = document.activeElement as HTMLElement | null;
                 window.addEventListener('keydown', handleKeydown);
                 await nextTick();
                 // 优先聚焦第一个可交互元素，否则聚焦弹窗面板本身
                 const focusable = getFocusableElements();
                 if (focusable.length) {
-                    (focusable[0] as any).focus();
+                    focusable[0].focus();
                 } else {
-                    (modalPanelRef.value as Record<string, any> | undefined)?.focus();
+                    modalPanelRef.value?.focus();
                 }
             } else {
                 window.removeEventListener('keydown', handleKeydown);
                 // 还原焦点到触发元素
-                if (
-                    previouslyFocused &&
-                    typeof (previouslyFocused as Record<string, any>).focus === 'function'
-                ) {
-                    (previouslyFocused as Record<string, any>).focus();
+                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+                    previouslyFocused.focus();
                     previouslyFocused = null;
                 }
             }
