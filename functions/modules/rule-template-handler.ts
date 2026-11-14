@@ -10,11 +10,29 @@ export const KV_KEY_RULE_TEMPLATES = 'misub_rule_templates_v1';
 const MAX_TEMPLATE_COUNT = 50;
 const MAX_TEMPLATE_CONTENT_LENGTH = 128 * 1024;
 
+/** 自定义规则模板记录 */
+interface RuleTemplate {
+    id: string;
+    name: string;
+    description: string;
+    type: string;
+    content: string;
+    enabled: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** 规则模板用到的存储适配器最小面 */
+interface RuleTemplateStorage {
+    get(key: string): Promise<unknown>;
+    put(key: string, value: unknown): Promise<unknown>;
+}
+
 function nowIso() {
     return new Date().toISOString();
 }
 
-function sanitizeId(value = '') {
+function sanitizeId(value: unknown = ''): string {
     return String(value || '')
         .trim()
         .replace(/\s+/g, '-')
@@ -29,45 +47,46 @@ function createId() {
     return `rule-template-${Date.now().toString(36)}-${random}`;
 }
 
-function hasIniShape(content: any) {
-    return /\[(custom|proxy\s*group|rule|ruleset|proxy)\]/i.test(content);
+function hasIniShape(content: unknown): boolean {
+    return /\[(custom|proxy\s*group|rule|ruleset|proxy)\]/i.test(String(content ?? ''));
 }
 
-export function normalizeCustomRuleTemplates(input: any[] = []) {
+export function normalizeCustomRuleTemplates(input: unknown = []): RuleTemplate[] {
     if (!Array.isArray(input)) return [];
-    const seen = new Set();
-    const normalized: any[] = [];
+    const seen = new Set<string>();
+    const normalized: RuleTemplate[] = [];
 
     for (const item of input.slice(0, MAX_TEMPLATE_COUNT)) {
         if (!item || typeof item !== 'object') continue;
+        const record = item as Record<string, unknown>;
 
-        const content =
-            typeof item.content === 'string' ? (item.content as Record<string, any>).trim() : '';
+        const content = typeof record.content === 'string' ? record.content.trim() : '';
         if (!content || content.length > MAX_TEMPLATE_CONTENT_LENGTH || !hasIniShape(content))
             continue;
 
-        let id = sanitizeId(item.id) || createId();
+        let id = sanitizeId(record.id) || createId();
         while (seen.has(id)) {
             id = `${id}-${Math.random().toString(36).slice(2, 6)}`.slice(0, 80);
         }
         seen.add(id);
 
         const name =
-            String(item.name || '')
+            String(record.name || '')
                 .trim()
                 .slice(0, 80) || '未命名规则模板';
+        const createdAtValue = String(record.createdAt || '');
         const createdAt =
-            item.createdAt && !Number.isNaN(Date.parse(item.createdAt)) ? item.createdAt : nowIso();
+            createdAtValue && !Number.isNaN(Date.parse(createdAtValue)) ? createdAtValue : nowIso();
 
         normalized.push({
             id,
             name,
-            description: String(item.description || '')
+            description: String(record.description || '')
                 .trim()
                 .slice(0, 300),
             type: 'ini',
             content,
-            enabled: item.enabled !== false,
+            enabled: record.enabled !== false,
             createdAt,
             updatedAt: nowIso(),
         });
@@ -76,23 +95,27 @@ export function normalizeCustomRuleTemplates(input: any[] = []) {
     return normalized;
 }
 
-async function getStorageAdapter(env: any) {
-    if (env?.__TEST_STORAGE_ADAPTER) return env.__TEST_STORAGE_ADAPTER;
+async function getStorageAdapter(env: Env): Promise<RuleTemplateStorage> {
+    const testAdapter = (env as { __TEST_STORAGE_ADAPTER?: unknown }).__TEST_STORAGE_ADAPTER;
+    if (testAdapter) return testAdapter as RuleTemplateStorage;
     const storageType = await StorageFactory.getStorageType(env);
-    return StorageFactory.createAdapter(env, storageType);
+    return StorageFactory.createAdapter(env, storageType) as unknown as RuleTemplateStorage;
 }
 
-export async function listRuleTemplates(storageAdapter: any) {
+export async function listRuleTemplates(
+    storageAdapter: RuleTemplateStorage
+): Promise<RuleTemplate[]> {
     const raw = await storageAdapter.get(KV_KEY_RULE_TEMPLATES);
     return normalizeCustomRuleTemplates(Array.isArray(raw) ? raw : []);
 }
 
-export async function resolveRuleTemplateSource(storageAdapter: any, templateSource: any) {
-    if (!templateSource || templateSource.kind !== 'custom') return null;
-    const templateId = sanitizeId(templateSource.value);
+export async function resolveRuleTemplateSource(storageAdapter: unknown, templateSource: unknown) {
+    const source = templateSource as { kind?: unknown; value?: unknown } | null;
+    if (!source || source.kind !== 'custom') return null;
+    const templateId = sanitizeId(source.value);
     if (!templateId) return null;
 
-    const templates = await listRuleTemplates(storageAdapter);
+    const templates = await listRuleTemplates(storageAdapter as RuleTemplateStorage);
     const template = templates.find((item) => item.enabled !== false && item.id === templateId);
     if (!template) return null;
 
@@ -103,7 +126,7 @@ export async function resolveRuleTemplateSource(storageAdapter: any, templateSou
     };
 }
 
-export async function handleRuleTemplatesRequest(request: any, env: any) {
+export async function handleRuleTemplatesRequest(request: Request, env: Env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
 
