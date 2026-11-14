@@ -53,18 +53,18 @@ npm run test:run     # 运行测试
 后端总入口是：
 
 ```text
-functions/[[path]].js
+functions/[[path]].ts
 ```
 
 该文件负责 Cloudflare Pages Functions 的顶层请求分发：
 
 ```text
 HTTP Request
-└── functions/[[path]].js:onRequest(context)
-    ├── /api/*                         → functions/modules/api-router.js
-    ├── /sub/*                         → functions/modules/subscription-handler.js
-    ├── /<mytoken>/*, /<profileToken>/* → functions/modules/subscription-handler.js
-    ├── /cron                          → functions/modules/notifications.js
+└── functions/[[path]].ts:onRequest(context)
+    ├── /api/*                         → functions/modules/api-router.ts
+    ├── /sub/*                         → functions/modules/subscription-handler.ts
+    ├── /<mytoken>/*, /<profileToken>/* → functions/modules/subscription-handler.ts
+    ├── /cron                          → functions/modules/notifications.ts
     └── 其他路径                        → SPA 静态资源、公开页或伪装页
 ```
 
@@ -79,10 +79,10 @@ HTTP Request
 相关文件：
 
 ```text
-functions/middleware/cors.js
-functions/modules/disguise-page.js
-functions/modules/handlers/disguise-handler.js
-functions/modules/notifications.js
+functions/middleware/cors.ts
+functions/modules/disguise-page.ts
+functions/modules/handlers/disguise-handler.ts
+functions/modules/notifications.ts
 ```
 
 ## 4. API 路由层
@@ -90,7 +90,7 @@ functions/modules/notifications.js
 API 路由集中在：
 
 ```text
-functions/modules/api-router.js
+functions/modules/api-router.ts
 ```
 
 它根据 `/api` 后的路径分发到各业务 handler。
@@ -136,16 +136,16 @@ functions/modules/api-router.js
 主要 handler 文件：
 
 ```text
-functions/modules/api-handler.js                  # 数据、设置、公开配置、密码更新
-functions/modules/auth-middleware.js              # 登录态、cookie、密码校验
-functions/modules/rule-template-handler.js        # 自定义规则模板
-functions/modules/handlers/node-handler.js        # 节点数量、批量刷新、节点清理、健康检查
-functions/modules/handlers/debug-handler.js       # 调试、系统信息、导出、预览内容
-functions/modules/handlers/client-handler.js      # 客户端配置接口
-functions/modules/handlers/guestbook-handler.js   # 留言板
-functions/modules/handlers/telegram-webhook-handler.js
-functions/modules/handlers/github-proxy-handler.js
-functions/modules/handlers/error-report-handler.js
+functions/modules/api-handler.ts                  # 数据、设置、公开配置、密码更新
+functions/modules/auth-middleware.ts              # 登录态、cookie、密码校验
+functions/modules/rule-template-handler.ts        # 自定义规则模板
+functions/modules/handlers/node-handler.ts        # 节点数量、批量刷新、节点清理、健康检查
+functions/modules/handlers/debug-handler.ts       # 调试、系统信息、导出、预览内容
+functions/modules/handlers/client-handler.ts      # 客户端配置接口
+functions/modules/handlers/guestbook-handler.ts   # 留言板
+functions/modules/handlers/telegram-webhook-handler.ts
+functions/modules/handlers/github-proxy-handler.ts
+functions/modules/handlers/error-report-handler.ts
 ```
 
 ## 5. 存储模型
@@ -153,7 +153,7 @@ functions/modules/handlers/error-report-handler.js
 存储抽象层是：
 
 ```text
-functions/storage-adapter.js
+functions/storage-adapter.ts
 ```
 
 MiSub 支持两种存储后端：
@@ -176,7 +176,7 @@ misub_profile_download_count_<profile> # Profile 下载次数
 默认设置定义在：
 
 ```text
-functions/modules/config.js
+functions/modules/config.ts
 ```
 
 其中包括：
@@ -191,8 +191,8 @@ functions/modules/config.js
 订阅输出的核心入口是：
 
 ```text
-functions/modules/subscription-handler.js
-functions/modules/subscription/main-handler.js
+functions/modules/subscription-handler.ts
+functions/modules/subscription/main-handler.ts
 ```
 
 核心链路：
@@ -214,15 +214,15 @@ functions/modules/subscription/main-handler.js
 关键文件：
 
 ```text
-functions/modules/subscription/request-context.js
-functions/modules/subscription/cache-manager.js
-functions/services/subscription-service.js
-functions/services/processor-service.js
-functions/modules/subscription/user-agent-utils.js
-functions/modules/subscription/profile-handler.js
-functions/modules/subscription/single-subscription.js
-functions/modules/subscription/preview-handler.js
-functions/modules/subscription/node-fetcher.js
+functions/modules/subscription/request-context.ts
+functions/modules/subscription/cache-manager.ts
+functions/services/subscription-service.ts
+functions/services/processor-service.ts
+functions/modules/subscription/user-agent-utils.ts
+functions/modules/subscription/profile-handler.ts
+functions/modules/subscription/single-subscription.ts
+functions/modules/subscription/preview-handler.ts
+functions/modules/subscription/node-fetcher.ts
 ```
 
 订阅模式主要包括：
@@ -237,8 +237,8 @@ functions/modules/subscription/node-fetcher.js
 订阅源拉取入口：
 
 ```text
-functions/modules/subscription/node-fetcher.js
-functions/services/subscription-service.js
+functions/modules/subscription/node-fetcher.ts
+functions/services/subscription-service.ts
 ```
 
 相关能力：
@@ -253,13 +253,13 @@ functions/services/subscription-service.js
 Fetch Proxy URL 构建逻辑在：
 
 ```text
-functions/utils/fetch-proxy-utils.js
+functions/utils/fetch-proxy-utils.ts
 ```
 
 节点缓存服务在：
 
 ```text
-functions/services/node-cache-service.js
+functions/services/node-cache-service.ts
 ```
 
 缓存相关设置包括：
@@ -277,14 +277,14 @@ maxSubscriptionConcurrency
 主要文件：
 
 ```text
-functions/modules/utils/node-parser.js     # 订阅内容解析，含 Clash YAML → 节点 URL
-functions/utils/clash-to-url.js            # Clash proxy 对象 → 节点 URL
-functions/utils/url-to-clash.js            # 节点 URL → Clash proxy / Clash config
-functions/utils/xhttp-extra.js              # xHTTP extra ↔ Clash xhttp-opts 字段双向映射
-functions/utils/node-utils.js              # 节点命名、国旗、编码修正、YAML 安全处理
-functions/utils/node-transformer.js        # 节点 record 化、过滤、重命名、排序、去重
-functions/utils/operator-runner.js         # 新版操作符链执行
-functions/utils/format-utils.js            # UA/URL 格式判断辅助
+functions/modules/utils/node-parser.ts     # 订阅内容解析，含 Clash YAML → 节点 URL
+functions/utils/clash-to-url.ts            # Clash proxy 对象 → 节点 URL
+functions/utils/url-to-clash.ts            # 节点 URL → Clash proxy / Clash config
+functions/utils/xhttp-extra.ts              # xHTTP extra ↔ Clash xhttp-opts 字段双向映射
+functions/utils/node-utils.ts              # 节点命名、国旗、编码修正、YAML 安全处理
+functions/utils/node-transformer.ts        # 节点 record 化、过滤、重命名、排序、去重
+functions/utils/operator-runner.ts         # 新版操作符链执行
+functions/utils/format-utils.ts            # UA/URL 格式判断辅助
 ```
 
 当前支持的常见协议包括：
@@ -310,38 +310,38 @@ snell, anytls, socks, wireguard, naive
 UA 判断相关文件：
 
 ```text
-functions/modules/subscription/user-agent-utils.js
+functions/modules/subscription/user-agent-utils.ts
 ```
 
 内置生成器：
 
 ```text
-functions/modules/subscription/builtin-clash-generator.js
-functions/modules/subscription/builtin-singbox-generator.js
-functions/modules/subscription/builtin-surge-generator.js
-functions/modules/subscription/builtin-loon-generator.js
-functions/modules/subscription/builtin-quanx-generator.js
-functions/modules/subscription/builtin-egern-generator.js
+functions/modules/subscription/builtin-clash-generator.ts
+functions/modules/subscription/builtin-singbox-generator.ts
+functions/modules/subscription/builtin-surge-generator.ts
+functions/modules/subscription/builtin-loon-generator.ts
+functions/modules/subscription/builtin-quanx-generator.ts
+functions/modules/subscription/builtin-egern-generator.ts
 ```
 
 模板管线：
 
 ```text
-functions/modules/subscription/template-pipeline.js
-functions/modules/subscription/template-model.js
-functions/modules/subscription/template-processor.js
-functions/modules/subscription/template-parsers/ini-template-parser.js
+functions/modules/subscription/template-pipeline.ts
+functions/modules/subscription/template-model.ts
+functions/modules/subscription/template-processor.ts
+functions/modules/subscription/template-parsers/ini-template-parser.ts
 functions/modules/subscription/template-renderers/
-functions/modules/subscription/builtin-template-registry.js
-functions/modules/subscription/template-compatibility.js
+functions/modules/subscription/builtin-template-registry.ts
+functions/modules/subscription/template-compatibility.ts
 ```
 
 外部转换后端相关逻辑在：
 
 ```text
-functions/modules/subscription/main-handler.js
-functions/modules/subscription/transform-template-cache.js
-functions/modules/subscription/transform-template-renderer.js
+functions/modules/subscription/main-handler.ts
+functions/modules/subscription/transform-template-cache.ts
+functions/modules/subscription/transform-template-renderer.ts
 ```
 
 内置模板是 MiSub 当前最可控的完整配置输出路径。外部后端适合作为兼容补充，但不应承担 MiSub 内部节点处理的主责。
@@ -375,9 +375,9 @@ defaultNodeTransform
 相关文件：
 
 ```text
-functions/utils/operator-runner.js
-functions/utils/node-transformer.js
-functions/services/processor-service.js
+functions/utils/operator-runner.ts
+functions/utils/node-transformer.ts
+functions/services/processor-service.ts
 src/components/features/Operators/OperatorChain.vue
 ```
 
@@ -386,9 +386,9 @@ src/components/features/Operators/OperatorChain.vue
 前端入口：
 
 ```text
-src/main.js
+src/main.ts
 src/App.vue
-src/router/index.js
+src/router/index.ts
 ```
 
 主要路由：
@@ -407,31 +407,31 @@ src/router/index.js
 前端 API 封装：
 
 ```text
-src/lib/http.js
-src/lib/api.js
-src/constants/api-endpoints.js
+src/lib/http.ts
+src/lib/api.ts
+src/constants/api-endpoints.ts
 ```
 
 主要状态 store：
 
 ```text
-src/stores/useDataStore.js # subscriptions、profiles、settings、保存状态
-src/stores/session.js      # 登录态、公开配置、初始数据
-src/stores/theme.js        # 主题
-src/stores/toast.js        # Toast
-src/stores/ui.js           # 布局状态
-src/stores/version.js      # 版本检查
+src/stores/useDataStore.ts # subscriptions、profiles、settings、保存状态
+src/stores/session.ts      # 登录态、公开配置、初始数据
+src/stores/theme.ts        # 主题
+src/stores/toast.ts        # Toast
+src/stores/ui.ts           # 布局状态
+src/stores/version.ts      # 版本检查
 ```
 
 主要业务 composables：
 
 ```text
-src/composables/useSubscriptions.js
-src/composables/useProfiles.js
-src/composables/useManualNodes.js
-src/composables/useNodePreview.js
-src/composables/useSettingsLogic.js
-src/composables/useBulkImportLogic.js
+src/composables/useSubscriptions.ts
+src/composables/useProfiles.ts
+src/composables/useManualNodes.ts
+src/composables/useNodePreview.ts
+src/composables/useSettingsLogic.ts
+src/composables/useBulkImportLogic.ts
 ```
 
 ## 12. 前端组件分区
@@ -459,8 +459,8 @@ src/components/modals/NodePreview/NodePreviewModal.vue
 src/components/modals/SubscriptionEditModal.vue
 src/components/modals/ProfileModal.vue
 src/components/settings/sections/ClientSettings.vue
-src/stores/useDataStore.js
-src/composables/useSubscriptions.js
+src/stores/useDataStore.ts
+src/composables/useSubscriptions.ts
 ```
 
 ## 13. 测试布局
@@ -538,8 +538,8 @@ URL → url-to-clash → builtin generator
 组件表单字段
 → composable
 → useDataStore
-→ src/lib/api.js
-→ functions/modules/api-router.js
+→ src/lib/api.ts
+→ functions/modules/api-router.ts
 → storage-adapter
 ```
 
@@ -568,8 +568,8 @@ URL → url-to-clash → builtin generator
 
 中期优先级：
 
-1. 拆薄 `functions/modules/api-router.js`
-2. 拆薄 `functions/modules/subscription/main-handler.js`
+1. 拆薄 `functions/modules/api-router.ts`
+2. 拆薄 `functions/modules/subscription/main-handler.ts`
 3. 收敛协议转换边界，减少前后端重复转换逻辑
 4. 为 subscription、profile、settings 建立明确 schema 文档或运行时校验
 5. 将 KV/D1 迁移和兼容逻辑从普通业务 handler 中进一步隔离

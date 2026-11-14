@@ -24,40 +24,40 @@
 
 ### 入口与路由
 
-- `functions/[[path]].js`：Cloudflare Pages Functions 主入口，挂载安全中间件、API 路由、订阅短链、cron 与静态资源 fallback。
-- `functions/modules/api-router.js`：`/api/*` 总路由，负责公开接口、认证接口、调试接口、迁移接口和管理接口分发。
-- `functions/modules/api-handler.js`：核心数据读写、settings、profiles、misubs 保存与公开配置。
+- `functions/[[path]].ts`：Cloudflare Pages Functions 主入口，挂载安全中间件、API 路由、订阅短链、cron 与静态资源 fallback。
+- `functions/modules/api-router.ts`：`/api/*` 总路由，负责公开接口、认证接口、调试接口、迁移接口和管理接口分发。
+- `functions/modules/api-handler.ts`：核心数据读写、settings、profiles、misubs 保存与公开配置。
 
 ### 存储层
 
-- `functions/storage-adapter.js`：KV / D1 / Noop adapter、SettingsCache、DataMigrator。
+- `functions/storage-adapter.ts`：KV / D1 / Noop adapter、SettingsCache、DataMigrator。
 - 当前数据形态兼容 KV 全量数组、D1 行级 JSON，以及旧 D1 `main` 行。
 - 风险：兼容逻辑复杂，旧结构与 row-level 结构并存时需要诊断能力支撑。
 
 ### 订阅主链路
 
-- `functions/modules/subscription/main-handler.js`：订阅请求主流程，负责 token/profile 解析、浏览器伪装、目标节点集合、缓存、内置/外部转换、响应输出、下载计数和通知。
-- `functions/services/subscription-service.js`：远程订阅拉取、手动节点、per-sub 缓存、过滤、去重、operator chain、运行态信息写回。
-- `functions/services/node-cache-service.js`：节点缓存读写、清理、保护性空覆盖防护。
+- `functions/modules/subscription/main-handler.ts`：订阅请求主流程，负责 token/profile 解析、浏览器伪装、目标节点集合、缓存、内置/外部转换、响应输出、下载计数和通知。
+- `functions/services/subscription-service.ts`：远程订阅拉取、手动节点、per-sub 缓存、过滤、去重、operator chain、运行态信息写回。
+- `functions/services/node-cache-service.ts`：节点缓存读写、清理、保护性空覆盖防护。
 
 ### 协议转换与模板
 
-- `functions/utils/url-to-clash.js`：URL 节点转 Clash proxy，体量最大、协议分支多。
-- `functions/utils/clash-to-url.js`：Clash proxy 转 URL 节点。
-- `functions/modules/utils/node-parser.js`：节点文本、Base64、Clash YAML、raw line 解析。
-- `functions/modules/subscription/builtin-*-generator.js`：Clash / Sing-box / Surge / Loon / QuanX / Egern 内置输出。
-- `functions/modules/subscription/template-pipeline.js` 与 `template-renderers/*`：模板模型与多目标渲染。
+- `functions/utils/url-to-clash.ts`：URL 节点转 Clash proxy，体量最大、协议分支多。
+- `functions/utils/clash-to-url.ts`：Clash proxy 转 URL 节点。
+- `functions/modules/utils/node-parser.ts`：节点文本、Base64、Clash YAML、raw line 解析。
+- `functions/modules/subscription/builtin-*-generator.ts`：Clash / Sing-box / Surge / Loon / QuanX / Egern 内置输出。
+- `functions/modules/subscription/template-pipeline.ts` 与 `template-renderers/*`：模板模型与多目标渲染。
 
 ### 定时与通知
 
-- `functions/modules/notifications.js`：当前 `/cron` 与 `/api/cron/trigger` 使用的主定时检查逻辑。
-- ~~`functions/_cron.js`、`functions/_schedule.js`~~：遗留定时实现（旧绑定/旧 key），已删除；`/api/cron/trigger` 现直接调用 `modules/scheduled-task-runner.js`。
+- `functions/modules/notifications.ts`：当前 `/cron` 与 `/api/cron/trigger` 使用的主定时检查逻辑。
+- ~~`functions/_cron.ts`、`functions/_schedule.ts`~~：遗留定时实现（旧绑定/旧 key），已删除；`/api/cron/trigger` 现直接调用 `modules/scheduled-task-runner.js`。
 
 ### 安全与公开接口
 
-- `functions/modules/auth-middleware.js`：HMAC cookie 登录会话、30 天闲置过期与 7 天活动续期、auth diagnostic 开关。
-- `functions/middleware/cors.js`：CORS、CSRF origin/referrer、安全响应头。
-- `functions/modules/security-utils.js`：敏感字段脱敏、公开 fetch SSRF 防护、redirect 重新校验。
+- `functions/modules/auth-middleware.ts`：HMAC cookie 登录会话、30 天闲置过期与 7 天活动续期、auth diagnostic 开关。
+- `functions/middleware/cors.ts`：CORS、CSRF origin/referrer、安全响应头。
+- `functions/modules/security-utils.ts`：敏感字段脱敏、公开 fetch SSRF 防护、redirect 重新校验。
 - 公开接口包括 public profiles/preview/guestbook/error report/Telegram webhook/GitHub release proxy，需要持续关注体积限制和滥用风险。
 
 ## 前端模块地图
@@ -78,9 +78,9 @@
 
 ### 状态与组合式函数
 
-- `src/stores/useDataStore.js`：主数据状态与保存入口，是前端状态热点。
-- `src/composables/useSubscriptions.js`、`useManualNodes.js`、`useProfiles.js`、`useNodePreview.js`：前端业务状态与 API 调用封装。
-- `src/lib/api.js`、`src/lib/http.js`：API facade 与 HTTP 封装。
+- `src/stores/useDataStore.ts`：主数据状态与保存入口，是前端状态热点。
+- `src/composables/useSubscriptions.ts`、`useManualNodes.js`、`useProfiles.js`、`useNodePreview.js`：前端业务状态与 API 调用封装。
+- `src/lib/api.ts`、`src/lib/http.ts`：API facade 与 HTTP 封装。
 
 ### 前端风险热点
 
@@ -110,16 +110,16 @@
 
 ## 最大复杂热点
 
-1. `functions/modules/handlers/telegram-webhook-handler.js`：约 2748 行，Bot 命令、权限、存储、消息格式混合。
-2. `functions/utils/url-to-clash.js`：约 1382 行，协议分支复杂。
-3. `functions/services/subscription-service.js`：约 997 行，拉取、缓存、过滤、统计、写回混合。
-4. `functions/modules/subscription/main-handler.js`：约 919 行，订阅主链路职责集中。
-5. `functions/modules/api-router.js`：约 910 行，路由权限边界需要显式化。
-6. `functions/storage-adapter.js`：约 845 行，KV/D1/legacy 兼容复杂。
+1. `functions/modules/handlers/telegram-webhook-handler.ts`：约 2748 行，Bot 命令、权限、存储、消息格式混合。
+2. `functions/utils/url-to-clash.ts`：约 1382 行，协议分支复杂。
+3. `functions/services/subscription-service.ts`：约 997 行，拉取、缓存、过滤、统计、写回混合。
+4. `functions/modules/subscription/main-handler.ts`：约 919 行，订阅主链路职责集中。
+5. `functions/modules/api-router.ts`：约 910 行，路由权限边界需要显式化。
+6. `functions/storage-adapter.ts`：约 845 行，KV/D1/legacy 兼容复杂。
 7. `src/components/modals/NodePreview/NodePreviewModal.vue`：约 713 行，前端弹窗复杂热点。
 8. `src/views/PublicProfilesView.vue`：约 578 行，公开页职责偏多。
 9. `src/components/settings/sections/ClientSettings.vue`：约 518 行，设置 UI 热点。
-10. `src/stores/useDataStore.js`：约 433 行，前端主状态热点。
+10. `src/stores/useDataStore.ts`：约 433 行，前端主状态热点。
 
 ## 下一轮小可逆治理建议
 

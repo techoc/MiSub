@@ -1,11 +1,11 @@
 # MiSub API Routes and Access Boundaries
 
-本文档记录当前 `functions/[[path]].js` 与 `functions/modules/api-router.js` 中的真实路由、认证边界与主要读写行为。目标是让公开接口、管理接口、迁移接口和诊断接口的边界可审查、可测试、可回归。
+本文档记录当前 `functions/[[path]].ts` 与 `functions/modules/api-router.ts` 中的真实路由、认证边界与主要读写行为。目标是让公开接口、管理接口、迁移接口和诊断接口的边界可审查、可测试、可回归。
 
 ## 全局入口与中间件
 
-- Cloudflare Pages Functions 入口：`functions/[[path]].js`
-- `/api/*` 路由入口：`functions/modules/api-router.js`
+- Cloudflare Pages Functions 入口：`functions/[[path]].ts`
+- `/api/*` 路由入口：`functions/modules/api-router.ts`
 - 所有请求先经过：
     - `corsMiddleware()`：按 `CORS_ORIGINS` 或当前 origin 设置 CORS。
     - `csrfOriginMiddleware()`：对 `POST` / `PUT` / `PATCH` / `DELETE` 做 Origin/Referer 校验；无 Cookie 的非浏览器/API 客户端或 Bearer 调用允许继续。
@@ -16,18 +16,18 @@
 ## 顶层非 `/api/*` 路由
 
 - `GET/HEAD /`、静态资源、SPA 路由
-    - 入口：`functions/[[path]].js`
+    - 入口：`functions/[[path]].ts`
     - 认证：公开；受 disguise 设置影响。受保护 SPA 路由在非 localhost 下会先校验登录状态，未登录时返回伪装页。
     - 写入：无。
 
 - `GET /sub/*`、`GET /{mytoken}`、`GET /{profileToken}`、其它疑似订阅短链路径
-    - Handler：`handleMisubRequest()`，实现位于 `functions/modules/subscription/main-handler.js`，由 `functions/modules/subscription-handler.js` re-export。
+    - Handler：`handleMisubRequest()`，实现位于 `functions/modules/subscription/main-handler.ts`，由 `functions/modules/subscription-handler.ts` re-export。
     - 认证：公开短链/token 模式；具体访问控制由 token、profile、settings、浏览器伪装和订阅配置决定。
     - 读取：settings、subscriptions、profiles、rule templates、node cache。
     - 写入：可能写下载计数、节点缓存、运行态/错误信息、通知状态。
 
 - `/cron`
-    - Handler：`handleCronTrigger()`，`functions/modules/notifications.js`
+    - Handler：`handleCronTrigger()`，`functions/modules/notifications.ts`
     - 认证：需要 `settings.cronSecret`，通过 Bearer 或 query secret 校验。
     - 读取：settings、subscriptions。
     - 写入：订阅节点数、用户流量信息、通知状态等 cron 同步结果。
@@ -37,7 +37,7 @@
 这些接口在 `api-router.js` 中位于全局 `authMiddleware()` 之前，不要求普通管理登录。写接口仍会经过全局 CSRF Origin/Referer 中间件。
 
 - `POST /api/login`
-    - Handler：`handleLogin()`，`functions/modules/auth-middleware.js`
+    - Handler：`handleLogin()`，`functions/modules/auth-middleware.ts`
     - 认证：公开登录入口。
     - 读取：管理员密码、Cookie secret。
     - 写入：设置登录 Cookie；必要时初始化/读取密码相关存储。
@@ -48,7 +48,7 @@
     - 写入：清除登录 Cookie。
 
 - `GET /api/public_config`、`GET /api/config`
-    - Handler：`handlePublicConfig()`，`functions/modules/api-handler.js`
+    - Handler：`handlePublicConfig()`，`functions/modules/api-handler.ts`
     - 认证：公开。
     - 读取：settings。
     - 返回：公开页开关、自定义登录路径、自定义公开页安全子集。
@@ -60,13 +60,13 @@
     - 返回：仅公开且启用的 profile 摘要，以及公告、hero、guestbook、customPage 等公开配置子集。
 
 - `POST /api/public/preview`
-    - Handler：`handlePublicPreviewRequest()`，`functions/modules/subscription/preview-handler.js`
+    - Handler：`handlePublicPreviewRequest()`，`functions/modules/subscription/preview-handler.ts`
     - 认证：公开，但只允许预览 `enabled && isPublic` 的 profile。
     - 读取：profile、其关联订阅/手动节点。
     - 写入：无直接持久化；可能触发远程订阅拉取。
 
 - `GET /api/public/guestbook`
-    - Handler：`handleGuestbookGet()`，`functions/modules/handlers/guestbook-handler.js`
+    - Handler：`handleGuestbookGet()`，`functions/modules/handlers/guestbook-handler.ts`
     - 认证：公开。
     - 读取：guestbook messages、settings。
     - 返回：仅 `isVisible` 的公开留言字段。
@@ -79,18 +79,18 @@
     - 限制：内容不能为空，最长 500 字；昵称最长 20 字。
 
 - `POST /api/telegram/webhook`
-    - Handler：`handleTelegramWebhook()`，`functions/modules/handlers/telegram-webhook-handler.js`
+    - Handler：`handleTelegramWebhook()`，`functions/modules/handlers/telegram-webhook-handler.ts`
     - 认证：公开入口，handler 内部校验 webhook secret / bot 配置 / 用户权限。
     - 读取/写入：Telegram bot 配置、subscriptions、profiles、settings 等，取决于命令。
 
 - `POST /api/system/error_report`
-    - Handler：`handleErrorReportRequest()`，`functions/modules/handlers/error-report-handler.js`
+    - Handler：`handleErrorReportRequest()`，`functions/modules/handlers/error-report-handler.ts`
     - 认证：公开；无 KV 时静默成功。
     - 写入：`misub_error_reports`，最多保留 100 条。
     - 限制：消息、stack、附加数据长度限制；内存级去重与每分钟持久化预算。
 
 - `GET /api/clients*`
-    - Handler：`handleClientRequest()`，`functions/modules/handlers/client-handler.js`
+    - Handler：`handleClientRequest()`，`functions/modules/handlers/client-handler.ts`
     - 认证：公开只读。
     - 读取：`misub_clients_v1`；无 KV 或存储暂停时回退内置默认客户端列表。
     - 写入：读取时如发现旧图标可能尝试迁移写回。
@@ -102,7 +102,7 @@
     - 写入：登录后可能异步迁移旧 profile ID。
 
 - `GET /api/github/release?repo=owner/repo`
-    - Handler：`handleGithubReleaseRequest()`，`functions/modules/handlers/github-proxy-handler.js`
+    - Handler：`handleGithubReleaseRequest()`，`functions/modules/handlers/github-proxy-handler.ts`
     - 认证：公开。
     - 读取：GitHub 最新 release API；读 KV 缓存。
     - 写入：`github_release_${repo}` KV 缓存。
@@ -122,8 +122,8 @@
 
 这些接口位于 `api-router.js` 中、在普通 `authMiddleware()` 之前分流到 `handleExternalApiRequest()`，不复用后台登录 Cookie，而是使用 `settings.externalApi` 中配置的 Bearer Token。
 
-- 入口：`functions/modules/external-api-router.js`
-- 认证：`functions/modules/external-api-auth.js`
+- 入口：`functions/modules/external-api-router.ts`
+- 认证：`functions/modules/external-api-auth.ts`
 - 文档：
     - `docs/external-management-api.md`
     - `docs/external-management-api-usage.md`

@@ -278,7 +278,7 @@ export async function setAdminPassword(env, newPassword) {
     await kv.put('SYSTEM_ADMIN_PASSWORD', newPassword);
 }
 
-export { formatBytes } from '../../src/shared/utils.js';
+export { formatBytes } from '../../src/shared/utils.ts';
 
 /**
  * 检测字符串是否为有效的Base64格式

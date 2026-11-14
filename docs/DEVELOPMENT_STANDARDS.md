@@ -45,22 +45,22 @@ MiSub 前后端开发规范。所有新代码与重构应遵循本页约定；�
     - `src/components/ui/*`：基础原子组件（Button、Input），**禁止在业务页面复制一套按钮/输入框风格**。
     - `src/components/shared/*`：共享复合组件（FormModal）。
     - `src/components/features/*` / `modals/*` / `forms/*` / `layout/*` / `nodes/*` / `profiles/*` / `settings/*` / `subscriptions/*` / `public/*`：按业务域组织。
-- 页面在 `src/views/*`，路由在 `src/router/index.js`。
+- 页面在 `src/views/*`，路由在 `src/router/index.ts`。
 - 状态用 Pinia（`src/stores/*`）；可复用逻辑放 composable（`src/composables/*`）。
-- API 调用统一走 `src/lib/api.js` + `src/constants/api-endpoints.js` 常量，**禁止在组件里硬编码 API 路径字面量**。
-- i18n 文案统一进 `src/i18n/messages.js`；语言切换只改文字，不改布局/样式/结构。
+- API 调用统一走 `src/lib/api.ts` + `src/constants/api-endpoints.ts` 常量，**禁止在组件里硬编码 API 路径字面量**。
+- i18n 文案统一进 `src/i18n/messages.ts`；语言切换只改文字，不改布局/样式/结构。
 - 样式用 Tailwind（`src/assets/main.css` 定义 token）；组件样式尽量 scoped。视觉约束详见 [[architecture/frontend-visual-system]]。
 
 ## Backend Structure
 
-- Cloudflare Pages Functions，入口 `functions/[[path]].js`。
+- Cloudflare Pages Functions，入口 `functions/[[path]].ts`。
 - 分层职责：
     - `functions/modules/handlers/*`：API controller（HTTP 语义、入参校验、响应组装）。
     - `functions/modules/subscription/*`：订阅链路专用模块（转换、缓存、预览、UA、DNS、分组）。
-    - `functions/modules/*.js`：路由 / 鉴权 / 外部 API / 工具。
+    - `functions/modules/*.ts`：路由 / 鉴权 / 外部 API / 工具。
     - `functions/services/*`：跨模块业务服务（订阅核心、渲染编排、日志、通知）。
     - `functions/utils/*` + `functions/modules/utils/*`：纯工具函数，无副作用。
-- 数据访问统一走 `functions/storage-adapter.js`（KV/D1 抽象），**禁止直接调 `env.KV` / `env.DB`**。
+- 数据访问统一走 `functions/storage-adapter.ts`（KV/D1 抽象），**禁止直接调 `env.KV` / `env.DB`**。
 - 订阅输出格式差异隔离在 transformer/generator/renderer 层。
 - 超过 ~800 行的文件应拆（当前最大 `handlers/telegram-webhook-handler.js` 2790 行为拆分候选）。
 

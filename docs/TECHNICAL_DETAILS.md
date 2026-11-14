@@ -6,7 +6,7 @@
 
 ## 1. 节点处理流水线 (Processing Pipeline)
 
-节点处理由 `functions/services/subscription-service.js` 驱动。完整流程如下：
+节点处理由 `functions/services/subscription-service.ts` 驱动。完整流程如下：
 
 1. **组合 (Combination)**：从 D1/KV 获取订阅源（Subscriptions）和手动节点（Manual Nodes）。
 2. **清洗 (Cleaning)**：初步修复破损的节点 URL，移除已知无法识别的非法字符。
@@ -19,7 +19,7 @@
 
 ## 2. 操作符运行引擎 (Operator Runner)
 
-执行引擎位于 `functions/utils/operator-runner.js`。
+执行引擎位于 `functions/utils/operator-runner.ts`。
 
 ### 脚本执行沙箱 (Script Sandbox)
 
@@ -43,7 +43,7 @@
 
 ## 3. 存储适配层 (Storage Adapter)
 
-为了同时支持 KV 和 D1，我们实现了一个抽象层 `functions/storage-adapter.js`：
+为了同时支持 KV 和 D1，我们实现了一个抽象层 `functions/storage-adapter.ts`：
 
 - **混合模式**：读请求优先从 KV（如果开启了缓存）或 D1 读取。
 - **事务模拟**：由于 KV 不支持事务，涉及多表操作时，Adapter 会执行乐观锁重试逻辑。
@@ -52,7 +52,7 @@
 
 ## 4. 节点解析逻辑
 
-解析器位于 `functions/modules/subscription/parser.js`。其核心是一个多阶段识别引擎：
+解析器位于 `functions/modules/subscription/parser.ts`。其核心是一个多阶段识别引擎：
 
 1. **Base64 探测**：识别内容是否为经过编码的节点列表。
 2. **格式分发**：根据关键字识别 YAML (Clash), JSON, 或 URL Scheme 列表。

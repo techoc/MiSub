@@ -6,7 +6,7 @@
 
 - **前端**：Vue 3 SPA，使用 Vite 构建，代码位于 `src/`。
 - **后端**：Cloudflare Pages Functions，代码位于 `functions/`。
-- **存储**：KV 与 D1 双存储，通过 `functions/storage-adapter.js` 统一抽象。
+- **存储**：KV 与 D1 双存储，通过 `functions/storage-adapter.ts` 统一抽象。
 - **构建产物**：`dist/`（生产）与 `dev-dist/`（开发）。
 
 ## 仓库布局（顶层）
@@ -93,14 +93,14 @@ functions/
 
 ### 核心流程说明
 
-- `functions/[[path]].js`：
+- `functions/[[path]].ts`：
     - 全局入口，拦截所有请求。
     - **伪装逻辑**：调用 `disguise-handler.js`，根据配置决定是否伪装根路径或 SPA 路由。
     - **路由分发**：将 `/api/*` 分发给 API 路由，`/sub/*` 分发给订阅处理，`/cron` 分发给定时任务。
     - **SPA 回退**：处理前端路由的 `index.html` 返回。
 
-- `functions/modules/api-router.js`：定义 API 路径到具体 Handlers 的映射，包含鉴权逻辑。
-- `functions/modules/subscription/main-handler.js`：处理 `/sub/*` 订阅请求的核心流程（获取、转换、缓存）。
+- `functions/modules/api-router.ts`：定义 API 路径到具体 Handlers 的映射，包含鉴权逻辑。
+- `functions/modules/subscription/main-handler.ts`：处理 `/sub/*` 订阅请求的核心流程（获取、转换、缓存）。
 
 ### 后端模块目录 (`functions/modules/`)
 
@@ -166,12 +166,12 @@ functions/services/
 - **UI**：新的 Vue 组件放入 `src/components/` 下对应分类，页面级组件放入 `src/views/`。
 - **API**：
     1. 在 `functions/modules/handlers/` 创建新的 Handler 文件。
-    2. 在 `functions/modules/api-router.js` 中注册路由。
-- **数据**：所有数据库操作**必须**通过 `functions/storage-adapter.js` 提供的 Adapter 实例进行，禁止直接调用 `env.KV` 或 `env.DB`，以保持 KV/D1 的兼容性。
+    2. 在 `functions/modules/api-router.ts` 中注册路由。
+- **数据**：所有数据库操作**必须**通过 `functions/storage-adapter.ts` 提供的 Adapter 实例进行，禁止直接调用 `env.KV` 或 `env.DB`，以保持 KV/D1 的兼容性。
 
 ### 2. 伪装与安全
 
-- 伪装逻辑位于 `functions/modules/handlers/disguise-handler.js`，在 `[[path]].js` 中被优先调用。
+- 伪装逻辑位于 `functions/modules/handlers/disguise-handler.ts`，在 `[[path]].js` 中被优先调用。
 - 涉及敏感操作的 API 需在 `api-router.js` 中添加 `authMiddleware` 保护。
 
 ### 3. 公共资源
