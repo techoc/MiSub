@@ -1,9 +1,53 @@
 import { createUnifiedTemplateModel } from '../template-model.ts';
 import { pinRemoteRuleUrl } from '../builtin-rules-provider.ts';
 
-function parseIniSections(templateText: any) {
+/** [Proxy Group] 行解析结果 */
+interface IniGroupLine {
+    name: string;
+    type: string;
+    members: string[];
+    options: Record<string, string>;
+}
+
+/** 规则/规则集行解析结果 */
+interface IniRuleLine {
+    type: string;
+    value: string;
+    policy: string;
+    extras: string[];
+    source?: string;
+    interval?: number;
+}
+
+/** custom_proxy_group 行解析结果 */
+interface IniProxyGroupLine {
+    name: string;
+    type: string;
+    members: string[];
+    filters: string[];
+    options: Record<string, unknown>;
+}
+
+/** INI 模板解析选项 */
+interface IniTemplateOptions {
+    fileName?: string;
+    targetFormat?: string;
+    ruleLevel?: string;
+    isMeta?: boolean;
+    proxies?: unknown[];
+    managedConfigUrl?: string;
+    interval?: number;
+    skipCertVerify?: boolean;
+    enableUdp?: boolean;
+    customDnsOverride?: unknown;
+    dnsMode?: string;
+    generatorOptions?: Record<string, unknown>;
+    [key: string]: unknown;
+}
+
+function parseIniSections(templateText: unknown): Map<string, string[]> {
     const lines = String(templateText || '').split(/\r?\n/);
-    const sections = new Map();
+    const sections = new Map<string, string[]>();
     let currentSection = 'custom'; // Default to custom if no section headers are found
 
     for (const rawLine of lines) {
@@ -18,13 +62,13 @@ function parseIniSections(templateText: any) {
         }
 
         if (!sections.has(currentSection)) sections.set(currentSection, []);
-        sections.get(currentSection).push(rawLine);
+        sections.get(currentSection)!.push(rawLine);
     }
 
     return sections;
 }
 
-function parseGroupLine(line: any) {
+function parseGroupLine(line: string): IniGroupLine | null {
     const parts = line.split('=');
     if (parts.length < 2) return null;
 
@@ -33,18 +77,18 @@ function parseGroupLine(line: any) {
         .slice(1)
         .join('=')
         .split(',')
-        .map((part: any) => part.trim())
+        .map((part) => part.trim())
         .filter(Boolean);
     if (bodyParts.length === 0) return null;
 
     const type = bodyParts[0];
-    const members: any[] = [];
-    const options = {};
+    const members: string[] = [];
+    const options: Record<string, string> = {};
 
     for (const part of bodyParts.slice(1)) {
         if (part.includes('=')) {
             const [key, value] = part.split(/=(.*)/, 2);
-            (options as Record<string, any>)[key.trim()] = (value || '').trim();
+            options[key.trim()] = (value || '').trim();
         } else {
             members.push(part);
         }
@@ -53,10 +97,10 @@ function parseGroupLine(line: any) {
     return { name, type, members, options };
 }
 
-function parseRuleLine(line: any) {
+function parseRuleLine(line: string): IniRuleLine | null {
     const parts = line
         .split(',')
-        .map((part: any) => part.trim())
+        .map((part) => part.trim())
         .filter(Boolean);
     if (parts.length < 2) return null;
 
@@ -68,9 +112,9 @@ function parseRuleLine(line: any) {
     };
 }
 
-function parseAclRuleSetLine(line: any) {
+function parseAclRuleSetLine(line: string): IniRuleLine | null {
     const raw = line.replace(/^ruleset=/i, '');
-    const parts = raw.split(',').map((part: any) => part.trim());
+    const parts = raw.split(',').map((part) => part.trim());
     if (parts.length < 2) return null;
 
     const policy = parts[0];
@@ -87,7 +131,7 @@ function parseAclRuleSetLine(line: any) {
         const inlineValue = source.slice(2);
         const inlineParts = inlineValue
             .split(',')
-            .map((part: any) => part.trim())
+            .map((part) => part.trim())
             .filter(Boolean);
         const type = (inlineParts[0] || '').toLowerCase();
         return {
@@ -101,7 +145,7 @@ function parseAclRuleSetLine(line: any) {
 
     // [兼容说明] 远程规则集行尾可带更新间隔参数（如 ,1800 / ,28800），这是
     // subconverter 的 interval 选项而非 URL 的一部分；拼进 URL 会导致下载 404。
-    let interval;
+    let interval: number | undefined;
     const trailing = source.split(',').pop() || '';
     if (source.includes(',') && /^\d+$/.test(trailing)) {
         interval = Number(trailing);
@@ -110,7 +154,7 @@ function parseAclRuleSetLine(line: any) {
 
     return {
         type: 'rule-set',
-        value: pinRemoteRuleUrl(source),
+        value: pinRemoteRuleUrl(source) || '',
         policy,
         source: 'remote',
         extras: [],
@@ -118,19 +162,19 @@ function parseAclRuleSetLine(line: any) {
     };
 }
 
-function parseAclProxyGroupLine(line: any) {
+function parseAclProxyGroupLine(line: string): IniProxyGroupLine | null {
     const raw = line.replace(/^custom_proxy_group=/i, '');
     const parts = raw
         .split('`')
-        .map((part: any) => part.trim())
+        .map((part) => part.trim())
         .filter(Boolean);
     if (parts.length < 2) return null;
 
     const name = parts[0];
     const type = parts[1];
-    const members: any[] = [];
-    const filters: any[] = [];
-    const options: Record<string, any> = {};
+    const members: string[] = [];
+    const filters: string[] = [];
+    const options: Record<string, unknown> = {};
 
     for (const part of parts.slice(2)) {
         if (part.startsWith('[]')) {
@@ -145,7 +189,7 @@ function parseAclProxyGroupLine(line: any) {
         if (/^\d+(?:,\s*\d*)*$/.test(part)) {
             const nums = part
                 .split(',')
-                .map((s: any) => s.trim())
+                .map((part2) => part2.trim())
                 .filter(Boolean)
                 .map(Number);
             if (nums.length > 0) {
@@ -181,7 +225,9 @@ function parseAclProxyGroupLine(line: any) {
  * 语法：custom_chain_proxy=<落地组名>`<前置组名>[`<落地副本名前缀>]
  * 前缀省略时默认为 "<落地组名> - "。
  */
-function parseChainProxyLine(line: any) {
+function parseChainProxyLine(
+    line: string
+): { group: string; entry: string; prefix: string } | null {
     const raw = line.replace(/^\s*/, '').replace(/^custom_chain_proxy=/i, '');
     const parts = raw.split('`');
     const group = (parts[0] || '').trim();
@@ -191,30 +237,36 @@ function parseChainProxyLine(line: any) {
     return { group, entry, prefix: parts.length > 2 ? parts[2] : '' };
 }
 
-export function parseIniTemplate(templateText: any, options: Record<string, any> = {}) {
+export function parseIniTemplate(templateText: unknown, options: IniTemplateOptions = {}) {
     const sections = parseIniSections(templateText);
     const aclCustomLines = sections.get('custom') || [];
     const parsedAclGroups = aclCustomLines
-        .filter((line: any) => /^custom_proxy_group=/i.test(line.trim()))
+        .filter((line) => /^custom_proxy_group=/i.test(line.trim()))
         .map(parseAclProxyGroupLine)
-        .filter(Boolean);
+        .filter((entry): entry is IniProxyGroupLine => Boolean(entry));
     const parsedAclRules = aclCustomLines
-        .filter((line: any) => /^ruleset=/i.test(line.trim()))
+        .filter((line) => /^ruleset=/i.test(line.trim()))
         .map(parseAclRuleSetLine)
-        .filter(Boolean);
+        .filter((entry): entry is IniRuleLine => Boolean(entry));
     const parsedChainProxy = aclCustomLines
-        .filter((line: any) => /^custom_chain_proxy=/i.test(line.trim()))
+        .filter((line) => /^custom_chain_proxy=/i.test(line.trim()))
         .map(parseChainProxyLine)
-        .filter(Boolean);
+        .filter((entry): entry is { group: string; entry: string; prefix: string } =>
+            Boolean(entry)
+        );
 
-    const groups = (sections.get('proxy group') || [])
-        .map(parseGroupLine)
-        .filter(Boolean)
-        .concat(parsedAclGroups);
-    const rules = (sections.get('rule') || [])
-        .map(parseRuleLine)
-        .filter(Boolean)
-        .concat(parsedAclRules);
+    const groups: Array<IniGroupLine | IniProxyGroupLine> = [
+        ...(sections.get('proxy group') || [])
+            .map(parseGroupLine)
+            .filter((entry): entry is IniGroupLine => Boolean(entry)),
+        ...parsedAclGroups,
+    ];
+    const rules: IniRuleLine[] = [
+        ...(sections.get('rule') || [])
+            .map(parseRuleLine)
+            .filter((entry): entry is IniRuleLine => Boolean(entry)),
+        ...parsedAclRules,
+    ];
 
     return createUnifiedTemplateModel({
         meta: {
