@@ -6,9 +6,11 @@
  * 拆成独立文件是为了让新增逻辑不污染 node-parser.js 的主流程。
  */
 
+import type { KvRecord } from '../../../types/models.ts';
+
 const V2RAYN_SCHEME = /^v2rayn:\/\/([a-z0-9+.-]+)\/(.+)$/i;
 
-const V2RAYN_PROTOCOL_ALIAS = {
+const V2RAYN_PROTOCOL_ALIAS: Record<string, string> = {
     hy2: 'hysteria2',
     hy: 'hysteria2',
     hysteria: 'hysteria2',
@@ -34,8 +36,8 @@ const SHA256_K = [
 ];
 
 /** 同步 SHA-256（Workers 无同步 crypto，用于从 PEM 算出证书指纹） */
-function sha256Hex(bytes: any) {
-    const rotr = (x: any, n: any) => ((x >>> n) | (x << (32 - n))) >>> 0;
+function sha256Hex(bytes: Uint8Array): string {
+    const rotr = (x: number, n: number): number => ((x >>> n) | (x << (32 - n))) >>> 0;
     const len = bytes.length;
     const total = (((len + 8) >>> 6) + 1) << 6;
     const buf = new Uint8Array(total);
@@ -102,7 +104,7 @@ function sha256Hex(bytes: any) {
 }
 
 /** base64 / base64url -> Uint8Array */
-function base64ToBytes(input: any) {
+function base64ToBytes(input: unknown): Uint8Array {
     let s = String(input)
         .replace(/[^A-Za-z0-9+/=_-]/g, '')
         .replace(/-/g, '+')
@@ -116,7 +118,7 @@ function base64ToBytes(input: any) {
 }
 
 /** PEM 证书 -> SHA-256 指纹（AA:BB:... 格式，供 pinSHA256 / fingerprint 使用） */
-function certPemToPinSha256(pem: any) {
+function certPemToPinSha256(pem: unknown): string {
     if (!pem || typeof pem !== 'string') return '';
     // 先剥掉 BEGIN/END 标记行：否则 "BEGINCERTIFICATE" 这些字母本身就是合法 base64 字符，
     // 会被当成证书内容拼进去，导致算出的指纹完全错误
@@ -131,33 +133,31 @@ function certPemToPinSha256(pem: any) {
     }
 }
 
-function decodeV2rayNJson(payload: any) {
+function decodeV2rayNJson(payload: unknown): KvRecord | null {
     const clean = String(payload).split('#')[0].split('?')[0];
     try {
         const text = new TextDecoder('utf-8').decode(base64ToBytes(clean));
-        const obj = JSON.parse(text);
-        return obj && typeof obj === 'object' ? obj : null;
+        const obj: unknown = JSON.parse(text);
+        return obj && typeof obj === 'object' ? (obj as KvRecord) : null;
     } catch (e) {
         console.debug('[NodeParser] v2rayn payload decode failed:', e);
         return null;
     }
 }
 
-function v2rayNFlag(value: any) {
+function v2rayNFlag(value: unknown): boolean {
     if (value === true || value === 1) return true;
     const s = String(value ?? '').toLowerCase();
     return s === 'true' || s === '1' || s === 'yes';
 }
 
-function v2rayNHost(server: any) {
+function v2rayNHost(server: string): string {
     return server.includes(':') && !server.startsWith('[') ? `[${server}]` : server;
 }
 
 /** v2rayN JSON 对象 -> 标准分享 URI */
-function v2rayNToUri(tag: any, cfg: any) {
-    const protocol = (V2RAYN_PROTOCOL_ALIAS as Record<string, any>)[
-        String(tag || '').toLowerCase()
-    ];
+function v2rayNToUri(tag: unknown, cfg: KvRecord): string | null {
+    const protocol = V2RAYN_PROTOCOL_ALIAS[String(tag || '').toLowerCase()];
     if (!protocol) return null;
 
     const server = cfg.Address || cfg.address || cfg.Server || cfg.server || '';
@@ -273,7 +273,7 @@ function v2rayNToUri(tag: any, cfg: any) {
 /**
  * 解析单条 v2rayN 分享链接，返回标准分享 URI；无法识别时返回 null
  */
-export function parseV2rayNLink(link: any) {
+export function parseV2rayNLink(link: unknown): string | null {
     if (!link || typeof link !== 'string') return null;
     const matched = V2RAYN_SCHEME.exec(link.trim());
     if (!matched) return null;
