@@ -47,7 +47,7 @@
         props.settings.regionOverrides.push({ pattern: '', region: '美国', flags: 'i' });
     }
 
-    function removeRegionOverride(index: any) {
+    function removeRegionOverride(index: number) {
         ensureDefaults();
         props.settings.regionOverrides.splice(index, 1);
     }

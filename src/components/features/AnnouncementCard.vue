@@ -42,7 +42,7 @@
         });
     });
 
-    const dismiss = (e: any) => {
+    const dismiss = (e: Event) => {
         e.stopPropagation();
         isVisible.value = false;
         if (props.announcement.updatedAt) {
@@ -81,7 +81,10 @@
     );
 
     const typeConfig = computed(() => {
-        const types = {
+        const types: Record<
+            string,
+            { bg: string; border: string; text: string; iconBg: string; glow: string }
+        > = {
             info: {
                 bg: 'bg-indigo-50/50 dark:bg-indigo-900/10',
                 border: 'border-indigo-100 dark:border-indigo-800/30',
@@ -111,7 +114,7 @@
                 glow: 'var(--glow-danger)',
             },
         };
-        return (types as Record<string, any>)[props.announcement.type] || types.info;
+        return types[String(props.announcement.type)] || types.info;
     });
 </script>
 

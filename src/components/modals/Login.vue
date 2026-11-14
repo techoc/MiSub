@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import { ref } from 'vue';
+    import type { PropType } from 'vue';
     import { useI18n } from '../../i18n/index.ts';
     import Button from '../ui/Button.vue';
 
@@ -15,7 +16,10 @@
     const logoFailed = ref(false);
 
     const props = defineProps({
-        login: Function as any,
+        login: {
+            type: Function as PropType<(password: string) => Promise<unknown>>,
+            required: true,
+        },
     });
 
     const submitLogin = async () => {

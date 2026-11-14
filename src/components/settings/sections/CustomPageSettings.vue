@@ -42,7 +42,7 @@
 
     const customPage = computed(() => props.settings.customPage);
 
-    const insertPlaceholder = (placeholder: any) => {
+    const insertPlaceholder = (placeholder: string) => {
         props.settings.customPage.content = (customPage.value.content || '') + `{{${placeholder}}}`;
     };
 
@@ -102,7 +102,7 @@
         },
     ];
 
-    const applyTemplate = async (tpl: any) => {
+    const applyTemplate = async (tpl: { nameKey: string; content: string; css?: string }) => {
         const confirmed = await confirmAction({
             message: t('settings.customPageApplyConfirm', { name: t(tpl.nameKey) }),
         });

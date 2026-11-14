@@ -61,8 +61,9 @@
         'preview',
     ];
 
-    const getPathSegment = (value: any) => value.replace(/^\/+/, '').split('/')[0].toLowerCase();
-    const hasInvalidTokenChars = (value: any) => /[\s/?#]/.test(value);
+    const getPathSegment = (value: unknown): string =>
+        String(value).replace(/^\/+/, '').split('/')[0].toLowerCase();
+    const hasInvalidTokenChars = (value: unknown): boolean => /[\s/?#]/.test(String(value));
 
     const customLoginPathError = computed(() => {
         const value = props.settings.customLoginPath;

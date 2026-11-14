@@ -8,8 +8,8 @@
  * @param {number} decimals - Decimal places.
  * @returns {string} Formatted size string.
  */
-export function formatBytes(bytes: any, decimals = 2) {
-    if (!+bytes || bytes < 0) return '0 B';
+export function formatBytes(bytes: number, decimals = 2): string {
+    if (!Number.isFinite(bytes) || bytes < 0) return '0 B';
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];

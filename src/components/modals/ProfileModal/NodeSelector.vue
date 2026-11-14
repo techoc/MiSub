@@ -50,14 +50,19 @@
     // 根据 selectedIds 顺序获取已选节点对象列表
     const orderedSelectedNodes = computed({
         get() {
-            const nodeMap = new Map(props.nodes.map((n) => [(n as Record<string, any>).id, n]));
-            return props.selectedIds.map((id) => nodeMap.get(id)).filter(Boolean);
+            const nodeMap = new Map(
+                props.nodes.map((n) => {
+                    const record = (n || {}) as Record<string, unknown>;
+                    return [String(record.id), record] as const;
+                })
+            );
+            return props.selectedIds.map((id) => nodeMap.get(String(id))).filter(Boolean);
         },
         set(newList) {
             // 拖拽排序后更新 ID 顺序
             emit(
                 'update:selectedIds',
-                newList.map((n) => (n as Record<string, any>).id)
+                newList.map((n) => String((n as Record<string, unknown> | null)?.id))
             );
         },
     });

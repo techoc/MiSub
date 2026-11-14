@@ -73,7 +73,7 @@
         }
     }
 
-    function buildBtnClass(type: any) {
+    function buildBtnClass(type: string) {
         const base = ['nav-action-btn', props.roundedClass];
 
         if (type === 'danger') {

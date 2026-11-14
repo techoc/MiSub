@@ -10,14 +10,14 @@
  */
 
 /** 两位补零 */
-const pad = (n: any) => String(n).padStart(2, '0');
+const pad = (n: number): string => String(n).padStart(2, '0');
 
 /**
  * 根据文件名生成分组名。
  * @param {string} fileName 例如「nodes.txt」「我的节点.json」
  * @returns {string} 例如「导入 nodes」
  */
-export function groupNameFromFile(fileName: any) {
+export function groupNameFromFile(fileName: unknown): string {
     const base = String(fileName || '')
         .replace(/\.[a-z0-9]+$/i, '')
         .trim();
@@ -45,6 +45,9 @@ export function groupNameFromTime(now = new Date()) {
  * @param {Date}   [options.now]
  * @returns {string}
  */
-export function buildAutoGroupName({ fileName = '', now = new Date() } = {}) {
+export function buildAutoGroupName({
+    fileName = '',
+    now = new Date(),
+}: { fileName?: unknown; now?: Date } = {}): string {
     return groupNameFromFile(fileName) || groupNameFromTime(now);
 }

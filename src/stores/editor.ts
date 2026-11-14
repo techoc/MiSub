@@ -4,7 +4,7 @@ import { ref } from 'vue';
 export const useEditorStore = defineStore('editor', () => {
     const isDirty = ref(false);
     const isLoading = ref(false);
-    const lastUpdated = ref(null);
+    const lastUpdated = ref<Date | null>(null);
 
     function markDirty() {
         isDirty.value = true;
@@ -14,11 +14,11 @@ export const useEditorStore = defineStore('editor', () => {
         isDirty.value = false;
     }
 
-    function setLoading(loading: any) {
+    function setLoading(loading: boolean) {
         isLoading.value = loading;
     }
 
-    function setLastUpdated(date: any) {
+    function setLastUpdated(date: Date | null) {
         lastUpdated.value = date;
     }
 

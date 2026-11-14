@@ -30,9 +30,10 @@
         window.location.reload();
     };
 
-    const errorCaptured = (error: any) => {
+    const errorCaptured = (error: unknown) => {
         hasError.value = true;
-        errorMessage.value = error?.message || t('common.routeRenderFailed');
+        errorMessage.value =
+            (error as { message?: string } | null)?.message || t('common.routeRenderFailed');
         return false;
     };
 
@@ -60,8 +61,10 @@
 
 <script lang="ts">
     export default {
-        errorCaptured(err) {
-            return (this.$.exposed as any).errorCaptured(err);
+        errorCaptured(err: unknown) {
+            const exposed = this.$.exposed as
+                { errorCaptured?: (error: unknown) => boolean } | undefined;
+            return exposed?.errorCaptured?.(err) ?? false;
         },
     };
 </script>

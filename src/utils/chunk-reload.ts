@@ -21,7 +21,7 @@ const CHUNK_ERROR_PATTERNS = [
 ];
 
 /** 是否为「动态导入的 chunk 拿不到」这一类错误 */
-export function isChunkLoadError(message: any) {
+export function isChunkLoadError(message: unknown): boolean {
     const text = String(message || '');
     return CHUNK_ERROR_PATTERNS.some((pattern) => text.includes(pattern));
 }

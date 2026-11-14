@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import { computed } from 'vue';
+    import type { PropType } from 'vue';
     import ProfileCard from './ProfileCard.vue';
     import HeroProfileCard from './HeroProfileCard.vue';
 
@@ -9,7 +10,7 @@
             default: () => [],
         },
         isQrExpanded: {
-            type: Function as any,
+            type: Function as PropType<(id: string) => boolean>,
             required: true,
         },
         profileToken: {
@@ -46,9 +47,7 @@
         <div class="block md:hidden max-w-md mx-auto">
             <ProfileCard
                 :profile="profiles[0] as Record<string, any>"
-                :is-qr-expanded="
-                    isQrExpanded((profiles[0] as Record<string, any>).id as any as any as any)
-                "
+                :is-qr-expanded="isQrExpanded(String((profiles[0] as Record<string, unknown>).id))"
                 @quick-import="emit('quick-import', profiles[0])"
                 @toggle-qr="emit('toggle-qr', profiles[0])"
                 @preview="emit('preview', profiles[0])"
@@ -80,7 +79,7 @@
             v-for="profile in profiles"
             :key="(profile as Record<string, any>).id"
             :profile="profile as Record<string, any>"
-            :is-qr-expanded="isQrExpanded((profile as Record<string, any>).id)"
+            :is-qr-expanded="isQrExpanded(String((profile as Record<string, unknown>).id))"
             @quick-import="emit('quick-import', profile)"
             @toggle-qr="emit('toggle-qr', profile)"
             @preview="emit('preview', profile)"

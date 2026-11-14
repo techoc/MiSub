@@ -51,16 +51,17 @@
                 props.editingSubscription.customUserAgent
             );
             if (res.success) {
+                const data = res.data as { count?: number } | undefined;
                 showToast(
                     t('subscriptions.proxyTestSuccess', {
-                        count: (res as Record<string, any>).data.count,
+                        count: data?.count ?? 0,
                     }),
                     'success'
                 );
             } else {
                 showToast(
                     t('subscriptions.proxyTestFailed', {
-                        message: (res as Record<string, any>).error,
+                        message: res.error,
                     }),
                     'error'
                 );

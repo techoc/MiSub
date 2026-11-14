@@ -16,11 +16,11 @@
     const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-group', 'ping']);
     const { t } = useI18n();
 
-    const getProtocol = (url: any) => {
+    const getProtocol = (url: unknown) => {
         // ... (protocol logic unchanged)
         try {
             if (!url) return 'unknown';
-            const lowerUrl = url.toLowerCase();
+            const lowerUrl = String(url).toLowerCase();
             // [更新] 新增 anytls 支援
             if (lowerUrl.startsWith('anytls://')) return 'anytls';
             if (lowerUrl.startsWith('hysteria2://') || lowerUrl.startsWith('hy2://'))

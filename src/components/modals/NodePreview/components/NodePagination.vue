@@ -26,7 +26,7 @@
     const emit = defineEmits(['go-to-page']);
 
     const pageNumbers = computed(() => {
-        const pages: any[] = [];
+        const pages: Array<number | string> = [];
         const current = props.currentPage;
         const total = props.totalPages;
 
@@ -61,9 +61,11 @@
         return pages;
     });
 
-    const goToPage = (page: any) => {
-        if (page < 1 || page > props.totalPages) return;
-        emit('go-to-page', page);
+    const goToPage = (page: number | string) => {
+        const target = Number(page);
+        if (!Number.isFinite(target)) return;
+        if (target < 1 || target > props.totalPages) return;
+        emit('go-to-page', target);
     };
 </script>
 

@@ -23,10 +23,10 @@
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const getProtocol = (url: any) => {
+    const getProtocol = (url: unknown) => {
         try {
             if (!url) return 'unknown';
-            const lowerUrl = url.toLowerCase();
+            const lowerUrl = String(url).toLowerCase();
             if (lowerUrl.startsWith('anytls://')) return 'anytls';
             if (lowerUrl.startsWith('hysteria2://') || lowerUrl.startsWith('hy2://'))
                 return 'hysteria2';
@@ -87,7 +87,7 @@
         return styles[p] || styles['unknown'];
     });
 
-    const copyToClipboard = async (text: any) => {
+    const copyToClipboard = async (text: string) => {
         try {
             await navigator.clipboard.writeText(text);
             showToast(t('notices.copied'), 'success');

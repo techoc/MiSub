@@ -72,7 +72,7 @@
         { key: 'list', label: t('profileModal.outputList'), icon: '📋' },
     ];
 
-    const selectedTransformAsset = ref<any>(null);
+    const selectedTransformAsset = ref<Record<string, unknown> | null>(null);
     const emit = defineEmits(['toggle-advanced']);
 
     const isExternalEngine = computed(() => {

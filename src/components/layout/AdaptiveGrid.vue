@@ -20,7 +20,7 @@
         },
     });
 
-    const containerRef = ref<any>(null);
+    const containerRef = ref<HTMLElement | null>(null);
     const containerWidth = ref(0);
 
     const gridColumns = computed(() => {
@@ -41,7 +41,7 @@
 
     const updateContainerWidth = () => {
         if (containerRef.value) {
-            containerWidth.value = (containerRef.value as Record<string, any>).offsetWidth;
+            containerWidth.value = containerRef.value.offsetWidth;
         }
     };
 

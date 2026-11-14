@@ -19,14 +19,30 @@
 
     const emit = defineEmits(['close']);
 
-    const form = ref<any>({
+    /** 留言表单 */
+    interface GuestbookForm {
+        nickname: string;
+        content: string;
+        type: string; // general, feature, bug
+        captcha: string;
+    }
+
+    /** 算术验证码 */
+    interface GuestbookCaptcha {
+        num1: number;
+        num2: number;
+        operator: string;
+        answer: number;
+    }
+
+    const form = ref<GuestbookForm>({
         nickname: '',
         content: '',
-        type: 'general', // general, feature, bug
+        type: 'general',
         captcha: '',
     });
 
-    const captcha = ref<any>({
+    const captcha = ref<GuestbookCaptcha>({
         num1: 0,
         num2: 0,
         operator: '+',

@@ -51,8 +51,8 @@
         props.localSearchTerm ? props.searchTotalPages : props.baseTotalPages
     );
 
-    const handleChangePage = (page: any) => {
-        let p = parseInt(page, 10);
+    const handleChangePage = (page: number | string) => {
+        let p = parseInt(String(page), 10);
         if (isNaN(p)) return;
         // Let parent handle boundaries if needed, but safe to clamp here for UI feedback
         if (p < 1) p = 1;

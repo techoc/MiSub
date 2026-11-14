@@ -38,7 +38,7 @@
     // The dashboard's "去设置 Token" buttons land here with `?focus=`. Without
     // this the query was ignored and the user had to hunt for the field.
     const highlightedFocusId = ref('');
-    let highlightTimer: any = null;
+    let highlightTimer: ReturnType<typeof setTimeout> | undefined;
 
     function applyFocusFromQuery() {
         const focus = route.query?.focus;

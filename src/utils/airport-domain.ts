@@ -71,7 +71,7 @@ const COMMON_SUBDOMAIN_LABELS = new Set([
  * @param {string} sourceUrl
  * @returns {string} 主域名，无法推断时返回空字符串
  */
-export function inferAirportRootDomain(sourceUrl: any) {
+export function inferAirportRootDomain(sourceUrl: unknown): string {
     const raw = String(sourceUrl || '').trim();
     if (!/^https?:\/\//i.test(raw)) return '';
 

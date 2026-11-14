@@ -28,7 +28,7 @@
 
     const emit = defineEmits(['update:show']);
 
-    const canvasRef = ref<any>(null);
+    const canvasRef = ref<HTMLCanvasElement | null>(null);
 
     const generateQRCode = async () => {
         if (!props.url || !canvasRef.value) return;
@@ -63,7 +63,7 @@
         if (!canvasRef.value) return;
         const link = document.createElement('a');
         link.download = `${props.title || 'qrcode'}.png`;
-        link.href = (canvasRef.value as Record<string, any>).toDataURL('image/png');
+        link.href = canvasRef.value.toDataURL('image/png');
         link.click();
     };
 </script>

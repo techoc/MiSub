@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
     import { ref, computed, onMounted, defineAsyncComponent, watch, markRaw } from 'vue';
+    import type { Component } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import { useSessionStore } from '../stores/session';
     import { storeToRefs } from 'pinia';
@@ -23,8 +24,8 @@
     const sessionStore = useSessionStore();
     const { publicConfig, initialData } = storeToRefs(sessionStore); // Ensure publicConfig contains settings or we need to access settings differently
 
-    const activeComponent = ref<any>(null);
-    const componentProps = ref<any>({});
+    const activeComponent = ref<Component | null>(null);
+    const componentProps = ref<Record<string, unknown>>({});
 
     onMounted(async () => {
         checkPath();
