@@ -9,6 +9,14 @@ import { parseSurgeConfig } from '../utils/protocolConverter.ts';
 import { api } from '../lib/http.ts';
 import { t } from '../i18n/index.ts';
 
+import type { SubscriptionDraft, SubscriptionItem } from '../../types/models.ts';
+
+/** 批量导入需要的写入回调 */
+interface BulkImportHandlers {
+    addSubscriptionsFromBulk: (subs: SubscriptionItem[]) => void | Promise<void>;
+    addNodesFromBulk: (nodes: SubscriptionDraft[], groupName?: string) => void;
+}
+
 const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS;
 const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, false);
 
@@ -18,7 +26,7 @@ const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, f
  * - Clash / mihomo YAML（proxies: ...）
  * - sing-box JSON（{"outbounds": [...]}）
  */
-export function needsServerParsing(text: any) {
+export function needsServerParsing(text: string): boolean {
     if (/^v2rayn:\/\//im.test(text)) return true;
     if (/^\s*proxies\s*:/im.test(text)) return true;
     const trimmed = text.trim();
@@ -26,7 +34,10 @@ export function needsServerParsing(text: any) {
     return false;
 }
 
-export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk }: any) {
+export function useBulkImportLogic({
+    addSubscriptionsFromBulk,
+    addNodesFromBulk,
+}: BulkImportHandlers) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     const showModal = ref(false);
@@ -34,19 +45,19 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
     /**
      * 交给后端把特殊格式转成标准分享 URI；失败时回退原文（前端能识别多少算多少）
      */
-    const convertViaServer = async (importText: any) => {
+    const convertViaServer = async (importText: string): Promise<string> => {
         try {
             const parsed = await api.post('/api/parse_subscription', { content: importText });
             const converted = (parsed?.data?.nodes || [])
-                .map((node: any) => node?.url)
+                .map((node: unknown) => (node as { url?: unknown } | null)?.url)
                 .filter(Boolean);
             if (!parsed?.success || converted.length === 0) return importText;
 
             // 订阅链接（http/https）后端不处理，原样保留
             const keptLines = importText
                 .split('\n')
-                .map((line: any) => line.trim())
-                .filter((line: any) => /^https?:\/\//i.test(line));
+                .map((line: string) => line.trim())
+                .filter((line: string) => /^https?:\/\//i.test(line));
 
             return [...converted, ...keptLines].join('\n');
         } catch (error) {
@@ -55,7 +66,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         }
     };
 
-    const handleBulkImport = async (importText: any, group: any) => {
+    const handleBulkImport = async (importText: string, group: string) => {
         if (!importText) return;
 
         const normalizedGroup = normalizeManualNodeGroupName(group);
@@ -67,10 +78,8 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         }
 
         // 获取已存在的所有 URL，用于去重
-        const existingUrls = new Set(
-            (dataStore.subscriptions || [])
-                .map((s) => (s as Record<string, any>).url)
-                .filter(Boolean)
+        const existingUrls = new Set<string>(
+            (dataStore.subscriptions || []).map((s) => s.url || '').filter(Boolean)
         );
 
         // 先尝试解析 Surge 格式（name = protocol, server, port, ...）
@@ -78,16 +87,16 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
 
         const lines = text
             .split('\n')
-            .map((line: any) => line.trim())
+            .map((line: string) => line.trim())
             .filter(Boolean);
-        const validSubs: any[] = [];
-        const validNodes: any[] = [];
+        const validSubs: SubscriptionItem[] = [];
+        const validNodes: SubscriptionItem[] = [];
 
         // 如果成功解析出 Surge 节点，使用解析结果
         if (surgeNodes && surgeNodes.length > 0) {
             surgeNodes.forEach((node) => {
                 // 去重检查：跳过已存在的 URL
-                if (!existingUrls.has(node.url)) {
+                if (!existingUrls.has(node.url || '')) {
                     validNodes.push({
                         id: generateNodeId(),
                         name: node.name || t('bulkImport.unnamed'),
@@ -105,7 +114,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         }
 
         // 处理标准 URL 格式（逐行检查）
-        lines.forEach((line: any) => {
+        lines.forEach((line: string) => {
             const baseItem = {
                 name: extractNodeName(line) || t('bulkImport.unnamed'),
                 url: line,
