@@ -20,11 +20,23 @@ import {
     setUserBoundProfileId,
 } from './user-access.ts';
 
-import type { KvRecord } from '../../../../types/models.ts';
+import type { KvRecord, ProfileItem, SubscriptionItem } from '../../../../types/models.ts';
+
+/** /dup 检测到的重复项 */
+interface DuplicateNode {
+    idx: number;
+    node: SubscriptionItem;
+    originalIdx: number;
+}
 /**
  * 处理 /import 命令 - 导入节点
  */
-export async function handleImportCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleImportCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         if (args.length === 0) {
             await sendTelegramMessage(
@@ -43,7 +55,7 @@ export async function handleImportCommand(chatId: any, userId: any, args: any, e
         }
 
         const input = args.join(' ').trim();
-        let nodeUrls: any[] = [];
+        let nodeUrls: string[] = [];
 
         // 判断是订阅链接还是 Base64
         if (input.startsWith('http://') || input.startsWith('https://')) {
@@ -101,7 +113,7 @@ export async function handleImportCommand(chatId: any, userId: any, args: any, e
         const storageAdapter = await getStorageAdapter(env);
         const allSubscriptions = await storageAdapter.getAllSubscriptions();
 
-        const addedNodes: any[] = [];
+        const addedNodes: SubscriptionItem[] = [];
         for (const url of nodeUrls) {
             const node = {
                 id: generateId(),
@@ -138,7 +150,12 @@ export async function handleImportCommand(chatId: any, userId: any, args: any, e
 /**
  * 处理 /sort 命令 - 节点排序
  */
-export async function handleSortCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleSortCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         const sortType = args[0]?.toLowerCase() || '';
 
@@ -157,8 +174,13 @@ export async function handleSortCommand(chatId: any, userId: any, args: any, env
             return;
         }
 
-        const { allSubscriptions, userNodes, indexMapping, storageAdapter } =
-            await getNodesWithMapping(userId, env);
+        const {
+            allSubscriptions,
+            userNodes: rawUserNodes,
+            indexMapping,
+            storageAdapter,
+        } = await getNodesWithMapping(userId, env);
+        const userNodes: SubscriptionItem[] = rawUserNodes;
 
         if (userNodes.length === 0) {
             await sendTelegramMessage(chatId, '📋 暂无可排序的节点', env);
@@ -171,16 +193,16 @@ export async function handleSortCommand(chatId: any, userId: any, args: any, env
         switch (sortType) {
             case 'name':
                 sortedIndices.sort((a, b) =>
-                    (userNodes[a].name as Record<string, any>).localeCompare(
-                        userNodes[b].name,
+                    String(userNodes[a].name ?? '').localeCompare(
+                        String(userNodes[b].name ?? ''),
                         'zh-CN'
                     )
                 );
                 break;
             case 'protocol':
                 sortedIndices.sort((a, b) => {
-                    const pa = (userNodes[a].url as Record<string, any>).split('://')[0];
-                    const pb = (userNodes[b].url as Record<string, any>).split('://')[0];
+                    const pa = String(userNodes[a].url ?? '').split('://')[0];
+                    const pb = String(userNodes[b].url ?? '').split('://')[0];
                     return pa.localeCompare(pb);
                 });
                 break;
@@ -212,10 +234,15 @@ export async function handleSortCommand(chatId: any, userId: any, args: any, env
 
         await storageAdapter.putAllSubscriptions(allSubscriptions);
 
-        const sortNames = { name: '名称', protocol: '协议', time: '时间', status: '状态' };
+        const sortNames: Record<string, string> = {
+            name: '名称',
+            protocol: '协议',
+            time: '时间',
+            status: '状态',
+        };
         await sendTelegramMessage(
             chatId,
-            `✅ <b>排序完成</b>\n\n已按${(sortNames as Record<string, any>)[sortType]}排序 ${userNodes.length} 个节点`,
+            `✅ <b>排序完成</b>\n\n已按${sortNames[sortType]}排序 ${userNodes.length} 个节点`,
             env
         );
     } catch (error) {
@@ -231,12 +258,22 @@ export async function handleSortCommand(chatId: any, userId: any, args: any, env
 /**
  * 处理 /dup 命令 - 去重检测
  */
-export async function handleDupCommand(chatId: any, userId: any, args: any, env: any) {
+export async function handleDupCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         const action = args[0]?.toLowerCase() || '';
 
-        const { allSubscriptions, userNodes, indexMapping, storageAdapter } =
-            await getNodesWithMapping(userId, env);
+        const {
+            allSubscriptions,
+            userNodes: rawUserNodes,
+            indexMapping,
+            storageAdapter,
+        } = await getNodesWithMapping(userId, env);
+        const userNodes: SubscriptionItem[] = rawUserNodes;
 
         if (userNodes.length === 0) {
             await sendTelegramMessage(chatId, '📋 暂无节点', env);
@@ -244,13 +281,13 @@ export async function handleDupCommand(chatId: any, userId: any, args: any, env:
         }
 
         // 检测重复（基于 URL）
-        const urlMap = new Map();
-        const duplicates: any[] = [];
+        const urlMap = new Map<string, number>();
+        const duplicates: DuplicateNode[] = [];
 
-        userNodes.forEach((node: any, idx: any) => {
-            const url = node.url;
+        userNodes.forEach((node, idx) => {
+            const url = node.url ?? '';
             if (urlMap.has(url)) {
-                duplicates.push({ idx, node, originalIdx: urlMap.get(url) });
+                duplicates.push({ idx, node, originalIdx: urlMap.get(url)! });
             } else {
                 urlMap.set(url, idx);
             }
@@ -317,15 +354,15 @@ export async function handleDupCommand(chatId: any, userId: any, args: any, env:
  * 处理 /bind 命令 - 绑定默认订阅组
  */
 export async function handleBindCommand(
-    chatId: any,
-    userId: any,
-    args: any,
-    env: any,
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env,
     requestCache: KvRecord | null = null
 ) {
     try {
         const cache = requestCache || createRequestCache();
-        const profiles = await getCachedProfiles(env, cache);
+        const profiles: ProfileItem[] = await getCachedProfiles(env, cache);
         const settings = await getCachedSettings(env, cache);
         const config = settings.telegram_push_config || {};
 
@@ -343,21 +380,21 @@ export async function handleBindCommand(
 
             const currentProfileId = getUserBoundProfileId(config, userId);
             if (currentProfileId) {
-                const current = profiles.find((p: any) => p.id === currentProfileId);
+                const current = profiles.find((p) => p.id === currentProfileId);
                 message += current ? `<b>${current.name}</b>` : '(已失效)';
             } else {
                 message += '无';
             }
 
             message += '\n\n可用订阅组:\n';
-            profiles.forEach((p: any, i: any) => {
+            profiles.forEach((p, i) => {
                 const isCurrent = p.id === currentProfileId;
                 message += `${isCurrent ? '✅' : ''} ${i + 1}. ${p.name}\n`;
             });
             message += '\n用法: /bind [序号]';
 
             // 生成快捷按钮
-            const buttons = profiles.slice(0, 6).map((p: any, i: any) => ({
+            const buttons = profiles.slice(0, 6).map((p, i) => ({
                 text: `${i + 1}. ${p.name.substring(0, 8)}`,
                 callback_data: `bind_profile_${p.id}`,
             }));
@@ -418,9 +455,9 @@ export async function handleBindCommand(
  * 处理 /unbind 命令 - 解除绑定
  */
 export async function handleUnbindCommand(
-    chatId: any,
-    userId: any,
-    env: any,
+    chatId: string | number,
+    userId: string | number,
+    env: Env,
     requestCache: KvRecord | null = null
 ) {
     try {
