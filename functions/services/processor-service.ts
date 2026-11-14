@@ -24,7 +24,7 @@ import { normalizeGeneratorOptions } from '../modules/subscription/generator-opt
 import { applyMihomoChainProxyToClashConfig } from '../modules/subscription/mihomo-chain-proxy.ts';
 
 import type { KvRecord } from '../../types/models.ts';
-function getTemplateExtension(templateUrl: any) {
+function getTemplateExtension(templateUrl: unknown): string {
     const raw = typeof templateUrl === 'string' ? templateUrl.trim() : '';
     if (!raw) return '';
 
@@ -38,34 +38,35 @@ function getTemplateExtension(templateUrl: any) {
 }
 
 export function isIniTemplateSource(
-    templateSource: any,
+    templateSource: { kind?: string; value?: string } | null | undefined,
     builtinTemplateEntry: KvRecord | null = null
-) {
+): boolean {
     if (builtinTemplateEntry?.format === 'ini') return true;
     if (templateSource?.kind === 'custom') return true;
     return getTemplateExtension(templateSource?.value) === 'ini';
 }
 
-function stripInternalProxyFields(proxy: any) {
+function stripInternalProxyFields(proxy: unknown): unknown {
     if (!proxy || typeof proxy !== 'object') return proxy;
-    const { metadata, ...publicProxy } = proxy;
+    const { metadata, ...publicProxy } = proxy as Record<string, unknown>;
     return publicProxy;
 }
 
-function deduplicateProxyNames(proxies: any) {
-    const seen = new Map();
-    proxies.forEach((proxy: any) => {
-        if (!proxy?.name) return;
-        const originalName = proxy.name;
+function deduplicateProxyNames(proxies: unknown[]) {
+    const seen = new Map<string, number>();
+    proxies.forEach((proxy) => {
+        const record = proxy as { name?: string } | null;
+        if (!record?.name) return;
+        const originalName = record.name;
         const count = seen.get(originalName) || 0;
         seen.set(originalName, count + 1);
         if (count > 0) {
-            proxy.name = `${originalName} ${count + 1}`;
+            record.name = `${originalName} ${count + 1}`;
         }
     });
 }
 
-export function isClashYamlProfileTemplate(templateText: any) {
+export function isClashYamlProfileTemplate(templateText: unknown): boolean {
     if (typeof templateText !== 'string' || templateText.trim() === '') return false;
 
     try {
@@ -74,8 +75,8 @@ export function isClashYamlProfileTemplate(templateText: any) {
             parsed &&
             typeof parsed === 'object' &&
             !Array.isArray(parsed) &&
-            Array.isArray((parsed as Record<string, any>)['proxy-groups']) &&
-            Array.isArray((parsed as Record<string, any>).rules)
+            Array.isArray((parsed as Record<string, unknown>)['proxy-groups']) &&
+            Array.isArray((parsed as Record<string, unknown>).rules)
         );
     } catch {
         return false;
@@ -91,11 +92,13 @@ export function isClashYamlProfileTemplate(templateText: any) {
  *   landing-group: 🔗 链式落地
  *   clone-prefix: "🔗 链式落地|"
  */
-function normalizeYamlChainConfigs(config: any) {
+function normalizeYamlChainConfigs(
+    config: Record<string, unknown>
+): Array<Record<string, unknown>> {
     const rawDeclaration = config['x-misub-chain-proxy'];
     delete config['x-misub-chain-proxy'];
 
-    let declarations: any[] = [];
+    let declarations: unknown[] = [];
     if (Array.isArray(rawDeclaration)) {
         declarations = rawDeclaration;
     } else if (rawDeclaration && typeof rawDeclaration === 'object') {
@@ -107,24 +110,28 @@ function normalizeYamlChainConfigs(config: any) {
             (declaration) =>
                 declaration && typeof declaration === 'object' && !Array.isArray(declaration)
         )
-        .map((declaration) => ({
-            ...declaration,
-            // Long names are the documented YAML form; short names mirror the unified model.
-            group: (declaration as Record<string, any>).group ?? declaration['landing-group'],
-            entry: (declaration as Record<string, any>).entry ?? declaration['entry-group'],
-            prefix: (declaration as Record<string, any>).prefix ?? declaration['clone-prefix'],
-        }));
+        .map((declaration) => {
+            const record = declaration as Record<string, unknown>;
+            return {
+                ...record,
+                // Long names are the documented YAML form; short names mirror the unified model.
+                group: record.group ?? record['landing-group'],
+                entry: record.entry ?? record['entry-group'],
+                prefix: record.prefix ?? record['clone-prefix'],
+            };
+        });
 }
 
 export function renderClashYamlProfileTemplate(
-    templateText: any,
-    nodeList: any,
-    options: Record<string, any> = {}
-) {
-    const config = yaml.load(templateText);
-    if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    templateText: string,
+    nodeList: unknown,
+    options: Record<string, unknown> = {}
+): string {
+    const loadedConfig = yaml.load(templateText);
+    if (!loadedConfig || typeof loadedConfig !== 'object' || Array.isArray(loadedConfig)) {
         return '';
     }
+    const config = loadedConfig as Record<string, unknown>;
 
     const nodeUrls = String(nodeList || '')
         .split(/\r?\n+/)
@@ -132,10 +139,15 @@ export function renderClashYamlProfileTemplate(
         .filter((line) => line && !line.startsWith('#'));
     const proxies = urlsToClashProxies(nodeUrls, options).map(stripInternalProxyFields);
     deduplicateProxyNames(proxies);
-    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
+    const rawGeneratorOptions = options.generatorOptions;
+    const generatorOptions = normalizeGeneratorOptions(
+        rawGeneratorOptions && typeof rawGeneratorOptions === 'object'
+            ? (rawGeneratorOptions as Record<string, unknown>)
+            : {}
+    );
 
     const chainConfigs = normalizeYamlChainConfigs(config);
-    (config as Record<string, any>).proxies = proxies;
+    config.proxies = proxies;
     if (chainConfigs.length > 0) {
         applyMihomoChainProxyToClashConfig(config, {
             chainConfigs,
@@ -150,12 +162,12 @@ export function renderClashYamlProfileTemplate(
             'bind-address': generatorOptions.allowLan ? '0.0.0.0' : '127.0.0.1',
             ipv6: generatorOptions.ipv6,
             'external-controller': '127.0.0.1:9090',
-            dns: resolveSafeDnsConfig((config as Record<string, any>).dns, {
+            dns: resolveSafeDnsConfig(config.dns, {
                 mode: options.dnsMode,
                 proxyGroup: '🌐 DNS 出口',
                 generatorOptions,
             }),
-            proxies: (config as Record<string, any>).proxies,
+            proxies: config.proxies,
         },
         {
             indent: 2,
@@ -174,7 +186,11 @@ export class ProcessorService {
      * @param {Object} config
      * @param {Object} params
      */
-    static async processNodes(context: any, config: any, params: any) {
+    static async processNodes(
+        context: unknown,
+        config: Record<string, unknown>,
+        params: Record<string, unknown>
+    ) {
         const {
             userAgent,
             targetMisubs,
@@ -190,10 +206,10 @@ export class ProcessorService {
             { ...config, enableAccessLog: false },
             userAgent,
             targetMisubs,
-            prependedContent,
-            generationSettings,
-            isDebugToken,
-            shouldSkipCertVerify
+            String(prependedContent ?? ''),
+            (generationSettings as KvRecord | null) ?? null,
+            Boolean(isDebugToken),
+            Boolean(shouldSkipCertVerify)
         );
 
         return combinedNodeList;
@@ -203,18 +219,28 @@ export class ProcessorService {
      * Render the combined node list into the final format
      * @param {Object} options
      */
-    static async renderOutput(options: any) {
+    static async renderOutput(options: Record<string, unknown> = {}) {
         const {
-            targetFormat,
-            combinedNodeList,
-            subName,
-            config,
+            targetFormat = 'base64',
+            combinedNodeList = '',
+            subName = '',
+            config = {},
             builtinOptions = {},
             templateSource = { kind: 'none', value: '' },
-            managedConfigUrl,
-            storageAdapter,
-            userInfoHeader,
-        } = options || {};
+            managedConfigUrl = '',
+            storageAdapter = null,
+            userInfoHeader = '',
+        } = options as {
+            targetFormat?: string;
+            combinedNodeList?: string;
+            subName?: string;
+            config?: Record<string, unknown>;
+            builtinOptions?: Record<string, unknown>;
+            templateSource?: { kind?: string; value?: string };
+            managedConfigUrl?: string;
+            storageAdapter?: unknown;
+            userInfoHeader?: string;
+        };
 
         // Check for Base64 (simplest case)
         if (targetFormat === 'base64') {
@@ -242,7 +268,9 @@ export class ProcessorService {
 
         let finalContent = builtinProxyContent;
         let contentType = 'text/plain; charset=utf-8';
-        const headers = userInfoHeader ? { 'Subscription-Userinfo': userInfoHeader } : {};
+        const headers: Record<string, string> = userInfoHeader
+            ? { 'Subscription-Userinfo': userInfoHeader }
+            : {};
 
         const shouldApplyTemplate = !builtinOptions.hiddifyCompatible;
         const builtinTemplateEntry =
@@ -320,7 +348,7 @@ export class ProcessorService {
                     builtinOptions
                 );
                 contentType = 'application/x-yaml; charset=utf-8';
-                (headers as Record<string, any>)['X-MiSub-Template-Mode'] = 'clash-yaml-profile';
+                headers['X-MiSub-Template-Mode'] = 'clash-yaml-profile';
             }
         }
 
