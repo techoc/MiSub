@@ -3,6 +3,25 @@
  * 提供自动重试、并发控制和超时处理
  */
 
+/** Cloudflare 扩展 fetch 选项（cf.insecureSkipVerify 等） */
+interface FetchInitOptions extends RequestInit {
+    cf?: { insecureSkipVerify?: boolean; [key: string]: unknown };
+}
+
+/** 重试选项 */
+interface FetchRetryOptions {
+    maxRetries?: number;
+    baseDelay?: number;
+    retryableStatus?: number[];
+}
+
+/** 并发队列条目 */
+interface QueueEntry {
+    task: () => unknown;
+    resolve: (value: unknown) => void;
+    reject: (reason?: unknown) => void;
+}
+
 const DEFAULT_RETRY_OPTIONS = {
     MAX_RETRIES: 2, // 最多重试 2 次
     BASE_DELAY: 1000, // 重试基础延迟 1 秒
@@ -17,17 +36,17 @@ const DEFAULT_RETRY_OPTIONS = {
  * @returns {Promise<Response>} - 响应对象
  */
 export async function fetchWithRetry(
-    url: any,
-    init: Record<string, any> = {},
-    options: Record<string, any> = {}
-) {
+    url: string,
+    init: FetchInitOptions = {},
+    options: FetchRetryOptions = {}
+): Promise<Response> {
     const {
         maxRetries = DEFAULT_RETRY_OPTIONS.MAX_RETRIES,
         baseDelay = DEFAULT_RETRY_OPTIONS.BASE_DELAY,
         retryableStatus = DEFAULT_RETRY_OPTIONS.RETRYABLE_STATUS,
     } = options;
 
-    let lastError;
+    let lastError: unknown;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
@@ -72,14 +91,16 @@ export async function fetchWithRetry(
  * @param {number} limit - 最大并发数
  * @returns {Function} - 包装函数 (task => Promise)
  */
-export function createConcurrencyLimiter(limit: any) {
-    const queue: any[] = [];
+export function createConcurrencyLimiter(limit: number) {
+    const queue: QueueEntry[] = [];
     let active = 0;
 
     const runNext = () => {
         if (active < limit && queue.length > 0) {
             active++;
-            const { task, resolve, reject } = queue.shift();
+            const entry = queue.shift();
+            if (!entry) return;
+            const { task, resolve, reject } = entry;
 
             // 执行任务
             Promise.resolve(task())
@@ -92,9 +113,9 @@ export function createConcurrencyLimiter(limit: any) {
         }
     };
 
-    return (task: any) => {
-        return new Promise((resolve, reject) => {
-            queue.push({ task, resolve, reject });
+    return <T>(task: () => T | Promise<T>): Promise<T> => {
+        return new Promise<T>((resolve, reject) => {
+            queue.push({ task, resolve: resolve as (value: unknown) => void, reject });
             runNext();
         });
     };
@@ -107,26 +128,29 @@ export function createConcurrencyLimiter(limit: any) {
  * @param {number} timeoutMs - 超时时间（毫秒）
  * @returns {Promise<string[]>} - 已完成的结果数组
  */
-export async function collectWithinTimeout(promises: any, timeoutMs: any) {
+export async function collectWithinTimeout(
+    promises: Array<Promise<unknown>>,
+    timeoutMs: number
+): Promise<unknown[]> {
     // 包装每个 Promise，使其在成功时返回结果，失败时返回 null（被忽略）
-    const wrappedPromises = promises.map((p: any) =>
+    const wrappedPromises = promises.map((p) =>
         p
-            .then((res: any) => ({ status: 'fulfilled', value: res }))
-            .catch((err: any) => ({ status: 'rejected', reason: err }))
+            .then((res) => ({ status: 'fulfilled' as const, value: res }))
+            .catch((err: unknown) => ({ status: 'rejected' as const, reason: err }))
     );
 
     // 竞态 Promise：所有完成 OR 超时
-    const timeoutPromise = new Promise((resolve) =>
+    const timeoutPromise = new Promise<'TIMEOUT'>((resolve) =>
         setTimeout(() => resolve('TIMEOUT'), timeoutMs)
     );
 
     // 等待全部完成或超时信号
     const raceResult = await Promise.race([Promise.all(wrappedPromises), timeoutPromise]);
 
-    let results;
+    let results: unknown[];
 
     if (raceResult === 'TIMEOUT') {
-        const completedCount = wrappedPromises.filter((p: any) => {
+        const completedCount = wrappedPromises.filter(() => {
             // 这是一个稍微取巧的方法查看 Promise 状态，但在标准 JS 中无法同步查看。
             // 实际上 Promise.race 返回时，未完成的 promise 还在 pending。
             // 我们这里其实需要获取那些已经 settled 的 promise 的值。
@@ -153,9 +177,9 @@ export async function collectWithinTimeout(promises: any, timeoutMs: any) {
         return []; // 暂时返回空，因为下面逻辑太复杂，我们在替换时直接复用原有逻辑或者改进。
     } else {
         // 全都完成了
-        results = (raceResult as Record<string, any>)
-            .filter((r: any) => r.status === 'fulfilled' && r.value)
-            .map((r: any) => r.value);
+        results = raceResult
+            .filter((r) => r.status === 'fulfilled' && r.value)
+            .map((r) => (r as { status: 'fulfilled'; value: unknown }).value);
     }
 
     return results;
@@ -169,8 +193,11 @@ export async function collectWithinTimeout(promises: any, timeoutMs: any) {
  * @param {number} timeoutMs - 整体超时时间(ms)
  * @returns {Promise<any[]>} - 在超时前所有成功 resolve 的结果数组
  */
-export async function robustCollect(taskFactories: any, timeoutMs: any) {
-    const results: any[] = [];
+export async function robustCollect(
+    taskFactories: Array<(signal: AbortSignal) => Promise<unknown>>,
+    timeoutMs: number
+): Promise<unknown[]> {
+    const results: unknown[] = [];
     const controller = new AbortController();
 
     // 超时中止
@@ -178,7 +205,7 @@ export async function robustCollect(taskFactories: any, timeoutMs: any) {
         controller.abort();
     }, timeoutMs);
 
-    const promises = taskFactories.map(async (taskFactory: any) => {
+    const promises = taskFactories.map(async (taskFactory) => {
         try {
             const res = await taskFactory(controller.signal);
             if (res !== undefined && res !== null) {
