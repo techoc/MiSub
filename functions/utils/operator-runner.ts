@@ -7,10 +7,59 @@ import * as NodeUtils from './node-transformer.ts';
 import { extractNodeRegion, getRegionEmoji } from '../modules/utils/geo-utils.ts';
 import { matchesDslCondition, renderDslTemplate } from './expression-dsl.ts';
 
+import type { KvRecord } from '../../types/models.ts';
+
+/** 重命名/过滤规则（字符串或 { pattern, flags, replacement } 对象） */
+type OperatorRule = { pattern: string; flags?: string; replacement?: string };
+type NormalizedRule = string | OperatorRule;
+
+/** 规则组（include/exclude/protocols/regions 共用） */
+interface RuleGroup {
+    enabled?: boolean;
+    rules?: unknown;
+    values?: unknown;
+}
+
+/** filter 算子参数 */
+interface OperatorFilterParams {
+    include?: RuleGroup;
+    exclude?: RuleGroup;
+    protocols?: RuleGroup;
+    regions?: RuleGroup;
+}
+
+/** rename 算子参数 */
+interface OperatorRenameParams {
+    regex?: RuleGroup;
+    template?: {
+        enabled?: boolean;
+        template?: string;
+        indexScope?: string;
+        scope?: string;
+        offset?: number;
+        indexStart?: number;
+    };
+}
+
+/** sort 算子参数 */
+interface OperatorSortParams {
+    keys?: Array<{ key?: unknown }>;
+}
+
+/** 算子定义（operators 数组元素） */
+interface OperatorDefinition {
+    type?: string;
+    params?: unknown;
+    enabled?: boolean;
+}
+
+/** script 算子单步 DSL */
+type ScriptStep = { action?: unknown; template?: unknown; expression?: unknown };
+
 /**
  * 辅助函数：将规则模式规范化为正则表达式数组
  */
-function normalizeRules(rules: any) {
+function normalizeRules(rules: unknown): NormalizedRule[] {
     if (!rules) return [];
     if (!Array.isArray(rules)) {
         if (typeof rules === 'string')
@@ -21,7 +70,7 @@ function normalizeRules(rules: any) {
         return [];
     }
 
-    let normalized: any[] = [];
+    const normalized: NormalizedRule[] = [];
     for (const rule of rules) {
         if (typeof rule === 'string') {
             // 支持在单个算子输入中通过 | 或 换行符 传递多个子规则
@@ -30,8 +79,9 @@ function normalizeRules(rules: any) {
                 .map((p) => p.trim())
                 .filter(Boolean);
             normalized.push(...parts);
-        } else if (rule && rule.pattern) {
-            normalized.push(rule);
+        } else if (rule && typeof rule === 'object') {
+            const candidate = rule as { pattern?: unknown };
+            if (candidate.pattern) normalized.push(rule as OperatorRule);
         }
     }
     return normalized;
@@ -40,10 +90,10 @@ function normalizeRules(rules: any) {
 /**
  * Filter Operator
  */
-function opFilter(nodes: any, params: any) {
+function opFilter(nodes: KvRecord[], params: OperatorFilterParams | null | undefined) {
     if (!params) return nodes;
     const { include, exclude, protocols, regions } = params;
-    let result = [...nodes];
+    let result: KvRecord[] = [...nodes];
 
     if (include?.enabled) {
         const rules = normalizeRules(include.rules);
@@ -82,7 +132,7 @@ function opFilter(nodes: any, params: any) {
         }
     }
     if (protocols?.enabled && Array.isArray(protocols.values)) {
-        const allowed = new Set(protocols.values.map((p: any) => p.toLowerCase()));
+        const allowed = new Set(protocols.values.map((p) => String(p).toLowerCase()));
         result = result.filter((r) => allowed.has(r.protocol.toLowerCase()));
     }
     if (regions?.enabled && Array.isArray(regions.values)) {
@@ -97,7 +147,7 @@ function opFilter(nodes: any, params: any) {
 /**
  * Rename Operator
  */
-function opRename(nodes: any, params: any) {
+function opRename(nodes: KvRecord[], params: OperatorRenameParams | null | undefined) {
     if (!params) return nodes;
     const { regex, template } = params;
     let result = [...nodes];
@@ -122,7 +172,7 @@ function opRename(nodes: any, params: any) {
                     if (
                         typeof rule === 'object' &&
                         rule.replacement &&
-                        (rule.replacement as Record<string, any>).includes('{')
+                        rule.replacement.includes('{')
                     ) {
                         return {
                             ...rule,
@@ -146,7 +196,7 @@ function opRename(nodes: any, params: any) {
     }
 
     if (template?.enabled && template.template) {
-        const counters = new Map();
+        const counters = new Map<string, number>();
         const scope = template.indexScope || template.scope || 'region'; // 默认按地区分组计数，符合用户直觉
 
         result = result.map((r, index) => {
@@ -192,7 +242,11 @@ function opRename(nodes: any, params: any) {
 /**
  * Script Operator (The heart of Sub-Store)
  */
-async function opScript(nodes: any, params: Record<string, any> = {}, context: any) {
+async function opScript(
+    nodes: KvRecord[],
+    params: Record<string, unknown> = {},
+    context: Record<string, unknown> = {}
+): Promise<KvRecord[]> {
     const dsl = Array.isArray(params.dsl) ? params.dsl : params.action ? [params] : [];
 
     if (!dsl.length) {
@@ -202,20 +256,21 @@ async function opScript(nodes: any, params: Record<string, any> = {}, context: a
         return nodes;
     }
 
-    let result = nodes.map((r: any) => NodeUtils.ensureRegionInfo(r, true));
+    let result = nodes.map((r) => NodeUtils.ensureRegionInfo(r, true));
 
     for (const step of dsl) {
-        const action = String(step?.action || '').toLowerCase();
+        const stepParams = step as ScriptStep;
+        const action = String(stepParams.action || '').toLowerCase();
         if (action === 'filter') {
-            result = result.filter((node: any, index: any) =>
-                matchesDslCondition({ ...node, index: index + 1 }, step)
+            result = result.filter((node, index) =>
+                matchesDslCondition({ ...node, index: index + 1 }, stepParams)
             );
             continue;
         }
         if (action === 'rename') {
-            const template = step.template || step.expression;
+            const template = stepParams.template || stepParams.expression;
             if (!template) continue;
-            result = result.map((node: any, index: any) => {
+            result = result.map((node, index) => {
                 const nextName =
                     renderDslTemplate(template, {
                         ...node,
@@ -242,23 +297,27 @@ async function opScript(nodes: any, params: Record<string, any> = {}, context: a
  * Main Entry Point for Operator Chain
  */
 export async function runOperatorChain(
-    nodeUrls: any,
-    operators: any,
-    context: Record<string, any> = {}
-) {
+    nodeUrls: string[],
+    operators: unknown,
+    context: Record<string, unknown> = {}
+): Promise<string[]> {
     if (!Array.isArray(operators) || operators.length === 0) {
         return nodeUrls;
     }
 
     // 1. Convert URLs to Records
-    let records = NodeUtils.nodeUrlsToRecords(nodeUrls, {
+    let records: KvRecord[] = NodeUtils.nodeUrlsToRecords(nodeUrls, {
         needServerPort: true,
         ensureRegion: false,
     });
-    const metadataByUrl =
-        context.nodeMetadataByUrl instanceof Map
-            ? context.nodeMetadataByUrl
-            : new Map(Object.entries(context.nodeMetadataByUrl || {}));
+    const rawMetadata = context.nodeMetadataByUrl;
+    const metadataByUrl: Map<string, Record<string, unknown>> = rawMetadata instanceof Map
+        ? (rawMetadata as Map<string, Record<string, unknown>>)
+        : new Map(
+              Object.entries((rawMetadata as Record<string, unknown>) || {}) as Array<
+                  [string, Record<string, unknown>]
+              >
+          );
     if (metadataByUrl.size > 0) {
         records = records.map((record) => ({
             ...record,
@@ -266,7 +325,7 @@ export async function runOperatorChain(
         }));
     }
 
-    const ua = (context.userAgent || '').toLowerCase();
+    const ua = String(context.userAgent || '').toLowerCase();
     const platform = {
         isClash: /clash|mihomo|stash|meta|verge/i.test(ua),
         isSurge: /surge/i.test(ua),
@@ -281,34 +340,42 @@ export async function runOperatorChain(
     const enrichedContext = { ...context, ...platform };
 
     // 2. Run Operators sequentially
-    for (const op of operators) {
-        const { type, params, enabled } = op;
+    for (const operator of operators as OperatorDefinition[]) {
+        const { type, params, enabled } = operator;
         if (enabled === false) continue;
 
         switch (type) {
             case 'filter':
-                records = opFilter(records, params);
+                records = opFilter(records, params as OperatorFilterParams | null | undefined);
                 break;
             case 'rename':
-                records = opRename(records, params);
+                records = opRename(records, params as OperatorRenameParams | null | undefined);
                 break;
             case 'script':
-                records = await opScript(records, params, enrichedContext);
+                records = await opScript(
+                    records,
+                    (params as Record<string, unknown>) || {},
+                    enrichedContext
+                );
                 break;
-            case 'sort':
-                if (params && Array.isArray(params.keys)) {
-                    const needsRegion = params.keys.some(
-                        (k: any) => k.key === 'region' || k.key === 'regionZh'
+            case 'sort': {
+                const sortParams = params as OperatorSortParams | null | undefined;
+                if (sortParams && Array.isArray(sortParams.keys)) {
+                    const needsRegion = sortParams.keys.some(
+                        (k) => k.key === 'region' || k.key === 'regionZh'
                     );
                     if (needsRegion) {
                         records = records.map((r) => NodeUtils.ensureRegionInfo(r, true));
                     }
-                    records.sort(NodeUtils.makeComparator({ keys: params.keys }));
+                    records.sort(NodeUtils.makeComparator({ keys: sortParams.keys }));
                 }
                 break;
+            }
             case 'dedup': {
-                const includeProtocol = params?.includeProtocol !== false;
-                const seenNodes = new Map();
+                const includeProtocol =
+                    (params as { includeProtocol?: boolean } | null | undefined)
+                        ?.includeProtocol !== false;
+                const seenNodes = new Map<string, KvRecord>();
                 for (const r of records) {
                     const hostPort = `${r.server}:${r.port}`;
                     const key = includeProtocol ? `${r.protocol}|${hostPort}` : hostPort;
@@ -316,7 +383,7 @@ export async function runOperatorChain(
                         seenNodes.set(key, r);
                     } else {
                         const existing = seenNodes.get(key);
-                        if ((r.name || '').length > (existing.name || '').length) {
+                        if (!existing || (r.name || '').length > (existing.name || '').length) {
                             seenNodes.set(key, r);
                         }
                     }
