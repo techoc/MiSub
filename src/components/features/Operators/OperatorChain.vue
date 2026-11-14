@@ -18,6 +18,38 @@
         },
     });
 
+    /** 转换算子 */
+    interface TransformOperator {
+        id: string;
+        type: string;
+        enabled: boolean;
+        params: Record<string, unknown>;
+        [key: string]: unknown;
+    }
+
+    /** 旧版转换配置（用于迁移） */
+    interface LegacyTransformData {
+        enabled?: boolean;
+        filter?: {
+            include?: { enabled?: boolean };
+            exclude?: { enabled?: boolean };
+            protocols?: { enabled?: boolean };
+            regions?: { enabled?: boolean };
+            script?: { enabled?: boolean };
+            useless?: { enabled?: boolean };
+            [key: string]: unknown;
+        };
+        rename?: {
+            regex?: { enabled?: boolean; rules?: unknown[] };
+            template?: { enabled?: boolean; template?: string; indexStart?: number };
+            script?: { enabled?: boolean; expression?: string };
+            [key: string]: unknown;
+        };
+        dedup?: { enabled?: boolean; [key: string]: unknown };
+        sort?: { enabled?: boolean; keys?: unknown[]; [key: string]: unknown };
+        [key: string]: unknown;
+    }
+
     const emit = defineEmits(['update:modelValue']);
     const { t } = useI18n();
 
@@ -28,8 +60,8 @@
 
     const migrateFromLegacy = () => {
         if (!props.legacyData) return;
-        const config = props.legacyData;
-        const ops: any[] = [];
+        const config = props.legacyData as LegacyTransformData;
+        const ops: TransformOperator[] = [];
 
         // 1. Filter
         const filter = config.filter;
@@ -52,7 +84,7 @@
 
         // 2. Rename (Regex)
         const regex = config.rename?.regex;
-        if (regex?.enabled && regex.rules?.length > 0) {
+        if (regex?.enabled && (regex.rules?.length ?? 0) > 0) {
             ops.push({
                 id: crypto.randomUUID(),
                 type: 'rename',
@@ -104,7 +136,7 @@
 
         // 6. Sort
         const sort = config.sort;
-        if (sort?.enabled && sort.keys?.length > 0) {
+        if (sort?.enabled && (sort.keys?.length ?? 0) > 0) {
             ops.push({
                 id: crypto.randomUUID(),
                 type: 'sort',
@@ -117,26 +149,28 @@
     };
 
     // Track which operator is expanded
-    const expandedIndex = ref(props.modelValue.length > 0 ? props.modelValue.length - 1 : null);
+    const expandedIndex = ref<number | null>(
+        props.modelValue.length > 0 ? props.modelValue.length - 1 : null
+    );
 
-    const toggleExpand = (index: any) => {
+    const toggleExpand = (index: number) => {
         expandedIndex.value = expandedIndex.value === index ? null : index;
     };
 
-    const addOperator = (type: any) => {
-        const newOp = {
+    const addOperator = (type: string) => {
+        const newOp: TransformOperator = {
             id: Math.random().toString(36).substring(2, 11),
             type,
             enabled: true,
             params: getInitialParams(type),
         };
-        const newList = [...props.modelValue, newOp];
+        const newList: TransformOperator[] = [...(props.modelValue as TransformOperator[]), newOp];
         emit('update:modelValue', newList);
         // Auto expand new operator
         expandedIndex.value = newList.length - 1;
     };
 
-    const getInitialParams = (type: any) => {
+    const getInitialParams = (type: string): Record<string, unknown> => {
         switch (type) {
             case 'filter':
                 return {
@@ -180,16 +214,16 @@
         }
     };
 
-    const removeOperator = (index: any) => {
-        const newList: any[] = [...props.modelValue];
+    const removeOperator = (index: number) => {
+        const newList: TransformOperator[] = [...(props.modelValue as TransformOperator[])];
         newList.splice(index, 1);
         emit('update:modelValue', newList);
         if (expandedIndex.value === index) expandedIndex.value = null;
     };
 
-    const moveOperator = (event: any, index: any, direction: any) => {
+    const moveOperator = (event: Event, index: number, direction: number) => {
         event.stopPropagation();
-        const newList: any[] = [...props.modelValue];
+        const newList: TransformOperator[] = [...(props.modelValue as TransformOperator[])];
         const newIndex = index + direction;
         if (newIndex < 0 || newIndex >= newList.length) return;
         [newList[index], newList[newIndex]] = [newList[newIndex], newList[index]];
@@ -198,17 +232,17 @@
         else if (expandedIndex.value === newIndex) expandedIndex.value = index;
     };
 
-    const toggleOperator = (event: any, index: any) => {
+    const toggleOperator = (event: Event, index: number) => {
         event.stopPropagation();
-        const newList: any[] = [...props.modelValue];
-        newList[index] = { ...newList[index], enabled: !(((newList[index].enabled as any) as any) as any) };
+        const newList: TransformOperator[] = [...(props.modelValue as TransformOperator[])];
+        newList[index] = { ...newList[index], enabled: !newList[index].enabled };
         emit('update:modelValue', newList);
     };
 
-    const operatorLabel = (type: any) => t(`operators.${type}`);
+    const operatorLabel = (type: string) => t(`operators.${type}`);
     const operatorTypes = ['filter', 'rename', 'script', 'sort', 'dedup'];
 
-    const getOperatorIcon = (type: any) => {
+    const getOperatorIcon = (type: string): string | undefined => {
         switch (type) {
             case 'filter':
                 return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>';
@@ -223,8 +257,8 @@
         }
     };
 
-    const updateOperatorParams = (index: any, params: any) => {
-        const newList: any[] = [...props.modelValue];
+    const updateOperatorParams = (index: number, params: Record<string, unknown>) => {
+        const newList: TransformOperator[] = [...(props.modelValue as TransformOperator[])];
         newList[index] = { ...newList[index], params };
         emit('update:modelValue', newList);
     };
