@@ -7,6 +7,17 @@
 
     const { t } = useI18n();
 
+    /** 转换模板资产条目 */
+    interface TransformAsset {
+        id: string | number;
+        name: string;
+        url: string;
+        group?: string;
+        sourceType?: string;
+        description?: string;
+        [key: string]: unknown;
+    }
+
     const props = defineProps({
         modelValue: { type: String, default: '' },
         type: { type: String, required: true },
@@ -95,33 +106,26 @@
         },
     ]);
 
-    const customTemplateAssets = computed(() => {
+    const customTemplateAssets = computed<TransformAsset[]>(() => {
         if (props.excludeBuiltinAssets) return [];
 
         return (ruleTemplates.value || [])
-            .filter(
-                (item) =>
-                    item &&
-                    (item as Record<string, any>).enabled !== false &&
-                    (item as Record<string, any>).id
-            )
+            .filter((item) => item && item.enabled !== false && item.id)
             .map((item) => ({
-                id: `custom:${(item as Record<string, any>).id}`,
-                name: (item as Error).name || t('transformSelector.unnamedTemplate'),
-                url: `custom:${(item as Record<string, any>).id}`,
+                id: `custom:${item.id}`,
+                name: item.name || t('transformSelector.unnamedTemplate'),
+                url: `custom:${item.id}`,
                 group: t('transformSelector.customTemplateGroup'),
                 sourceType: 'custom-template',
-                description:
-                    (item as Record<string, any>).description ||
-                    t('transformSelector.customTemplateDescription'),
+                description: item.description || t('transformSelector.customTemplateDescription'),
             }));
     });
 
-    const assets = computed(() => {
+    const assets = computed<TransformAsset[]>(() => {
         if (props.customTemplatesOnly) return customTemplateAssets.value;
 
         // 在 computed 里解析模板名称，切换语言时下拉框即时更新。
-        const builtinAndRemote = getLocalizedTransformAssets(t).filter((item) => {
+        const builtinAndRemote = getLocalizedTransformAssets(t).filter((item: TransformAsset) => {
             if (!props.excludeBuiltinAssets) return true;
             return !String(item.url || '').startsWith('builtin:');
         });
@@ -134,15 +138,14 @@
         return customTemplateAssets.value.some((item) => item.url === value) ? '' : value;
     });
 
-    const groupedConfigs = computed(() => {
+    const groupedConfigs = computed<Record<string, TransformAsset[]>>(() => {
         if (props.type !== 'config') return {};
 
-        const groups = {};
-        assets.value.forEach((item) => {
+        const groups: Record<string, TransformAsset[]> = {};
+        assets.value.forEach((item: TransformAsset) => {
             const group = item.group || t('transformSelector.otherGroup');
-            if (!(groups as Record<string, any>)[group])
-                (groups as Record<string, any>)[group] = [];
-            (groups as Record<string, any>)[group].push(item);
+            if (!groups[group]) groups[group] = [];
+            groups[group].push(item);
         });
         return groups;
     });
@@ -212,10 +215,10 @@
         { immediate: true }
     );
 
-    const handleSelectChange = (e: any) => {
+    const handleSelectChange = (e: Event) => {
         if (props.forceCustom) return;
 
-        const val = e.target.value;
+        const val = (e.target as HTMLSelectElement | null)?.value ?? '';
         if (val === 'custom' && !props.customTemplatesOnly) {
             isCustom.value = true;
             emit('select-asset', null);
@@ -229,8 +232,8 @@
         emit('update:modelValue', val);
     };
 
-    const handleCustomInput = (e: any) => {
-        emit('update:modelValue', e.target.value);
+    const handleCustomInput = (e: Event) => {
+        emit('update:modelValue', (e.target as HTMLInputElement | null)?.value ?? '');
     };
 
     const switchToSelect = () => {
