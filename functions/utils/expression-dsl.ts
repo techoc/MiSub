@@ -4,11 +4,14 @@
  * templates, field comparisons and a small helper call grammar.
  */
 
+/** DSL 上下文（节点记录等） */
+type DslContext = Record<string, unknown>;
+
 const IDENTIFIER_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 const STRING_RE = /^(?:'([^'\\]*(?:\\.[^'\\]*)*)'|"([^"\\]*(?:\\.[^"\\]*)*)")$/;
 const NUMBER_RE = /^-?\d+(?:\.\d+)?$/;
 
-function unquote(value: any) {
+function unquote(value: unknown): string {
     const text = String(value || '').trim();
     const match = text.match(STRING_RE);
     if (!match) return text;
@@ -27,7 +30,7 @@ function unquote(value: any) {
     });
 }
 
-function splitArgs(input: any) {
+function splitArgs(input: unknown): string[] {
     const args: string[] = [];
     let current = '';
     let quote = '';
@@ -67,18 +70,19 @@ function splitArgs(input: any) {
     return args;
 }
 
-function getField(ctx: any, name: any) {
-    if (!IDENTIFIER_RE.test(String(name || ''))) return '';
-    if (Object.prototype.hasOwnProperty.call(ctx, name)) return ctx[name];
+function getField(ctx: DslContext, name: unknown): unknown {
+    const field = String(name || '');
+    if (!IDENTIFIER_RE.test(field)) return '';
+    if (Object.prototype.hasOwnProperty.call(ctx, field)) return ctx[field];
     return '';
 }
 
-function safeTitle(value: any) {
+function safeTitle(value: unknown): string {
     const text = String(value || '');
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 }
 
-function safeMatch(value: any, pattern: any, flags = 'i') {
+function safeMatch(value: unknown, pattern: unknown, flags: unknown = 'i'): boolean {
     try {
         return new RegExp(String(pattern || ''), String(flags || 'i')).test(String(value || ''));
     } catch {
@@ -86,7 +90,12 @@ function safeMatch(value: any, pattern: any, flags = 'i') {
     }
 }
 
-function safeReplace(value: any, pattern: any, replacement = '', flags = 'g') {
+function safeReplace(
+    value: unknown,
+    pattern: unknown,
+    replacement: unknown = '',
+    flags: unknown = 'g'
+): string {
     try {
         return String(value || '').replace(
             new RegExp(String(pattern || ''), String(flags || 'g')),
@@ -97,18 +106,18 @@ function safeReplace(value: any, pattern: any, replacement = '', flags = 'g') {
     }
 }
 
-function fallback(...values: any[]) {
+function fallback(...values: unknown[]): unknown {
     for (const value of values) {
         if (value !== null && value !== undefined && String(value).trim() !== '') return value;
     }
     return '';
 }
 
-function pick(condition: any, truthyValue: any, falsyValue = '') {
+function pick(condition: unknown, truthyValue: unknown, falsyValue: unknown = ''): unknown {
     return condition ? truthyValue : falsyValue;
 }
 
-function evalValue(expr: any, ctx: any): any {
+function evalValue(expr: unknown, ctx: DslContext): unknown {
     const text = String(expr || '').trim();
     if (!text) return '';
     if (STRING_RE.test(text)) return unquote(text);
@@ -120,7 +129,7 @@ function evalValue(expr: any, ctx: any): any {
     const call = text.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\((.*)\)$/s);
     if (call) {
         const [, fn, rawArgs] = call;
-        const args: any = splitArgs(rawArgs).map((arg) => evalValue(arg, ctx));
+        const args: unknown[] = splitArgs(rawArgs).map((arg) => evalValue(arg, ctx));
         switch (fn) {
             case 'upper':
                 return String(args[0] || '').toUpperCase();
@@ -150,7 +159,7 @@ function evalValue(expr: any, ctx: any): any {
     return getField(ctx, text);
 }
 
-export function evaluateDslExpression(expression: any, ctx: Record<string, any> = {}): any {
+export function evaluateDslExpression(expression: unknown, ctx: DslContext = {}): boolean {
     const expr = String(expression || '').trim();
     if (!expr) return true;
 
@@ -184,7 +193,7 @@ export function evaluateDslExpression(expression: any, ctx: Record<string, any> 
     return Boolean(evalValue(expr, ctx));
 }
 
-export function renderDslTemplate(template: any, ctx: Record<string, any> = {}) {
+export function renderDslTemplate(template: unknown, ctx: DslContext = {}): string {
     return String(template || '')
         .replace(/\{([^{}]+)\}/g, (_, inner) => {
             const value = evalValue(inner, ctx);
@@ -193,7 +202,10 @@ export function renderDslTemplate(template: any, ctx: Record<string, any> = {}) 
         .trim();
 }
 
-export function matchesDslCondition(record: any, condition: Record<string, any> = {}) {
+export function matchesDslCondition(
+    record: DslContext,
+    condition: Record<string, unknown> | string = {}
+): boolean {
     if (typeof condition === 'string') return evaluateDslExpression(condition, record);
     if (!condition || typeof condition !== 'object') return true;
     const actual = getField(record, condition.field || 'name');
