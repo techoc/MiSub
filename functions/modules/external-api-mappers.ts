@@ -19,30 +19,34 @@ const NODE_PROTOCOLS = [
     'wireguard',
 ];
 
+import type { KvRecord } from '../../types/models.ts';
+
 const NODE_PROTOCOL_REGEX = new RegExp(
     `^(${NODE_PROTOCOLS.map((protocol) => protocol.replace('+', '\\+')).join('|')}):\\/\\/`,
     'i'
 );
 
-export function isRemoteSubscription(item: any) {
-    return typeof item?.url === 'string' && /^https?:\/\//i.test(item.url.trim());
+export function isRemoteSubscription(item: unknown): boolean {
+    const url = (item as { url?: unknown } | null | undefined)?.url;
+    return typeof url === 'string' && /^https?:\/\//i.test(url.trim());
 }
 
-export function isManualNode(item: any) {
-    if (typeof item?.url !== 'string') return false;
-    const url = item.url.trim();
+export function isManualNode(item: unknown): boolean {
+    const rawUrl = (item as { url?: unknown } | null | undefined)?.url;
+    if (typeof rawUrl !== 'string') return false;
+    const url = rawUrl.trim();
     if (!url || /^https?:\/\//i.test(url)) return false;
     return NODE_PROTOCOL_REGEX.test(url);
 }
 
-export function detectNodeProtocol(url = '') {
+export function detectNodeProtocol(url = ''): string {
     const match = String(url || '')
         .trim()
         .match(/^([a-z0-9+]+):\/\//i);
     return match ? match[1].toLowerCase() : '';
 }
 
-export function toExternalSubscription(item: any) {
+export function toExternalSubscription(item: KvRecord) {
     return {
         id: item.id,
         type: 'subscription',
@@ -63,7 +67,7 @@ export function toExternalSubscription(item: any) {
     };
 }
 
-export function toExternalManualNode(item: any) {
+export function toExternalManualNode(item: KvRecord) {
     return {
         id: item.id,
         type: 'manual_node',
@@ -80,7 +84,7 @@ export function toExternalManualNode(item: any) {
     };
 }
 
-export function toExternalProfile(profile: any) {
+export function toExternalProfile(profile: KvRecord) {
     return {
         id: profile.id,
         name: profile.name || '',
@@ -90,7 +94,9 @@ export function toExternalProfile(profile: any) {
         customId: profile.customId || '',
         subscriptionIds: Array.isArray(profile.subscriptions)
             ? profile.subscriptions
-                  .map((item: any) => (typeof item === 'object' ? item?.id : item))
+                  .map((entry: unknown) =>
+                      typeof entry === 'object' ? (entry as KvRecord | null)?.id : entry
+                  )
                   .filter(Boolean)
             : [],
         manualNodeIds: Array.isArray(profile.manualNodes)
@@ -103,8 +109,8 @@ export function toExternalProfile(profile: any) {
     };
 }
 
-export function toInternalProfilePatch(payload: Record<string, any> = {}) {
-    const internal: Record<string, any> = {};
+export function toInternalProfilePatch(payload: KvRecord = {}) {
+    const internal: Record<string, unknown> = {};
     if ('name' in payload) internal.name = payload.name;
     if ('description' in payload) internal.description = payload.description;
     if ('enabled' in payload) internal.enabled = payload.enabled;

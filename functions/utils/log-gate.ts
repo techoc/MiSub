@@ -12,22 +12,22 @@
  * installLogGate 每个请求调用一次，环境变量变化时自动重新应用（isolate 复用安全）。
  */
 
-const CONSOLE_METHODS = ['log', 'debug', 'info', 'warn', 'error'];
-const SUPPRESSED_BY_LEVEL = {
+type ConsoleMethod = 'log' | 'debug' | 'info' | 'warn' | 'error';
+
+const CONSOLE_METHODS: ConsoleMethod[] = ['log', 'debug', 'info', 'warn', 'error'];
+const SUPPRESSED_BY_LEVEL: Record<'warn' | 'error', Set<string>> = {
     warn: new Set(['log', 'debug', 'info']),
     error: new Set(['log', 'debug', 'info', 'warn']),
 };
 
-const originalConsole = {};
+const originalConsole: Record<string, (...args: unknown[]) => void> = {};
 for (const method of CONSOLE_METHODS) {
-    (originalConsole as Record<string, any>)[method] = (console as Record<string, any>)[
-        method
-    ]?.bind(console);
+    originalConsole[method] = console[method].bind(console);
 }
 
-let appliedLevel: any = null;
+let appliedLevel: 'warn' | 'error' | null = null;
 
-function normalizeLevel(value: any) {
+function normalizeLevel(value: unknown): 'warn' | 'error' | null {
     const level = String(value ?? '')
         .trim()
         .toLowerCase();
@@ -36,20 +36,22 @@ function normalizeLevel(value: any) {
     return null;
 }
 
-export function installLogGate(env: any) {
-    const level = normalizeLevel(env?.MISUB_LOG_LEVEL);
+export function installLogGate(env: unknown): void {
+    const level = normalizeLevel(
+        (env as { MISUB_LOG_LEVEL?: unknown } | null | undefined)?.MISUB_LOG_LEVEL
+    );
     if (level === appliedLevel) return;
 
     appliedLevel = level;
     // 先还原，再按需抑制，避免多次包装叠加
     for (const method of CONSOLE_METHODS) {
-        (console as Record<string, any>)[method] = (originalConsole as Record<string, any>)[method];
+        console[method] = originalConsole[method] as typeof console.log;
     }
     if (!level) return;
 
     const suppressed = SUPPRESSED_BY_LEVEL[level];
     for (const method of CONSOLE_METHODS) {
         if (!suppressed.has(method)) continue;
-        (console as Record<string, any>)[method] = () => {};
+        console[method] = () => {};
     }
 }
