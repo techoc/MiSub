@@ -1,0 +1,20 @@
+{
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "types": ["vite/client"],
+        "paths": {
+            "@/*": ["./src/*"],
+            "vuedraggable": ["./node_modules/vuedraggable/src/vuedraggable.d.ts"]
+        }
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.d.ts",
+        "src/**/*.vue",
+        "src/**/*.js",
+        "vite.config.ts",
+        "vitest.config.ts"
+    ],
+    "exclude": ["node_modules", "dist", "dev-dist", "tests"]
+}

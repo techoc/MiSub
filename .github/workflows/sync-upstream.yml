@@ -1,39 +1,72 @@
-name: 自动同步上游 MiSub
+name: 上游 MiSub 更新提醒
+
+# 2026-11-14 起，本 fork 转为 TypeScript（functions/、src/ 全量 .ts）。
+# 与上游 imzyb/MiSub（纯 JS）的文件系统已分叉，自动 merge 必然产生大规模
+# 冲突；因此每日同步改为「仅提醒」：检测到上游有新提交时开/更新一个 Issue，
+# 由维护者手动决定是否移植。
 
 on:
-  schedule:
-    # 每天北京时间 08:00（UTC 00:00）检查一次
-    - cron: '0 0 * * *'
-  workflow_dispatch:  # 可在 Actions 页面手动触发
+    schedule:
+        # 每天北京时间 08:00（UTC 00:00）检查一次
+        - cron: '0 0 * * *'
+    workflow_dispatch: # 可在 Actions 页面手动触发
 
 permissions:
-  contents: write  # 允许 push 回 fork
+    contents: read
+    issues: write
 
 jobs:
-  sync:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 检出仓库
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    notify:
+        runs-on: ubuntu-latest
+        steps:
+            - name: 检出仓库
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-      - name: 配置 git 身份
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            - name: 检查上游更新并提醒
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  git remote add upstream https://github.com/imzyb/MiSub.git
+                  git fetch upstream main
 
-      - name: 同步上游 imzyb/MiSub
-        run: |
-          git remote add upstream https://github.com/imzyb/MiSub.git
-          git fetch upstream main
-          LOCAL=$(git rev-parse HEAD)
-          REMOTE=$(git rev-parse upstream/main)
-          if [ "$LOCAL" = "$REMOTE" ]; then
-            echo "✅ 已是最新，无需同步"
-          else
-            echo "🔁 检测到上游更新，开始同步..."
-            git merge upstream/main --no-edit
-            git push origin main
-            echo "✅ 已推送，Cloudflare Pages 将自动重新构建"
-          fi
+                  LOCAL=$(git rev-parse HEAD)
+                  REMOTE=$(git rev-parse upstream/main)
+                  if [ "$LOCAL" = "$REMOTE" ]; then
+                    echo "✅ 与上游一致，无需提醒"
+                    exit 0
+                  fi
+
+                  BEHIND=$(git rev-list --count HEAD..upstream/main)
+                  if [ "$BEHIND" -eq 0 ]; then
+                    echo "ℹ️ 本地领先于上游（分叉常态），无需提醒"
+                    exit 0
+                  fi
+
+                  echo "🔔 上游有 $BEHIND 个新提交，需要人工评估是否手动移植"
+                  git log --oneline HEAD..upstream/main | head -30 > /tmp/upstream-commits.txt
+                  {
+                    echo "上游 imzyb/MiSub 自上次检查以来有 **$BEHIND** 个新提交。"
+                    echo ""
+                    echo "本 fork 已转为 TypeScript，无法自动 merge，请人工评估后手动移植："
+                    echo ""
+                    echo '```'
+                    cat /tmp/upstream-commits.txt
+                    echo '```'
+                    echo ""
+                    echo "对比地址：https://github.com/imzyb/MiSub/compare/main...$(git rev-parse --short HEAD)"
+                  } > /tmp/body.md
+
+                  # 复用既有提醒 Issue，避免重复开新帖
+                  ISSUE_URL=$(gh issue list --state open --label upstream-sync --json url --jq '.[0].url' 2>/dev/null || true)
+                  if [ -n "$ISSUE_URL" ]; then
+                    gh issue comment "$ISSUE_URL" --body-file /tmp/body.md
+                    echo "📝 已更新提醒：$ISSUE_URL"
+                  else
+                    gh issue create \
+                      --title "上游 MiSub 有 $BEHIND 个新提交，需要手动同步" \
+                      --body-file /tmp/body.md \
+                      --label upstream-sync
+                    echo "📝 已创建提醒 Issue"
+                  fi

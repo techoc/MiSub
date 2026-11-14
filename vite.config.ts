@@ -37,15 +37,17 @@ export default defineConfig({
                 chunkFileNames: 'assets/js/[name]-[hash].js',
                 entryFileNames: 'assets/js/[name]-[hash].js',
                 assetFileNames: (assetInfo) => {
-                    const info = assetInfo.name.split('.');
+                    // vite 7 中 name 可选（names 数组取代），行为保持不变
+                    const assetName = assetInfo.names?.[0] ?? assetInfo.name ?? '';
+                    const info = assetName.split('.');
                     const ext = info[info.length - 1];
-                    if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(assetInfo.name)) {
+                    if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(assetName)) {
                         return `assets/media/[name]-[hash][extname]`;
                     }
-                    if (/\.(png|jpe?g|gif|svg)(\?.*)?$/i.test(assetInfo.name)) {
+                    if (/\.(png|jpe?g|gif|svg)(\?.*)?$/i.test(assetName)) {
                         return `assets/img/[name]-[hash][extname]`;
                     }
-                    if (/\.(woff2?|eot|ttf|otf)(\?.*)?$/i.test(assetInfo.name)) {
+                    if (/\.(woff2?|eot|ttf|otf)(\?.*)?$/i.test(assetName)) {
                         return `assets/fonts/[name]-[hash][extname]`;
                     }
                     return `assets/${ext}/[name]-[hash][extname]`;
