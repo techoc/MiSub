@@ -5,7 +5,10 @@
 
 import { base64Decode, extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 
-export function normalizeSsPluginOption(key: any, value: any) {
+/** ss 插件参数 */
+type SsPluginOptions = Record<string, unknown>;
+
+export function normalizeSsPluginOption(key: string, value: unknown): unknown {
     if (key === 'mux') {
         if (value === '1' || value === 'true') return true;
         if (value === '0' || value === 'false') return false;
@@ -13,22 +16,22 @@ export function normalizeSsPluginOption(key: any, value: any) {
     return value;
 }
 
-export function parseSsPlugin(pluginStr: any) {
+export function parseSsPlugin(pluginStr: unknown): { name: string; opts: SsPluginOptions } | null {
     if (!pluginStr) return null;
     // 插件参数内部通常用分号分隔
-    const parts = pluginStr.split(';');
+    const parts = String(pluginStr).split(';');
     const name = parts[0];
-    const opts = {};
+    const opts: SsPluginOptions = {};
     for (let i = 1; i < parts.length; i++) {
         const item = parts[i];
         if (!item) continue;
         const eqIndex = item.indexOf('=');
         if (eqIndex === -1) {
             // 布尔值标识位，例如 "tls"
-            (opts as Record<string, any>)[item] = true;
+            opts[item] = true;
         } else {
             const key = item.substring(0, eqIndex);
-            let val = item.substring(eqIndex + 1);
+            let val: string | boolean = item.substring(eqIndex + 1);
             // 处理 SIP002 转义：\= -> =, \; -> ;, \? -> ?
             val = val
                 .replace(/\\=/g, '=')
@@ -38,7 +41,7 @@ export function parseSsPlugin(pluginStr: any) {
             // 尝试处理布尔值字符串
             if (val === 'true') val = true;
             if (val === 'false') val = false;
-            (opts as Record<string, any>)[key] = normalizeSsPluginOption(key, val);
+            opts[key] = normalizeSsPluginOption(key, val);
         }
     }
     return { name, opts };
@@ -49,14 +52,15 @@ export function parseSsPlugin(pluginStr: any) {
  * @param {string} url - Shadowsocks URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSsUrl(url: any) {
+export function parseSsUrl(url: unknown): Record<string, unknown> | null {
     try {
+        const urlText = String(url || '');
         // ss://base64(method:password)@server:port#name
         // 或 ss://base64(method:password@server:port)#name
         // [SIP002] 格式支持插件：ss://userInfo@server:port?plugin=xxx#name
-        let body = url.substring(5); // 去掉 ss://
-        const name = extractName(url);
-        const params = parseQueryParams(url);
+        let body = urlText.substring(5); // 去掉 ss://
+        const name = extractName(urlText);
+        const params = parseQueryParams(urlText);
 
         // 去掉 fragment
         const hashIndex = body.indexOf('#');
@@ -68,7 +72,10 @@ export function parseSsUrl(url: any) {
             body = body.substring(0, queryIndex);
         }
 
-        let method, password, server, port;
+        let method = '';
+        let password = '';
+        let server = '';
+        let port: string | number = '';
 
         const atIndex = body.lastIndexOf('@');
         if (atIndex !== -1) {
@@ -122,7 +129,7 @@ export function parseSsUrl(url: any) {
             return null;
         }
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `SS-${server}`,
             type: 'ss',
             server,
@@ -136,28 +143,22 @@ export function parseSsUrl(url: any) {
         if (pluginStr) {
             const pluginDetails = parseSsPlugin(pluginStr);
             if (pluginDetails) {
-                proxy.plugin = pluginDetails.name;
-                proxy['plugin-opts'] = pluginDetails.opts;
-
+                const pluginOpts: SsPluginOptions = { ...pluginDetails.opts };
                 const obfsMode = params.get('obfs');
                 const obfsHost = params.get('obfs-host');
-                if (obfsMode) proxy['plugin-opts'].mode = obfsMode;
-                if (obfsHost) proxy['plugin-opts'].host = obfsHost;
+                if (obfsMode) pluginOpts.mode = obfsMode;
+                if (obfsHost) pluginOpts.host = obfsHost;
+                proxy.plugin = pluginDetails.name;
+                proxy['plugin-opts'] = pluginOpts;
 
                 // 协议兼容性映射 (TLS / Host)
-                if (
-                    (pluginDetails.opts as Record<string, any>).tls ||
-                    (
-                        (pluginDetails.opts as Record<string, any>).mode as
-                            Record<string, any> | undefined
-                    )?.includes('tls') ||
-                    (pluginDetails.opts as Record<string, any>).security === 'tls'
-                ) {
+                const pluginMode = typeof pluginOpts.mode === 'string' ? pluginOpts.mode : '';
+                if (pluginOpts.tls || pluginMode.includes('tls') || pluginOpts.security === 'tls') {
                     proxy.tls = true;
                 }
-                if ((pluginDetails.opts as Record<string, any>).host) {
-                    proxy.sni = (pluginDetails.opts as Record<string, any>).host;
-                    proxy.servername = (pluginDetails.opts as Record<string, any>).host;
+                if (typeof pluginOpts.host === 'string' && pluginOpts.host) {
+                    proxy.sni = pluginOpts.host;
+                    proxy.servername = pluginOpts.host;
                 }
             }
         }
@@ -177,9 +178,9 @@ export function parseSsUrl(url: any) {
  * @param {string} url - Hysteria2 URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSsrUrl(url: any) {
+export function parseSsrUrl(url: unknown): Record<string, unknown> | null {
     try {
-        const b64 = url.substring(6);
+        const b64 = String(url || '').substring(6);
         const decoded = base64Decode(b64);
 
         // server:port:protocol:method:obfs:password_base64/?params
@@ -198,7 +199,7 @@ export function parseSsrUrl(url: any) {
             passwordEndIndex !== -1 ? passwordPart.substring(0, passwordEndIndex) : passwordPart;
         const password = base64Decode(passwordBase64);
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: `SSR-${server}`,
             type: 'ssr',
             server,
@@ -235,9 +236,9 @@ export function parseSsrUrl(url: any) {
  * @param {string} url - SSD URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSsdUrl(url: any) {
+export function parseSsdUrl(url: unknown): Record<string, unknown> | null {
     try {
-        const b64 = url.substring(6);
+        const b64 = String(url || '').substring(6);
         const decoded = base64Decode(b64);
         const config = JSON.parse(decoded);
 
@@ -247,7 +248,7 @@ export function parseSsdUrl(url: any) {
         if (!config.servers || !config.servers.length) return null;
 
         const s = config.servers[0];
-        const proxy = {
+        const proxy: Record<string, unknown> = {
             name: s.remarks || `SSD-${s.server}`,
             type: 'ss',
             server: s.server,
