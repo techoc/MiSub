@@ -34,23 +34,31 @@ const DEFAULT_SORT_KEYS = [
 
 const REGION_CODE_TO_ZH = buildRegionCodeToZhMap();
 const REGION_ZH_TO_CODE = buildZhToCodeMap();
-export const warnedRegexRules = new Set();
+export const warnedRegexRules = new Set<string>();
 export const VIRTUAL_INFO_NODE_UUID = '00000000-0000-0000-0000-000000000000';
 
-export function warnInvalidRegex(rule: any, error: any) {
+/** 归一化任意值为普通对象（非对象则为空对象） */
+function asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+export function warnInvalidRegex(
+    rule: { pattern?: string; flags?: string },
+    error: unknown
+) {
     const key = `${rule.pattern || ''}|${rule.flags || ''}`;
     if (warnedRegexRules.has(key)) return;
     warnedRegexRules.add(key);
     console.warn('[NodeTransform] Invalid rename regex:', {
         pattern: rule.pattern,
         flags: rule.flags,
-        error: error?.message || String(error),
+        error: (error as { message?: string } | undefined)?.message || String(error),
     });
 }
 
 // ============ 工具函数 ============
 
-export function safeDecodeURI(value: any) {
+export function safeDecodeURI(value: string): string {
     try {
         return decodeURIComponent(value);
     } catch {
@@ -58,7 +66,7 @@ export function safeDecodeURI(value: any) {
     }
 }
 
-export function normalizeBase64(input: any) {
+export function normalizeBase64(input: unknown): string {
     let s = String(input || '')
         .trim()
         .replace(/\s+/g, '');
@@ -76,17 +84,20 @@ export function normalizeBase64(input: any) {
     return s;
 }
 
-export function base64UrlEncode(text: any) {
+export function base64UrlEncode(text: unknown): string {
     return base64Encode(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-export function getSchemePayload(url: any, prefixLen: any) {
+export function getSchemePayload(url: unknown, prefixLen: number): string {
     const rest = String(url || '').slice(prefixLen);
     const cut = rest.search(/[?#]/);
     return (cut === -1 ? rest : rest.slice(0, cut)).trim();
 }
 
-export function splitSchemeQueryAndFragment(url: any, prefixLen: any) {
+export function splitSchemeQueryAndFragment(
+    url: unknown,
+    prefixLen: number
+): { payload: string; query: string; hasFragment: boolean } {
     const rest = String(url || '').slice(prefixLen);
     const hashIdx = rest.indexOf('#');
     const queryIdx = rest.indexOf('?');
@@ -99,21 +110,21 @@ export function splitSchemeQueryAndFragment(url: any, prefixLen: any) {
     return { payload, query, hasFragment: hashIdx !== -1 };
 }
 
-export function base64Decode(base64: any) {
+export function base64Decode(base64: unknown): string {
     const binary = atob(normalizeBase64(base64));
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return new TextDecoder('utf-8').decode(bytes);
 }
 
-export function base64Encode(text: any) {
+export function base64Encode(text: unknown): string {
     const bytes = new TextEncoder().encode(String(text));
     let binary = '';
     for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
     return btoa(binary);
 }
 
-export function getProtocol(url: any) {
+export function getProtocol(url: unknown): string {
     const m = String(url || '').match(/^([a-zA-Z0-9+.-]+):\/\//);
     return m ? m[1].toLowerCase() : 'unknown';
 }
@@ -121,26 +132,26 @@ export function getProtocol(url: any) {
 /**
  * 归一化协议名称，将别名统一为标准名
  */
-export function normalizeProtocol(proto: any) {
+export function normalizeProtocol(proto: unknown): string {
     const p = String(proto || 'unknown').toLowerCase();
     if (p === 'hy' || p === 'hy2' || p === 'hysteria') return 'hysteria2';
     return p;
 }
 
-export function getFragment(url: any) {
+export function getFragment(url: string): string {
     const idx = String(url || '').lastIndexOf('#');
     if (idx === -1) return '';
     return safeDecodeURI(url.slice(idx + 1)).trim();
 }
 
-export function setFragment(url: any, name: any) {
+export function setFragment(url: string, name: unknown): string {
     const s = String(url || '');
     const idx = s.lastIndexOf('#');
     const base = idx === -1 ? s : s.slice(0, idx);
     return `${base}#${encodeURIComponent(String(name || ''))}`;
 }
 
-export function parseHostPort(hostPort: any) {
+export function parseHostPort(hostPort: unknown): { server: string; port: string } {
     const s = String(hostPort || '').trim();
     if (!s) return { server: '', port: '' };
     if (s.startsWith('[') && s.includes(']')) {
@@ -158,7 +169,7 @@ export function parseHostPort(hostPort: any) {
 
 // ============ 节点解析 ============
 
-export function stripLeadingEmoji(name: any) {
+export function stripLeadingEmoji(name: unknown): string {
     return String(name || '')
         .replace(/^[\uD83C][\uDDE6-\uDDFF][\uD83C][\uDDE6-\uDDFF]\s*/g, '')
         .trim();
@@ -166,47 +177,53 @@ export function stripLeadingEmoji(name: any) {
 
 // ============ 配置标准化 ============
 
-export function normalizeConfig(cfg: any) {
-    const config = cfg && typeof cfg === 'object' ? cfg : {};
-    const filter = config.filter || {};
-    const rename = config.rename || {};
-    const regex = rename.regex || {};
-    const template = rename.template || {};
-    const dedup = config.dedup || {};
-    const sort = config.sort || {};
+export function normalizeConfig(cfg: unknown) {
+    const config = asRecord(cfg);
+    const filter = asRecord(config.filter);
+    const rename = asRecord(config.rename);
+    const regex = asRecord(rename.regex);
+    const template = asRecord(rename.template);
+    const dedup = asRecord(config.dedup);
+    const sort = asRecord(config.sort);
+    const include = asRecord(filter.include);
+    const exclude = asRecord(filter.exclude);
+    const protocols = asRecord(filter.protocols);
+    const regions = asRecord(filter.regions);
+    const filterScript = asRecord(filter.script);
+    const useless = asRecord(filter.useless);
+    const renameScript = asRecord(rename.script);
+    const dedupPrefer = asRecord(dedup.prefer);
 
     return {
         enabled: Boolean(config.enabled),
         enableEmoji: config.enableEmoji !== false,
         filter: {
             include: {
-                enabled: Boolean(filter.include?.enabled),
-                rules: Array.isArray(filter.include?.rules) ? filter.include.rules : [],
+                enabled: Boolean(include.enabled),
+                rules: Array.isArray(include.rules) ? include.rules : [],
             },
             exclude: {
-                enabled: Boolean(filter.exclude?.enabled),
-                rules: Array.isArray(filter.exclude?.rules) ? filter.exclude.rules : [],
+                enabled: Boolean(exclude.enabled),
+                rules: Array.isArray(exclude.rules) ? exclude.rules : [],
             },
             protocols: {
-                enabled: Boolean(filter.protocols?.enabled),
-                values: Array.isArray(filter.protocols?.values)
-                    ? filter.protocols.values
-                          .map((value: any) => normalizeProtocol(value))
-                          .filter(Boolean)
+                enabled: Boolean(protocols.enabled),
+                values: Array.isArray(protocols.values)
+                    ? protocols.values.map((value) => normalizeProtocol(value)).filter(Boolean)
                     : [],
             },
             regions: {
-                enabled: Boolean(filter.regions?.enabled),
-                values: Array.isArray(filter.regions?.values)
-                    ? filter.regions.values.map((value: any) => toRegionZh(value)).filter(Boolean)
+                enabled: Boolean(regions.enabled),
+                values: Array.isArray(regions.values)
+                    ? regions.values.map((value) => toRegionZh(value)).filter(Boolean)
                     : [],
             },
             script: {
-                enabled: Boolean(filter.script?.enabled),
-                expression: String(filter.script?.expression || '').trim(),
+                enabled: Boolean(filterScript.enabled),
+                expression: String(filterScript.expression || '').trim(),
             },
             useless: {
-                enabled: Boolean(filter.useless?.enabled),
+                enabled: Boolean(useless.enabled),
             },
         },
         rename: {
@@ -215,17 +232,23 @@ export function normalizeConfig(cfg: any) {
                 rules: Array.isArray(regex.rules) ? regex.rules : [],
             },
             script: {
-                enabled: Boolean(rename.script?.enabled),
-                expression: String(rename.script?.expression || '').trim(),
+                enabled: Boolean(renameScript.enabled),
+                expression: String(renameScript.expression || '').trim(),
             },
             template: {
                 enabled: Boolean(template.enabled),
-                template: template.template || '{emoji}{region}-{protocol}-{index}',
-                indexStart: Number.isFinite(template.indexStart) ? template.indexStart : 1,
-                indexPad: Number.isFinite(template.indexPad) ? template.indexPad : 2,
-                indexScope: template.indexScope || 'regionProtocol',
-                regionAlias: template.regionAlias || {},
-                protocolAlias: template.protocolAlias || {},
+                template: String(template.template || '{emoji}{region}-{protocol}-{index}'),
+                indexStart:
+                    typeof template.indexStart === 'number' && Number.isFinite(template.indexStart)
+                        ? template.indexStart
+                        : 1,
+                indexPad:
+                    typeof template.indexPad === 'number' && Number.isFinite(template.indexPad)
+                        ? template.indexPad
+                        : 2,
+                indexScope: String(template.indexScope || 'regionProtocol'),
+                regionAlias: asRecord(template.regionAlias),
+                protocolAlias: asRecord(template.protocolAlias),
             },
         },
         dedup: {
@@ -233,8 +256,8 @@ export function normalizeConfig(cfg: any) {
             mode: dedup.mode === 'url' ? 'url' : 'serverPort',
             includeProtocol: Boolean(dedup.includeProtocol),
             prefer: {
-                protocolOrder: Array.isArray(dedup.prefer?.protocolOrder)
-                    ? dedup.prefer.protocolOrder.map((s: any) => String(s).toLowerCase())
+                protocolOrder: Array.isArray(dedupPrefer.protocolOrder)
+                    ? dedupPrefer.protocolOrder.map((s) => String(s).toLowerCase())
                     : [],
             },
         },
@@ -248,21 +271,19 @@ export function normalizeConfig(cfg: any) {
 
 // ============ 转换函数 ============
 
-function buildRegionCodeToZhMap() {
-    const map = {};
+function buildRegionCodeToZhMap(): Record<string, string> {
+    const map: Record<string, string> = {};
     for (const [zhName, keywords] of Object.entries(REGION_KEYWORDS || {})) {
         if (!Array.isArray(keywords)) continue;
         for (const keyword of keywords) {
             const code = String(keyword || '').trim();
             if (/^[A-Za-z]{2,3}$/.test(code)) {
                 const upper = code.toUpperCase();
-                if (!(map as Record<string, any>)[upper])
-                    (map as Record<string, any>)[upper] = zhName;
+                if (!map[upper]) map[upper] = zhName;
             }
         }
     }
-    if ((map as Record<string, any>)['GB'] && !(map as Record<string, any>)['UK'])
-        (map as Record<string, any>)['UK'] = (map as Record<string, any>)['GB'];
+    if (map['GB'] && !map['UK']) map['UK'] = map['GB'];
     return map;
 }
 
@@ -270,15 +291,15 @@ function buildRegionCodeToZhMap() {
  * 构建中文地区名到地区代码的映射
  * 例如: { '美国': 'US', '香港': 'HK' }
  */
-function buildZhToCodeMap() {
-    const map = {};
+function buildZhToCodeMap(): Record<string, string> {
+    const map: Record<string, string> = {};
     for (const [zhName, keywords] of Object.entries(REGION_KEYWORDS || {})) {
         if (!Array.isArray(keywords)) continue;
         // 取第一个符合地区代码格式的关键词作为该地区的代码
         for (const keyword of keywords) {
             const code = String(keyword || '').trim();
             if (/^[A-Za-z]{2,3}$/.test(code)) {
-                (map as Record<string, any>)[zhName] = code.toUpperCase();
+                map[zhName] = code.toUpperCase();
                 break;
             }
         }
@@ -291,19 +312,19 @@ function buildZhToCodeMap() {
  * @param {string} zhRegion - 中文地区名 (如 '美国')
  * @returns {string} 地区代码 (如 'US')，如未找到则返回原值
  */
-export function toRegionCode(zhRegion: any) {
+export function toRegionCode(zhRegion: unknown): string {
     const region = String(zhRegion || '').trim();
     if (!region) return '';
     // 如果已经是地区代码格式，直接返回大写
     if (/^[A-Za-z]{2,3}$/.test(region)) return region.toUpperCase();
     // 从映射表中查找
-    return (REGION_ZH_TO_CODE as Record<string, any>)[region] || region;
+    return REGION_ZH_TO_CODE[region] || region;
 }
 
-export function toRegionZh(value: any) {
+export function toRegionZh(value: unknown): string {
     const region = String(value || '').trim();
     if (!region) return '';
     if (/[\u4e00-\u9fa5]/.test(region)) return region;
     const upper = region.toUpperCase();
-    return (REGION_CODE_TO_ZH as Record<string, any>)[upper] || region;
+    return REGION_CODE_TO_ZH[upper] || region;
 }
