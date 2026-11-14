@@ -4,7 +4,7 @@ import { t } from '../i18n/index.ts';
 //
 const isDev = import.meta.env.DEV;
 
-export function extractNodeName(url: any) {
+export function extractNodeName(url: string | null | undefined): string {
     if (!url) return '';
     url = url.trim();
     try {
@@ -86,7 +86,7 @@ export function extractNodeName(url: any) {
  * @param {string} prefix - 要添加的前缀 (通常是订阅名)
  * @returns {string} - 添加了前缀的新链接
  */
-export function prependNodeName(link: any, prefix: any) {
+export function prependNodeName(link: string, prefix: string | null | undefined): string {
     if (!prefix) return link; // 如果没有前缀，直接返回原链接
 
     const hashIndex = link.lastIndexOf('#');
@@ -115,7 +115,7 @@ export function prependNodeName(link: any, prefix: any) {
  * @param {string} url - 节点链接
  * @returns {{host: string, port: string}} - 解析失败时返回 { host: '解析失败', port: 'N/A' }
  */
-export function extractHostAndPort(url: any) {
+export function extractHostAndPort(url: string | null | undefined) {
     if (!url) return { host: '', port: '' };
 
     try {
@@ -214,13 +214,13 @@ export function extractHostAndPort(url: any) {
  * @param {string} userAgent
  * @returns {{name: string, className: string}}
  */
-export function getClientInfo(userAgent: any) {
+export function getClientInfo(userAgent: unknown) {
     if (!userAgent)
         return {
             name: 'Unknown',
             className: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
         };
-    const ua = userAgent.toLowerCase();
+    const ua = String(userAgent).toLowerCase();
 
     // === 优先级最高：复合型客户端/内核 ===
     // Karing - 包含 sing-box, mihomo 等关键字，必须最优先匹配
