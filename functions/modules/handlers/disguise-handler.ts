@@ -77,8 +77,15 @@ export async function handleDisguiseRequest(
     // [Public Page Logic]
     // If Public Page is enabled, we allow access to root '/' and '/explore'.
     // NOTE: We do NOT automatically allow /login here anymore if disguise is on.
+    // 与 public_config(以及前端)使用同一默认值：原始 settings 可能从未持久化
+    // enablePublicPage，这时它按 defaultSettings 的 true 对外宣告可访问，
+    // 伪装判定不能把 undefined 当成关闭，否则公开页「显示开启但实际被拦」。
+    // 动态导入避免 config <-> handler 的循环依赖（同 KV_KEY_SETTINGS 的既有写法）
+    const { DEFAULT_SETTINGS } = await import('../config.ts');
+    const enablePublicPage =
+        settings!.enablePublicPage ?? (DEFAULT_SETTINGS as Record<string, any>).enablePublicPage;
     const isPublicAccessAllowed =
-        settings!.enablePublicPage && (url.pathname === '/' || url.pathname === '/explore');
+        enablePublicPage && (url.pathname === '/' || url.pathname === '/explore');
     if (isPublicAccessAllowed) {
         return null; // Allow access
     }
