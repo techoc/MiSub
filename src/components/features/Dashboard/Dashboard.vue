@@ -16,6 +16,7 @@
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.ts';
     import { inferAirportRootDomain } from '@/utils/airport-domain.ts';
     import { rememberDomainName } from '@/utils/domain-name-memory.ts';
+    import type { SubscriptionItem } from '../../../../types/models.ts';
 
     const isDev = import.meta.env.DEV;
 
@@ -80,9 +81,9 @@
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
     const showCopyModal = ref(false);
-    const showCopyModalProfile = ref<any>(null);
+    const showCopyModalProfile = ref<SubscriptionItem | null>(null);
 
-    const handleQRCode = (id: any, type = 'subscription') => {
+    const handleQRCode = (id: string, type = 'subscription') => {
         if (type === 'subscription') {
             const sub = subscriptions.value.find((s) => s.id === id);
             if (sub) {
@@ -108,7 +109,7 @@
         }
     };
 
-    const handleOpenCopy = (profileId: any) => {
+    const handleOpenCopy = (profileId: string) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             showCopyModalProfile.value = profile;
@@ -173,7 +174,7 @@
         pingAllNodes,
     } = useManualNodes(markDirty);
 
-    const handleSearchTermUpdate = (val: any) => {
+    const handleSearchTermUpdate = (val: string) => {
         searchTerm.value = val;
     };
 
@@ -235,17 +236,17 @@
     const showLogModal = ref(false);
     const logProfileName = ref('');
     const showBatchDeleteModal = ref(false);
-    const batchDeleteIds = ref<any[]>([]);
+    const batchDeleteIds = ref<string[]>([]);
     const showDedupModal = ref(false);
-    const dedupPlan = ref<any>(null);
+    const dedupPlan = ref<ReturnType<typeof buildDedupPlan> | null>(null);
     const showBatchGroupModal = ref(false); // Added
-    const batchGroupIds = ref<any[]>([]); // Added
+    const batchGroupIds = ref<string[]>([]); // Added
     const showGroupManagementModal = ref(false); // 分组管理模态框
 
     // 节点预览相关状态
     const showNodePreviewModal = ref(false);
-    const previewSubscriptionId = ref<any>(null);
-    const previewProfileId = ref<any>(null);
+    const previewSubscriptionId = ref<string | null>(null);
+    const previewProfileId = ref<string | null>(null);
     const previewSubscriptionName = ref('');
     const previewSubscriptionUrl = ref('');
     const previewProfileName = ref('');
@@ -270,7 +271,7 @@
         }
     };
 
-    const handleBeforeUnload = (event: any) => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
         if (isDirty.value) {
             event.preventDefault();
             event.returnValue = t('common.unsavedLeaveConfirm');
@@ -304,7 +305,7 @@
         }
     );
 
-    const setViewMode = (mode: any) => {
+    const setViewMode = (mode: string) => {
         manualNodeViewMode.value = mode;
         writeRawPreference('manualNodeViewMode', mode);
     };
@@ -334,11 +335,11 @@
         }
     };
 
-    const handleDeleteSubscriptionWithCleanup = (subId: any) => {
+    const handleDeleteSubscriptionWithCleanup = (subId: string) => {
         deleteSubscription(subId);
         // cleanup 已在 deleteSubscription 内部通过 removeSubscriptionFromProfiles 实现
     };
-    const handleDeleteNodeWithCleanup = (nodeId: any) => {
+    const handleDeleteNodeWithCleanup = (nodeId: string) => {
         deleteNode(nodeId);
         // cleanup 已在 deleteNode 内部通过 removeManualNodeFromProfiles 实现
     };
@@ -367,7 +368,13 @@
         showDedupModal.value = true;
     };
 
-    const handleBatchDeleteRequest = (ids: any) => {
+    const handleDedupConfirm = () => {
+        if (dedupPlan.value) applyDedupPlan(dedupPlan.value);
+        showDedupModal.value = false;
+        dedupPlan.value = null;
+    };
+
+    const handleBatchDeleteRequest = (ids: string[]) => {
         if (ids && ids.length > 0) {
             batchDeleteIds.value = ids;
             showBatchDeleteModal.value = true;
@@ -380,12 +387,12 @@
         showBatchDeleteModal.value = false;
     };
 
-    const handleOpenBatchGroupModal = (ids: any) => {
+    const handleOpenBatchGroupModal = (ids: string[]) => {
         batchGroupIds.value = ids;
         showBatchGroupModal.value = true;
     };
 
-    const handleBatchGroupConfirm = (groupName: any) => {
+    const handleBatchGroupConfirm = (groupName: string) => {
         batchUpdateGroup(batchGroupIds.value, groupName);
         batchGroupIds.value = [];
     };
@@ -395,23 +402,23 @@
         showGroupManagementModal.value = true;
     };
 
-    const handleGroupRename = (oldName: any, newName: any) => {
+    const handleGroupRename = (oldName: string, newName: string) => {
         renameGroup(oldName, newName);
         showToast(t('manualNodes.groupRenamed', { oldName, newName }), 'success');
     };
 
-    const handleGroupDelete = (groupName: any) => {
+    const handleGroupDelete = (groupName: string) => {
         deleteGroup(groupName);
         showToast(t('manualNodes.groupDeleted', { groupName }), 'success');
     };
 
-    const handleGroupReorder = (newOrder: any) => {
+    const handleGroupReorder = (newOrder: string[]) => {
         reorderGroups(newOrder);
         showToast(t('manualNodes.groupOrderUpdated'), 'success');
     };
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
-    const handleApplyDetectedName = (subscriptionId: any, name: any) => {
+    const handleApplyDetectedName = (subscriptionId: string, name: string) => {
         const target = String(name || '').trim();
         if (!target) return;
         const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
@@ -425,7 +432,7 @@
     };
 
     // 节点预览处理函数
-    const handlePreviewSubscription = (subscriptionId: any) => {
+    const handlePreviewSubscription = (subscriptionId: string) => {
         const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
         if (subscription) {
             previewSubscriptionId.value = subscriptionId;
@@ -437,7 +444,7 @@
         }
     };
 
-    const handlePreviewProfile = (profileId: any) => {
+    const handlePreviewProfile = (profileId: string) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             previewProfileId.value = profileId;
@@ -449,7 +456,7 @@
         }
     };
 
-    const handleViewLogs = (profileId: any) => {
+    const handleViewLogs = (profileId: string) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             logProfileName.value = profile.name;
@@ -457,7 +464,7 @@
         }
     };
 
-    const handleProfileReorder = (profileId: any, direction: any) => {
+    const handleProfileReorder = (profileId: string, direction: string) => {
         const fromIndex = profiles.value.findIndex(
             (profile) => profile.id === profileId || profile.customId === profileId
         );
@@ -678,12 +685,8 @@
     />
     <ManualNodeDedupModal
         v-model:show="showDedupModal"
-        :plan="dedupPlan"
-        @confirm="
-            applyDedupPlan(dedupPlan);
-            showDedupModal = false;
-            dedupPlan = null;
-        "
+        :plan="dedupPlan ?? undefined"
+        @confirm="handleDedupConfirm"
     />
 
     <BatchGroupModal
@@ -721,10 +724,10 @@
     <!-- Node preview modal -->
     <NodePreviewModal
         :show="showNodePreviewModal"
-        :subscription-id="previewSubscriptionId"
+        :subscription-id="previewSubscriptionId ?? undefined"
         :subscription-name="previewSubscriptionName"
         :subscription-url="previewSubscriptionUrl"
-        :profile-id="previewProfileId"
+        :profile-id="previewProfileId ?? undefined"
         :profile-name="previewProfileName"
         @update:show="showNodePreviewModal = $event"
     />
