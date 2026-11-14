@@ -18,20 +18,29 @@ const MAX_ADDITIONAL_LENGTH = 2000;
 const ERROR_REPORT_COOLDOWN_MS = 10 * 60 * 1000;
 const MAX_PERSISTED_REPORTS_PER_MINUTE = 6;
 
-let recentReportFingerprints = new Map();
-let persistedReportTimestamps: number[] = [];
-
-function getKV(env: any) {
-    return env?.MISUB_KV || null;
+/** 错误上报用到的 KV 命名空间最小面（测试可注入 mock） */
+interface ErrorReportKV {
+    get(key: string): Promise<string | null>;
+    put(key: string, value: string): Promise<unknown>;
 }
 
-function safeString(value: any, limit: any) {
+/** 上报请求体 */
+type ReportBody = Record<string, unknown>;
+
+let recentReportFingerprints = new Map<string, number>();
+let persistedReportTimestamps: number[] = [];
+
+function getKV(env: Env): ErrorReportKV | null {
+    return (env?.MISUB_KV as unknown as ErrorReportKV | undefined) || null;
+}
+
+function safeString(value: unknown, limit: number): string {
     if (value === undefined || value === null) return '';
     const text = String(value);
     return text.length > limit ? text.slice(0, limit) : text;
 }
 
-function safeAdditionalData(value: any) {
+function safeAdditionalData(value: unknown): unknown {
     if (!value) return null;
     try {
         const json = JSON.stringify(value);
@@ -51,7 +60,7 @@ function cleanupReportBudgets(now = Date.now()) {
     }
 }
 
-function buildReportFingerprint(body: any, request: any) {
+function buildReportFingerprint(body: ReportBody, request: Request): string {
     const message = safeString(body?.message, 160);
     const context = safeString(body?.context, 120);
     const url = safeString(body?.url, 200);
@@ -59,7 +68,7 @@ function buildReportFingerprint(body: any, request: any) {
     return `${context}|${message}|${url}|${origin}`;
 }
 
-function shouldPersistReport(body: any, request: any) {
+function shouldPersistReport(body: ReportBody, request: Request): boolean {
     const now = Date.now();
     cleanupReportBudgets(now);
 
@@ -78,7 +87,7 @@ function shouldPersistReport(body: any, request: any) {
     return true;
 }
 
-export async function handleErrorReportRequest(request: any, env: any) {
+export async function handleErrorReportRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -90,7 +99,7 @@ export async function handleErrorReportRequest(request: any, env: any) {
     }
 
     try {
-        const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
+        const body = (await readJsonWithLimit(request, JSON_BODY_LIMITS.small)) as ReportBody;
         if (!shouldPersistReport(body, request)) {
             return createJsonResponse({ success: true, skipped: true });
         }
@@ -114,7 +123,7 @@ export async function handleErrorReportRequest(request: any, env: any) {
         };
 
         const raw = await kv.get(ERROR_REPORT_KV_KEY);
-        let reports = raw ? JSON.parse(raw) : [];
+        let reports: unknown[] = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(reports)) reports = [];
 
         reports.unshift(report);
@@ -127,11 +136,11 @@ export async function handleErrorReportRequest(request: any, env: any) {
         return createJsonResponse({ success: true });
     } catch (error) {
         console.error('[ErrorReport] Failed to save report:', error);
+        const err = error as { status?: unknown } | null;
+        const status = typeof err?.status === 'number' ? err.status : 500;
         return createErrorResponse(
-            (error as Record<string, any>).status === 413
-                ? (error as Error).message
-                : 'Failed to save error report',
-            (error as Record<string, any>).status || 500
+            status === 413 ? (error as Error).message : 'Failed to save error report',
+            status
         );
     }
 }
