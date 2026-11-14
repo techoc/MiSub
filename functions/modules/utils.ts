@@ -125,7 +125,7 @@ async function safeKvPut(kv, key, value) {
  * @param {any} oldData - 旧数据（可选）
  * @returns {Promise<boolean>} - 是否执行了写入操作
  */
-export async function conditionalKVPut(env, key, newData, oldData = null) {
+export async function conditionalKVPut(env, key, newData, oldData: KvRecord | null = null) {
     const kv = getKV(env);
     // 如果没有提供旧数据，先从KV读取
     if (oldData === null) {
@@ -407,7 +407,7 @@ export function prependNodeName(link, prefix) {
  * @param {number} timeout - 超时时间（毫秒）
  * @returns {Promise<Response>} 响应
  */
-export function createTimeoutFetch(input, init = {}, timeout = 10000) {
+export function createTimeoutFetch(input, init: Record<string, any> = {}, timeout = 10000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -436,7 +436,7 @@ export function createTimeoutFetch(input, init = {}, timeout = 10000) {
  * @param {number} options.baseDelay - 基础延迟时间
  * @returns {Promise<Response>} 响应
  */
-export async function retryFetch(input, init = {}, options = {}) {
+export async function retryFetch(input, init: Record<string, any> = {}, options: Record<string, any> = {}) {
     const { maxRetries = 3, timeout = 10000, baseDelay = 1000 } = options;
 
     let lastError;
@@ -474,7 +474,7 @@ export async function retryFetch(input, init = {}, options = {}) {
  * @param {string} context - 操作上下文
  * @returns {Promise<any>} 操作结果
  */
-export async function safeStorageOperation(operation, fallback = null, context = '') {
+export async function safeStorageOperation(operation, fallback: KvRecord | null = null, context = '') {
     try {
         return await operation();
     } catch (error) {
@@ -489,7 +489,7 @@ export async function safeStorageOperation(operation, fallback = null, context =
  * @param {string} message - 日志消息
  * @param {any} data - 附加数据
  */
-export function log(level, message, data = null) {
+export function log(level, message, data: KvRecord | null = null) {
     const timestamp = new Date().toISOString();
     const logEntry = {
         timestamp,
@@ -605,7 +605,7 @@ export function migrateConfigSettings(config) {
  * @param {Object} headers - 额外的HTTP头
  * @returns {Response}
  */
-export function createJsonResponse(data, status = 200, headers = {}) {
+export function createJsonResponse(data, status = 200, headers: Record<string, any> = {}) {
     return new Response(JSON.stringify(data), {
         status,
         headers: {

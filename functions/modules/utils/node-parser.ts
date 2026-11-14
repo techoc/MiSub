@@ -314,7 +314,7 @@ function isValidUUID(uuid) {
 /**
  * 解析节点列表 (用于预览和计数)
  */
-export function parseNodeList(content, options = {}) {
+export function parseNodeList(content, options: Record<string, any> = {}) {
     const validNodes = extractValidNodes(content);
 
     return validNodes

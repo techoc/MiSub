@@ -208,7 +208,7 @@ function normalizeQxVmessMethod(method) {
     return normalized;
 }
 
-export function renderQuanxFromTemplateModel(model, options = {}) {
+export function renderQuanxFromTemplateModel(model, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

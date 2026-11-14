@@ -250,7 +250,7 @@ function buildQxLine(proxy) {
     return null;
 }
 
-export function generateBuiltinQuanxConfig(nodeList, options = {}) {
+export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any> = {}) {
     const {
         managedConfigUrl = '',
         interval = 86400,

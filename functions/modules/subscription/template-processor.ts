@@ -345,7 +345,7 @@ function ensureAiPolicy(model) {
  * @param {Object} model - 统一模板模型
  * @param {Object} [options] - 注入开关：injectAiPolicy / injectDnsExitGroup（默认均开启）
  */
-export function applySmartModelOptimizations(model, options = {}) {
+export function applySmartModelOptimizations(model, options: Record<string, any> = {}) {
     const { ruleLevel } = model.meta || {};
     const normalizedLevel = (ruleLevel || '').toLowerCase();
     const isCustomOrNone = !normalizedLevel || normalizedLevel === 'none';

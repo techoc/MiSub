@@ -126,7 +126,7 @@ export function setNodeName(url, protocol, newName) {
     }
 }
 
-export function applyRegexRename(name, rules, record = null) {
+export function applyRegexRename(name, rules, record: KvRecord | null = null) {
     let result = String(name || '');
     if (!Array.isArray(rules)) return result;
 

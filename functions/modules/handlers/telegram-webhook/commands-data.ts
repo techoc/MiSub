@@ -296,7 +296,7 @@ export async function handleDupCommand(chatId, userId, args, env) {
 /**
  * 处理 /bind 命令 - 绑定默认订阅组
  */
-export async function handleBindCommand(chatId, userId, args, env, requestCache = null) {
+export async function handleBindCommand(chatId, userId, args, env, requestCache: KvRecord | null = null) {
     try {
         const cache = requestCache || createRequestCache();
         const profiles = await getCachedProfiles(env, cache);
@@ -386,7 +386,7 @@ export async function handleBindCommand(chatId, userId, args, env, requestCache 
 /**
  * 处理 /unbind 命令 - 解除绑定
  */
-export async function handleUnbindCommand(chatId, userId, env, requestCache = null) {
+export async function handleUnbindCommand(chatId, userId, env, requestCache: KvRecord | null = null) {
     try {
         const cache = requestCache || createRequestCache();
         const settings = await getCachedSettings(env, cache);

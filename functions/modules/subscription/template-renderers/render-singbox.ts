@@ -408,7 +408,7 @@ function buildRuleSets(rules, dnsDetour = DNS_PROXY_GROUP) {
     return [...remoteRuleSets, ...implicitRuleSets];
 }
 
-export function renderSingboxFromTemplateModel(model, options = {}) {
+export function renderSingboxFromTemplateModel(model, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

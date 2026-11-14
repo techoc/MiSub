@@ -220,7 +220,7 @@ export async function getAuthSessionDiagnostic(request, env) {
  * @param {Object|null} diagnostic Optional diagnostic from a prior auth check
  * @returns {Promise<Response>}
  */
-export async function renewAuthSession(request, env, response, diagnostic = null) {
+export async function renewAuthSession(request, env, response, diagnostic: KvRecord | null = null) {
     const authDiagnostic = diagnostic || (await getAuthSessionDiagnostic(request, env));
     if (!authDiagnostic?.isAuthenticated || !authDiagnostic.shouldRenew) {
         return response;

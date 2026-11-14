@@ -8,7 +8,7 @@
  * @param {string} nodeUrl
  * @returns {string}
  */
-export function fixNodeUrlEncoding(nodeUrl, options = {}) {
+export function fixNodeUrlEncoding(nodeUrl, options: Record<string, any> = {}) {
     if (!nodeUrl) return '';
 
     // 辅助函数：安全解码
@@ -92,7 +92,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
 /**
  * 修复SS节点编码
  */
-export function fixSSEncoding(nodeUrl, options = {}) {
+export function fixSSEncoding(nodeUrl, options: Record<string, any> = {}) {
     if (!nodeUrl.startsWith('ss://')) return nodeUrl;
 
     const { plusAsSpace = false } = options;

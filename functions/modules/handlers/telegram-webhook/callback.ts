@@ -42,7 +42,7 @@ import { handleBindCommand, handleDupCommand } from './commands-data.ts';
 /**
  * 处理 Callback Query（按钮回调）
  */
-export async function handleCallbackQuery(callbackQuery, env, request, requestCache = null) {
+export async function handleCallbackQuery(callbackQuery, env, request, requestCache: KvRecord | null = null) {
     const chatId = callbackQuery.message.chat.id;
     const messageId = callbackQuery.message.message_id;
     const userId = callbackQuery.from.id;

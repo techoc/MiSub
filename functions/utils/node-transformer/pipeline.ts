@@ -34,7 +34,7 @@ import { makeComparator } from './sort.ts';
 /**
  * 将 URL 列表转换为结构化 Record 列表
  */
-export function nodeUrlsToRecords(nodeUrls, options = {}) {
+export function nodeUrlsToRecords(nodeUrls, options: Record<string, any> = {}) {
     const input = Array.isArray(nodeUrls)
         ? nodeUrls.map((s) => String(s || '').trim()).filter(Boolean)
         : [];
@@ -74,7 +74,7 @@ export function recordsToNodeUrls(records) {
     });
 }
 
-export function applyNodeTransformPipeline(nodeUrls, transformConfig = {}) {
+export function applyNodeTransformPipeline(nodeUrls, transformConfig: Record<string, any> = {}) {
     const cfg = normalizeConfig(transformConfig);
     if (!cfg.enabled) return nodeUrls;
 

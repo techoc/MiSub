@@ -30,14 +30,14 @@ export async function fetchSubscriptionNodes(
     url,
     subscriptionName,
     userAgent,
-    customUserAgent = null,
+    customUserAgent: KvRecord | null = null,
     debug = false,
     excludeRules = '',
-    fetchProxy = null,
+    fetchProxy: KvRecord | null = null,
     skipCertVerify = false,
     plusAsSpace = false,
     enableNodeCache = false,
-    storageAdapter = null,
+    storageAdapter: KvRecord | null = null,
     subscription = null
 ) {
     // 自动检测调试 Token

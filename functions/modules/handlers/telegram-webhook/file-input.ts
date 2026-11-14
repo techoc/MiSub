@@ -73,7 +73,7 @@ async function downloadTelegramFile(message, config) {
  * @param {Object} env
  * @param {Object|null} requestCache
  */
-export async function handleFileInput(chatId, message, userId, config, env, requestCache = null) {
+export async function handleFileInput(chatId, message, userId, config, env, requestCache: KvRecord | null = null) {
     try {
         await sendTelegramMessage(chatId, '📥 正在读取文件…', env);
 

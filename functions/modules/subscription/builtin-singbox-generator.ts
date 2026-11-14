@@ -267,7 +267,7 @@ function buildOutbound(proxy) {
     return outbound;
 }
 
-export function generateBuiltinSingboxConfig(nodeList, options = {}) {
+export function generateBuiltinSingboxConfig(nodeList, options: Record<string, any> = {}) {
     const {
         managedConfigUrl = '',
         skipCertVerify = false,

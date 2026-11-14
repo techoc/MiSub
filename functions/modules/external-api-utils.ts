@@ -63,7 +63,7 @@ export async function readExternalJson(request) {
     }
 }
 
-export async function getExternalApiSettings(env, storageAdapter = null) {
+export async function getExternalApiSettings(env, storageAdapter: KvRecord | null = null) {
     const adapter = storageAdapter || (await getExternalStorageAdapter(env));
     const settings = (await adapter.get(KV_KEY_SETTINGS)) || {};
     return settings.externalApi || {};

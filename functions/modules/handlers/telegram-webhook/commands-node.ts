@@ -278,7 +278,7 @@ export async function handleSearchCommand(chatId, userId, args, env) {
 /**
  * 处理 /sub 命令 - 获取订阅链接
  */
-export async function handleSubCommand(chatId, args, env, request, requestCache = null) {
+export async function handleSubCommand(chatId, args, env, request, requestCache: KvRecord | null = null) {
     try {
         const cache = requestCache || createRequestCache();
         const profiles = await getCachedProfiles(env, cache);
@@ -364,7 +364,7 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
 /**
  * 处理订阅获取 - 简化版（用于快捷菜单，不需要 request）
  */
-export async function handleSubCommandSimple(chatId, env, requestCache = null) {
+export async function handleSubCommandSimple(chatId, env, requestCache: KvRecord | null = null) {
     try {
         const cache = requestCache || createRequestCache();
         const profiles = await getCachedProfiles(env, cache);

@@ -63,7 +63,7 @@ export function isPlaceholderInfoNode(proxy) {
     return server === '127.0.0.1' || server === '::1';
 }
 
-export function groupNodeLinesByRegion(nodes = [], options = {}) {
+export function groupNodeLinesByRegion(nodes = [], options: Record<string, any> = {}) {
     const groups = new Map();
     const regionOverrides = normalizeRegionOverrides(options.regionOverrides);
 

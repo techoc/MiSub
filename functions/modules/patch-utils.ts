@@ -4,7 +4,7 @@
  * @param {Object} diff - The diff object { added: [], updated: [], removed: [] }
  * @returns {Array} The new array with patches applied
  */
-export function applyPatch(originalItems = [], diff = {}) {
+export function applyPatch(originalItems = [], diff: Record<string, any> = {}) {
     if (!diff) return originalItems;
 
     const { added = [], updated = [], removed = [] } = diff;

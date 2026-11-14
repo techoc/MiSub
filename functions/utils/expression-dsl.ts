@@ -150,7 +150,7 @@ function evalValue(expr, ctx) {
     return getField(ctx, text);
 }
 
-export function evaluateDslExpression(expression, ctx = {}) {
+export function evaluateDslExpression(expression, ctx: Record<string, any> = {}) {
     const expr = String(expression || '').trim();
     if (!expr) return true;
 
@@ -184,7 +184,7 @@ export function evaluateDslExpression(expression, ctx = {}) {
     return Boolean(evalValue(expr, ctx));
 }
 
-export function renderDslTemplate(template, ctx = {}) {
+export function renderDslTemplate(template, ctx: Record<string, any> = {}) {
     return String(template || '')
         .replace(/\{([^{}]+)\}/g, (_, inner) => {
             const value = evalValue(inner, ctx);
@@ -193,7 +193,7 @@ export function renderDslTemplate(template, ctx = {}) {
         .trim();
 }
 
-export function matchesDslCondition(record, condition = {}) {
+export function matchesDslCondition(record, condition: Record<string, any> = {}) {
     if (typeof condition === 'string') return evaluateDslExpression(condition, record);
     if (!condition || typeof condition !== 'object') return true;
     const actual = getField(record, condition.field || 'name');

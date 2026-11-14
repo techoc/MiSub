@@ -36,7 +36,7 @@ function getTemplateExtension(templateUrl) {
     }
 }
 
-export function isIniTemplateSource(templateSource, builtinTemplateEntry = null) {
+export function isIniTemplateSource(templateSource, builtinTemplateEntry: KvRecord | null = null) {
     if (builtinTemplateEntry?.format === 'ini') return true;
     if (templateSource?.kind === 'custom') return true;
     return getTemplateExtension(templateSource?.value) === 'ini';
@@ -112,7 +112,7 @@ function normalizeYamlChainConfigs(config) {
         }));
 }
 
-export function renderClashYamlProfileTemplate(templateText, nodeList, options = {}) {
+export function renderClashYamlProfileTemplate(templateText, nodeList, options: Record<string, any> = {}) {
     const config = yaml.load(templateText);
     if (!config || typeof config !== 'object' || Array.isArray(config)) {
         return '';

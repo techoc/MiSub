@@ -19,7 +19,7 @@ export async function handleGroupSelect(
     chatId,
     userId,
     env,
-    messageId = null,
+    messageId: KvRecord | null = null,
     type = 'node',
     requestCache = null
 ) {
@@ -92,7 +92,7 @@ export async function handleGroupManage(
     chatId,
     userId,
     env,
-    messageId = null,
+    messageId: KvRecord | null = null,
     type = 'node',
     requestCache = null
 ) {
@@ -205,7 +205,7 @@ export async function applyGroupOperation(
     type,
     groupName,
     op = 'rename',
-    newName = null,
+    newName: KvRecord | null = null,
     requestCache = null
 ) {
     const cache = requestCache || createRequestCache();

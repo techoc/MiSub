@@ -36,7 +36,7 @@ export function anonymizeLogToken(value, type = 'token') {
     return `${normalizedType}:${fingerprint}`;
 }
 
-function sanitizeLogEntry(logEntry = {}) {
+function sanitizeLogEntry(logEntry: Record<string, any> = {}) {
     const type = logEntry?.type === 'profile' ? 'profile' : 'token';
     return {
         ...logEntry,

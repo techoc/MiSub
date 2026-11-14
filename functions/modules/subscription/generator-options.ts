@@ -24,7 +24,7 @@ export const DEFAULT_GENERATOR_OPTIONS = Object.freeze({
     }),
 });
 
-export function normalizeGeneratorOptions(value = {}) {
+export function normalizeGeneratorOptions(value: Record<string, any> = {}) {
     const input = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
     const dns =
         input.dns && typeof input.dns === 'object' && !Array.isArray(input.dns) ? input.dns : {};
@@ -82,7 +82,7 @@ function parseBooleanParam(value) {
     return null;
 }
 
-export function resolveGeneratorOptions(value = {}, searchParams = null) {
+export function resolveGeneratorOptions(value: Record<string, any> = {}, searchParams: KvRecord | null = null) {
     const options = normalizeGeneratorOptions(value);
     if (!searchParams || typeof searchParams.has !== 'function') return options;
 
@@ -95,7 +95,7 @@ export function resolveGeneratorOptions(value = {}, searchParams = null) {
     return options;
 }
 
-export function applyDnsGeneratorOptions(dnsConfig, options = {}) {
+export function applyDnsGeneratorOptions(dnsConfig, options: Record<string, any> = {}) {
     const normalized = normalizeGeneratorOptions({ dns: options });
     dnsConfig.enable = normalized.dns.enable;
     dnsConfig.ipv6 = normalized.dns.ipv6;

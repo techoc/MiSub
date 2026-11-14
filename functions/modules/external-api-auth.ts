@@ -1,6 +1,6 @@
 import { createExternalError, getExternalApiSettings } from './external-api-utils.ts';
 
-export async function authenticateExternalApiRequest(request, env, storageAdapter = null) {
+export async function authenticateExternalApiRequest(request, env, storageAdapter: KvRecord | null = null) {
     const settings = await getExternalApiSettings(env, storageAdapter);
     if (settings.enabled !== true) {
         return {

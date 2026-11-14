@@ -29,7 +29,7 @@ export async function handleNodeInput(
     text,
     userId,
     env,
-    requestCache = null,
+    requestCache: KvRecord | null = null,
     options = {}
 ) {
     // 同一批导入的节点共用一个分组名（文件导入用文件名，文本导入用时间）

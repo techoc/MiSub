@@ -310,7 +310,7 @@ function buildRemoteRuleLine(rule) {
     return `${rule.value}, policy=${rule.policy}, enabled=true`;
 }
 
-export function renderLoonFromTemplateModel(model, options = {}) {
+export function renderLoonFromTemplateModel(model, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

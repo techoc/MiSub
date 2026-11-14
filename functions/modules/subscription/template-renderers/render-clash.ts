@@ -196,7 +196,7 @@ function mapRule(rule, ruleProviderMap) {
     return appendRuleExtras(rule, `${type},${rule.value},${rule.policy}`);
 }
 
-export function renderClashFromTemplateModel(model, options = {}) {
+export function renderClashFromTemplateModel(model, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

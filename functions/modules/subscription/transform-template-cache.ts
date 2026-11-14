@@ -80,7 +80,7 @@ async function putTemplateCache(storageAdapter, cacheKey, cacheEntry, maxAgeSeco
     }
 }
 
-function createCacheEntry(templateUrl, nodes, response, previousEntry = null) {
+function createCacheEntry(templateUrl, nodes, response, previousEntry: KvRecord | null = null) {
     return {
         nodes,
         timestamp: Date.now(),

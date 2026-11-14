@@ -124,7 +124,7 @@ function aiPolicyGroups(proxyNames, regionNames, { relay = false } = {}) {
  * @param {Object[]} proxies
  * @returns {Array} 地区分组数据
  */
-function generateRegionData(proxies, options = {}) {
+function generateRegionData(proxies, options: Record<string, any> = {}) {
     // [智能升级] 直接传递代理对象数组，region-groups 现在能识别 metadata
     // 占位信息节点（trojan://127.0.0.1）不参与地区分组，避免地区组仅由占位节点构成
     const realProxies = (Array.isArray(proxies) ? proxies : []).filter(
@@ -191,7 +191,7 @@ export function pruneProxyGroups(proxyGroups, proxies) {
 /**
  * 内部辅助：生成地区相关的策略组定义
  */
-function _generateRegionGroups(proxies, options = {}) {
+function _generateRegionGroups(proxies, options: Record<string, any> = {}) {
     const regions = generateRegionData(proxies, options);
     const regionSelectGroups = []; // 地区选择组（顶级按钮）
     const regionSupportGroups = []; // 地区辅助组（隐藏/末尾）
@@ -502,7 +502,7 @@ const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/$
  * @param {boolean} [options.mirror=true] 是否启用 CDN 镜像重写
  * @returns {string} 重写后的地址（不满足条件时原样返回）
  */
-export function pinRemoteRuleUrl(sourceUrl, options = {}) {
+export function pinRemoteRuleUrl(sourceUrl, options: Record<string, any> = {}) {
     const { mirror = true } = options;
     const raw = String(sourceUrl || '').trim();
     if (!/^https?:\/\//i.test(raw)) return sourceUrl;

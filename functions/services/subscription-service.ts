@@ -79,7 +79,7 @@ export async function generateCombinedNodeList(
     userAgent,
     misubs,
     prependedContent = '',
-    profilePrefixSettings = null,
+    profilePrefixSettings: KvRecord | null = null,
     debug = false,
     skipCertVerify = false
 ) {

@@ -66,7 +66,7 @@ function createNodeCountRequest(body) {
     });
 }
 
-function normalizeSubscriptionRuntimeFields(item = {}) {
+function normalizeSubscriptionRuntimeFields(item: Record<string, any> = {}) {
     return {
         userAgent: String(item.customUserAgent || item.userAgent || '').trim(),
         fetchProxy: String(item.fetchProxy || item.proxy || '').trim(),
@@ -74,7 +74,7 @@ function normalizeSubscriptionRuntimeFields(item = {}) {
     };
 }
 
-export async function inspectRemoteSubscription(env, payload = {}) {
+export async function inspectRemoteSubscription(env, payload: Record<string, any> = {}) {
     const requestedUrl = String(payload.url || '').trim();
     if (!requestedUrl)
         return {
@@ -145,7 +145,7 @@ async function persistSubscriptionRefresh(storageAdapter, current, inspection) {
     return updated;
 }
 
-export async function handleExternalSubscriptionsRequest(request, env, selector = null) {
+export async function handleExternalSubscriptionsRequest(request, env, selector: KvRecord | null = null) {
     const storageAdapter = await getExternalStorageAdapter(env);
     const url = new URL(request.url);
     const action = typeof selector === 'object' && selector ? selector.action || null : null;

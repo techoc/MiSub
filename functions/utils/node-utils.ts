@@ -308,7 +308,7 @@ export function removeFlagEmoji(link) {
 /**
  * [核心修复] 修复节点URL中的编码问题（包含 Hysteria2 密码解码）
  */
-export function fixNodeUrlEncoding(nodeUrl, options = {}) {
+export function fixNodeUrlEncoding(nodeUrl, options: Record<string, any> = {}) {
     if (typeof nodeUrl !== 'string' || nodeUrl.length === 0) {
         return nodeUrl;
     }

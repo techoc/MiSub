@@ -237,7 +237,7 @@ export async function clearCache(storageAdapter, cacheKey) {
  * @param {Object} storageAdapter - 存储适配器
  * @returns {Promise<{cleared: number, failed: number}>}
  */
-export async function clearAllNodeCaches(storageAdapter, options = {}) {
+export async function clearAllNodeCaches(storageAdapter, options: Record<string, any> = {}) {
     try {
         let cleared = 0;
         let failed = 0;
@@ -316,7 +316,7 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
  * @param {string} token - Token（可选）
  * @returns {Promise<number>} 清除的缓存数量
  */
-export async function invalidateCaches(storageAdapter, profileIds = [], token = null) {
+export async function invalidateCaches(storageAdapter, profileIds = [], token: KvRecord | null = null) {
     let clearedCount = 0;
 
     // 清除 Profile 缓存

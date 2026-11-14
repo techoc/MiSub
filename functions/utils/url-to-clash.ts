@@ -104,7 +104,7 @@ export function urlToClashProxy(url) {
  * @param {Object} options - 参数增强选项 (tfo, udp, scv 等)
  * @returns {Object[]} Clash 代理对象数组
  */
-export function urlsToClashProxies(urls, options = {}) {
+export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
     if (!Array.isArray(urls)) return [];
 
     return urls
@@ -166,7 +166,7 @@ export function urlsToClashProxies(urls, options = {}) {
  * @param {Object} options - 配置选项
  * @returns {string} Clash YAML 配置
  */
-export function generateClashConfig(urls, options = {}) {
+export function generateClashConfig(urls, options: Record<string, any> = {}) {
     const proxies = urlsToClashProxies(urls, options);
 
     if (proxies.length === 0) {

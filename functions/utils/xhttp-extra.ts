@@ -387,7 +387,7 @@ export function parseXhttpExtra(extra) {
  * @param {Object} [upstream] - 代理级上下文，用于物化 mihomo 下行对上行安全配置的继承
  * @returns {Object|null} Xray extra 对象；不含任何 extra 字段时返回 null
  */
-export function serializeXhttpExtra(xhttpOpts, upstream = null) {
+export function serializeXhttpExtra(xhttpOpts, upstream: KvRecord | null = null) {
     if (!isPlainObject(xhttpOpts)) return null;
 
     const extra = {};

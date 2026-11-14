@@ -409,7 +409,7 @@ function appendTlsParams(parts, proxy) {
  * @returns {string} Surge INI 配置
  */
 
-export function generateBuiltinSurgeConfig(nodeList, options = {}) {
+export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any> = {}) {
     const {
         fileName = 'MiSub',
         managedConfigUrl = '',

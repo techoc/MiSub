@@ -1,6 +1,6 @@
 import { normalizeGeneratorOptions } from './generator-options.ts';
 
-export function createUnifiedTemplateModel(input = {}) {
+export function createUnifiedTemplateModel(input: Record<string, any> = {}) {
     return {
         meta: {
             name: input.meta?.name || 'MiSub',
@@ -26,6 +26,6 @@ export function createUnifiedTemplateModel(input = {}) {
     };
 }
 
-export function normalizeUnifiedTemplateModel(model = {}) {
+export function normalizeUnifiedTemplateModel(model: Record<string, any> = {}) {
     return createUnifiedTemplateModel(model);
 }

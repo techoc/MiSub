@@ -244,7 +244,7 @@ const NOISY_SITE_TITLES = [
     /^未找到/i,
 ];
 
-export async function fetchAirportSiteTitle(rootDomain, options = {}) {
+export async function fetchAirportSiteTitle(rootDomain, options: Record<string, any> = {}) {
     const { timeout = 5000 } = options;
     const domain = String(rootDomain || '').trim();
     if (!domain || !domain.includes('.')) return '';

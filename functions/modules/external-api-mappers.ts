@@ -103,7 +103,7 @@ export function toExternalProfile(profile) {
     };
 }
 
-export function toInternalProfilePatch(payload = {}) {
+export function toInternalProfilePatch(payload: Record<string, any> = {}) {
     const internal = {};
     if ('name' in payload) internal.name = payload.name;
     if ('description' in payload) internal.description = payload.description;

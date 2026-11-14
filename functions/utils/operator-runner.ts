@@ -192,7 +192,7 @@ function opRename(nodes, params) {
 /**
  * Script Operator (The heart of Sub-Store)
  */
-async function opScript(nodes, params = {}, context) {
+async function opScript(nodes, params: Record<string, any> = {}, context) {
     const dsl = Array.isArray(params.dsl) ? params.dsl : params.action ? [params] : [];
 
     if (!dsl.length) {
@@ -241,7 +241,7 @@ async function opScript(nodes, params = {}, context) {
 /**
  * Main Entry Point for Operator Chain
  */
-export async function runOperatorChain(nodeUrls, operators, context = {}) {
+export async function runOperatorChain(nodeUrls, operators, context: Record<string, any> = {}) {
     if (!Array.isArray(operators) || operators.length === 0) {
         return nodeUrls;
     }

@@ -63,7 +63,7 @@ export async function persistCachedSettings(env, cache) {
 /**
  * 获取 Telegram Bot 推送配置
  */
-export async function getTelegramPushConfig(env, cache = null) {
+export async function getTelegramPushConfig(env, cache: KvRecord | null = null) {
     let settings;
     if (cache) {
         settings = await getCachedSettings(env, cache);

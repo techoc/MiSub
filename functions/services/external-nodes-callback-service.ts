@@ -99,7 +99,7 @@ function getMemoryCache() {
     return globalThis[MEMORY_CACHE_SYMBOL];
 }
 
-function resolveExternalNodesKv(env = {}) {
+function resolveExternalNodesKv(env: Record<string, any> = {}) {
     try {
         return StorageFactory.resolveKV(env);
     } catch {
@@ -107,7 +107,7 @@ function resolveExternalNodesKv(env = {}) {
     }
 }
 
-function resolveExternalNodesD1Adapter(env = {}) {
+function resolveExternalNodesD1Adapter(env: Record<string, any> = {}) {
     if (!env?.MISUB_DB) return null;
     try {
         return StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
@@ -278,7 +278,7 @@ export async function verifyExternalNodesToken(token, secret) {
     return payload;
 }
 
-export function resolveExternalNodesCallbackSecret(env = {}) {
+export function resolveExternalNodesCallbackSecret(env: Record<string, any> = {}) {
     return env?.CALLBACK_TOKEN_SECRET || env?.COOKIE_SECRET || '';
 }
 
@@ -314,7 +314,7 @@ export async function prepareExternalNodesCallback({
     };
 }
 
-export async function handleExternalNodesCallbackRequest(request, env = {}) {
+export async function handleExternalNodesCallbackRequest(request, env: Record<string, any> = {}) {
     const url = new URL(request.url);
     const token = url.searchParams.get('token');
     if (!token) {

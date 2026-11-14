@@ -139,7 +139,7 @@ function hasGeolocationValue(info) {
     );
 }
 
-function mergeMissingGeolocationValues(current = {}, incoming = {}) {
+function mergeMissingGeolocationValues(current: Record<string, any> = {}, incoming: Record<string, any> = {}) {
     const merged = { ...current };
     for (const key of ['country', 'city', 'isp', 'asn']) {
         if (!merged[key] && incoming?.[key]) merged[key] = incoming[key];

@@ -150,7 +150,7 @@ function policyInput(override) {
     return isObject(override.policy) ? { ...override, ...override.policy } : override;
 }
 
-export function resolveDnsPolicy(raw, options = {}) {
+export function resolveDnsPolicy(raw, options: Record<string, any> = {}) {
     const override = parseOverride(raw);
     const input = policyInput(override);
     const mode = normalizeDnsMode(options.mode || input.mode || input['dns-mode']);
@@ -266,7 +266,7 @@ export function isExplicitDnsOverride(raw) {
     return isExplicitDnsBlock(parseOverride(raw));
 }
 
-export function resolveSafeDnsConfig(raw, options = {}) {
+export function resolveSafeDnsConfig(raw, options: Record<string, any> = {}) {
     const rawOverride = parseOverride(raw);
     if (isExplicitDnsBlock(rawOverride)) {
         return clone(rawOverride);
@@ -357,7 +357,7 @@ function parseSingboxResolver(value, tag, detour) {
     return result;
 }
 
-export function buildSingboxDnsConfig(raw, options = {}) {
+export function buildSingboxDnsConfig(raw, options: Record<string, any> = {}) {
     const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
     const policy = resolveDnsPolicy(raw, options);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
@@ -400,6 +400,6 @@ export function buildSingboxDnsConfig(raw, options = {}) {
     };
 }
 
-export function cloneDnsPolicy(raw, options = {}) {
+export function cloneDnsPolicy(raw, options: Record<string, any> = {}) {
     return cloneResolverPolicy(resolveDnsPolicy(raw, options));
 }

@@ -56,11 +56,11 @@ function normalizeScope(scope) {
         : BACKUP_SCOPES.DATA_ONLY;
 }
 
-function normalizeWebdavConfig(settings = {}) {
+function normalizeWebdavConfig(settings: Record<string, any> = {}) {
     return { ...DEFAULT_WEBDAV_CONFIG, ...(settings.webdavBackup || {}) };
 }
 
-function sanitizeRuntimeSecrets(settings = {}) {
+function sanitizeRuntimeSecrets(settings: Record<string, any> = {}) {
     const sanitized = cloneJson(settings) || {};
     delete sanitized.webdavBackup;
     delete sanitized.adminPassword;
@@ -76,11 +76,11 @@ function sanitizeRuntimeSecrets(settings = {}) {
     return sanitized;
 }
 
-export function sanitizeSettingsForBackup(settings = {}) {
+export function sanitizeSettingsForBackup(settings: Record<string, any> = {}) {
     return sanitizeRuntimeSecrets(settings);
 }
 
-export function sanitizeSettingsForRestore(settings = {}) {
+export function sanitizeSettingsForRestore(settings: Record<string, any> = {}) {
     return sanitizeRuntimeSecrets(settings);
 }
 
@@ -110,7 +110,7 @@ async function readBusinessData(storageAdapter) {
     };
 }
 
-export async function buildBackupPayload(env, options = {}) {
+export async function buildBackupPayload(env, options: Record<string, any> = {}) {
     const { storageAdapter, storageType } = await getStorage(env);
     const settings =
         (await storageAdapter.get(KV_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
@@ -246,7 +246,7 @@ async function createPreRestoreSnapshot(env, storageAdapter, scope) {
     return snapshot;
 }
 
-export async function restoreBackupPayload(env, rawPayload, options = {}) {
+export async function restoreBackupPayload(env, rawPayload, options: Record<string, any> = {}) {
     const payload = normalizeBackupPayload(rawPayload);
     const scope = normalizeScope(options.scope || payload.scope);
     const { storageAdapter } = await getStorage(env);
@@ -337,7 +337,7 @@ function assertSafeWebdavConfig(config) {
     }
 }
 
-async function webdavFetch(config, path, init = {}) {
+async function webdavFetch(config, path, init: Record<string, any> = {}) {
     assertSafeWebdavConfig(config);
     const headers = new Headers(init.headers || {});
     headers.set('Authorization', `Basic ${toBasicAuth(config.username, config.password)}`);
@@ -381,7 +381,7 @@ async function updateBackupStatus(env, patch) {
     return webdavBackup;
 }
 
-export async function performWebdavBackup(env, options = {}) {
+export async function performWebdavBackup(env, options: Record<string, any> = {}) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);

@@ -307,7 +307,7 @@ function buildRuleLine(rule) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-export function renderSurgeFromTemplateModel(model, options = {}) {
+export function renderSurgeFromTemplateModel(model, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

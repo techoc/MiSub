@@ -42,7 +42,7 @@ function normalizeLoginPath(customLoginPath) {
     return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
 }
 
-function normalizeProfile(profile = {}) {
+function normalizeProfile(profile: Record<string, any> = {}) {
     const normalized = { ...profile };
     normalized.subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
     normalized.manualNodes = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
@@ -175,7 +175,7 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleDataRequest(env, context = null) {
+export async function handleDataRequest(env, context: PagesEventContext | null = null) {
     let storageType = 'unknown';
     try {
         storageType = await StorageFactory.getStorageType(env);
@@ -506,7 +506,7 @@ export async function handleMisubsSave(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-function redactSettingsForResponse(settings = {}) {
+function redactSettingsForResponse(settings: Record<string, any> = {}) {
     return {
         ...settings,
         webdavBackup: settings.webdavBackup

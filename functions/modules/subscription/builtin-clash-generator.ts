@@ -138,7 +138,7 @@ function applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups) {
  * @param {Object} options - 配置选项
  * @returns {string} Clash YAML 配置
  */
-export function generateBuiltinClashConfig(nodeList, options = {}) {
+export function generateBuiltinClashConfig(nodeList, options: Record<string, any> = {}) {
     const {
         fileName = 'MiSub',
         enableUdp = true,

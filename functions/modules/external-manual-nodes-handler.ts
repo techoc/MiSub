@@ -57,7 +57,7 @@ async function removeManualNodeIdFromProfiles(storageAdapter, id) {
     return affected;
 }
 
-export async function handleExternalManualNodesRequest(request, env, selector = null) {
+export async function handleExternalManualNodesRequest(request, env, selector: KvRecord | null = null) {
     const storageAdapter = await getExternalStorageAdapter(env);
     const url = new URL(request.url);
     const action = typeof selector === 'object' && selector ? selector.action || null : null;

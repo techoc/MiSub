@@ -23,7 +23,7 @@ export function parseSubscriptionUserInfoHeader(header) {
 /**
  * 构建单机场订阅源的保护性缓存 key
  */
-export function buildSubscriptionNodeCacheKey(sub = {}) {
+export function buildSubscriptionNodeCacheKey(sub: Record<string, any> = {}) {
     const id = typeof sub.id === 'string' ? sub.id.trim() : '';
     if (id) return `node_cache_subscription_${encodeURIComponent(id)}`;
 
@@ -40,7 +40,7 @@ export function buildSubscriptionNodeCacheKey(sub = {}) {
  * 用于区分"节点数缩减是用户改了过滤配置"与"上游响应被截断"：
  * 前者是预期行为，不应触发骤降保护或回退旧缓存。
  */
-export function buildSubscriptionFilterFingerprint(sub = {}) {
+export function buildSubscriptionFilterFingerprint(sub: Record<string, any> = {}) {
     const exclude = typeof sub.exclude === 'string' ? sub.exclude.trim() : '';
     const operators = Array.isArray(sub.operators) ? JSON.stringify(sub.operators) : '';
     const nodeTransform = sub.nodeTransform ? JSON.stringify(sub.nodeTransform) : '';
@@ -88,7 +88,7 @@ export async function writeSubscriptionNodeCache(storage, sub, nodes) {
     }
 }
 
-async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {}) {
+async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo: Record<string, any> = {}) {
     if (!storage || !sub?.id) return false;
     const { nodeCount, userInfo, lastGoodNodeCount, detectedName } = runtimeInfo;
     const hasUserInfo = Object.prototype.hasOwnProperty.call(runtimeInfo, 'userInfo');

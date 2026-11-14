@@ -7,7 +7,7 @@ import { isHiddifyAgent } from '../user-agent-utils.ts';
 import { resolveGeneratorOptions } from '../generator-options.ts';
 import { normalizeDnsMode } from '../safe-dns.ts';
 
-export function resolveBuiltinEngineFlags(config = {}, isExternalMode = false) {
+export function resolveBuiltinEngineFlags(config: Record<string, any> = {}, isExternalMode = false) {
     if (isExternalMode) {
         return {
             shouldSkipCertificateVerify: false,

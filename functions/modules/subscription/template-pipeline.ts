@@ -23,7 +23,7 @@ function deduplicateNames(proxies) {
     });
 }
 
-export function renderClashFromIniTemplate(templateText, options = {}) {
+export function renderClashFromIniTemplate(templateText, options: Record<string, any> = {}) {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -45,7 +45,7 @@ export function renderClashFromIniTemplate(templateText, options = {}) {
     return renderClashFromTemplateModel(model, options);
 }
 
-export function renderSingboxFromIniTemplate(templateText, options = {}) {
+export function renderSingboxFromIniTemplate(templateText, options: Record<string, any> = {}) {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -64,7 +64,7 @@ export function renderSingboxFromIniTemplate(templateText, options = {}) {
     return renderSingboxFromTemplateModel(model, options);
 }
 
-export function renderSurgeFromIniTemplate(templateText, options = {}) {
+export function renderSurgeFromIniTemplate(templateText, options: Record<string, any> = {}) {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -83,7 +83,7 @@ export function renderSurgeFromIniTemplate(templateText, options = {}) {
     return renderSurgeFromTemplateModel(model, options);
 }
 
-export function renderLoonFromIniTemplate(templateText, options = {}) {
+export function renderLoonFromIniTemplate(templateText, options: Record<string, any> = {}) {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -102,7 +102,7 @@ export function renderLoonFromIniTemplate(templateText, options = {}) {
     return renderLoonFromTemplateModel(model, options);
 }
 
-export function renderQuanxFromIniTemplate(templateText, options = {}) {
+export function renderQuanxFromIniTemplate(templateText, options: Record<string, any> = {}) {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -121,7 +121,7 @@ export function renderQuanxFromIniTemplate(templateText, options = {}) {
     return renderQuanxFromTemplateModel(model, options);
 }
 
-export function renderEgernFromIniTemplate(templateText, options = {}) {
+export function renderEgernFromIniTemplate(templateText, options: Record<string, any> = {}) {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')

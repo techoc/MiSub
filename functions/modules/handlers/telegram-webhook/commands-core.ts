@@ -61,7 +61,7 @@ export async function handleHelpCommand(chatId, env) {
 /**
  * 处理 /menu 命令 - 快捷菜单
  */
-export async function handleMenuCommand(chatId, env, messageId = null, requestCache = null) {
+export async function handleMenuCommand(chatId, env, messageId: KvRecord | null = null, requestCache: KvRecord | null = null) {
     const keyboard = {
         inline_keyboard: [
             [
@@ -107,8 +107,8 @@ export async function handleListCommand(
     env,
     page = 0,
     type = 'all',
-    messageId = null,
-    requestCache = null,
+    messageId: KvRecord | null = null,
+    requestCache: KvRecord | null = null,
     groupFilter = null
 ) {
     try {
@@ -263,7 +263,7 @@ export async function handleListCommand(
     }
 }
 
-export async function handleListTypeSelector(chatId, env, messageId = null, requestCache = null) {
+export async function handleListTypeSelector(chatId, env, messageId: KvRecord | null = null, requestCache: KvRecord | null = null) {
     const message =
         '📋 <b>请选择列表类型</b>\n\n' +
         '🚀 节点列表：手动添加的代理节点\n' +
@@ -292,7 +292,7 @@ export async function handleListTypeSelector(chatId, env, messageId = null, requ
 /**
  * 处理 /stats 命令
  */
-export async function handleStatsCommand(chatId, userId, env, requestCache = null) {
+export async function handleStatsCommand(chatId, userId, env, requestCache: KvRecord | null = null) {
     try {
         const userNodes = await getUserNodes(userId, env);
 

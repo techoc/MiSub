@@ -315,7 +315,7 @@ function mapRule(rule) {
     };
 }
 
-export function renderEgernFromTemplateModel(model, options = {}) {
+export function renderEgernFromTemplateModel(model, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

@@ -191,7 +191,7 @@ function parseChainProxyLine(line) {
     return { group, entry, prefix: parts.length > 2 ? parts[2] : '' };
 }
 
-export function parseIniTemplate(templateText, options = {}) {
+export function parseIniTemplate(templateText, options: Record<string, any> = {}) {
     const sections = parseIniSections(templateText);
     const aclCustomLines = sections.get('custom') || [];
     const parsedAclGroups = aclCustomLines

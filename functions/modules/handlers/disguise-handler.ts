@@ -18,7 +18,7 @@ function normalizeLoginPath(customLoginPath) {
  * @param {Object} [preloadedSettings] Optional, if already fetched
  * @returns {Promise<Response|null>}
  */
-export async function handleDisguiseRequest(context, preloadedSettings = null) {
+export async function handleDisguiseRequest(context, preloadedSettings: KvRecord | null = null) {
     const { request, env } = context;
     const url = new URL(request.url);
 

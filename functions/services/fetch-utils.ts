@@ -16,7 +16,7 @@ const DEFAULT_RETRY_OPTIONS = {
  * @param {Object} options - 重试选项 (maxRetries, baseDelay, retryableStatus)
  * @returns {Promise<Response>} - 响应对象
  */
-export async function fetchWithRetry(url, init = {}, options = {}) {
+export async function fetchWithRetry(url, init: Record<string, any> = {}, options: Record<string, any> = {}) {
     const {
         maxRetries = DEFAULT_RETRY_OPTIONS.MAX_RETRIES,
         baseDelay = DEFAULT_RETRY_OPTIONS.BASE_DELAY,

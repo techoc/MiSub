@@ -288,7 +288,7 @@ function appendTlsParams(parts, proxy) {
  * 生成内置 Loon 配置
  */
 
-export function generateBuiltinLoonConfig(nodeList, options = {}) {
+export function generateBuiltinLoonConfig(nodeList, options: Record<string, any> = {}) {
     const {
         managedConfigUrl = '',
         interval = 86400,
