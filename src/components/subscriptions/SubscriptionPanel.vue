@@ -7,14 +7,14 @@
     import EmptyState from '@/components/ui/EmptyState.vue';
     import Modal from '@/components/forms/Modal.vue';
     import { useUIStore } from '@/stores/ui';
-    import { useI18n } from '@/i18n/index.js';
-    import { inferAirportRootDomain } from '../../utils/airport-domain.js';
-    import { lookupDomainName } from '../../utils/domain-name-memory.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { inferAirportRootDomain } from '../../utils/airport-domain.ts';
+    import { lookupDomainName } from '../../utils/domain-name-memory.ts';
     import {
         getAirportIdentityKey,
         getAirportIdentityName,
         createAirportGroupId,
-    } from '../../utils/airport-identity.js';
+    } from '../../utils/airport-identity.ts';
 
     const { layoutMode } = useUIStore();
     const { t } = useI18n();

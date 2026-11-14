@@ -1,6 +1,6 @@
 <script setup>
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const toastStore = useToastStore();
     const { t } = useI18n();

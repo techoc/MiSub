@@ -3,11 +3,11 @@
     import BulkOperations from './ManualNodePanel/BulkOperations.vue';
     import NodeActions from './ManualNodePanel/NodeActions.vue';
     import NodeTable from './ManualNodePanel/NodeTable.vue';
-    import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
+    import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.ts';
     import {
         normalizeManualNodeGroupName,
         DEFAULT_GROUP_KEY,
-    } from '@/composables/manual-nodes/groups.js';
+    } from '@/composables/manual-nodes/groups.ts';
 
     const props = defineProps({
         manualNodes: { type: Array, default: () => [] },

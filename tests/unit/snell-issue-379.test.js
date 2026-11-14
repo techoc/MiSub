@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSurgeConfig } from '../../src/utils/protocolConverter.js';
+import { parseSurgeConfig } from '../../src/utils/protocolConverter.ts';
 
 describe('Issue #379: snell 节点添加无效', () => {
     it('应正确解析用户提供的 Surge Snell 配置（带空格的键值对）', () => {

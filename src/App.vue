@@ -11,10 +11,10 @@
     import { useVersionStore } from './stores/version';
     import { storeToRefs } from 'pinia';
     import NavBar from './components/layout/NavBar.vue';
-    import { detectLegacyD1 } from './lib/api.js';
-    import { useI18n } from './i18n/index.js';
-    import { configureAuthGuard, translateRouteTitle } from './router/index.js';
-    import { readSessionPreference } from './utils/session-preference.js';
+    import { detectLegacyD1 } from './lib/api.ts';
+    import { useI18n } from './i18n/index.ts';
+    import { configureAuthGuard, translateRouteTitle } from './router/index.ts';
+    import { readSessionPreference } from './utils/session-preference.ts';
 
     // Lazy components
     const Login = defineAsyncComponent(() => import('./components/modals/Login.vue'));

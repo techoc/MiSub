@@ -1,7 +1,7 @@
 <script setup>
     import { ref, watch, nextTick, onUnmounted, computed } from 'vue';
-    import { useI18n } from '@/i18n/index.js';
-    import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { useBackdropDismiss } from '@/composables/useBackdropDismiss.ts';
 
     const props = defineProps({
         show: Boolean,

@@ -1,7 +1,7 @@
 ﻿<script setup>
     import { ref, onMounted } from 'vue';
     import MigrationModal from './MigrationModal.vue';
-    import { useSettingsLogic } from '../../composables/useSettingsLogic.js';
+    import { useSettingsLogic } from '../../composables/useSettingsLogic.ts';
     import SettingsContent from '../settings/SettingsContent.vue';
 
     const {

@@ -11,8 +11,8 @@
     import { useRoute, useRouter } from 'vue-router';
     import { useSessionStore } from '../stores/session';
     import { storeToRefs } from 'pinia';
-    import { isValidCustomLoginPath } from '../utils/login-path.js';
-    import { readSessionPreference, writeSessionPreference } from '../utils/session-preference.js';
+    import { isValidCustomLoginPath } from '../utils/login-path.ts';
+    import { readSessionPreference, writeSessionPreference } from '../utils/session-preference.ts';
 
     // Lazy load components
     const Login = defineAsyncComponent(() => import('../components/modals/Login.vue'));

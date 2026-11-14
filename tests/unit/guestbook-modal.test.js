@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import GuestbookModal from '../../src/components/modals/GuestbookModal.vue';
-import { setLocale } from '../../src/i18n/index.js';
+import { setLocale } from '../../src/i18n/index.ts';
 
 const { post } = vi.hoisted(() => ({
     post: vi.fn(),

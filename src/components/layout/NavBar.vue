@@ -1,14 +1,14 @@
 <script setup>
     import { computed } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useUIStore } from '../../stores/ui.js';
-    import { useSessionStore } from '../../stores/session.js';
+    import { useUIStore } from '../../stores/ui.ts';
+    import { useSessionStore } from '../../stores/session.ts';
     import { storeToRefs } from 'pinia';
     import BaseIcon from '../ui/BaseIcon.vue';
     import BrandLogo from './BrandLogo.vue';
     import NavActionGroup from './NavActionGroup.vue';
-    import { MAIN_NAV_ITEMS } from '../../constants/navigation.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { MAIN_NAV_ITEMS } from '../../constants/navigation.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const route = useRoute();
     const uiStore = useUIStore();

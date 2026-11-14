@@ -77,7 +77,7 @@ describe('严格 CSP 下的首页渲染（runtime template regression）', () =>
         const pinia = createPinia();
         setActivePinia(pinia);
 
-        const { useSessionStore } = await import('../../src/stores/session.js');
+        const { useSessionStore } = await import('../../src/stores/session.ts');
         const session = useSessionStore();
         session.sessionState = 'loggedIn';
 

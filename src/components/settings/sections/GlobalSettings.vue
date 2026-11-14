@@ -3,7 +3,7 @@
     import OperatorChain from '../../features/Operators/OperatorChain.vue';
     import Input from '../../ui/Input.vue';
     import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
 

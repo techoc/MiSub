@@ -1,15 +1,15 @@
 <script setup>
     import { ref, defineAsyncComponent, onMounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useProfiles } from '../composables/useProfiles.js';
+    import { useDataStore } from '../stores/useDataStore.ts';
+    import { useProfiles } from '../composables/useProfiles.ts';
     import ProfilePanel from '../components/profiles/ProfilePanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import { storeToRefs } from 'pinia';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { useToastStore } from '../stores/toast.js';
-    import { useI18n } from '../i18n/index.js';
-    import { resolveProfileFocus } from '../utils/dashboard-deeplink.js';
+    import { useManualNodes } from '../composables/useManualNodes.ts';
+    import { useToastStore } from '../stores/toast.ts';
+    import { useI18n } from '../i18n/index.ts';
+    import { resolveProfileFocus } from '../utils/dashboard-deeplink.ts';
 
     const { t } = useI18n();
     const route = useRoute();

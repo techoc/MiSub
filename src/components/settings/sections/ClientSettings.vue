@@ -1,9 +1,9 @@
 <script setup>
     import { ref, onMounted, computed } from 'vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
     import { useToastStore } from '../../../stores/toast';
     import Modal from '../../forms/Modal.vue';
-    import { api } from '../../../lib/http.js';
+    import { api } from '../../../lib/http.ts';
     import SectionHeader from '../SectionHeader.vue';
 
     const clients = ref([]);

@@ -1,5 +1,5 @@
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
     /**
@@ -7,7 +7,7 @@
      * 纯 UI 组件，解析与入库由父组件处理。
      */
     import { ref, computed } from 'vue';
-    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../../utils/importFile.js';
+    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../../utils/importFile.ts';
 
     const props = defineProps({
         isProcessing: {

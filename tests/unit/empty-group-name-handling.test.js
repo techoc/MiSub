@@ -3,7 +3,7 @@ import {
     collectManualNodeGroups,
     buildGroupedManualNodes,
     normalizeManualNodeGroupName,
-} from '../../src/composables/manual-nodes/groups.js';
+} from '../../src/composables/manual-nodes/groups.ts';
 
 describe('空分组名处理一致性', () => {
     it('normalizeManualNodeGroupName 应将空值、空字符串、空格规范化为空字符串', () => {

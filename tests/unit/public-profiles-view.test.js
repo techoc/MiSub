@@ -27,7 +27,7 @@ vi.mock('../../src/components/modals/QuickImportModal.vue', () => ({
     default: { template: '<div />' },
 }));
 
-import { api } from '../../src/lib/http.js';
+import { api } from '../../src/lib/http.ts';
 
 describe('PublicProfilesView hero loading state', () => {
     let wrapper;

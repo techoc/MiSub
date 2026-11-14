@@ -3,14 +3,14 @@
     import Modal from '../forms/Modal.vue';
     import Input from '../ui/Input.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { useSubscriptions } from '../../composables/useSubscriptions.js';
-    import { useBulkImportLogic, needsServerParsing } from '../../composables/useBulkImportLogic.js';
-    import { useManualNodes } from '../../composables/useManualNodes.js';
-    import { useI18n } from '../../i18n/index.js';
-    import { parseSurgeConfig } from '../../utils/protocolConverter.js';
-    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../utils/importFile.js';
-    import { buildAutoGroupName } from '../../utils/auto-group-name.js';
+    import { useDataStore } from '../../stores/useDataStore.ts';
+    import { useSubscriptions } from '../../composables/useSubscriptions.ts';
+    import { useBulkImportLogic, needsServerParsing } from '../../composables/useBulkImportLogic.ts';
+    import { useManualNodes } from '../../composables/useManualNodes.ts';
+    import { useI18n } from '../../i18n/index.ts';
+    import { parseSurgeConfig } from '../../utils/protocolConverter.ts';
+    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../utils/importFile.ts';
+    import { buildAutoGroupName } from '../../utils/auto-group-name.ts';
 
     const props = defineProps({
         show: Boolean,

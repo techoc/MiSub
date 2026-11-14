@@ -6,8 +6,8 @@
     import LoginEntryButton from './LoginEntryButton.vue';
     import ExternalRepoButton from './ExternalRepoButton.vue';
     import LanguageSwitcher from './LanguageSwitcher.vue';
-    import { NAV_ICONS } from '../../constants/navigation.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { NAV_ICONS } from '../../constants/navigation.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const props = defineProps({
         isLoggedIn: {

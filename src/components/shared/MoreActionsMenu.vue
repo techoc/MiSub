@@ -1,6 +1,6 @@
 <script setup>
     import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
-    import { t } from '../../i18n/index.js';
+    import { t } from '../../i18n/index.ts';
 
     const props = defineProps({
         teleportToBody: {

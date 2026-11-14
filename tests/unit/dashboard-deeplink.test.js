@@ -7,7 +7,7 @@ import {
     resolveSettingsFocusAnchor,
     resolveProfileFocus,
     countSubscriptionsByStatus,
-} from '../../src/utils/dashboard-deeplink.js';
+} from '../../src/utils/dashboard-deeplink.ts';
 
 const now = 1_800_000_000_000;
 

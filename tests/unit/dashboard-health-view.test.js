@@ -49,11 +49,11 @@ vi.mock('../../src/composables/useManualNodes.js', () => ({
     }),
 }));
 import DashboardView from '../../src/views/DashboardView.vue';
-import { createI18n } from '../../src/i18n/index.js';
-import { messages } from '../../src/i18n/messages.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useSettingsStore } from '../../src/stores/settings.js';
-import { useToastStore } from '../../src/stores/toast.js';
+import { createI18n } from '../../src/i18n/index.ts';
+import { messages } from '../../src/i18n/messages.ts';
+import { useDataStore } from '../../src/stores/useDataStore.ts';
+import { useSettingsStore } from '../../src/stores/settings.ts';
+import { useToastStore } from '../../src/stores/toast.ts';
 
 function mountDashboard(locale = 'zh-CN') {
     return mount(DashboardView, {

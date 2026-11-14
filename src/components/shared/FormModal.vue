@@ -2,8 +2,8 @@
 
 <script setup>
     import { ref, watch, nextTick, computed } from 'vue';
-    import { t } from '../../i18n/index.js';
-    import { useBackdropDismiss } from '../../composables/useBackdropDismiss.js';
+    import { t } from '../../i18n/index.ts';
+    import { useBackdropDismiss } from '../../composables/useBackdropDismiss.ts';
 
     const props = defineProps({
         show: {

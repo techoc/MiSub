@@ -1,6 +1,6 @@
 <script setup>
     import StatusIndicator from './StatusIndicator.vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     defineProps({
         isDirty: Boolean,

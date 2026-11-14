@@ -1,20 +1,20 @@
 <script setup>
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
     import { ref, watch } from 'vue';
-    import { useToastStore } from '../../stores/toast.js';
+    import { useToastStore } from '../../stores/toast.ts';
     import Modal from '../forms/Modal.vue';
-    import { handleError } from '../../utils/errorHandler.js';
-    import { generateNodeId } from '../../utils/id.js';
-    import { api, APIError } from '../../lib/http.js';
+    import { handleError } from '../../utils/errorHandler.ts';
+    import { generateNodeId } from '../../utils/id.ts';
+    import { api, APIError } from '../../lib/http.ts';
     import FormatDetector from './SubscriptionImport/FormatDetector.vue';
     import ImportForm from './SubscriptionImport/ImportForm.vue';
     import FileImport from './SubscriptionImport/FileImport.vue';
     import ParseResult from './SubscriptionImport/ParseResult.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
-    import { readFilesAsText } from '../../utils/importFile.js';
-    import { buildAutoGroupName } from '../../utils/auto-group-name.js';
+    import { readFilesAsText } from '../../utils/importFile.ts';
+    import { buildAutoGroupName } from '../../utils/auto-group-name.ts';
 
     const isDev = import.meta.env.DEV;
 

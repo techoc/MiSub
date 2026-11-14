@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { configureUnauthorizedHandler, request } from '../../src/lib/http.js';
+import { configureUnauthorizedHandler, request } from '../../src/lib/http.ts';
 
 describe('HTTP unauthorized handler', () => {
     beforeEach(() => {

@@ -36,8 +36,8 @@ vi.mock('vue-router', async () => {
 });
 
 import MySubscriptionsView from '../../src/views/MySubscriptionsView.vue';
-import { createI18n } from '../../src/i18n/index.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
+import { createI18n } from '../../src/i18n/index.ts';
+import { useDataStore } from '../../src/stores/useDataStore.ts';
 
 const scrollSpy = vi.fn();
 const mountedWrappers = [];

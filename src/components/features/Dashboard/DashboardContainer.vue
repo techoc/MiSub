@@ -2,11 +2,11 @@
 
 <script setup>
     import { ref, onMounted, onUnmounted } from 'vue';
-    import { saveMisubs } from '../../../lib/api.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useUIStore } from '../../../stores/ui.js';
-    import { TIMING } from '../../../constants/timing.js';
-    import { useI18n } from '@/i18n/index.js';
+    import { saveMisubs } from '../../../lib/api.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useUIStore } from '../../../stores/ui.ts';
+    import { TIMING } from '../../../constants/timing.ts';
+    import { useI18n } from '@/i18n/index.ts';
 
     // 子组件
     import SubscriptionManager from './SubscriptionManager.vue';

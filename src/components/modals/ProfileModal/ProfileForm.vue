@@ -5,7 +5,7 @@
     import Switch from '../../ui/Switch.vue';
     import OperatorChain from '../../features/Operators/OperatorChain.vue';
     import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
 

@@ -1,7 +1,7 @@
 /** * 节点预览主容器组件 * @author MiSub Team */
 
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
     import { ref, computed, onMounted } from 'vue';
@@ -16,8 +16,8 @@
     import EmptyState from './EmptyState.vue';
 
     // Composables
-    import { useNodePreview } from '@/composables/useNodePreview.js';
-    import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useNodePreview } from '@/composables/useNodePreview.ts';
+    import { useBackdropDismiss } from '@/composables/useBackdropDismiss.ts';
 
     const props = defineProps({
         show: Boolean,

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import SubscriptionPanel from '../../src/components/subscriptions/SubscriptionPanel.vue';
-import { clearDomainNameMemory } from '../../src/utils/domain-name-memory.js';
+import { clearDomainNameMemory } from '../../src/utils/domain-name-memory.ts';
 
 /**
  * 订阅源「按站点自动折叠」回归测试。

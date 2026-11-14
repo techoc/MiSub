@@ -1,21 +1,21 @@
 <script setup>
     import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, watch } from 'vue';
-    import { formatBytes } from '../../../lib/utils.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useUIStore } from '../../../stores/ui.js';
-    import { useDataStore } from '../../../stores/useDataStore.js';
-    import { useSubscriptions } from '../../../composables/useSubscriptions.js';
-    import { useManualNodes } from '../../../composables/useManualNodes.js';
-    import { useProfiles } from '../../../composables/useProfiles.js';
-    import { useSubscriptionForms } from '../../../composables/useSubscriptionForms.js';
-    import { useNodeForms } from '../../../composables/useNodeForms.js';
-    import { useBulkImportLogic } from '../../../composables/useBulkImportLogic.js';
-    import { useBackupLogic } from '../../../composables/useBackupLogic.js';
+    import { formatBytes } from '../../../lib/utils.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useUIStore } from '../../../stores/ui.ts';
+    import { useDataStore } from '../../../stores/useDataStore.ts';
+    import { useSubscriptions } from '../../../composables/useSubscriptions.ts';
+    import { useManualNodes } from '../../../composables/useManualNodes.ts';
+    import { useProfiles } from '../../../composables/useProfiles.ts';
+    import { useSubscriptionForms } from '../../../composables/useSubscriptionForms.ts';
+    import { useNodeForms } from '../../../composables/useNodeForms.ts';
+    import { useBulkImportLogic } from '../../../composables/useBulkImportLogic.ts';
+    import { useBackupLogic } from '../../../composables/useBackupLogic.ts';
     import { storeToRefs } from 'pinia';
-    import { useI18n } from '@/i18n/index.js';
-    import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
-    import { inferAirportRootDomain } from '@/utils/airport-domain.js';
-    import { rememberDomainName } from '@/utils/domain-name-memory.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { readRawPreference, writeRawPreference } from '@/utils/local-preference.ts';
+    import { inferAirportRootDomain } from '@/utils/airport-domain.ts';
+    import { rememberDomainName } from '@/utils/domain-name-memory.ts';
 
     const isDev = import.meta.env.DEV;
 

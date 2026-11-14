@@ -3,9 +3,9 @@
     import Modal from '../forms/Modal.vue';
     import { useToastStore } from '../../stores/toast';
     import { getClientInfo } from '../../lib/utils';
-    import { api } from '../../lib/http.js';
-    import { useI18n } from '../../i18n/index.js';
-    import { confirmAction } from '../../composables/useConfirm.js';
+    import { api } from '../../lib/http.ts';
+    import { useI18n } from '../../i18n/index.ts';
+    import { confirmAction } from '../../composables/useConfirm.ts';
 
     const props = defineProps({
         show: Boolean,

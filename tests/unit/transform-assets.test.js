@@ -5,9 +5,9 @@ import {
     getLocalizedTransformAssets,
     getLocalizedTransformAssetByUrl,
     localizeTransformAsset,
-} from '../../src/constants/transform-assets.js';
+} from '../../src/constants/transform-assets.ts';
 import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
-import { t } from '../../src/i18n/index.js';
+import { t } from '../../src/i18n/index.ts';
 
 describe('Transform assets', () => {
     it('should provide metadata for preset configs', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import AdvancedOptions from '../../src/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 
 describe('AdvancedOptions', () => {
     it('renders subscription toggles with concise labels and Switch controls', () => {

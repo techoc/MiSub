@@ -1,7 +1,7 @@
 /** * 节点预览头部组件 * @author MiSub Team */
 
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
     defineProps({

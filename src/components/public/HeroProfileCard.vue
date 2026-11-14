@@ -1,7 +1,7 @@
 <script setup>
     import QRCodeOverlay from './QRCodeOverlay.vue';
     import BaseIcon from '../ui/BaseIcon.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
 

@@ -1,9 +1,9 @@
 <script setup>
     import { ref } from 'vue';
-    import { useToastStore } from '../../../stores/toast.js';
+    import { useToastStore } from '../../../stores/toast.ts';
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const props = defineProps({
         settings: {

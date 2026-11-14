@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect } from 'vitest';
-import { validateProfile } from '../../src/utils/validation-utils.js';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale } from '../../src/i18n/index.js';
+import { validateProfile } from '../../src/utils/validation-utils.ts';
+import { messages } from '../../src/i18n/messages.ts';
+import { setLocale } from '../../src/i18n/index.ts';
 
 // 校验文案已 i18n，必须钉住语言（happy-dom 默认 en-US）
 beforeEach(() => setLocale('zh-CN'));

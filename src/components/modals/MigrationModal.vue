@@ -1,9 +1,9 @@
 <script setup>
     import { ref, computed } from 'vue';
     import Modal from '../forms/Modal.vue';
-    import { migrateToD1 } from '../../lib/api.js';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { migrateToD1 } from '../../lib/api.ts';
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const props = defineProps({
         show: Boolean,

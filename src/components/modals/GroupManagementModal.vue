@@ -2,8 +2,8 @@
     import { ref, computed, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import draggable from 'vuedraggable';
-    import { useI18n } from '../../i18n/index.js';
-    import { confirmAction } from '../../composables/useConfirm.js';
+    import { useI18n } from '../../i18n/index.ts';
+    import { confirmAction } from '../../composables/useConfirm.ts';
 
     const { t } = useI18n();
 

@@ -10,7 +10,7 @@
  * 一旦改成匹配界面文案，判定就会随语言漂移。
  */
 import { describe, expect, it } from 'vitest';
-import { isNetworkErrorMessage } from '../../src/utils/network-error.js';
+import { isNetworkErrorMessage } from '../../src/utils/network-error.ts';
 
 describe('isNetworkErrorMessage', () => {
     it('认得各浏览器实际抛出的网络失败措辞', () => {

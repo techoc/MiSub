@@ -3,14 +3,14 @@
     import Modal from '../forms/Modal.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
     import FileImport from './SubscriptionImport/FileImport.vue';
-    import { useManualNodes } from '../../composables/useManualNodes.js';
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '@/i18n/index.js';
-    import { api } from '../../lib/http.js';
-    import { generateNodeId } from '../../utils/id.js';
-    import { readFilesAsText } from '../../utils/importFile.js';
-    import { buildAutoGroupName } from '../../utils/auto-group-name.js';
+    import { useManualNodes } from '../../composables/useManualNodes.ts';
+    import { useDataStore } from '../../stores/useDataStore.ts';
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useI18n } from '@/i18n/index.ts';
+    import { api } from '../../lib/http.ts';
+    import { generateNodeId } from '../../utils/id.ts';
+    import { readFilesAsText } from '../../utils/importFile.ts';
+    import { buildAutoGroupName } from '../../utils/auto-group-name.ts';
 
     const { t } = useI18n();
     const { manualNodeGroups } = useManualNodes(useDataStore().markDirty);

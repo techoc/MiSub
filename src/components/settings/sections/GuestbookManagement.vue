@@ -1,9 +1,9 @@
 <script setup>
     import { ref, computed, onMounted, watch } from 'vue';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { api } from '../../../lib/http.js';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { api } from '../../../lib/http.ts';
     import Switch from '../../ui/Switch.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const props = defineProps({
         settings: {

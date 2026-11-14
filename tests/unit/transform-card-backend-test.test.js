@@ -7,7 +7,7 @@ vi.mock('../../src/lib/api.js', () => ({
     testSubconverterBackend: vi.fn(),
 }));
 
-const { testSubconverterBackend } = await import('../../src/lib/api.js');
+const { testSubconverterBackend } = await import('../../src/lib/api.ts');
 
 function createSettings(overrides = {}) {
     return {

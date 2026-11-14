@@ -1,12 +1,12 @@
 <script setup>
     import { onMounted, onUnmounted } from 'vue';
     import Modal from '../forms/Modal.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
     import {
         setConfirmHost,
         settleConfirm,
         useConfirmState,
-    } from '../../composables/useConfirm.js';
+    } from '../../composables/useConfirm.ts';
 
     const { t } = useI18n();
     const pending = useConfirmState();

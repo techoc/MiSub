@@ -1,8 +1,8 @@
 <script setup>
     import { ref, watch } from 'vue';
-    import { api } from '../../lib/http.js';
+    import { api } from '../../lib/http.ts';
     import Modal from '../forms/Modal.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
 

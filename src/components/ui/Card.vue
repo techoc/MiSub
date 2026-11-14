@@ -1,12 +1,12 @@
 <script setup>
     import { computed, ref } from 'vue';
-    import { formatBytes } from '../../lib/utils.js';
-    import { inferAirportRootDomain } from '../../utils/airport-domain.js';
-    import { lookupDomainName } from '../../utils/domain-name-memory.js';
-    import { api } from '../../lib/http.js';
-    import { TIMING } from '../../constants/timing.js';
+    import { formatBytes } from '../../lib/utils.ts';
+    import { inferAirportRootDomain } from '../../utils/airport-domain.ts';
+    import { lookupDomainName } from '../../utils/domain-name-memory.ts';
+    import { api } from '../../lib/http.ts';
+    import { TIMING } from '../../constants/timing.ts';
     import Switch from './Switch.vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const props = defineProps({
         misub: {

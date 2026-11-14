@@ -1,11 +1,11 @@
 <script setup>
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
     import { ref, watch, nextTick } from 'vue';
     import QRCode from 'qrcode';
     import Modal from '../forms/Modal.vue';
-    import { useToastStore } from '../../stores/toast.js';
+    import { useToastStore } from '../../stores/toast.ts';
 
     const { showToast } = useToastStore();
 

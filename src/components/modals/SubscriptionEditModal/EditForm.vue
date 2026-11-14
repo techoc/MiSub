@@ -8,9 +8,9 @@
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
     import { ref, watch } from 'vue';
-    import { fetchNodeCount } from '../../../lib/api.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useI18n } from '../../../i18n/index.js';
+    import { fetchNodeCount } from '../../../lib/api.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { showToast } = useToastStore();
     const { t } = useI18n();

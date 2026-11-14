@@ -4,7 +4,7 @@ import { parseIniTemplate } from '../../functions/modules/subscription/template-
 import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.ts';
 import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.ts';
 import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
-import { TRANSFORM_ASSETS } from '../../src/constants/transform-assets.js';
+import { TRANSFORM_ASSETS } from '../../src/constants/transform-assets.ts';
 import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.ts';
 
 /**

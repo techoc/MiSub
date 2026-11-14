@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isValidCustomLoginPath } from '../../src/utils/login-path.js';
+import { isValidCustomLoginPath } from '../../src/utils/login-path.ts';
 
 describe('isValidCustomLoginPath', () => {
     it('treats login as the default path instead of a custom-only route', () => {

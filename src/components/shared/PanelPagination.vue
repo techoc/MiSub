@@ -1,6 +1,6 @@
 ﻿<script setup>
     import { computed, ref, watch } from 'vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const props = defineProps({
         variant: {

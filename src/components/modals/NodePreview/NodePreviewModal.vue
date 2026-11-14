@@ -1,11 +1,11 @@
 <script setup>
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-    import { api, APIError } from '../../../lib/http.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useDataStore } from '../../../stores/useDataStore.js';
-    import { useManualNodes } from '../../../composables/useManualNodes.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { isNetworkErrorMessage } from '../../../utils/network-error.js';
+    import { api, APIError } from '../../../lib/http.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useDataStore } from '../../../stores/useDataStore.ts';
+    import { useManualNodes } from '../../../composables/useManualNodes.ts';
+    import { useI18n } from '../../../i18n/index.ts';
+    import { isNetworkErrorMessage } from '../../../utils/network-error.ts';
     import Modal from '../../forms/Modal.vue';
     import NodeFilters from './components/NodeFilters.vue';
     import NodeList from './components/NodeList.vue';

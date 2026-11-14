@@ -1,9 +1,9 @@
 <script setup>
     import { ref } from 'vue';
-    import { api } from '../../../lib/http.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { confirmAction } from '../../../composables/useConfirm.js';
+    import { api } from '../../../lib/http.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useI18n } from '../../../i18n/index.ts';
+    import { confirmAction } from '../../../composables/useConfirm.ts';
     import Input from '../../ui/Input.vue';
 
     const props = defineProps({

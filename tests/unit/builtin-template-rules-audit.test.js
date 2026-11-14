@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
 import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.ts';
 import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.ts';
-import { TRANSFORM_ASSETS } from '../../src/constants/transform-assets.js';
+import { TRANSFORM_ASSETS } from '../../src/constants/transform-assets.ts';
 import {
     getBuiltinRules,
     getRemoteProviderDefinitions,

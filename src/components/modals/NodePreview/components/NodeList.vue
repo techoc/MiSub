@@ -1,7 +1,7 @@
 <script setup>
     import { computed } from 'vue';
-    import { useVirtualScroll } from '@/composables/useVirtualScroll.js';
-    import { useI18n } from '../../../../i18n/index.js';
+    import { useVirtualScroll } from '@/composables/useVirtualScroll.ts';
+    import { useI18n } from '../../../../i18n/index.ts';
 
     const { t } = useI18n();
 

@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed } from 'vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
     import FilterEditor from './components/FilterEditor.vue';
     import RenameEditor from './components/RenameEditor.vue';
     import SortEditor from './components/SortEditor.vue';

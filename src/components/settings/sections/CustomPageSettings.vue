@@ -1,8 +1,8 @@
 <script setup>
     import { computed } from 'vue';
-    import { parseCustomPageSource } from '../../../utils/custom-page-source.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { confirmAction } from '../../../composables/useConfirm.js';
+    import { parseCustomPageSource } from '../../../utils/custom-page-source.ts';
+    import { useI18n } from '../../../i18n/index.ts';
+    import { confirmAction } from '../../../composables/useConfirm.ts';
     import Switch from '../../ui/Switch.vue';
 
     const { t } = useI18n();

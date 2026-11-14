@@ -1,7 +1,7 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { useDataStore } from '@/stores/useDataStore.js';
-    import { useI18n } from '@/i18n/index.js';
+    import { useDataStore } from '@/stores/useDataStore.ts';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
 

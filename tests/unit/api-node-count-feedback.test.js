@@ -37,7 +37,7 @@ describe('fetchNodeCount feedback normalization', () => {
             userInfo: null,
         });
 
-        const { fetchNodeCount } = await import('../../src/lib/api.js');
+        const { fetchNodeCount } = await import('../../src/lib/api.ts');
         const result = await fetchNodeCount('https://airport.example/sub');
 
         expect(result.success).toBe(false);
@@ -50,7 +50,7 @@ describe('fetchNodeCount feedback normalization', () => {
         const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         mocks.post.mockRejectedValue(error);
 
-        const { fetchNodeCount } = await import('../../src/lib/api.js');
+        const { fetchNodeCount } = await import('../../src/lib/api.ts');
         try {
             const result = await fetchNodeCount('https://airport.example/sub');
 
@@ -68,7 +68,7 @@ describe('fetchNodeCount feedback normalization', () => {
         const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         mocks.post.mockRejectedValue(error);
 
-        const { fetchNodeCount } = await import('../../src/lib/api.js');
+        const { fetchNodeCount } = await import('../../src/lib/api.ts');
         try {
             const result = await fetchNodeCount('https://airport.example/sub');
 

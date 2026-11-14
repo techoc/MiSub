@@ -1,7 +1,7 @@
 <script setup>
     import { storeToRefs } from 'pinia';
-    import { useThemeStore } from '../../stores/theme.js';
-    import { useI18n } from '@/i18n/index.js';
+    import { useThemeStore } from '../../stores/theme.ts';
+    import { useI18n } from '@/i18n/index.ts';
 
     const store = useThemeStore();
     const { theme } = storeToRefs(store);

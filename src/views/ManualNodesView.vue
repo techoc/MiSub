@@ -1,18 +1,18 @@
 <script setup>
     import { ref, defineAsyncComponent } from 'vue';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { useNodeForms } from '../composables/useNodeForms.js'; // Added
-    import { useToastStore } from '../stores/toast.js';
-    import { extractNodeName } from '../lib/utils.js';
+    import { useDataStore } from '../stores/useDataStore.ts';
+    import { useManualNodes } from '../composables/useManualNodes.ts';
+    import { useNodeForms } from '../composables/useNodeForms.ts'; // Added
+    import { useToastStore } from '../stores/toast.ts';
+    import { extractNodeName } from '../lib/utils.ts';
     import ManualNodePanel from '../components/nodes/ManualNodePanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import ManualNodeEditModal from '../components/modals/ManualNodeEditModal.vue';
     import ManualNodeDedupModal from '../components/modals/ManualNodeDedupModal.vue';
     import SubscriptionImportModal from '../components/modals/SubscriptionImportModal.vue';
     import BatchGroupModal from '../components/modals/BatchGroupModal.vue'; // Added
-    import { useI18n } from '../i18n/index.js';
-    import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
+    import { useI18n } from '../i18n/index.ts';
+    import { readRawPreference, writeRawPreference } from '../utils/local-preference.ts';
 
     const GroupManagementModal = defineAsyncComponent(
         () => import('../components/modals/GroupManagementModal.vue')

@@ -1,6 +1,6 @@
 <script setup>
     import { ref } from 'vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
     import Button from '../ui/Button.vue';
 
     const { t } = useI18n();

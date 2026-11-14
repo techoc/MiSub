@@ -13,7 +13,7 @@ function collectSourceFiles(dir) {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
             files.push(...collectSourceFiles(fullPath));
-        } else if (/\.(js|vue)$/.test(entry.name)) {
+        } else if (/\.(js|ts|vue)$/.test(entry.name)) {
             files.push(fullPath);
         }
     }

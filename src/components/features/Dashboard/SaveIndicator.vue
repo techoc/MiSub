@@ -2,7 +2,7 @@
 
 <script setup>
     import { computed, toRefs } from 'vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
     const props = defineProps({

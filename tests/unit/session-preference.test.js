@@ -9,7 +9,7 @@ import {
     readSessionPreference,
     removeSessionPreference,
     writeSessionPreference,
-} from '../../src/utils/session-preference.js';
+} from '../../src/utils/session-preference.ts';
 
 function createSessionStorageStub(initial = {}) {
     const store = new Map(Object.entries(initial));

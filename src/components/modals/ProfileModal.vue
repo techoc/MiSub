@@ -5,11 +5,11 @@
     import SubscriptionSelector from './ProfileModal/SubscriptionSelector.vue';
     import SubProfileSelector from './ProfileModal/SubProfileSelector.vue';
     import NodeSelector from './ProfileModal/NodeSelector.vue';
-    import { useManualNodes } from '../../composables/useManualNodes.js';
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { useSettingsStore } from '../../stores/settings.js';
-    import { useI18n } from '@/i18n/index.js';
-    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
+    import { useManualNodes } from '../../composables/useManualNodes.ts';
+    import { useDataStore } from '../../stores/useDataStore.ts';
+    import { useSettingsStore } from '../../stores/settings.ts';
+    import { useI18n } from '@/i18n/index.ts';
+    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.ts';
 
     const { t } = useI18n();
     const dataStore = useDataStore();

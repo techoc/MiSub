@@ -1,7 +1,7 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useI18n } from '../../i18n/index.ts';
     import Modal from '../forms/Modal.vue';
     import EditForm from './SubscriptionEditModal/EditForm.vue';
     import RuleSection from './SubscriptionEditModal/RuleSection.vue';

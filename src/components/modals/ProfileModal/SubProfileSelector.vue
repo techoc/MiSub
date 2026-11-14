@@ -1,8 +1,8 @@
 <script setup>
     import { computed } from 'vue';
     import draggable from 'vuedraggable';
-    import { useI18n } from '@/i18n/index.js';
-    import { wouldCreateCycle } from '@/utils/profile-graph.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { wouldCreateCycle } from '@/utils/profile-graph.ts';
 
     const { t } = useI18n();
 

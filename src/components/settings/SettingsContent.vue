@@ -1,6 +1,6 @@
 <script setup>
     import { computed, defineAsyncComponent, reactive, watch } from 'vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
     import SettingsLayout from '../layout/SettingsLayout.vue';
     import SettingsSidebar from './SettingsSidebar.vue';
 

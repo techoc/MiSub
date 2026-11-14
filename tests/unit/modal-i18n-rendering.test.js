@@ -4,7 +4,7 @@ import LogModal from '../../src/components/modals/LogModal.vue';
 import QuickImportModal from '../../src/components/modals/QuickImportModal.vue';
 import ManualNodeDedupModal from '../../src/components/modals/ManualNodeDedupModal.vue';
 import ManualNodeEditModal from '../../src/components/modals/ManualNodeEditModal.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 import { createPinia, setActivePinia } from 'pinia';
 
 vi.mock('../../src/lib/http.js', () => ({

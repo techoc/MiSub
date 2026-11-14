@@ -67,7 +67,7 @@ describe('useSubscriptions manual node refresh failures', () => {
             status: 403,
         });
 
-        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.js');
+        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.ts');
         const markDirty = vi.fn();
         const { handleUpdateNodeCount } = useSubscriptions(markDirty);
 
@@ -109,7 +109,7 @@ describe('useSubscriptions manual node refresh failures', () => {
             status: 403,
         });
 
-        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.js');
+        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.ts');
         const markDirty = vi.fn();
         const { handleUpdateNodeCount } = useSubscriptions(markDirty);
 

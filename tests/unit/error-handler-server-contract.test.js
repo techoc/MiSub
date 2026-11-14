@@ -20,9 +20,9 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ErrorHandler } from '../../src/utils/errorHandler.js';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale } from '../../src/i18n/index.js';
+import { ErrorHandler } from '../../src/utils/errorHandler.ts';
+import { messages } from '../../src/i18n/messages.ts';
+import { setLocale } from '../../src/i18n/index.ts';
 
 const FUNCTIONS_ROOT = path.resolve(__dirname, '../../functions');
 const zh = messages['zh-CN'].errors;
@@ -149,7 +149,7 @@ describe('errorHandler ↔ 服务端错误消息契约', () => {
     it('客户端侧不该出现「服务端标识符」的本地化版本', () => {
         // MISUB_KV / MISUB_DB 是环境变量名，作为兜底判据保留；
         // 但客户端不该产生它们（否则就是客户端在伪造服务端消息）。
-        const clientSource = ['src/utils/errorHandler.js']
+        const clientSource = ['src/utils/errorHandler.ts']
             .map((rel) => readFileSync(path.resolve(__dirname, '../..', rel), 'utf8'))
             .join('\n');
 

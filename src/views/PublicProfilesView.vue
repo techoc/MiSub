@@ -8,13 +8,13 @@
         computed,
         watch,
     } from 'vue';
-    import { useToastStore } from '../stores/toast.js';
-    import { hasStoredLocale, useI18n } from '../i18n/index.js';
+    import { useToastStore } from '../stores/toast.ts';
+    import { hasStoredLocale, useI18n } from '../i18n/index.ts';
     import QRCode from 'qrcode';
-    import { api } from '../lib/http.js';
+    import { api } from '../lib/http.ts';
     import ProfileGrid from '../components/public/ProfileGrid.vue';
     import BaseIcon from '../components/ui/BaseIcon.vue';
-    import { parseCustomPageSource } from '../utils/custom-page-source.js';
+    import { parseCustomPageSource } from '../utils/custom-page-source.ts';
 
     const isDev = import.meta.env.DEV;
 

@@ -20,7 +20,7 @@
     import Switch from '../../ui/Switch.vue';
     import { watch, computed } from 'vue';
     import { useToastStore } from '../../../stores/toast';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { showToast } = useToastStore();
     const { t } = useI18n();

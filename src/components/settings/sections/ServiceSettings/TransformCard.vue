@@ -7,9 +7,9 @@
     import {
         DEFAULT_SUBCONVERTER_BACKEND,
         SUBCONVERTER_BACKENDS,
-    } from '@/constants/subconverter-backends.js';
-    import { testSubconverterBackend } from '@/lib/api.js';
-    import { useI18n } from '@/i18n/index.js';
+    } from '@/constants/subconverter-backends.ts';
+    import { testSubconverterBackend } from '@/lib/api.ts';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
 
