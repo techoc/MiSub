@@ -4,6 +4,8 @@
     import { useI18n } from '@/i18n/index.ts';
     import { wouldCreateCycle } from '@/utils/profile-graph.ts';
 
+    import type { ProfileItem } from '../../../../types/models.ts';
+
     const { t } = useI18n();
 
     const props = defineProps({
@@ -41,40 +43,52 @@
         'deselect-all',
     ]);
 
+    // props 为 unknown[]，统一收窄后供脚本与模板使用
+    const profileList = computed<ProfileItem[]>(() => (props.profiles || []) as ProfileItem[]);
+    const filteredList = computed<ProfileItem[]>(
+        () => (props.filteredProfiles || []) as ProfileItem[]
+    );
+    const selectedIdList = computed<string[]>(() => (props.selectedIds || []) as string[]);
+    const allProfileList = computed<ProfileItem[]>(
+        () => (props.allProfiles || []) as ProfileItem[]
+    );
+
     const searchModel = computed({
         get: () => props.searchTerm,
-        set: (val) => emit('update:searchTerm', val),
+        set: (val: string) => emit('update:searchTerm', val),
     });
 
     // 检查某个候选 profile 是否会导致循环依赖
-    const isCycleCandidate = (profileId: any) => {
-        return wouldCreateCycle(props.targetProfileId, profileId, props.allProfiles);
+    const isCycleCandidate = (profileId: string): boolean => {
+        return wouldCreateCycle(props.targetProfileId, profileId, allProfileList.value);
     };
 
     // 根据 selectedIds 顺序获取已选子订阅对象列表
-    const orderedSelectedProfiles = computed({
+    const orderedSelectedProfiles = computed<ProfileItem[]>({
         get() {
-            const profileMap = new Map();
-            props.allProfiles.forEach((p: any) => {
-                if ((p as Record<string, any>).id) profileMap.set((((p.id as any) as any) as any), p);
-                if ((p as Record<string, any>).customId) profileMap.set((((p.customId as any) as any) as any), p);
+            const profileMap = new Map<string, ProfileItem>();
+            allProfileList.value.forEach((p) => {
+                if (p.id) profileMap.set(String(p.id), p);
+                if (p.customId) profileMap.set(String(p.customId), p);
             });
-            return props.selectedIds.map((id) => profileMap.get(id)).filter(Boolean);
+            return selectedIdList.value
+                .map((id) => profileMap.get(String(id)))
+                .filter((p): p is ProfileItem => Boolean(p));
         },
-        set(newList) {
-            const reorderedIds = newList.map((p) => p.id || p.customId);
+        set(newList: ProfileItem[]) {
+            const reorderedIds = newList.map((p) => p.id || p.customId || '');
             emit('update:selectedIds', reorderedIds);
         },
     });
 
     const handleSelectAllValid = () => {
-        const validProfiles = props.filteredProfiles.filter((p) => !isCycleCandidate((p as Record<string, any>).id));
+        const validProfiles = filteredList.value.filter((p) => !isCycleCandidate(p.id));
         emit('select-all', validProfiles);
     };
 </script>
 
 <template>
-    <div v-if="profiles.length > 0" class="space-y-2">
+    <div v-if="profileList.length > 0" class="space-y-2">
         <div class="flex justify-between items-center mb-2">
             <h4
                 class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5"
@@ -127,41 +141,41 @@
             class="border border-gray-200 dark:border-gray-700 misub-radius-md p-3 space-y-2 max-h-56 overflow-y-auto"
         >
             <div
-                v-if="filteredProfiles.length === 0"
+                v-if="filteredList.length === 0"
                 class="text-center py-4 text-xs text-gray-500 dark:text-gray-400"
             >
                 {{ t('profileModal.noMatchedSubProfiles') }}
             </div>
             <label
-                v-for="item in filteredProfiles"
-                :key="(item as Record<string, any>).id"
+                v-for="item in filteredList"
+                :key="item.id"
                 class="flex items-center gap-2 p-1.5 rounded-sm transition-colors text-sm"
                 :class="[
-                    isCycleCandidate((item as Record<string, any>).id)
+                    isCycleCandidate(item.id)
                         ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800/40'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer',
                 ]"
             >
                 <input
                     type="checkbox"
-                    :checked="selectedIds.includes((item as Record<string, any>).id)"
-                    :disabled="isCycleCandidate((item as Record<string, any>).id)"
-                    @change="emit('toggle-selection', (item as Record<string, any>).id)"
+                    :checked="selectedIdList.includes(item.id)"
+                    :disabled="isCycleCandidate(item.id)"
+                    @change="emit('toggle-selection', item.id)"
                     class="rounded-sm border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
                 />
                 <span class="truncate flex-1 text-gray-800 dark:text-gray-200 font-medium">
-                    {{ (item as Error).name }}
+                    {{ item.name }}
                 </span>
                 <span
-                    v-if="isCycleCandidate((item as Record<string, any>).id)"
+                    v-if="isCycleCandidate(item.id)"
                     class="text-[10px] px-1.5 py-0.5 rounded-sm bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300 shrink-0"
                     :title="t('profileModal.cycleWarning')"
                 >
                     {{ t('profileModal.cycleWarning') }}
                 </span>
                 <span v-else class="text-xs text-gray-400 dark:text-gray-500 shrink-0">
-                    {{ ((item as Record<string, any>).subscriptions || []).length }} 机场 ·
-                    {{ ((item as Record<string, any>).manualNodes || []).length }} 节点
+                    {{ (item.subscriptions || []).length }} 机场 ·
+                    {{ (item.manualNodes || []).length }} 节点
                 </span>
             </label>
         </div>
