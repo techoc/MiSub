@@ -17,7 +17,8 @@
         size: {
             type: String,
             default: 'medium',
-            validator: (value) => ['small', 'medium', 'large', 'xlarge'].includes(value as any),
+            validator: (value: unknown) =>
+                ['small', 'medium', 'large', 'xlarge'].includes(String(value)),
         },
         closable: {
             type: Boolean,
@@ -75,11 +76,11 @@
 
     const emit = defineEmits(['update:show', 'confirm', 'cancel', 'close', 'opened', 'closed']);
 
-    const modalRef = ref<any>(null);
-    const contentRef = ref<any>(null);
+    const modalRef = ref<HTMLElement | null>(null);
+    const contentRef = ref<HTMLElement | null>(null);
 
     // 尺寸样式映射
-    const sizeClasses = {
+    const sizeClasses: Record<string, string> = {
         small: 'max-w-md',
         medium: 'max-w-lg',
         large: 'max-w-2xl',
@@ -89,12 +90,12 @@
     // 计算样式
     const modalClasses = computed(() => [
         'relative transform overflow-hidden rounded-[var(--misub-radius-lg)] bg-white dark:bg-[var(--surface-panel-dark)] text-left shadow-xl border border-gray-200 dark:border-white/10 transition-opacity duration-150',
-        (sizeClasses as Record<string, any>)[props.size] || sizeClasses.medium,
+        sizeClasses[props.size] || sizeClasses.medium,
         props.maxWidth ? `max-w-[${props.maxWidth}]` : '',
     ]);
 
     const contentStyle = computed(() => {
-        const styles: Record<string, any> = {};
+        const styles: Record<string, string> = {};
         if (props.maxHeight) {
             styles.maxHeight = props.maxHeight;
         }
@@ -113,9 +114,8 @@
                 emit('opened');
                 // 自动聚焦到第一个输入框
                 if (contentRef.value) {
-                    const firstInput = (contentRef.value as Record<string, any>).querySelector(
-                        'input, textarea, select'
-                    );
+                    const firstInput =
+                        contentRef.value.querySelector<HTMLElement>('input, textarea, select');
                     if (firstInput) {
                         firstInput.focus();
                     }
@@ -156,7 +156,7 @@
     };
 
     // 键盘事件处理
-    const handleKeydown = (event: any) => {
+    const handleKeydown = (event: KeyboardEvent) => {
         if (!props.show) return;
 
         switch (event.key) {
@@ -180,7 +180,7 @@
     defineExpose({
         focus: () => {
             if (modalRef.value) {
-                (modalRef.value as Record<string, any>).focus();
+                modalRef.value.focus();
             }
         },
         getContentElement: () => contentRef.value,

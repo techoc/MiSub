@@ -51,26 +51,29 @@ if (typeof window !== 'undefined') {
             filename: event.filename,
             lineno: event.lineno,
             colno: event.colno,
-            tagName: (event.target as Record<string, any> | undefined)?.tagName,
+            tagName: (event.target as ResourceTarget | null | undefined)?.tagName,
         });
     });
+
+    /** 资源加载错误里 event.target 上会用到的字段 */
+    type ResourceTarget = { tagName?: string; src?: string; href?: string };
 
     // 处理资源加载错误（忽略第三方资源）
     const assetReloadKey = 'misub:asset-reload';
     const currentOrigin = window.location.origin;
     const localHost = isLocalHost(window.location.hostname);
-    const isSameOriginResource = (resourceUrl: any) =>
+    const isSameOriginResource = (resourceUrl: unknown): boolean =>
         isSameOriginUrl(resourceUrl, currentOrigin, window.location.href);
     // 只有打包产物里的 JS/CSS 失败才值得「清缓存重载」与错误上报，
     // 判定逻辑见 utils/url-origin.js 的 isCriticalAssetPath。
     const hasAssetReloaded = () => readSessionPreference(assetReloadKey) === '1';
     const markAssetReloaded = () => writeSessionPreference(assetReloadKey, '1');
 
-    const tryRecoverAssetLoad = async (resourceUrl: any) => {
+    const tryRecoverAssetLoad = async (resourceUrl: unknown): Promise<boolean> => {
         if (!isSameOriginResource(resourceUrl)) return false;
         let resourcePath;
         try {
-            resourcePath = new URL(resourceUrl, window.location.href).pathname;
+            resourcePath = new URL(String(resourceUrl), window.location.href).pathname;
         } catch {
             return false;
         }
@@ -105,8 +108,8 @@ if (typeof window !== 'undefined') {
         (event) => {
             if (event.target !== window) {
                 const resourceUrl =
-                    (event.target as Record<string, any>).src ||
-                    (event.target as Record<string, any>).href ||
+                    (event.target as ResourceTarget).src ||
+                    (event.target as ResourceTarget).href ||
                     '';
 
                 // 忽略第三方资源加载错误（如 Cloudflare Analytics、广告等）
@@ -120,7 +123,7 @@ if (typeof window !== 'undefined') {
                 }
 
                 // 忽略 LINK 标签的加载错误 (通常是 modulepreload 失败，不影响主应用运行)
-                if ((event.target as Record<string, any>).tagName === 'LINK') {
+                if ((event.target as ResourceTarget).tagName === 'LINK') {
                     console.warn(
                         '[Resource Load] Ignoring LINK tag error (likely modulepreload):',
                         resourceUrl
@@ -146,7 +149,7 @@ if (typeof window !== 'undefined') {
                     // 品牌资源 404，把正常的伪装行为说成故障。
                     let resourcePath;
                     try {
-                        resourcePath = new URL(resourceUrl, window.location.href).pathname;
+                        resourcePath = new URL(String(resourceUrl), window.location.href).pathname;
                     } catch {
                         console.debug('[Resource Load] Unresolvable resource error:', resourceUrl);
                         return;
@@ -166,7 +169,7 @@ if (typeof window !== 'undefined') {
                         new Error(`Resource load failed: ${resourceUrl}`),
                         'Resource Load Error',
                         {
-                            tagName: (event.target as Record<string, any>).tagName,
+                            tagName: (event.target as ResourceTarget).tagName,
                             src: resourceUrl,
                         }
                     );
@@ -180,7 +183,7 @@ if (typeof window !== 'undefined') {
 const pinia = createPinia();
 const app = createApp(App);
 
-configureUnauthorizedHandler(({ url }: any) => {
+configureUnauthorizedHandler(({ url }: { url?: unknown }) => {
     window.dispatchEvent(new CustomEvent('misub:unauthorized', { detail: { url } }));
 });
 
