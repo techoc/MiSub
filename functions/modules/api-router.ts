@@ -78,7 +78,7 @@ import type { KvRecord } from '../../types/models.ts';
 // 常量定义
 const OLD_KV_KEY = 'misub_data_v1';
 const KV_KEY_PROFILES = 'misub_profiles_v1'; // Ensure this is defined if used
-function isAuthDiagnosticsEnabled(env: any) {
+function isAuthDiagnosticsEnabled(env: Env) {
     return String(env?.ENABLE_AUTH_DIAGNOSTICS || '').toLowerCase() === 'true';
 }
 
@@ -200,7 +200,9 @@ export async function handleApiRequest(
             if (!kv) {
                 return createJsonResponse({ success: false, message: 'KV 未绑定' }, 400);
             }
-            const oldData = await kv.get(OLD_KV_KEY).then((r: any) => (r ? JSON.parse(r) : null));
+            const oldData = await kv
+                .get(OLD_KV_KEY)
+                .then((r: string | null) => (r ? JSON.parse(r) : null));
             const newDataRaw = await kv.get(KV_KEY_SUBS);
             const newDataExists = newDataRaw !== null;
 
@@ -567,7 +569,7 @@ export async function handleApiRequest(
     }
 }
 
-export async function handleSubconverterTestRequest(request: any, env: any) {
+export async function handleSubconverterTestRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -607,18 +609,18 @@ export async function handleSubconverterTestRequest(request: any, env: any) {
 
     try {
         // 使用公开测试节点内容直接传给后端，避免探测时依赖用户订阅链接或 MiSub 回调 URL。
-        endpoint!.searchParams.set('target', safeTarget);
-        endpoint!.searchParams.set(
+        endpoint.searchParams.set('target', safeTarget);
+        endpoint.searchParams.set(
             'url',
             'trojan://password@example.com:443?allowInsecure=1&sni=example.com#MiSub-Test-Node'
         );
-        endpoint!.searchParams.set('insert', 'false');
-        endpoint!.searchParams.set('emoji', 'false');
-        endpoint!.searchParams.set('list', 'false');
-        endpoint!.searchParams.set('udp', 'true');
-        endpoint!.searchParams.set('tfo', 'false');
-        endpoint!.searchParams.set('scv', 'true');
-        endpoint!.searchParams.set('sort', 'false');
+        endpoint.searchParams.set('insert', 'false');
+        endpoint.searchParams.set('emoji', 'false');
+        endpoint.searchParams.set('list', 'false');
+        endpoint.searchParams.set('udp', 'true');
+        endpoint.searchParams.set('tfo', 'false');
+        endpoint.searchParams.set('scv', 'true');
+        endpoint.searchParams.set('sort', 'false');
 
         const startedAt = Date.now();
         const response = await fetch(
@@ -684,7 +686,7 @@ export async function handleSubconverterTestRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleExternalFetchRequest(request: any, env: any) {
+export async function handleExternalFetchRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -822,7 +824,7 @@ export async function handleExternalFetchRequest(request: any, env: any) {
 /**
  * ArrayBuffer -> Base64 ??
  */
-function encodeArrayBufferToBase64(buffer: any) {
+function encodeArrayBufferToBase64(buffer: ArrayBufferLike): string {
     const bytes = new Uint8Array(buffer);
     const chunkSize = 0x8000;
     let binary = '';
@@ -840,15 +842,15 @@ function encodeArrayBufferToBase64(buffer: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-async function handleCronStatusRequest(env: any) {
+async function handleCronStatusRequest(env: Env) {
     try {
         // 检查是否启用Cron功能
         const enableCron = env.ENABLE_CRON !== 'false';
 
         // 获取Cron配置
         const cronType = env.CRON_TYPE || 'hourly-subscription-sync';
-        const maxSyncCount = parseInt(env.CRON_MAX_SYNC_COUNT) || 50;
-        const syncTimeout = parseInt(env.CRON_SYNC_TIMEOUT) || 30000;
+        const maxSyncCount = parseInt(env.CRON_MAX_SYNC_COUNT || '') || 50;
+        const syncTimeout = parseInt(env.CRON_SYNC_TIMEOUT || '') || 30000;
         const enableParallel = env.CRON_ENABLE_PARALLEL !== 'false';
 
         // 获取最近的Cron执行状态（如果有的话）
@@ -894,7 +896,7 @@ async function handleCronStatusRequest(env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-async function handleCronTriggerRequest(env: any) {
+async function handleCronTriggerRequest(env: Env) {
     try {
         // 检查是否启用Cron功能
         const enableCron = env.ENABLE_CRON !== 'false';
