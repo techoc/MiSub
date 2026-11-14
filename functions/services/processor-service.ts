@@ -282,13 +282,18 @@ export class ProcessorService {
                 ? await resolveRuleTemplateSource(storageAdapter, templateSource)
                 : null;
         const remoteTemplateUrl =
-            shouldApplyTemplate && templateSource.kind === 'remote' ? templateSource.value : '';
+            shouldApplyTemplate && templateSource.kind === 'remote'
+                ? templateSource.value || ''
+                : '';
 
         if (builtinTemplateEntry || customTemplateEntry || remoteTemplateUrl) {
             const templateText =
                 builtinTemplateEntry?.content ||
                 customTemplateEntry?.content ||
-                (await fetchTransformTemplate(storageAdapter, remoteTemplateUrl));
+                (await fetchTransformTemplate(
+                    storageAdapter as Parameters<typeof fetchTransformTemplate>[0],
+                    remoteTemplateUrl
+                ));
             const isIniTemplate = isIniTemplateSource(
                 templateSource,
                 builtinTemplateEntry || customTemplateEntry

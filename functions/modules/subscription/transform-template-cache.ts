@@ -1,7 +1,25 @@
 import { getCache } from '../../services/node-cache-service.ts';
 import { assertPublicNetworkUrl } from '../security-utils.ts';
 
-import type { KvRecord } from '../../../types/models.ts';
+/** 模板缓存用到的存储适配器最小面 */
+interface TemplateCacheStorage {
+    get(key: string): Promise<unknown>;
+    put(key: string, value: unknown): Promise<unknown>;
+    delete(key: string): Promise<unknown>;
+    kv?: KVNamespace;
+    env?: Record<string, unknown>;
+}
+
+/** 模板缓存条目 */
+interface TemplateCacheEntry {
+    nodes?: string;
+    timestamp?: number;
+    nodeCount?: number;
+    sources?: string[];
+    etag?: string;
+    lastModified?: string;
+}
+
 const TEMPLATE_CACHE_PREFIX = 'transform_template_';
 const DEFAULT_REVALIDATE_INTERVAL_SECONDS = 5 * 60;
 const DEFAULT_CACHE_MAX_AGE_SECONDS = 24 * 60 * 60;
@@ -10,22 +28,22 @@ const MAX_REVALIDATE_INTERVAL_SECONDS = 24 * 60 * 60;
 const MIN_CACHE_MAX_AGE_SECONDS = 5 * 60;
 const MAX_CACHE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
-function makeTemplateCacheKey(url: any) {
+function makeTemplateCacheKey(url: string): string {
     return `${TEMPLATE_CACHE_PREFIX}${btoa(url).replace(/=+$/g, '')}`;
 }
 
-function readNumericSetting(name: any, storageAdapter: any) {
-    const value = storageAdapter?.env?.[name] ?? (globalThis as Record<string, any>)[name];
+function readNumericSetting(name: string, storageAdapter: TemplateCacheStorage): number | null {
+    const value = storageAdapter?.env?.[name] ?? (globalThis as Record<string, unknown>)[name];
     if (value === undefined || value === null || value === '') return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
 }
 
-function clampNumber(value: any, min: any, max: any) {
+function clampNumber(value: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, value));
 }
 
-function getTemplateCacheConfig(storageAdapter: any) {
+function getTemplateCacheConfig(storageAdapter: TemplateCacheStorage) {
     const revalidateSetting = readNumericSetting(
         'TEMPLATE_REVALIDATE_INTERVAL_SECONDS',
         storageAdapter
@@ -47,35 +65,35 @@ function getTemplateCacheConfig(storageAdapter: any) {
     };
 }
 
-function isCacheYoungerThan(cacheEntry: any, maxAgeMs: any) {
+function isCacheYoungerThan(cacheEntry: TemplateCacheEntry | null, maxAgeMs: number): boolean {
     if (!cacheEntry?.timestamp) return false;
     return Date.now() - cacheEntry.timestamp < maxAgeMs;
 }
 
-function buildFetchHeaders(cacheEntry: any) {
-    const headers = {
+function buildFetchHeaders(cacheEntry: TemplateCacheEntry | null): Record<string, string> {
+    const headers: Record<string, string> = {
         'User-Agent': 'MiSub-Template-Fetch/1.0',
     };
 
     if (cacheEntry?.etag) {
-        (headers as Record<string, any>)['If-None-Match'] = cacheEntry.etag;
+        headers['If-None-Match'] = cacheEntry.etag;
     }
     if (cacheEntry?.lastModified) {
-        (headers as Record<string, any>)['If-Modified-Since'] = cacheEntry.lastModified;
+        headers['If-Modified-Since'] = cacheEntry.lastModified;
     }
 
     return headers;
 }
 
-function getHeader(response: any, name: any) {
+function getHeader(response: Response, name: string): string | null {
     return response.headers?.get?.(name) || response.headers?.get?.(name.toLowerCase()) || null;
 }
 
 async function putTemplateCache(
-    storageAdapter: any,
-    cacheKey: any,
-    cacheEntry: any,
-    maxAgeSeconds: any
+    storageAdapter: TemplateCacheStorage,
+    cacheKey: string,
+    cacheEntry: TemplateCacheEntry,
+    maxAgeSeconds: number
 ) {
     if (storageAdapter?.kv && typeof storageAdapter.kv.put === 'function') {
         await storageAdapter.kv.put(cacheKey, JSON.stringify(cacheEntry), {
@@ -87,11 +105,11 @@ async function putTemplateCache(
 }
 
 function createCacheEntry(
-    templateUrl: any,
-    nodes: any,
-    response: any,
-    previousEntry: KvRecord | null = null
-) {
+    templateUrl: string,
+    nodes: string,
+    response: Response,
+    previousEntry: TemplateCacheEntry | null = null
+): TemplateCacheEntry {
     return {
         nodes,
         timestamp: Date.now(),
@@ -103,16 +121,17 @@ function createCacheEntry(
 }
 
 export async function fetchTransformTemplate(
-    storageAdapter: any,
-    templateUrl: any,
+    storageAdapter: TemplateCacheStorage,
+    templateUrl: string,
     forceRefresh = false
-) {
+): Promise<string | null> {
     if (!templateUrl) return null;
 
-    const safeTemplateUrl = (assertPublicNetworkUrl(templateUrl) as URL).toString();
+    const safeTemplateUrl = assertPublicNetworkUrl(templateUrl).toString();
     const cacheKey = makeTemplateCacheKey(safeTemplateUrl);
     const cacheConfig = getTemplateCacheConfig(storageAdapter);
-    const { data: cachedTemplate } = await getCache(storageAdapter, cacheKey);
+    const { data: cachedEntry } = await getCache(storageAdapter, cacheKey);
+    const cachedTemplate: TemplateCacheEntry | null = cachedEntry;
 
     if (
         !forceRefresh &&
@@ -122,7 +141,7 @@ export async function fetchTransformTemplate(
         return cachedTemplate.nodes;
     }
 
-    let response;
+    let response: Response;
     try {
         response = await fetch(safeTemplateUrl, {
             headers: forceRefresh
