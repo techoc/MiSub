@@ -13,6 +13,23 @@ import {
 import { isManualNode, isRemoteSubscription, toExternalProfile } from './external-api-mappers.ts';
 import { inspectRemoteSubscription } from './external-subscriptions-handler.ts';
 
+/** 外部 API 用到的存储适配器最小面 */
+interface ExternalProfileStorage {
+    getAllProfiles(): Promise<unknown[]>;
+    getAllSubscriptions(): Promise<unknown[]>;
+    getProfileById(id: string): Promise<Record<string, unknown> | null>;
+    putProfile(profile: unknown): Promise<unknown>;
+    putSubscription(subscription: unknown): Promise<unknown>;
+    deleteProfileById(id: string): Promise<unknown>;
+}
+
+/** 外部 API 路由上下文 */
+interface ExternalProfileContext {
+    id?: string | null;
+    relation?: string | null;
+    action?: string | null;
+}
+
 function nowIso() {
     return new Date().toISOString();
 }
@@ -25,21 +42,31 @@ function generateId() {
     return `profile_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function loadProfiles(storageAdapter: any) {
-    return sortBySortIndex(await storageAdapter.getAllProfiles());
+async function loadProfiles(
+    storageAdapter: ExternalProfileStorage
+): Promise<Array<Record<string, unknown>>> {
+    return sortBySortIndex(await storageAdapter.getAllProfiles()) as Array<Record<string, unknown>>;
 }
 
-async function getProfileById(storageAdapter: any, id: any) {
+async function getProfileById(
+    storageAdapter: ExternalProfileStorage,
+    id: string
+): Promise<Record<string, unknown> | null> {
     return await storageAdapter.getProfileById(id);
 }
 
 async function validateProfileReferences(
-    storageAdapter: any,
+    storageAdapter: ExternalProfileStorage,
     subscriptionIds: string[] | undefined = undefined,
     manualNodeIds: string[] | undefined = undefined
 ) {
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
-    const byId = new Map(allSubscriptions.map((item: any) => [item.id, item]));
+    const byId = new Map(
+        allSubscriptions.map((item) => {
+            const record = item as Record<string, unknown>;
+            return [String(record.id), record] as const;
+        })
+    );
 
     if (subscriptionIds !== undefined) {
         for (const id of subscriptionIds) {
@@ -80,25 +107,36 @@ async function validateProfileReferences(
     return null;
 }
 
-function dedupe(values: any) {
+function dedupe(values: unknown): string[] {
     return [...new Set(normalizeStringArray(values))];
 }
 
-async function refreshProfileSubscriptions(storageAdapter: any, env: any, profile: any) {
+async function refreshProfileSubscriptions(
+    storageAdapter: ExternalProfileStorage,
+    env: Env,
+    profile: Record<string, unknown>
+) {
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
-    const byId = new Map(allSubscriptions.map((item: any) => [item.id, item]));
+    const byId = new Map(
+        allSubscriptions.map((item) => {
+            const record = item as Record<string, unknown>;
+            return [String(record.id), record] as const;
+        })
+    );
     const remoteSubscriptions = (Array.isArray(profile.subscriptions) ? profile.subscriptions : [])
-        .map((id: any) => byId.get(id))
-        .filter((item: any) => item && isRemoteSubscription(item));
+        .map((id) => byId.get(String(id)))
+        .filter(
+            (item): item is Record<string, unknown> => Boolean(item) && isRemoteSubscription(item)
+        );
     const manualNodes = (Array.isArray(profile.manualNodes) ? profile.manualNodes : [])
-        .map((id: any) => byId.get(id))
-        .filter((item: any) => item && isManualNode(item));
+        .map((id) => byId.get(String(id)))
+        .filter((item): item is Record<string, unknown> => Boolean(item) && isManualNode(item));
 
-    const results: any[] = [];
+    const results: Array<Record<string, unknown>> = [];
     for (const current of remoteSubscriptions) {
         const inspection = await inspectRemoteSubscription(env, current);
         const timestamp = nowIso();
-        const updated = {
+        const updated: Record<string, unknown> = {
             ...current,
             nodeCount: inspection.ok ? inspection.nodeCount : 0,
             userInfo: inspection.ok ? inspection.userInfo : inspection.userInfo || null,
@@ -136,9 +174,9 @@ async function refreshProfileSubscriptions(storageAdapter: any, env: any, profil
 }
 
 export async function handleExternalProfilesRequest(
-    request: any,
-    env: any,
-    { id = null, relation = null, action = null }: Record<string, any> = {}
+    request: Request,
+    env: Env,
+    { id = null, relation = null, action = null }: ExternalProfileContext = {}
 ) {
     const storageAdapter = await getExternalStorageAdapter(env);
     const url = new URL(request.url);
@@ -208,7 +246,8 @@ export async function handleExternalProfilesRequest(
             sortIndex: Number.isFinite(Number(payload.sortIndex))
                 ? Number(payload.sortIndex)
                 : allProfiles.reduce(
-                      (max: any, item: any) => Math.max(max, Number(item?.sortIndex) || 0),
+                      (max: number, item: unknown) =>
+                          Math.max(max, Number((item as Record<string, unknown>)?.sortIndex) || 0),
                       0
                   ) + 1,
             createdAt: timestamp,
@@ -282,7 +321,9 @@ export async function handleExternalProfilesRequest(
                 ? await validateProfileReferences(storageAdapter, incomingIds, undefined)
                 : await validateProfileReferences(storageAdapter, undefined, incomingIds);
         if (validationError) return validationError;
-        const currentIds = Array.isArray(current[field]) ? current[field] : [];
+        const currentIds: string[] = Array.isArray(current[field])
+            ? normalizeStringArray(current[field])
+            : [];
         const nextIds =
             request.method === 'POST'
                 ? [...new Set([...currentIds, ...incomingIds])]
