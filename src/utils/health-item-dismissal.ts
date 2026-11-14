@@ -25,7 +25,7 @@ export const LEGACY_DISMISSED_HEALTH_ITEMS_KEY = 'misub:dismissedHealthItems';
 export const MAX_DISMISSED_HEALTH_ITEMS = 100;
 
 /** 单个 id 规范化：非字符串或空白一律视为无效 */
-function normalizeId(id: any) {
+function normalizeId(id: unknown) {
     if (typeof id !== 'string') return '';
     return id.trim();
 }
@@ -38,9 +38,9 @@ function normalizeId(id: any) {
  * @param {unknown} value
  * @returns {string[]} 规范化后的新数组
  */
-export function normalizeDismissedHealthItemIds(value: any) {
+export function normalizeDismissedHealthItemIds(value: unknown): string[] {
     if (!Array.isArray(value)) return [];
-    const seen = new Set();
+    const seen = new Set<string>();
     const result: string[] = [];
     for (const entry of value) {
         const id = normalizeId(entry);
@@ -56,7 +56,7 @@ export function normalizeDismissedHealthItemIds(value: any) {
  * @param {string[]} ids 已忽略的 id 列表
  * @param {string} id
  */
-export function isHealthItemDismissed(ids: any, id: any) {
+export function isHealthItemDismissed(ids: unknown, id: unknown): boolean {
     const key = normalizeId(id);
     if (!key) return false;
     return normalizeDismissedHealthItemIds(ids).includes(key);
@@ -71,7 +71,7 @@ export function isHealthItemDismissed(ids: any, id: any) {
  * @returns {string[]} 规范化后的新数组（无变化时是内容等价的新数组，
  *          调用方若要判断「有没有真的变化」，用 isHealthItemDismissed 先判）
  */
-export function addDismissedHealthItem(ids: any, id: any) {
+export function addDismissedHealthItem(ids: unknown, id: unknown): string[] {
     const current = normalizeDismissedHealthItemIds(ids);
     const key = normalizeId(id);
     if (!key || current.includes(key)) return current;
@@ -84,10 +84,13 @@ export function addDismissedHealthItem(ids: any, id: any) {
  * @param {string[]} ids 已忽略的 id 列表
  * @returns {Array} 保留的条目
  */
-export function filterDismissedHealthItems(items: any, ids: any) {
+export function filterDismissedHealthItems<T extends { id?: string }>(
+    items: T[] | null | undefined,
+    ids: unknown
+): T[] {
     if (!Array.isArray(items)) return [];
     const dismissed = new Set(normalizeDismissedHealthItemIds(ids));
-    return items.filter((item) => !dismissed.has(item?.id));
+    return items.filter((item) => !dismissed.has(String(item?.id ?? '')));
 }
 
 /**

@@ -11,7 +11,7 @@ import { t } from '@/i18n/index.ts';
  * @param {string} url - 要验证的URL
  * @returns {boolean} 是否为有效的URL
  */
-export function isValidUrl(url: any) {
+export function isValidUrl(url: unknown): boolean {
     if (!url || typeof url !== 'string') return false;
 
     try {
@@ -27,7 +27,7 @@ export function isValidUrl(url: any) {
  * @param {string} nodeUrl - 节点URL
  * @returns {boolean} 是否为有效的节点URL
  */
-export function isValidNodeUrl(nodeUrl: any) {
+export function isValidNodeUrl(nodeUrl: unknown): boolean {
     if (!nodeUrl || typeof nodeUrl !== 'string') return false;
 
     // 检查是否为支持的协议
@@ -39,7 +39,7 @@ export function isValidNodeUrl(nodeUrl: any) {
  * @param {string} email - 邮箱地址
  * @returns {boolean} 是否为有效的邮箱格式
  */
-export function isValidEmail(email: any) {
+export function isValidEmail(email: unknown): boolean {
     if (!email || typeof email !== 'string') return false;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,8 +51,8 @@ export function isValidEmail(email: any) {
  * @param {string} password - 密码
  * @returns {Object} 密码强度信息
  */
-export function validatePasswordStrength(password: any) {
-    if (!password) {
+export function validatePasswordStrength(password: unknown) {
+    if (!password || typeof password !== 'string') {
         return {
             score: 0,
             message: t('validation.passwordRequired'),
@@ -61,7 +61,7 @@ export function validatePasswordStrength(password: any) {
     }
 
     let score = 0;
-    const suggestions: any[] = [];
+    const suggestions: string[] = [];
 
     // 长度检查
     if (password.length >= 8) {
@@ -116,17 +116,29 @@ export function validatePasswordStrength(password: any) {
  * @param {Object} rules - 验证规则
  * @returns {Object} 验证结果
  */
-export function validateForm(formData: any, rules: any) {
+export interface ValidationRule {
+    required?: string | boolean;
+    type?: string;
+    minLength?: number;
+    maxLength?: number;
+    validator?: (value: unknown) => string | null | undefined;
+}
+
+export function validateForm(formData: Record<string, unknown>, rules: Record<string, ValidationRule>) {
     const errors = {};
     const isValid = true;
 
-    for (const [field, fieldRules] of Object.entries(rules) as [string, Record<string, any>][]) {
+    for (const [field, fieldRules] of Object.entries(rules)) {
         const value = formData[field];
-        const fieldErrors: any[] = [];
+        const fieldErrors: string[] = [];
 
         // 必填验证
-        if (fieldRules.required && (!value || value.toString().trim() === '')) {
-            fieldErrors.push(fieldRules.required || t('validation.fieldRequired', { field }));
+        if (fieldRules.required && (!value || String(value).trim() === '')) {
+            fieldErrors.push(
+                typeof fieldRules.required === 'string'
+                    ? fieldRules.required
+                    : t('validation.fieldRequired', { field })
+            );
         }
 
         // 如果值为空且不是必填，跳过其他验证
@@ -156,11 +168,11 @@ export function validateForm(formData: any, rules: any) {
         }
 
         // 长度验证
-        if (fieldRules.minLength && value.length < fieldRules.minLength) {
+        if (fieldRules.minLength && String(value).length < fieldRules.minLength) {
             fieldErrors.push(t('validation.minLength', { count: fieldRules.minLength }));
         }
 
-        if (fieldRules.maxLength && value.length > fieldRules.maxLength) {
+        if (fieldRules.maxLength && String(value).length > fieldRules.maxLength) {
             fieldErrors.push(t('validation.maxLength', { count: fieldRules.maxLength }));
         }
 
@@ -173,7 +185,7 @@ export function validateForm(formData: any, rules: any) {
         }
 
         if (fieldErrors.length > 0) {
-            (errors as Record<string, any>)[field] = fieldErrors;
+            (errors as Record<string, string[]>)[field] = fieldErrors;
         }
     }
 
@@ -188,7 +200,7 @@ export function validateForm(formData: any, rules: any) {
  * @param {Object} subscription - 订阅配置
  * @returns {Object} 验证结果
  */
-export function validateSubscription(subscription: any) {
+export function validateSubscription(subscription: Record<string, unknown>) {
     const rules = {
         name: {
             required: t('validation.subscriptionNameRequired'),
@@ -209,7 +221,7 @@ export function validateSubscription(subscription: any) {
  * @param {Object} profile - 配置文件
  * @returns {Object} 验证结果
  */
-export function validateProfile(profile: any) {
+export function validateProfile(profile: Record<string, unknown>) {
     const rules = {
         name: {
             required: t('validation.profileNameRequired'),
@@ -220,20 +232,21 @@ export function validateProfile(profile: any) {
             maxLength: 50,
         },
         transformConfig: {
-            validator: (value: any) => {
+            validator: (value: unknown) => {
                 if (!value) return null;
+                const text = String(value);
 
                 // 允许 builtin: 和 custom: 前缀（内置/自定义模板）
-                if (value.startsWith('builtin:')) {
-                    const templateName = value.slice(8).trim();
+                if (text.startsWith('builtin:')) {
+                    const templateName = text.slice(8).trim();
                     if (!templateName) {
                         return `builtin: ${t('validation.templateNameEmpty')}`;
                     }
                     return null;
                 }
 
-                if (value.startsWith('custom:')) {
-                    const templateName = value.slice(7).trim();
+                if (text.startsWith('custom:')) {
+                    const templateName = text.slice(7).trim();
                     if (!templateName) {
                         return `custom: ${t('validation.templateNameEmpty')}`;
                     }
