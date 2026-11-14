@@ -159,6 +159,20 @@ describe('migrateKVToD1 实际搬运行为', () => {
         expect(settings.mytoken).toBe('t');
     });
 
+    it('KV 从未持久化 settings 时,迁移也写入 storageType=d1,避免「数据搬了但读仍走 KV」', async () => {
+        // 回归:全新部署只保存过订阅/订阅组、从未保存过设置时,settings 键为空;
+        // 旧实现直接跳过 -> storageType 保持默认 kv,D1 里虽有数据但读取仍指向 KV,
+        // 解绑 KV 后读到空数据(或 Noop 适配器)。
+        const { db, result } = await run({
+            misub_subscriptions_v1: [{ id: 'sub-a', url: 'https://a.example/sub' }],
+            misub_profiles_v1: [{ id: 'p1' }],
+        });
+        expect(result.settings).toBe(true);
+        expect(result.keys['worker_settings_v1']).toBe('migrated');
+        const stored = JSON.parse(db.tables.settings.get('main'));
+        expect(stored.storageType).toBe('d1');
+    });
+
     it('保留 subscriptions / profiles 两个布尔位，兼容旧调用方', async () => {
         const { result } = await run();
         expect(result.subscriptions).toBe(true);

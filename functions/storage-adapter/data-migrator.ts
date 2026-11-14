@@ -111,7 +111,14 @@ export class DataMigrator {
                     results.settings = true;
                     (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'migrated';
                 } else {
-                    (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'empty';
+                    // KV 里从未持久化过设置（全新部署只存过订阅/订阅组）：仍要写一条
+                    // 最小 settings 行把 storageType 翻成 d1。否则数据已搬进 D1，但读取
+                    // 仍按默认 kv 路由，解绑 KV 后看到的是空数据/Noop 适配器。
+                    await d1Adapter.put(DATA_KEYS.SETTINGS, {
+                        storageType: STORAGE_TYPES.D1,
+                    });
+                    results.settings = true;
+                    (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'migrated';
                 }
             } catch (error) {
                 (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'failed';

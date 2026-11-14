@@ -88,6 +88,21 @@ export const D1_KNOWN_SETTINGS_KEYS = new Set([
     'misub_restore_snapshot_latest',
 ]);
 
+/**
+ * 以 settings 表为家的业务键前缀（非 misub_*_v1 形式）。
+ *
+ * 这些键在生产路径高频读写（节点缓存）或按设计落在 settings 表（诊断日志、
+ * 备份互斥锁、遗留数据），不应触发「未知 key 格式」告警——否则真正的异常键
+ * 会被噪声淹没。
+ */
+export const D1_KNOWN_SETTINGS_PREFIXES = [
+    'node_cache_',
+    'misub_system_logs',
+    'misub_error_reports',
+    'misub_webdav_backup_lock',
+    'misub_data_v1',
+];
+
 export async function ensureD1Schema(d1Db: any) {
     for (const statement of D1_SCHEMA_STATEMENTS) {
         await d1Db.prepare(statement).run();

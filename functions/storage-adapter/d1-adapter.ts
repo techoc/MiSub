@@ -6,6 +6,7 @@ import {
     DATA_KEYS,
     STORAGE_TYPES,
     D1_KNOWN_SETTINGS_KEYS,
+    D1_KNOWN_SETTINGS_PREFIXES,
     invalidateD1CollectionCache,
     readCachedD1Collection,
 } from './shared.ts';
@@ -420,6 +421,9 @@ export class D1StorageAdapter {
             // 这些业务键本来就以 settings 表为家（KV→D1 迁移会主动写它们），
             // 不该走下面那条「未知格式」告警，否则真正的异常 key 会被噪声淹掉。
             if (D1_KNOWN_SETTINGS_KEYS.has(String(key))) {
+                return { table: 'settings', queryField: 'key', queryValue: key };
+            }
+            if (D1_KNOWN_SETTINGS_PREFIXES.some((prefix) => String(key).startsWith(prefix))) {
                 return { table: 'settings', queryField: 'key', queryValue: key };
             }
             // 处理其他格式的 key，默认作为 settings 表的 key，但记录警告
