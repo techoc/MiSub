@@ -1,5 +1,5 @@
 // 地区展示配置：包含 Emoji 和标准中文名称
-const REGION_DISPLAY_CONFIG = {
+const REGION_DISPLAY_CONFIG: Record<string, { flag: string; name: string }> = {
     香港: { flag: '🇭🇰', name: '香港节点' },
     台湾: { flag: '🇹🇼', name: '台湾节点' },
     日本: { flag: '🇯🇵', name: '日本节点' },
@@ -35,21 +35,50 @@ export const REGION_GROUP_PATTERNS = [
     { name: '🇦🇺 澳洲节点', pattern: /澳|AU|Australia/i },
 ];
 
-function normalizeRegionOverrides(overrides: any[] = []) {
+/** 地区覆盖规则 */
+interface RegionOverride {
+    pattern: RegExp;
+    region: string;
+}
+
+/** 地区分组里的节点条目 */
+interface RegionGroupNode {
+    tag?: string;
+    name?: string;
+    metadata?: { region?: string; [key: string]: unknown };
+    [key: string]: unknown;
+}
+
+/** 地区分组结果 */
+interface RegionGroup {
+    name: string;
+    tags: string[];
+    nodes: RegionGroupNode[];
+    count: number;
+    selectorTag: string;
+    urltestTag: string;
+    fallbackTag: string;
+}
+
+function normalizeRegionOverrides(overrides: unknown = []): RegionOverride[] {
     if (!Array.isArray(overrides)) return [];
     return overrides
-        .map((rule) => {
-            if (!rule || !rule.pattern || !rule.region) return null;
+        .map((rule: unknown) => {
+            const record = (rule || {}) as Record<string, unknown>;
+            if (!record.pattern || !record.region) return null;
             try {
                 return {
-                    pattern: new RegExp(rule.pattern, rule.flags || 'i'),
-                    region: String(rule.region).trim(),
+                    pattern: new RegExp(
+                        String(record.pattern),
+                        typeof record.flags === 'string' ? record.flags : 'i'
+                    ),
+                    region: String(record.region).trim(),
                 };
             } catch {
                 return null;
             }
         })
-        .filter(Boolean);
+        .filter((rule): rule is RegionOverride => Boolean(rule));
 }
 
 /**
@@ -58,30 +87,30 @@ function normalizeRegionOverrides(overrides: any[] = []) {
  * 若地区组成员全部由占位节点构成，剔除后策略组会变成空 proxies，
  * 导致 mihomo 解析失败（`use` or `proxies` missing）。
  */
-export function isPlaceholderInfoNode(proxy: any) {
-    const server = proxy?.server;
+export function isPlaceholderInfoNode(proxy: unknown): boolean {
+    const server = (proxy as { server?: unknown } | null)?.server;
     return server === '127.0.0.1' || server === '::1';
 }
 
-export function groupNodeLinesByRegion(nodes: any[] = [], options: Record<string, any> = {}) {
-    const groups = new Map();
+export function groupNodeLinesByRegion(
+    nodes: unknown[] = [],
+    options: Record<string, unknown> = {}
+): RegionGroup[] {
+    const groups = new Map<string, RegionGroupNode[]>();
     const regionOverrides = normalizeRegionOverrides(options.regionOverrides);
 
-    nodes.forEach((node) => {
-        const tagName = node.tag || node.name;
+    nodes.forEach((rawNode) => {
+        const node = (rawNode || {}) as RegionGroupNode;
+        const tagName = String(node.tag || node.name);
         let region = '其他';
-        const override = regionOverrides.find((rule) => rule!.pattern.test(tagName));
+        const override = regionOverrides.find((rule) => rule.pattern.test(tagName));
 
         // 1. 用户自定义规则优先，用于修正自动地区识别误判
         if (override) {
             region = override.region;
-        } else if (
-            node.metadata &&
-            (node.metadata as Record<string, any>).region &&
-            node.metadata.region !== '其他'
-        ) {
+        } else if (node.metadata?.region && node.metadata.region !== '其他') {
             // 2. 使用预提取的元数据
-            region = (node.metadata as Record<string, any>).region;
+            region = node.metadata.region;
         } else {
             // 3. 回退到正则匹配逻辑
             for (const { name: groupName, pattern } of REGION_GROUP_PATTERNS) {
@@ -99,23 +128,22 @@ export function groupNodeLinesByRegion(nodes: any[] = [], options: Record<string
         }
 
         // 4. 构造标准的展示组名
-        const config = (REGION_DISPLAY_CONFIG as Record<string, any>)[region] || {
+        const config = REGION_DISPLAY_CONFIG[region] || {
             flag: '🌍',
             name: `${region}节点`,
         };
         const groupName = `${config.flag} ${config.name}`;
 
-        if (!groups.has(groupName)) {
-            groups.set(groupName, []);
-        }
-        groups.get(groupName).push(node);
+        const bucket = groups.get(groupName);
+        if (bucket) bucket.push(node);
+        else groups.set(groupName, [node]);
     });
 
-    const result: any[] = [];
+    const result: RegionGroup[] = [];
     groups.forEach((matchedNodes, name) => {
         result.push({
             name,
-            tags: matchedNodes.map((item: any) => item.tag || item.name),
+            tags: matchedNodes.map((item) => String(item.tag || item.name || '')),
             nodes: matchedNodes,
             count: matchedNodes.length,
             selectorTag: `${name} 选择`,
