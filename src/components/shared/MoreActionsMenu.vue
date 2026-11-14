@@ -14,8 +14,8 @@
     });
 
     const isOpen = ref(false);
-    const triggerRef = ref<any>(null);
-    const menuRef = ref<any>(null);
+    const triggerRef = ref<HTMLElement | null>(null);
+    const menuRef = ref<HTMLElement | null>(null);
     const menuId = `more-actions-menu-${Math.random().toString(36).slice(2, 10)}`;
 
     const FOCUSABLE = ['button:not([disabled])', 'a[href]', '[tabindex]:not([tabindex="-1"])'].join(
@@ -25,9 +25,9 @@
     const fixedMenuPosition = computed(() => {
         if (!props.teleportToBody || !triggerRef.value) return {};
 
-        const buttonRect = (triggerRef.value as Record<string, any>).getBoundingClientRect();
+        const buttonRect = triggerRef.value.getBoundingClientRect();
         const isInsideModal = Boolean(
-            (triggerRef.value as Record<string, any>).closest('[role="dialog"][aria-modal="true"]')
+            triggerRef.value.closest('[role="dialog"][aria-modal="true"]')
         );
         return {
             top: `${buttonRect.bottom}px`,
@@ -36,9 +36,9 @@
         };
     });
 
-    function getFocusableItems() {
+    function getFocusableItems(): HTMLElement[] {
         return menuRef.value
-            ? Array.from((menuRef.value as Record<string, any>).querySelectorAll(FOCUSABLE))
+            ? Array.from(menuRef.value.querySelectorAll<HTMLElement>(FOCUSABLE))
             : [];
     }
 
@@ -46,7 +46,7 @@
         isOpen.value = true;
         await nextTick();
         const [firstItem] = getFocusableItems();
-        (firstItem as Record<string, any> | undefined)?.focus();
+        firstItem?.focus();
     }
 
     function toggleMenu() {
@@ -57,26 +57,25 @@
         }
     }
 
-    function closeMenu(options = {}) {
-        const { restoreFocus = false } = options as Record<string, any>;
+    function closeMenu(options: { restoreFocus?: boolean } = {}) {
+        const { restoreFocus = false } = options;
         isOpen.value = false;
         if (restoreFocus) {
-            (triggerRef.value as Record<string, any> | undefined)?.querySelector('button')?.focus();
+            triggerRef.value?.querySelector('button')?.focus();
         }
     }
 
-    function handleClickOutside(event: any) {
-        const isClickInTrigger =
-            triggerRef.value && (triggerRef.value as Record<string, any>).contains(event.target);
-        const isClickInMenu =
-            menuRef.value && (menuRef.value as Record<string, any>).contains(event.target);
+    function handleClickOutside(event: MouseEvent) {
+        const target = event.target as Node | null;
+        const isClickInTrigger = triggerRef.value && triggerRef.value.contains(target);
+        const isClickInMenu = menuRef.value && menuRef.value.contains(target);
 
         if (!isClickInTrigger && !isClickInMenu) {
             closeMenu();
         }
     }
 
-    function handleTriggerKeydown(event: any) {
+    function handleTriggerKeydown(event: KeyboardEvent) {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             toggleMenu();
@@ -91,11 +90,11 @@
             }
 
             const [firstItem] = getFocusableItems();
-            (firstItem as Record<string, any> | undefined)?.focus();
+            firstItem?.focus();
         }
     }
 
-    function handleMenuKeydown(event: any) {
+    function handleMenuKeydown(event: KeyboardEvent) {
         if (event.key === 'Escape') {
             event.preventDefault();
             closeMenu({ restoreFocus: true });
