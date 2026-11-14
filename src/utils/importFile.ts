@@ -61,7 +61,7 @@ export function assertFileSize(file) {
 
 /**
  * 把多个文件的内容合并成一个文本块（后端逐行解析，天然支持多文件追加）。
- * @param {File[]} files
+ * @param {File: any[]} files
  * @returns {Promise<{ text: string, fileCount: number, byteSize: number }>}
  */
 export async function readFilesAsText(files) {

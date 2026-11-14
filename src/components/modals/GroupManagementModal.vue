@@ -18,8 +18,8 @@
     const emit = defineEmits(['close', 'rename', 'delete', 'reorder', 'update:show']);
 
     // 本地可编辑的分组列表
-    const localGroups = ref([]);
-    const editingGroupIndex = ref(null);
+    const localGroups = ref<any[]>([]);
+    const editingGroupIndex = ref<any>(null);
     const editingGroupName = ref('');
 
     // 监听 props.groups 变化，同步到本地

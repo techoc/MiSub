@@ -26,12 +26,12 @@
 
     const emit = defineEmits(['update:show', 'save']);
 
-    const localProfile = ref({});
+    const localProfile = ref<any>({});
     const subscriptionSearchTerm = ref('');
     const subProfileSearchTerm = ref('');
     const nodeSearchTerm = ref('');
     const activeResourceTab = ref('subscriptions');
-    const activeManualNodeGroupFilter = ref(null);
+    const activeManualNodeGroupFilter = ref<any>(null);
     const showAdvanced = ref(false);
     const uiText = computed(() => ({
         prefixTitle: t('profileModal.nodeNameVisibility'),
@@ -113,7 +113,7 @@
 
     const selectableSubscriptions = computed(() => {
         return (props.allSubscriptions || []).filter(
-            (sub) => sub.enabled && sub.url && /^https?:\/\//.test(sub.url)
+            (sub) => (sub as Record<string, any>).enabled && sub.url && /^https?:\/\//.test(sub.url)
         );
     });
 
@@ -127,7 +127,7 @@
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
         return validSubs.filter((sub) => {
-            const subNameLower = sub.name ? sub.name.toLowerCase() : '';
+            const subNameLower = (sub as Error).name ? sub.name.toLowerCase() : '';
 
             if (subNameLower.includes(lowerCaseSearchTerm)) {
                 return true;
@@ -188,9 +188,9 @@
 
         if (activeManualNodeGroupFilter.value) {
             if (activeManualNodeGroupFilter.value === DEFAULT_GROUP_KEY) {
-                nodes = nodes!.filter((n) => !n.group);
+                nodes = nodes!.filter((n) => !(n as Record<string, any>).group);
             } else {
-                nodes = nodes!.filter((n) => n.group === activeManualNodeGroupFilter.value);
+                nodes = nodes!.filter((n) => (n as Record<string, any>).group === activeManualNodeGroupFilter.value);
             }
         }
 
@@ -201,7 +201,7 @@
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
         return nodes!.filter((node) => {
-            const nodeNameLower = node.name ? node.name.toLowerCase() : '';
+            const nodeNameLower = (node as Error).name ? node.name.toLowerCase() : '';
 
             if (nodeNameLower.includes(lowerCaseSearchTerm)) {
                 return true;

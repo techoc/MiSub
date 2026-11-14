@@ -75,8 +75,8 @@
 
     const emit = defineEmits(['update:show', 'confirm', 'cancel', 'close', 'opened', 'closed']);
 
-    const modalRef = ref(null);
-    const contentRef = ref(null);
+    const modalRef = ref<any>(null);
+    const contentRef = ref<any>(null);
 
     // 尺寸样式映射
     const sizeClasses = {

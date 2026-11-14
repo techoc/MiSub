@@ -109,7 +109,7 @@
         return [];
     });
 
-    const effectiveExcludeRules = computed(() => {
+    const effectiveExcludeRules = computed<any[]>(() => {
         if (props.excludeRules && props.excludeRules.length > 0) return props.excludeRules;
         if (props.ruleMode === 'exclude') return props.selectedRules;
         return [];
@@ -250,22 +250,22 @@
                         <div class="flex flex-wrap gap-1.5">
                             <button
                                 v-for="tag in presetRegions"
-                                :key="tag.pattern"
+                                :key="(tag as Record<string, any>).pattern"
                                 type="button"
                                 @click="toggleTag(tag, 'region')"
-                                :aria-pressed="isSelected(tag.pattern)"
+                                :aria-pressed="isSelected((tag as Record<string, any>).pattern)"
                                 :class="[
                                     'px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md transition-all !min-h-0 !min-w-0 cursor-pointer',
-                                    isSelected(tag.pattern)
+                                    isSelected((tag as Record<string, any>).pattern)
                                         ? ruleModeModel === 'keep'
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 ring-1 ring-emerald-400 dark:ring-emerald-600'
                                             : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-amber-400 dark:ring-amber-600'
-                                        : isOtherSelected(tag.pattern)
+                                        : isOtherSelected((tag as Record<string, any>).pattern)
                                           ? 'bg-gray-50 text-gray-500 dark:bg-gray-800/80 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100'
                                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
                                 ]"
                             >
-                                {{ tag.icon }} {{ tag.label }}
+                                {{ (tag as Record<string, any>).icon }} {{ tag.label }}
                             </button>
                         </div>
                     </div>
@@ -278,22 +278,22 @@
                         <div class="flex flex-wrap gap-1.5">
                             <button
                                 v-for="tag in presetProtocols"
-                                :key="tag.pattern"
+                                :key="(tag as Record<string, any>).pattern"
                                 type="button"
                                 @click="toggleTag(tag, 'protocol')"
-                                :aria-pressed="isSelected(tag.pattern)"
+                                :aria-pressed="isSelected((tag as Record<string, any>).pattern)"
                                 :class="[
                                     'px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md transition-all !min-h-0 !min-w-0 cursor-pointer',
-                                    isSelected(tag.pattern)
+                                    isSelected((tag as Record<string, any>).pattern)
                                         ? ruleModeModel === 'keep'
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 ring-1 ring-emerald-400 dark:ring-emerald-600'
                                             : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-amber-400 dark:ring-amber-600'
-                                        : isOtherSelected(tag.pattern)
+                                        : isOtherSelected((tag as Record<string, any>).pattern)
                                           ? 'bg-gray-50 text-gray-500 dark:bg-gray-800/80 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100'
                                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
                                 ]"
                             >
-                                {{ tag.label }}
+                                {{ (tag as Record<string, any>).label }}
                             </button>
                         </div>
                     </div>
@@ -306,22 +306,22 @@
                         <div class="flex flex-wrap gap-1.5">
                             <button
                                 v-for="tag in presetKeywords"
-                                :key="tag.pattern"
+                                :key="(tag as Record<string, any>).pattern"
                                 type="button"
                                 @click="toggleTag(tag, 'keyword')"
-                                :aria-pressed="isSelected(tag.pattern)"
+                                :aria-pressed="isSelected((tag as Record<string, any>).pattern)"
                                 :class="[
                                     'px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md transition-all !min-h-0 !min-w-0 cursor-pointer',
-                                    isSelected(tag.pattern)
+                                    isSelected((tag as Record<string, any>).pattern)
                                         ? ruleModeModel === 'keep'
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 ring-1 ring-emerald-400 dark:ring-emerald-600'
                                             : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-amber-400 dark:ring-amber-600'
-                                        : isOtherSelected(tag.pattern)
+                                        : isOtherSelected((tag as Record<string, any>).pattern)
                                           ? 'bg-gray-50 text-gray-500 dark:bg-gray-800/80 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100'
                                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
                                 ]"
                             >
-                                {{ tag.label }}
+                                {{ (tag as Record<string, any>).label }}
                             </button>
                         </div>
                     </div>
@@ -372,7 +372,7 @@
                                     :key="'keep-' + index"
                                     class="inline-flex items-center gap-1 px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 !min-h-0 !min-w-0"
                                 >
-                                    {{ rule.icon ? rule.icon + ' ' : '' }}{{ rule.label }}
+                                    {{ (rule as Record<string, any>).icon ? (rule as Record<string, any>).icon + ' ' : '' }}{{ rule.label }}
                                     <button
                                         type="button"
                                         @click="handleRemoveKeep(index)"

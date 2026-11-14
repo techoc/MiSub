@@ -73,10 +73,10 @@
 
     const resolvedEmptyText = computed(() => props.emptyText || t('common.noData'));
 
-    const listRef = ref(null);
+    const listRef = ref<any>(null);
     const draggedIndex = ref(-1);
     const draggedOverIndex = ref(-1);
-    const dragState = ref({
+    const dragState = ref<any>({
         isDragging: false,
         startIndex: -1,
         endIndex: -1,
@@ -355,16 +355,16 @@
                                             class="text-sm font-medium text-gray-900 dark:text-white"
                                         >
                                             {{
-                                                item.name ||
-                                                item.title ||
+                                                (item as Error).name ||
+                                                (item as Record<string, any>).title ||
                                                 t('common.itemName', { index: index + 1 })
                                             }}
                                         </h4>
                                         <p
-                                            v-if="item.description"
+                                            v-if="(item as Record<string, any>).description"
                                             class="text-xs text-gray-500 dark:text-gray-400"
                                         >
-                                            {{ item.description }}
+                                            {{ (item as Record<string, any>).description }}
                                         </p>
                                     </div>
                                 </div>

@@ -18,7 +18,7 @@
     const { t } = useI18n();
 
     const isMigrating = ref(false);
-    const logs = ref([]);
+    const logs = ref<any[]>([]);
     const step = ref('check');
 
     const addLog = (message, type = 'info') => {
@@ -73,8 +73,8 @@
             emit('success');
         } catch (error) {
             step.value = 'error';
-            addLog(t('d1Migration.logUpgradeFailed', { message: error.message }), 'error');
-            showToast(t('d1Migration.toastLegacyFailed', { message: error.message }), 'error');
+            addLog(t('d1Migration.logUpgradeFailed', { message: (error as Error).message }), 'error');
+            showToast(t('d1Migration.toastLegacyFailed', { message: (error as Error).message }), 'error');
         } finally {
             isMigrating.value = false;
         }

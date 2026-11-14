@@ -175,7 +175,7 @@
                             :key="protocol"
                             :value="protocol"
                         >
-                            {{ protocol.toUpperCase() }}
+                            {{ (protocol as Record<string, any>).toUpperCase() }}
                         </option>
                     </select>
                 </div>

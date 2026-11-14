@@ -63,7 +63,7 @@
                 >
                 <select
                     :value="params.mode"
-                    @change="updateValue({ mode: $event.target.value })"
+                    @change="updateValue({ mode: ($event.target as HTMLInputElement).value })"
                     class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
                     <option value="serverPort">{{ t('operators.dedupServerPort') }}</option>

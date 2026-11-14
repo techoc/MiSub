@@ -20,9 +20,9 @@
     const emit = defineEmits(['update:modelValue']);
 
     const isOpen = ref(false);
-    const inputRef = ref(null);
-    const containerRef = ref(null);
-    const dropdownStyle = ref({ top: '0px', left: '0px', width: '0px' });
+    const inputRef = ref<any>(null);
+    const containerRef = ref<any>(null);
+    const dropdownStyle = ref<any>({ top: '0px', left: '0px', width: '0px' });
     const isTyping = ref(false);
 
     const normalizeGroup = (value) => String(value || '').trim();

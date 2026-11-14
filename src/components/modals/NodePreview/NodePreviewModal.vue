@@ -40,7 +40,7 @@
     // 响应式数据
     const loading = ref(false);
     const error = ref('');
-    const allNodes = ref([]); // 存储所有节点
+    const allNodes = ref<any[]>([]); // 存储所有节点
     const currentPage = ref(1);
     const pageSize = ref(24);
     const viewMode = ref('list'); // 'list' 或 'card'
@@ -61,10 +61,10 @@
     const searchQuery = ref('');
 
     // 统计信息
-    const protocolStats = ref({});
-    const regionStats = ref({});
-    const availableProtocols = ref([]);
-    const availableRegions = ref([]);
+    const protocolStats = ref<any>({});
+    const regionStats = ref<any>({});
+    const availableProtocols = ref<any[]>([]);
+    const availableRegions = ref<any[]>([]);
 
     // 复制状态
     const copiedNodeId = ref('');
@@ -123,7 +123,7 @@
             pickingMode.value = false;
             selectedUrls.value.clear();
         } catch (err) {
-            showToast(t('nodePreview.saveSelectionFailed', { message: err.message }), 'error');
+            showToast(t('nodePreview.saveSelectionFailed', { message: (err as Error).message }), 'error');
         }
     };
 
@@ -343,7 +343,7 @@
             } else if (isNetworkErrorMessage((err as Error | undefined)?.message)) {
                 error.value = t('nodePreview.networkFailed');
             } else {
-                error.value = err.message || t('nodePreview.loadFailed');
+                error.value = (err as Error).message || t('nodePreview.loadFailed');
             }
 
             allNodes.value = [];

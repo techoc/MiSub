@@ -130,7 +130,7 @@
     );
 
     const showLegacyD1MigrationModal = ref(false);
-    const legacyD1Details = ref({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
+    const legacyD1Details = ref<any>({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
     const pendingVersionModal = ref(false);
 
     // Determine which login component to show (Custom Path -> NotFound, else -> Login)

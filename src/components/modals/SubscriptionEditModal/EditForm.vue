@@ -59,7 +59,7 @@
                 showToast(t('subscriptions.proxyTestFailed', { message: (res as Record<string, any>).error }), 'error');
             }
         } catch (err) {
-            showToast(t('subscriptions.proxyTestError', { message: err.message }), 'error');
+            showToast(t('subscriptions.proxyTestError', { message: (err as Error).message }), 'error');
         } finally {
             isTestingProxy.value = false;
         }

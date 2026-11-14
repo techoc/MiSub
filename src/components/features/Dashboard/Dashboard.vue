@@ -80,7 +80,7 @@
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
     const showCopyModal = ref(false);
-    const showCopyModalProfile = ref(null);
+    const showCopyModalProfile = ref<any>(null);
 
     const handleQRCode = (id, type = 'subscription') => {
         if (type === 'subscription') {
@@ -235,17 +235,17 @@
     const showLogModal = ref(false);
     const logProfileName = ref('');
     const showBatchDeleteModal = ref(false);
-    const batchDeleteIds = ref([]);
+    const batchDeleteIds = ref<any[]>([]);
     const showDedupModal = ref(false);
-    const dedupPlan = ref(null);
+    const dedupPlan = ref<any>(null);
     const showBatchGroupModal = ref(false); // Added
-    const batchGroupIds = ref([]); // Added
+    const batchGroupIds = ref<any[]>([]); // Added
     const showGroupManagementModal = ref(false); // 分组管理模态框
 
     // 节点预览相关状态
     const showNodePreviewModal = ref(false);
-    const previewSubscriptionId = ref(null);
-    const previewProfileId = ref(null);
+    const previewSubscriptionId = ref<any>(null);
+    const previewProfileId = ref<any>(null);
     const previewSubscriptionName = ref('');
     const previewSubscriptionUrl = ref('');
     const previewProfileName = ref('');

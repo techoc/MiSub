@@ -14,7 +14,7 @@
 
     const emit = defineEmits(['update:show']);
 
-    const settingsPanelRef = ref(null);
+    const settingsPanelRef = ref<any>(null);
 
     const handleConfirm = async () => {
         if (!settingsPanelRef.value) return;

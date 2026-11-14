@@ -38,10 +38,10 @@
     const saveState = ref('idle');
 
     // Data
-    const initialSubs = ref([]);
-    const initialNodes = ref([]);
-    const initialProfiles = ref([]);
-    const config = ref({});
+    const initialSubs = ref<any[]>([]);
+    const initialNodes = ref<any[]>([]);
+    const initialProfiles = ref<any[]>([]);
+    const config = ref<any>({});
 
     // Mark dirty callback
     const markDirty = () => {
@@ -109,8 +109,8 @@
 
     // Node preview state
     const showNodePreviewModal = ref(false);
-    const previewSubscriptionId = ref(null);
-    const previewProfileId = ref(null);
+    const previewSubscriptionId = ref<any>(null);
+    const previewProfileId = ref<any>(null);
 
     // Initialize state
     const initializeState = () => {
@@ -155,7 +155,7 @@
         } catch (error) {
             console.error('Save failed:', error);
             saveState.value = 'error';
-            showToast(t('store.saveDataFailed', { message: error.message }), 'error');
+            showToast(t('store.saveDataFailed', { message: (error as Error).message }), 'error');
             setTimeout(() => {
                 saveState.value = 'idle';
             }, TIMING.TOAST_DURATION_MS);

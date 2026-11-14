@@ -141,9 +141,9 @@
             console.error('文件导入失败:', error);
             handleError(error, 'File Import Error', { parseStatus: parseStatus.value });
             parseStatus.value = '';
-            errorMessage.value = error.message || t('importNodes.failed');
+            errorMessage.value = (error as Error).message || t('importNodes.failed');
             toastStore.showToast(
-                t('importNodes.failedWithMessage', { message: error.message }),
+                t('importNodes.failedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {
@@ -249,9 +249,9 @@
                 parseStatus: parseStatus.value,
             });
 
-            errorMessage.value = error.message || t('importNodes.failed');
+            errorMessage.value = (error as Error).message || t('importNodes.failed');
             toastStore.showToast(
-                t('importNodes.failedWithMessage', { message: error.message }),
+                t('importNodes.failedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {

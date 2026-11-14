@@ -15,10 +15,10 @@
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const messages = ref([]);
+    const messages = ref<any[]>([]);
     const loading = ref(false);
     const filterStatus = ref('all'); // all, pending, approved, replied
-    const replyingId = ref(null);
+    const replyingId = ref<any>(null);
     const replyContent = ref('');
 
     const defaultGuestbookConfig = {

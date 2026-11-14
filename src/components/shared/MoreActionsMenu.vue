@@ -14,8 +14,8 @@
     });
 
     const isOpen = ref(false);
-    const triggerRef = ref(null);
-    const menuRef = ref(null);
+    const triggerRef = ref<any>(null);
+    const menuRef = ref<any>(null);
     const menuId = `more-actions-menu-${Math.random().toString(36).slice(2, 10)}`;
 
     const FOCUSABLE = ['button:not([disabled])', 'a[href]', '[tabindex]:not([tabindex="-1"])'].join(

@@ -54,8 +54,8 @@
     ];
 
     // 规则池：分别管理保留规则和剔除规则
-    const keepRules = ref([]);
-    const excludeRules = ref([]);
+    const keepRules = ref<any[]>([]);
+    const excludeRules = ref<any[]>([]);
 
     // 活跃规则列表（根据当前 tab 切换）
     const currentRulePool = computed(() => {
@@ -293,8 +293,8 @@
     );
 
     // === 高级模式相关（保留原有逻辑） ===
-    const excludeRuleTextarea = ref(null);
-    const excludeRuleHighlight = ref(null);
+    const excludeRuleTextarea = ref<any>(null);
+    const excludeRuleHighlight = ref<any>(null);
 
     const excludeRuleLines = computed(() => {
         const text = props.editingSubscription?.exclude ?? '';

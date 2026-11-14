@@ -72,7 +72,7 @@
         { key: 'list', label: t('profileModal.outputList'), icon: '📋' },
     ];
 
-    const selectedTransformAsset = ref(null);
+    const selectedTransformAsset = ref<any>(null);
     const emit = defineEmits(['toggle-advanced']);
 
     const isExternalEngine = computed(() => {
@@ -445,10 +445,10 @@
                                 >
                                     <option
                                         v-for="option in prefixToggleOptions"
-                                        :key="String(option.value)"
-                                        :value="option.value"
+                                        :key="String((option as Record<string, any>).value)"
+                                        :value="(option as Record<string, any>).value"
                                     >
-                                        {{ option.label }}
+                                        {{ (option as Record<string, any>).label }}
                                     </option>
                                 </select>
                             </div>
@@ -464,10 +464,10 @@
                                 >
                                     <option
                                         v-for="option in prefixToggleOptions"
-                                        :key="String(option.value)"
-                                        :value="option.value"
+                                        :key="String((option as Record<string, any>).value)"
+                                        :value="(option as Record<string, any>).value"
                                     >
-                                        {{ option.label }}
+                                        {{ (option as Record<string, any>).label }}
                                     </option>
                                 </select>
                             </div>
@@ -483,10 +483,10 @@
                                 >
                                     <option
                                         v-for="option in groupPrefixToggleOptions"
-                                        :key="String(option.value)"
-                                        :value="option.value"
+                                        :key="String((option as Record<string, any>).value)"
+                                        :value="(option as Record<string, any>).value"
                                     >
-                                        {{ option.label }}
+                                        {{ (option as Record<string, any>).label }}
                                     </option>
                                 </select>
                             </div>

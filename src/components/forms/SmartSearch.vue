@@ -27,7 +27,7 @@
 
     const searchQuery = ref('');
     const activeFilters = ref(new Set());
-    const searchHistory = ref([]);
+    const searchHistory = ref<any[]>([]);
 
     // 智能搜索结果
     const searchResults = computed(() => {
@@ -47,7 +47,7 @@
             const matchesFilters =
                 activeFilters.value.size === 0 ||
                 Array.from(activeFilters.value).every((filter) => {
-                    const filterConfig = props.filters.find((f) => f.key === filter);
+                    const filterConfig = props.filters.find((f) => (f as Record<string, any>).key === filter);
                     return (filterConfig as Record<string, any> | undefined)?.predicate(item) ?? true;
                 });
 
@@ -170,18 +170,18 @@
         <div v-if="filters.length > 0" class="flex flex-wrap gap-2">
             <button
                 v-for="filter in filters"
-                :key="filter.key"
-                @click="toggleFilter(filter.key)"
+                :key="(filter as Record<string, any>).key"
+                @click="toggleFilter((filter as Record<string, any>).key)"
                 class="px-3 py-1.5 text-sm font-medium rounded-full smooth-all"
                 :class="
-                    activeFilters.has(filter.key)
+                    activeFilters.has((filter as Record<string, any>).key)
                         ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                 "
             >
-                {{ filter.label }}
-                <span v-if="filter.count !== undefined" class="ml-1 opacity-60">
-                    ({{ filter.count }})
+                {{ (filter as Record<string, any>).label }}
+                <span v-if="(filter as Record<string, any>).count !== undefined" class="ml-1 opacity-60">
+                    ({{ (filter as Record<string, any>).count }})
                 </span>
             </button>
         </div>

@@ -31,7 +31,7 @@
     const emit = defineEmits(['files']);
 
     const isDragging = ref(false);
-    const fileInput = ref(null);
+    const fileInput = ref<any>(null);
 
     const acceptAttr = IMPORT_FILE_ACCEPT;
 

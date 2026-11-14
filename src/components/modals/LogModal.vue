@@ -19,9 +19,9 @@
 
     const { showToast } = useToastStore();
     const { t, locale } = useI18n();
-    const logs = ref([]);
+    const logs = ref<any[]>([]);
     const isLoading = ref(false);
-    const expandedLogId = ref(null);
+    const expandedLogId = ref<any>(null);
 
     // Pagination State
     const currentPage = ref(1);

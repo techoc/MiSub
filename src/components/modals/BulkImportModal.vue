@@ -122,9 +122,9 @@
         } catch (error) {
             console.error('批量文件导入失败:', error);
             parseStatus.value = '';
-            errorMessage.value = error.message || t('importNodes.failed');
+            errorMessage.value = (error as Error).message || t('importNodes.failed');
             toastStore.showToast(
-                t('importNodes.failedWithMessage', { message: error.message }),
+                t('importNodes.failedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {

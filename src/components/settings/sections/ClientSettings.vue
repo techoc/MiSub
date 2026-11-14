@@ -6,17 +6,17 @@
     import { api } from '../../../lib/http.ts';
     import SectionHeader from '../SectionHeader.vue';
 
-    const clients = ref([]);
+    const clients = ref<any[]>([]);
     const loading = ref(false);
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
     const showEditModal = ref(false);
-    const editingClient = ref({});
+    const editingClient = ref<any>({});
     const isNew = ref(false);
     const saving = ref(false);
     const ordering = ref(false);
-    const iconFileInput = ref(null);
+    const iconFileInput = ref<any>(null);
     const uploadingIcon = ref(false);
     const isDataIcon = computed(() => {
         const icon = (editingClient.value as Record<string, any> | undefined)?.icon;
@@ -193,7 +193,7 @@
             }
         } catch (e) {
             showToast(
-                t('settings.clientOrderSaveFailedWithMessage', { message: e.message }),
+                t('settings.clientOrderSaveFailedWithMessage', { message: (e as Error).message }),
                 'error'
             );
         } finally {
@@ -228,14 +228,14 @@
                 showToast(data.message || t('settings.clientSaveFailed'), 'error');
             }
         } catch (e) {
-            showToast(t('settings.clientSaveFailedWithMessage', { message: e.message }), 'error');
+            showToast(t('settings.clientSaveFailedWithMessage', { message: (e as Error).message }), 'error');
         } finally {
             saving.value = false;
         }
     };
 
     const showDeleteConfirm = ref(false);
-    const clientToDeleteId = ref(null);
+    const clientToDeleteId = ref<any>(null);
 
     const handleDelete = (id) => {
         clientToDeleteId.value = id;

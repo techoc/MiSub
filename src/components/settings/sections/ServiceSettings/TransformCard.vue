@@ -27,7 +27,7 @@
         { value: 'custom_template', label: t('settings.transformCustomTemplate') },
     ]);
 
-    const selectedAsset = ref(null);
+    const selectedAsset = ref<any>(null);
 
     const flagOptions = computed(() => [
         { key: 'udp', label: t('settings.transformUdp'), icon: '⚡️' },
@@ -82,10 +82,10 @@
             props.settings.subconverter.engineMode === ''
     );
     const isExternalEngine = computed(() => props.settings.subconverter.engineMode === 'external');
-    const backendTestStatus = ref(null);
+    const backendTestStatus = ref<any>(null);
     const isTestingBackend = ref(false);
-    const previousEngineSettings = ref(null);
-    const restoreEngineSnapshot = ref(null);
+    const previousEngineSettings = ref<any>(null);
+    const restoreEngineSnapshot = ref<any>(null);
     const showEngineChangeWarning = ref(false);
     const engineChangeNoticeDismissed = ref(false);
     const backendTestToneClass = computed(() => {

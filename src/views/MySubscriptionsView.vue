@@ -22,7 +22,7 @@
     // --- Dashboard deep-link (?focus=profiles) ---
     // The health card "创建组合订阅" links here with `?focus=profiles`. We use it
     // to open the "add profile" flow directly instead of dropping the query.
-    const profilesSectionRef = ref(null);
+    const profilesSectionRef = ref<any>(null);
 
     function applyFocusFromQuery() {
         if (!resolveProfileFocus(route.query?.focus)) return;
@@ -80,7 +80,7 @@
         () => import('../components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
-    const previewProfileId = ref(null);
+    const previewProfileId = ref<any>(null);
     const previewProfileName = ref('');
 
     const handlePreviewProfile = (profileId) => {
@@ -104,7 +104,7 @@
     const logProfileName = ref('');
 
     const showCopyModal = ref(false);
-    const showCopyModalProfile = ref(null);
+    const showCopyModalProfile = ref<any>(null);
 
     const handleOpenCopy = (profileId) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);

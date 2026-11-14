@@ -88,7 +88,7 @@
         () => import('../components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
-    const previewSubscriptionId = ref(null);
+    const previewSubscriptionId = ref<any>(null);
     const previewSubscriptionName = ref('');
     const previewSubscriptionUrl = ref('');
 

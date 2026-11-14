@@ -20,7 +20,7 @@
         },
     });
 
-    const containerRef = ref(null);
+    const containerRef = ref<any>(null);
     const containerWidth = ref(0);
 
     const gridColumns = computed(() => {
@@ -60,7 +60,7 @@
         <div :style="gridStyle" class="smooth-all">
             <div
                 v-for="(item, index) in items"
-                :key="item.id || index"
+                :key="(item as Record<string, any>).id || index"
                 class="list-item-animation"
                 :style="{ '--delay-index': index }"
             >

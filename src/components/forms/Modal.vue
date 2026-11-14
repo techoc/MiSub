@@ -44,7 +44,7 @@
     const confirmTitle = computed(() => props.confirmButtonTitle || t('actions.confirm'));
 
     const confirmInput = ref('');
-    const modalPanelRef = ref(null);
+    const modalPanelRef = ref<any>(null);
     const titleId = `modal-title-${Math.random().toString(36).slice(2, 10)}`;
 
     // 记录打开弹窗前的焦点元素，关闭时还原
@@ -85,12 +85,12 @@
         if (e.shiftKey) {
             if (document.activeElement === first) {
                 e.preventDefault();
-                last.focus();
+                (last as Record<string, any>).focus();
             }
         } else {
             if (document.activeElement === last) {
                 e.preventDefault();
-                first.focus();
+                (first as Record<string, any>).focus();
             }
         }
     };

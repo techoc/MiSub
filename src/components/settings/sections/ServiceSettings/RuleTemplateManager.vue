@@ -39,7 +39,7 @@ overwrite_original_rules=true`;
         enabled: true,
     });
 
-    const localTemplates = ref([]);
+    const localTemplates = ref<any[]>([]);
     const selectedId = ref('');
     const isSaving = ref(false);
     const isLoading = ref(false);

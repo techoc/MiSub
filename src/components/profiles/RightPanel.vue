@@ -171,10 +171,10 @@
                     </option>
                     <option
                         v-for="profile in profiles"
-                        :key="profile.id"
-                        :value="profile.customId || profile.id"
+                        :key="(profile as Record<string, any>).id"
+                        :value="(profile as Record<string, any>).customId || profile.id"
                     >
-                        {{ profile.name }}
+                        {{ (profile as Error).name }}
                     </option>
                 </select>
             </div>

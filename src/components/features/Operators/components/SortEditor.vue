@@ -216,7 +216,7 @@
 
                     <select
                         :value="item.key"
-                        @change="updateKeyField(idx, 'key', $event.target.value)"
+                        @change="updateKeyField(idx, 'key', ($event.target as HTMLInputElement).value)"
                         class="flex-1 bg-transparent border-none p-0 text-[11px] font-medium text-gray-900 dark:text-gray-100 focus-visible:ring-0 outline-none"
                     >
                         <option
@@ -231,7 +231,7 @@
 
                     <select
                         :value="item.order"
-                        @change="updateKeyField(idx, 'order', $event.target.value)"
+                        @change="updateKeyField(idx, 'order', ($event.target as HTMLInputElement).value)"
                         class="w-14 bg-transparent border-none p-0 text-[11px] text-gray-600 dark:text-gray-300 focus-visible:ring-0 outline-none"
                     >
                         <option

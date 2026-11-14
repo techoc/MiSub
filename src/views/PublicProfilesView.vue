@@ -34,12 +34,12 @@
         () => import('../components/public/CustomPublicRenderer.vue')
     );
 
-    const publicProfiles = ref([]);
+    const publicProfiles = ref<any[]>([]);
     const loading = ref(true);
-    const error = ref(null);
+    const error = ref<any>(null);
     const { showToast } = useToastStore();
     const { t, setLocale } = useI18n();
-    const config = ref({});
+    const config = ref<any>({});
     const announcement = computed(() => (config.value as Record<string, any>).announcement);
     const heroConfig = computed(
         () =>
@@ -111,7 +111,7 @@
 
     const showGuestbookModal = ref(false);
     const showQuickImportModal = ref(false);
-    const selectedProfileForImport = ref(null);
+    const selectedProfileForImport = ref<any>(null);
 
     const handleGuestbookTrigger = () => {
         if (guestbookConfig.value && guestbookConfig.value.enabled === false) {
@@ -180,7 +180,7 @@
         }
     };
 
-    const clients = ref([]);
+    const clients = ref<any[]>([]);
 
     const fetchClients = async () => {
         try {
@@ -228,7 +228,7 @@
     };
 
     const showPreviewModal = ref(false);
-    const previewProfileId = ref(null);
+    const previewProfileId = ref<any>(null);
     const previewProfileName = ref('');
 
     const handlePreview = (profile) => {
@@ -244,7 +244,7 @@
 
     // QR Code in Card
     const expandedQRCards = ref(new Set());
-    const qrCanvasRefs = ref({});
+    const qrCanvasRefs = ref<any>({});
 
     const registerQrCanvas = (profileId, canvas) => {
         if (!canvas) return;

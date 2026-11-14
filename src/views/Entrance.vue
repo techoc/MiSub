@@ -23,8 +23,8 @@
     const sessionStore = useSessionStore();
     const { publicConfig, initialData } = storeToRefs(sessionStore); // Ensure publicConfig contains settings or we need to access settings differently
 
-    const activeComponent = ref(null);
-    const componentProps = ref({});
+    const activeComponent = ref<any>(null);
+    const componentProps = ref<any>({});
 
     onMounted(async () => {
         checkPath();

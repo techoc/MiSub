@@ -18,7 +18,7 @@
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const passwordForm = ref({
+    const passwordForm = ref<any>({
         newPassword: '',
         confirmPassword: '',
     });
@@ -103,7 +103,7 @@
                 showToast(data.error || t('systemSettings.updateFailed'), 'error');
             }
         } catch (e) {
-            showToast(t('systemSettings.requestFailed', { message: e.message }), 'error');
+            showToast(t('systemSettings.requestFailed', { message: (e as Error).message }), 'error');
         } finally {
             isUpdatingPassword.value = false;
         }

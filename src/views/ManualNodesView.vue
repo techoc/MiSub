@@ -28,12 +28,12 @@
     const manualNodeViewMode = ref(readRawPreference('manualNodeViewMode') || 'card');
     const showDeleteNodesModal = ref(false);
     const showBatchDeleteModal = ref(false);
-    const batchDeleteIds = ref([]);
+    const batchDeleteIds = ref<any[]>([]);
     const showSubscriptionImportModal = ref(false);
     const showDedupModal = ref(false);
-    const dedupPlan = ref(null);
+    const dedupPlan = ref<any>(null);
     const showBatchGroupModal = ref(false); // Added
-    const batchGroupIds = ref([]); // Added
+    const batchGroupIds = ref<any[]>([]); // Added
     const showGroupManagementModal = ref(false); // 分组管理模态框
 
     const {

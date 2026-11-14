@@ -28,7 +28,7 @@
 
     const emit = defineEmits(['update:show']);
 
-    const canvasRef = ref(null);
+    const canvasRef = ref<any>(null);
 
     const generateQRCode = async () => {
         if (!props.url || !canvasRef.value) return;

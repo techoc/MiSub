@@ -14,7 +14,7 @@
     const { t } = useI18n();
 
     const isMigrating = ref(false);
-    const logs = ref([]);
+    const logs = ref<any[]>([]);
     const step = ref('check'); // check, migrating, done, error
 
     const addLog = (message, type = 'info') => {
@@ -62,11 +62,11 @@
             }
         } catch (err) {
             step.value = 'error';
-            addLog(t('d1Migration.logException', { message: err.message }), 'error');
+            addLog(t('d1Migration.logException', { message: (err as Error).message }), 'error');
             addLog(t('d1Migration.hintCheckSchema'), 'warning');
             addLog(t('d1Migration.hintRunSchema'), 'warning');
             addLog(t('d1Migration.hintCheckBinding'), 'warning');
-            showToast(t('d1Migration.toastMigrateFailed', { message: err.message }), 'error');
+            showToast(t('d1Migration.toastMigrateFailed', { message: (err as Error).message }), 'error');
         } finally {
             isMigrating.value = false;
             addLog(t('d1Migration.logFinished'), 'info');

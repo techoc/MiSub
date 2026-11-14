@@ -28,7 +28,7 @@
         try {
             await props.login(password.value);
         } catch (err) {
-            error.value = err.message || t('login.unknownError');
+            error.value = (err as Error).message || t('login.unknownError');
         } finally {
             isLoading.value = false;
         }

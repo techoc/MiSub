@@ -35,7 +35,7 @@
     const { handleBulkImport } = useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk });
 
     // [文件导入] 新增节点时支持选择本地文件，内容直接填入编辑框，复用多行预览与批量导入流程
-    const fileInputRef = ref(null);
+    const fileInputRef = ref<any>(null);
     const fileAccept = IMPORT_FILE_ACCEPT;
     const fileNameHint = ref('');
     const isReadingFile = ref(false);
@@ -70,7 +70,7 @@
             }
         } catch (error) {
             console.error('读取文件失败:', error);
-            fileNameHint.value = error.message || t('manualNodes.fileImportFailed');
+            fileNameHint.value = (error as Error).message || t('manualNodes.fileImportFailed');
         } finally {
             isReadingFile.value = false;
         }

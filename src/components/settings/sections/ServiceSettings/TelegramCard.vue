@@ -63,11 +63,11 @@
         return `https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl.value)}&secret_token=${encodeURIComponent(webhookSecret.value)}`;
     });
 
-    const copyStatus = ref(null);
+    const copyStatus = ref<any>(null);
     const showSetupGuide = ref(false);
     const showUsageGuide = ref(false);
     const isTesting = ref(false);
-    const testResult = ref(null);
+    const testResult = ref<any>(null);
 
     async function copyText(value, key) {
         if (!value) return;
@@ -128,7 +128,7 @@
         } catch (error) {
             testResult.value = {
                 success: false,
-                message: error.message || t('settings.telegramRequestFailed'),
+                message: (error as Error).message || t('settings.telegramRequestFailed'),
             };
         } finally {
             isTesting.value = false;

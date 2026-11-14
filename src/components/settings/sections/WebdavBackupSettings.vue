@@ -19,7 +19,7 @@
     const isBackingUp = ref(false);
     const isRestoring = ref(false);
     const isLoadingRemoteFiles = ref(false);
-    const remoteFiles = ref([]);
+    const remoteFiles = ref<any[]>([]);
 
     const ensureConfig = () => {
         if (!props.settings.webdavBackup) {
@@ -53,7 +53,7 @@
             showToast(result.message || t('settings.webdavTestSuccess'), 'success');
         } catch (error) {
             showToast(
-                t('settings.webdavTestFailedWithMessage', { message: error.message }),
+                t('settings.webdavTestFailedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {
@@ -79,7 +79,7 @@
             showToast(t('settings.webdavBackupSuccess'), 'success');
         } catch (error) {
             showToast(
-                t('settings.webdavBackupFailedWithMessage', { message: error.message }),
+                t('settings.webdavBackupFailedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {
@@ -116,7 +116,7 @@
                     setTimeout(() => window.location.reload(), 800);
                 } catch (error) {
                     showToast(
-                        t('settings.webdavRestoreFailedWithMessage', { message: error.message }),
+                        t('settings.webdavRestoreFailedWithMessage', { message: (error as Error).message }),
                         'error'
                     );
                 } finally {
@@ -141,7 +141,7 @@
             );
         } catch (error) {
             showToast(
-                t('settings.webdavLoadRemoteFailedWithMessage', { message: error.message }),
+                t('settings.webdavLoadRemoteFailedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {
@@ -165,7 +165,7 @@
             setTimeout(() => window.location.reload(), 800);
         } catch (error) {
             showToast(
-                t('settings.webdavRestoreRemoteFailedWithMessage', { message: error.message }),
+                t('settings.webdavRestoreRemoteFailedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {

@@ -74,9 +74,9 @@
     <div v-else :class="gridClass">
         <ProfileCard
             v-for="profile in profiles"
-            :key="profile.id"
+            :key="(profile as Record<string, any>).id"
             :profile="profile"
-            :is-qr-expanded="isQrExpanded(profile.id)"
+            :is-qr-expanded="isQrExpanded((profile as Record<string, any>).id)"
             @quick-import="emit('quick-import', profile)"
             @toggle-qr="emit('toggle-qr', profile)"
             @preview="emit('preview', profile)"

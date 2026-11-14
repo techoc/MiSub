@@ -37,7 +37,7 @@
 
     const groupNameInput = ref('');
     const selectedAirportGroup = ref('');
-    const editingSubscriptionIds = ref([]);
+    const editingSubscriptionIds = ref<any[]>([]);
     const showAirportIdentityEditor = ref(false);
     const emit = defineEmits([
         'add',
@@ -99,7 +99,7 @@
     const availableAirportGroups = computed(() => {
         const groups = new Map();
         props.subscriptions.forEach((item) => {
-            const identity = item.airportIdentity;
+            const identity = (item as Record<string, any>).airportIdentity;
             if (identity?.groupId && identity?.name) groups.set(identity.groupId, identity.name);
         });
         return [...groups].map(([groupId, name]) => ({ groupId, name }));
@@ -109,7 +109,7 @@
             'reset-group',
             group.items.map((it) => it.id)
         );
-    const openAirportIdentityEditor = (ids = props.subscriptions.map((item) => item.id)) => {
+    const openAirportIdentityEditor = (ids = props.subscriptions.map((item) => (item as Record<string, any>).id)) => {
         groupNameInput.value = '';
         selectedAirportGroup.value = '';
         editingSubscriptionIds.value = [...ids];
@@ -118,7 +118,7 @@
     const saveAirportIdentity = () => {
         const name = groupNameInput.value.trim();
         const existing = props.subscriptions
-            .map((item) => item.airportIdentity)
+            .map((item) => (item as Record<string, any>).airportIdentity)
             .find((identity) => identity?.groupId === selectedAirportGroup.value);
         if (!selectedAirportGroup.value && !name) return;
         const groupId = selectedAirportGroup.value || createAirportGroupId();
@@ -273,7 +273,7 @@
     );
 
     const pageSubscriptionIds = computed(
-        () => new Set((props.paginatedSubscriptions || []).map((sub) => sub.id))
+        () => new Set((props.paginatedSubscriptions || []).map((sub) => (sub as Record<string, any>).id))
     );
 
     /** 当前分页命中组内任一条时显示组；组本身完整呈现但按首条排序锚定。 */
@@ -647,18 +647,18 @@
             <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div
                     v-for="(subscription, index) in paginatedSubscriptions"
-                    :key="subscription.id"
+                    :key="(subscription as Record<string, any>).id"
                     class="list-item-animation"
                     :style="{ '--delay-index': index }"
                 >
                     <Card
                         :misub="subscription"
-                        @delete="handleDelete(subscription.id)"
+                        @delete="handleDelete((subscription as Record<string, any>).id)"
                         @change="handleSortEnd"
-                        @update="handleUpdate(subscription.id)"
-                        @edit="handleEdit(subscription.id)"
-                        @preview="handlePreview(subscription.id)"
-                        @qrcode="handleQRCode(subscription.id)"
+                        @update="handleUpdate((subscription as Record<string, any>).id)"
+                        @edit="handleEdit((subscription as Record<string, any>).id)"
+                        @preview="handlePreview((subscription as Record<string, any>).id)"
+                        @qrcode="handleQRCode((subscription as Record<string, any>).id)"
                         @applyDetectedName="(name) => handleApplyDetectedName(subscription, name)"
                     />
                 </div>
