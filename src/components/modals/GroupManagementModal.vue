@@ -17,14 +17,20 @@
 
     const emit = defineEmits(['close', 'rename', 'delete', 'reorder', 'update:show']);
 
+    /** 本地可编辑分组条目 */
+    interface EditableGroup {
+        name: string;
+        editing: boolean;
+    }
+
     // 本地可编辑的分组列表
-    const localGroups = ref<any[]>([]);
-    const editingGroupIndex = ref<any>(null);
+    const localGroups = ref<EditableGroup[]>([]);
+    const editingGroupIndex = ref<number | null>(null);
     const editingGroupName = ref('');
 
     // 监听 props.groups 变化，同步到本地
     const syncGroups = () => {
-        localGroups.value = props.groups.map((g) => ({ name: g, editing: false }));
+        localGroups.value = props.groups.map((g) => ({ name: String(g), editing: false }));
     };
 
     // 监听 show 变化，模态框打开时同步分组
@@ -44,7 +50,7 @@
         emit('close');
     };
 
-    const startEdit = (index: any) => {
+    const startEdit = (index: number) => {
         editingGroupIndex.value = index;
         editingGroupName.value = localGroups.value[index].name;
     };
@@ -61,16 +67,21 @@
             return;
         }
 
-        const oldName = localGroups.value[(editingGroupIndex as any).value].name;
+        const index = editingGroupIndex.value;
+        if (index === null) {
+            cancelEdit();
+            return;
+        }
+        const oldName = localGroups.value[index].name;
         if (newName !== oldName) {
             emit('rename', oldName, newName);
-            localGroups.value[(editingGroupIndex as any).value].name = newName;
+            localGroups.value[index].name = newName;
         }
 
         cancelEdit();
     };
 
-    const handleDelete = async (groupName: any) => {
+    const handleDelete = async (groupName: string) => {
         const confirmed = await confirmAction({
             message: t('subscriptions.deleteGroupConfirm', { name: groupName }),
             variant: 'danger',
@@ -78,11 +89,11 @@
         if (!confirmed) return;
 
         emit('delete', groupName);
-        localGroups.value = localGroups.value.filter((g) => (g as Error).name !== groupName);
+        localGroups.value = localGroups.value.filter((g) => g.name !== groupName);
     };
 
     const handleDragEnd = () => {
-        const newOrder = localGroups.value.map((g) => (g as Error).name);
+        const newOrder = localGroups.value.map((g) => g.name);
         emit('reorder', newOrder);
     };
 

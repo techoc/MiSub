@@ -24,7 +24,7 @@
                 }
             );
         },
-        set(value) {
+        set(value: string) {
             props.settings.telegram_push_config = value;
         },
     });
@@ -33,10 +33,10 @@
         get() {
             return (telegramPushConfig.value.allowed_user_ids || []).join(', ');
         },
-        set(value) {
+        set(value: string) {
             const ids = value
                 .split(',')
-                .map((id: any) => id.trim())
+                .map((id) => id.trim())
                 .filter(Boolean);
             telegramPushConfig.value = {
                 ...telegramPushConfig.value,
@@ -63,13 +63,26 @@
         return `https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl.value)}&secret_token=${encodeURIComponent(webhookSecret.value)}`;
     });
 
-    const copyStatus = ref<any>(null);
+    /** 复制状态：记录哪个字段刚被复制 */
+    interface CopyStatus {
+        key: string;
+        message: string;
+    }
+
+    /** 测试通知结果 */
+    interface TelegramTestResult {
+        success: boolean;
+        message: string;
+        detail?: unknown;
+    }
+
+    const copyStatus = ref<CopyStatus | null>(null);
     const showSetupGuide = ref(false);
     const showUsageGuide = ref(false);
     const isTesting = ref(false);
-    const testResult = ref<any>(null);
+    const testResult = ref<TelegramTestResult | null>(null);
 
-    async function copyText(value: any, key: any) {
+    async function copyText(value: string, key: string) {
         if (!value) return;
 
         try {
@@ -94,7 +107,7 @@
             copyStatus.value = { key, message: t('settings.copyFailedManualSelect') };
         } finally {
             window.setTimeout(() => {
-                if ((copyStatus.value as Record<string, any> | undefined)?.key === key) {
+                if (copyStatus.value?.key === key) {
                     copyStatus.value = null;
                 }
             }, 2500);

@@ -24,6 +24,7 @@
         resolveHealthItemCopy,
         shouldShowFullGuide,
     } from '../utils/dashboard-health.ts';
+    import type { HealthItemCopy } from '../utils/dashboard-health.ts';
     import { useToastStore } from '../stores/toast.ts';
     import { useI18n } from '../i18n/index.ts';
 
@@ -151,7 +152,10 @@
         info: 'bg-sky-500',
     };
 
-    const handleStatNavigate = (path: any, query = {}) => {
+    const handleStatNavigate = (
+        path: string,
+        query: Record<string, string | number | undefined> = {}
+    ) => {
         router.push({ path, query });
     };
 
@@ -189,14 +193,14 @@
     // action key and must not be consulted: an item can carry both (e.g. the
     // error card links to the filtered list AND offers "打开日志"), and reading
     // `action` here used to short-circuit the primary navigation entirely.
-    const handleHealthAction = (item: any) => {
+    const handleHealthAction = (item: HealthItemCopy) => {
         if (item.actionRoute) {
             router.push({ path: item.actionRoute, query: item.actionQuery || {} });
         }
     };
 
     // Secondary buttons dispatch the item's own action key instead of navigating.
-    const handleHealthSecondaryAction = (item: any) => {
+    const handleHealthSecondaryAction = (item: HealthItemCopy) => {
         if (item.action === 'openLog') {
             showLogModal.value = true;
         }
@@ -208,7 +212,7 @@
     // 写入失败必须明确告知用户，否则表现为「点了没反应」且没有任何提示。
     // silent=true：忽略某个待处理项不该弹「设置已更新」，失败文案也用下面更贴切的两句。
     // preferencesOnly=true：这个字段不影响节点处理，让服务端跳过清缓存与 TG 通知。
-    const persistDismissedHealthItems = async (ids: any) => {
+    const persistDismissedHealthItems = async (ids: string[]) => {
         try {
             await dataStore.saveSettings(
                 { dismissedHealthItems: ids },
@@ -221,7 +225,7 @@
         }
     };
 
-    const dismissHealthItemById = async (id: any) => {
+    const dismissHealthItemById = async (id: unknown) => {
         const current = dismissedHealthItemIds.value;
         // 已经忽略过就不必再往返一次服务端
         if (isHealthItemDismissed(current, id)) return;
@@ -265,7 +269,7 @@
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
 
-    const handleQRCode = (url: any, title: any) => {
+    const handleQRCode = (url: string, title: string) => {
         qrCodeUrl.value = url;
         qrCodeTitle.value = title;
         showQRCodeModal.value = true;
@@ -404,16 +408,18 @@
                                 :key="item.id"
                                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[var(--misub-radius-md)] border p-3"
                                 :class="
-                                    (healthToneClasses as Record<string, any>)[item.tone ?? 'info'] ||
-                                    healthToneClasses.info
+                                    (healthToneClasses as Record<string, any>)[
+                                        item.tone ?? 'info'
+                                    ] || healthToneClasses.info
                                 "
                             >
                                 <div class="flex gap-3 min-w-0">
                                     <span
                                         class="mt-2 h-2 w-2 shrink-0 rounded-full"
                                         :class="
-                                            (healthDotClasses as Record<string, any>)[item.tone ?? 'info'] ||
-                                            healthDotClasses.info
+                                            (healthDotClasses as Record<string, any>)[
+                                                item.tone ?? 'info'
+                                            ] || healthDotClasses.info
                                         "
                                     ></span>
                                     <div class="min-w-0">
