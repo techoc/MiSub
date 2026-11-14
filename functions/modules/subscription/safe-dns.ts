@@ -33,27 +33,48 @@ const DNS_HOST_PATTERN =
     /^(?:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}|(?:\d{1,3}\.){3}\d{1,3}|\[[0-9a-f:]+\])$/i;
 const DNS_SCHEME_PATTERN = /^(?:udp|tcp|tls|https):\/\//i;
 
-function isObject(value: any) {
-    return value && typeof value === 'object' && !Array.isArray(value);
+/** 解析后的 DNS 策略 */
+interface DnsPolicy {
+    mode: string;
+    domestic: string[];
+    domesticEncrypted: string[];
+    foreign: string[];
+    polluted: string[];
 }
 
-function clone(value: any): any {
-    if (Array.isArray(value)) return value.map(clone);
+/** sing-box DNS server 定义 */
+interface SingboxResolver {
+    tag: string;
+    type: string;
+    server: string;
+    server_port: number;
+    detour: string;
+    path?: string;
+    tls?: { enabled: boolean; server_name: string };
+    [key: string]: unknown;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function clone<T>(value: T): T {
+    if (Array.isArray(value)) return value.map((item) => clone(item)) as unknown as T;
     if (isObject(value))
-        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, clone(item)]));
+        return Object.fromEntries(
+            Object.entries(value).map(([key, item]) => [key, clone(item)])
+        ) as unknown as T;
     return value;
 }
 
-function parseOverride(raw: any) {
+function parseOverride(raw: unknown): Record<string, unknown> {
     if (isObject(raw)) return raw;
     if (typeof raw !== 'string' || !raw.trim()) return {};
 
     try {
         const parsed = yaml.load(raw.trim());
         if (!isObject(parsed)) return {};
-        return isObject((parsed as Record<string, any>).dns)
-            ? (parsed as Record<string, any>).dns
-            : parsed;
+        return isObject(parsed.dns) ? parsed.dns : parsed;
     } catch {
         return {};
     }
@@ -64,7 +85,7 @@ function parseOverride(raw: any) {
  * clean / polluted（国外 DNS 对，历史行为）；domestic-clean / domestic-polluted（阿里+腾讯，国内 DNS 对）。
  * 别名：domestic → domestic-clean；foreign-clean / foreign-polluted → clean / polluted；未知值一律回退 clean。
  */
-export function normalizeDnsMode(value: any) {
+export function normalizeDnsMode(value: unknown) {
     const raw = String(value || '')
         .trim()
         .toLowerCase();
@@ -82,12 +103,12 @@ export function normalizeDnsMode(value: any) {
     }
 }
 
-export function isDomesticDnsMode(value: any) {
+export function isDomesticDnsMode(value: unknown) {
     const mode = normalizeDnsMode(value);
     return mode === DNS_MODES.DOMESTIC_CLEAN || mode === DNS_MODES.DOMESTIC_POLLUTED;
 }
 
-function resolverHost(value: any) {
+function resolverHost(value: unknown): string {
     const raw = String(value || '').trim();
     if (!raw || raw.includes('#') || raw === 'system') return raw === 'system' ? raw : '';
 
@@ -104,13 +125,13 @@ function resolverHost(value: any) {
     }
 }
 
-function resolverList(value: any, fallback: any) {
+function resolverList(value: unknown, fallback: string[]): string[] {
     const values = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
     const normalized = values.map(resolverHost).filter(Boolean);
     return normalized.length > 0 ? normalized : [...fallback];
 }
 
-function plainResolver(value: any) {
+function plainResolver(value: unknown): string {
     const raw = String(value || '').trim();
     if (!raw || raw === 'system') return '';
 
@@ -131,7 +152,7 @@ function plainResolver(value: any) {
  * 明文主机 → https://<host>/dns-query；https/tls 保留原样；udp/tcp 等明文 scheme → https://<host>/dns-query。
  * 仅用于国内 polluted 形态，IP 直连端点可避免 sing-box 引导解析循环。
  */
-function encryptedResolver(value: any) {
+function encryptedResolver(value: unknown): string {
     const raw = String(value || '').trim();
     if (!raw || raw === 'system') return '';
 
@@ -148,11 +169,14 @@ function encryptedResolver(value: any) {
     }
 }
 
-function policyInput(override: any) {
+function policyInput(override: Record<string, unknown>): Record<string, unknown> {
     return isObject(override.policy) ? { ...override, ...override.policy } : override;
 }
 
-export function resolveDnsPolicy(raw: any, options: Record<string, any> = {}) {
+export function resolveDnsPolicy(
+    raw: unknown,
+    options: Record<string, unknown> = {}
+): DnsPolicy {
     const override = parseOverride(raw);
     const input = policyInput(override);
     const mode = normalizeDnsMode(options.mode || input.mode || input['dns-mode']);
@@ -196,13 +220,13 @@ export function resolveDnsPolicy(raw: any, options: Record<string, any> = {}) {
     };
 }
 
-function withProxy(value: any, proxyGroup: any) {
+function withProxy(value: unknown, proxyGroup: string): string {
     const raw = String(value || '').trim();
     if (!raw || raw === 'system') return raw;
     return `${raw}#${proxyGroup}`;
 }
 
-function cloneResolverPolicy(policy: any) {
+function cloneResolverPolicy(policy: DnsPolicy): DnsPolicy {
     return {
         mode: policy.mode,
         domestic: [...policy.domestic],
@@ -249,7 +273,7 @@ export const DEFAULT_DNS_CONFIG = {
     },
 };
 
-export function isExplicitDnsBlock(override: any) {
+export function isExplicitDnsBlock(override: unknown): boolean {
     if (!isObject(override)) return false;
     return (
         override.enable !== undefined ||
@@ -264,17 +288,19 @@ export function isExplicitDnsBlock(override: any) {
  * 仅提供解析器列表的 policy 型覆盖不算：该形态下 Safe DNS 结构保留，
  * 境外解析仍会引用 DNS 出口策略组，调用方必须保证该组存在。
  */
-export function isExplicitDnsOverride(raw: any) {
+export function isExplicitDnsOverride(raw: unknown) {
     return isExplicitDnsBlock(parseOverride(raw));
 }
 
-export function resolveSafeDnsConfig(raw: any, options: Record<string, any> = {}) {
+export function resolveSafeDnsConfig(raw: unknown, options: Record<string, unknown> = {}) {
     const rawOverride = parseOverride(raw);
     if (isExplicitDnsBlock(rawOverride)) {
         return clone(rawOverride);
     }
 
-    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
+    const generatorOptions = normalizeGeneratorOptions(
+        isObject(options.generatorOptions) ? options.generatorOptions : {}
+    );
     const policy = resolveDnsPolicy(raw, options);
     const isDomestic = isDomesticDnsMode(policy.mode);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
@@ -295,18 +321,23 @@ export function resolveSafeDnsConfig(raw: any, options: Record<string, any> = {}
         : (policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign).map((value) =>
               withProxy(value, proxyGroup)
           );
-    const dns = clone(DEFAULT_DNS_CONFIG);
+    const dns: Record<string, unknown> = clone(DEFAULT_DNS_CONFIG);
 
     dns['default-nameserver'] = [...policy.domestic];
     dns.nameserver = [...domesticNameserver];
     dns['nameserver-policy'] = {
         'geosite:private': [...policy.domestic],
         'geosite:cn': [...policy.domestic],
-        ...options.subscriptionDnsPolicies?.reduce((acc: any, item: any) => {
-            if (item && item.policy && isObject(item.policy)) {
-                Object.assign(acc, item.policy);
-            } else if (item && item.domains && item.nameservers) {
-                acc[item.domains] = item.nameservers;
+        ...(Array.isArray(options.subscriptionDnsPolicies)
+            ? options.subscriptionDnsPolicies
+            : []
+        ).reduce<Record<string, unknown>>((acc, item) => {
+            if (isObject(item)) {
+                if (isObject(item.policy)) {
+                    Object.assign(acc, item.policy);
+                } else if (item.domains && item.nameservers) {
+                    acc[String(item.domains)] = item.nameservers;
+                }
             }
             return acc;
         }, {}),
@@ -346,21 +377,27 @@ export function resolveSafeDnsConfig(raw: any, options: Record<string, any> = {}
     return dns;
 }
 
-function parseSingboxResolver(value: any, tag: any, detour: any) {
+function parseSingboxResolver(
+    value: unknown,
+    tag: string,
+    detour: string
+): SingboxResolver {
     const raw = String(value || '').trim();
     const candidate = DNS_SCHEME_PATTERN.test(raw) ? raw : `udp://${raw}`;
     const parsed = new URL(candidate);
     const type = parsed.protocol.slice(0, -1);
     const server = parsed.hostname.replace(/^\[|\]$/g, '');
     const serverPort = Number(parsed.port) || (type === 'https' ? 443 : type === 'tls' ? 853 : 53);
-    const result: Record<string, any> = { tag, type, server, server_port: serverPort, detour };
+    const result: SingboxResolver = { tag, type, server, server_port: serverPort, detour };
     if (type === 'https') result.path = parsed.pathname || '/dns-query';
     if (type === 'tls') result.tls = { enabled: true, server_name: server };
     return result;
 }
 
-export function buildSingboxDnsConfig(raw: any, options: Record<string, any> = {}) {
-    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
+export function buildSingboxDnsConfig(raw: unknown, options: Record<string, unknown> = {}) {
+    const generatorOptions = normalizeGeneratorOptions(
+        isObject(options.generatorOptions) ? options.generatorOptions : {}
+    );
     const policy = resolveDnsPolicy(raw, options);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
     const isDomestic = isDomesticDnsMode(policy.mode);
@@ -402,6 +439,6 @@ export function buildSingboxDnsConfig(raw: any, options: Record<string, any> = {
     };
 }
 
-export function cloneDnsPolicy(raw: any, options: Record<string, any> = {}) {
+export function cloneDnsPolicy(raw: unknown, options: Record<string, unknown> = {}) {
     return cloneResolverPolicy(resolveDnsPolicy(raw, options));
 }
