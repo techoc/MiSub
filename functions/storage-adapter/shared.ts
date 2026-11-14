@@ -17,9 +17,16 @@ export const DATA_KEYS = {
 };
 
 const D1_COLLECTION_CACHE_TTL_MS = 30 * 1000;
-const d1CollectionCaches = new WeakMap();
 
-function getD1CollectionCache(database: any) {
+/** 单个 D1 database 上的集合缓存条目 */
+interface D1CollectionCacheEntry {
+    timestamp: number;
+    promise: Promise<unknown>;
+}
+
+const d1CollectionCaches = new WeakMap<object, Map<string, D1CollectionCacheEntry>>();
+
+function getD1CollectionCache(database: object): Map<string, D1CollectionCacheEntry> {
     let cache = d1CollectionCaches.get(database);
     if (!cache) {
         cache = new Map();
@@ -28,16 +35,20 @@ function getD1CollectionCache(database: any) {
     return cache;
 }
 
-export function invalidateD1CollectionCache(database: any, table: any) {
+export function invalidateD1CollectionCache(database: object, table: string): void {
     getD1CollectionCache(database).delete(table);
 }
 
-export async function readCachedD1Collection(database: any, table: any, loader: any) {
+export async function readCachedD1Collection<T>(
+    database: object,
+    table: string,
+    loader: () => Promise<T>
+): Promise<T> {
     const cache = getD1CollectionCache(database);
     const now = Date.now();
     const existing = cache.get(table);
     if (existing && now - existing.timestamp < D1_COLLECTION_CACHE_TTL_MS) {
-        return structuredClone(await existing.promise);
+        return structuredClone(await existing.promise) as T;
     }
 
     const promise = Promise.resolve().then(loader);
@@ -103,7 +114,7 @@ export const D1_KNOWN_SETTINGS_PREFIXES = [
     'misub_data_v1',
 ];
 
-export async function ensureD1Schema(d1Db: any) {
+export async function ensureD1Schema(d1Db: D1Database): Promise<void> {
     for (const statement of D1_SCHEMA_STATEMENTS) {
         await d1Db.prepare(statement).run();
     }
@@ -112,13 +123,14 @@ export async function ensureD1Schema(d1Db: any) {
 /**
  * 判断一个值是否像 KV namespace（有 get/put/delete 方法）
  */
-function isKVNamespace(val: any) {
+function isKVNamespace(val: unknown): val is KVNamespace {
+    const record = val as Record<string, unknown> | null;
     return (
-        val &&
-        typeof val === 'object' &&
-        typeof val.get === 'function' &&
-        typeof val.put === 'function' &&
-        typeof val.delete === 'function'
+        !!record &&
+        typeof record === 'object' &&
+        typeof record.get === 'function' &&
+        typeof record.put === 'function' &&
+        typeof record.delete === 'function'
     );
 }
 
@@ -128,18 +140,18 @@ function isKVNamespace(val: any) {
  * @param {Object} env
  * @returns {Object|null}
  */
-export function resolveKV(env: any) {
+export function resolveKV(env: unknown): KVNamespace | null {
+    const envRecord = (env || {}) as Record<string, unknown>;
+
     // 1. Cloudflare Pages 方式：env.MISUB_KV
-    if (env && isKVNamespace(env.MISUB_KV)) return env.MISUB_KV;
+    if (isKVNamespace(envRecord.MISUB_KV)) return envRecord.MISUB_KV;
 
     // 2. 自动探测 env 中其他 KV 绑定（仅允许变量名包含 KV，避免误识别）
-    if (env) {
-        for (const key of Object.keys(env)) {
-            if (!String(key).toUpperCase().includes('KV')) continue;
-            if (isKVNamespace(env[key])) {
-                console.log(`[Storage] Auto-detected KV in env: ${key}`);
-                return env[key];
-            }
+    for (const key of Object.keys(envRecord)) {
+        if (!String(key).toUpperCase().includes('KV')) continue;
+        if (isKVNamespace(envRecord[key])) {
+            console.log(`[Storage] Auto-detected KV in env: ${key}`);
+            return envRecord[key];
         }
     }
 
