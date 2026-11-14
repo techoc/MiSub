@@ -5,14 +5,15 @@
 
 import { normalizeGeneratorOptions } from './subscription/generator-options.ts';
 import { normalizeDnsMode } from './subscription/safe-dns.ts';
+import type { MisubSettings } from '../../types/models.ts';
 
 /**
  * 计算数据的简单哈希值，用于检测变更
  * @param {any} data - 要计算哈希的数据
  * @returns {string} - 数据的哈希值
  */
-export function calculateDataHash(data: any) {
-    const jsonString = JSON.stringify(data, Object.keys(data).sort());
+export function calculateDataHash(data: unknown) {
+    const jsonString = JSON.stringify(data, Object.keys((data ?? {}) as Record<string, unknown>).sort());
     let hash = 0;
     for (let i = 0; i < jsonString.length; i++) {
         const char = jsonString.charCodeAt(i);
@@ -28,7 +29,7 @@ export function calculateDataHash(data: any) {
  * @param {any} newData - 新数据
  * @returns {boolean} - 是否发生变更
  */
-export function hasDataChanged(oldData: any, newData: any) {
+export function hasDataChanged(oldData: unknown, newData: unknown) {
     if (!oldData && !newData) return false;
     if (!oldData || !newData) return true;
     return calculateDataHash(oldData) !== calculateDataHash(newData);
@@ -40,7 +41,7 @@ export function hasDataChanged(oldData: any, newData: any) {
  * @param {Object} env
  * @returns {Object|null}
  */
-function getKV(env: any) {
+function getKV(env: Env): KVNamespace | null {
     return env?.MISUB_KV || null;
 }
 
@@ -50,7 +51,7 @@ function getKV(env: any) {
  * @param {string} key
  * @returns {string|undefined}
  */
-function getRuntimeEnvValue(env: any, key: any) {
+function getRuntimeEnvValue(env: Env, key: string) {
     const envValue = env?.[key];
     if (envValue !== undefined && envValue !== null && String(envValue).trim() !== '') {
         return String(envValue);
@@ -59,8 +60,8 @@ function getRuntimeEnvValue(env: any, key: any) {
     return undefined;
 }
 
-function isStorageUnavailableError(error: any) {
-    const message = String(error?.message || error || '').toLowerCase();
+function isStorageUnavailableError(error: unknown) {
+    const message = String((error as { message?: string } | undefined)?.message || error || '').toLowerCase();
     return (
         message.includes('kv storage is paused') ||
         message.includes('storage is paused') ||
@@ -70,7 +71,7 @@ function isStorageUnavailableError(error: any) {
     );
 }
 
-async function safeKvGet(kv: any, key: any) {
+async function safeKvGet(kv: KVNamespace | null, key: string) {
     if (!kv) return null;
     try {
         return await kv.get(key);
@@ -88,7 +89,7 @@ async function safeKvGet(kv: any, key: any) {
  * @param {Object} env
  * @returns {Promise<string|null>}
  */
-async function getAdminPasswordFromKv(env: any) {
+async function getAdminPasswordFromKv(env: Env) {
     const kv = getKV(env);
     if (!kv) return null;
     try {
@@ -103,7 +104,7 @@ async function getAdminPasswordFromKv(env: any) {
     }
 }
 
-async function safeKvPut(kv: any, key: any, value: any) {
+async function safeKvPut(kv: KVNamespace | null, key: string, value: string) {
     if (!kv) return false;
     try {
         await kv.put(key, value);
@@ -126,16 +127,17 @@ async function safeKvPut(kv: any, key: any, value: any) {
  * @returns {Promise<boolean>} - 是否执行了写入操作
  */
 export async function conditionalKVPut(
-    env: any,
-    key: any,
-    newData: any,
+    env: Env,
+    key: string,
+    newData: unknown,
     oldData: KvRecord | null = null
 ) {
-    const kv = getKV(env);
+    // 绑定缺失时保持既有行为：访问 kv.get 会抛 TypeError（由调用方兜底）
+    const kv = getKV(env) as KVNamespace;
     // 如果没有提供旧数据，先从KV读取
     if (oldData === null) {
         try {
-            oldData = await kv.get(key).then((r: any) => (r ? JSON.parse(r) : null));
+            oldData = await kv.get(key).then((raw) => (raw ? JSON.parse(raw) : null));
         } catch (error) {
             // 读取失败时，为安全起见执行写入
             await kv.put(key, JSON.stringify(newData));
@@ -158,7 +160,7 @@ export async function conditionalKVPut(
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密钥
  */
-export async function getCookieSecret(env: any) {
+export async function getCookieSecret(env: Env) {
     const kv = getKV(env);
     const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
 
@@ -190,7 +192,7 @@ export async function getCookieSecret(env: any) {
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密码
  */
-export async function getAdminPassword(env: any) {
+export async function getAdminPassword(env: Env) {
     const runtimeAdminPassword = getRuntimeEnvValue(env, 'ADMIN_PASSWORD');
     if (runtimeAdminPassword) {
         return runtimeAdminPassword.trim();
@@ -211,7 +213,7 @@ export async function getAdminPassword(env: any) {
  * @param {Object} env
  * @returns {Promise<Object>}
  */
-export async function getAuthDebugInfo(env: any) {
+export async function getAuthDebugInfo(env: Env) {
     const runtimeAdminPassword = getRuntimeEnvValue(env, 'ADMIN_PASSWORD');
     const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
     const kv = getKV(env);
@@ -261,7 +263,7 @@ export async function getAuthDebugInfo(env: any) {
  * @param {Object} env
  * @returns {Promise<boolean>}
  */
-export async function isUsingDefaultPassword(env: any) {
+export async function isUsingDefaultPassword(env: Env) {
     const current = await getAdminPassword(env);
     return current === 'admin';
 }
@@ -272,7 +274,7 @@ export async function isUsingDefaultPassword(env: any) {
  * @param {Object} env - 运行时环境对象
  * @param {string} newPassword - 新密码
  */
-export async function setAdminPassword(env: any, newPassword: any) {
+export async function setAdminPassword(env: Env, newPassword: string) {
     if (getRuntimeEnvValue(env, 'ADMIN_PASSWORD')) {
         throw new Error('当前部署通过环境变量 ADMIN_PASSWORD 设置密码，请在平台控制台修改该变量');
     }
@@ -290,8 +292,8 @@ export { formatBytes } from '../../src/shared/utils.ts';
  * @param {string} str - 要检测的字符串
  * @returns {boolean} - 是否为有效Base64
  */
-export function isValidBase64(str: any) {
-    const cleanStr = str.replace(/\s/g, '');
+export function isValidBase64(str: unknown) {
+    const cleanStr = String(str ?? '').replace(/\s/g, '');
     if (!cleanStr) return false;
 
     let normalized = cleanStr.replace(/-/g, '+').replace(/_/g, '/');
@@ -309,7 +311,7 @@ export function isValidBase64(str: any) {
  * @param {string} content - Clash配置内容
  * @returns {string} - 修复后的配置内容
  */
-export function clashFix(content: any) {
+export function clashFix(content: string) {
     if (content.includes('wireguard') && !content.includes('remote-dns-resolve')) {
         let lines;
         if (content.includes('\r\n')) {
@@ -341,7 +343,7 @@ import type { KvRecord } from '../../types/models.ts';
  * @param {string} originalUserAgent - 原始用户代理字符串
  * @returns {string} - 处理后的用户代理字符串
  */
-export function getProcessedUserAgent(originalUserAgent: any, url = '') {
+export function getProcessedUserAgent(originalUserAgent: unknown, url = '') {
     if (!originalUserAgent) return originalUserAgent;
 
     const rawUrl = typeof url === 'string' ? url : '';
@@ -368,9 +370,9 @@ export function getProcessedUserAgent(originalUserAgent: any, url = '') {
  * @param {string} prefix - 前缀文本
  * @returns {string} 添加前缀后的链接
  */
-export function prependNodeName(link: any, prefix: any) {
+export function prependNodeName(link: string, prefix: string) {
     if (!prefix) return link;
-    const appendToFragment = (baseLink: any, namePrefix: any) => {
+    const appendToFragment = (baseLink: string, namePrefix: string) => {
         const hashIndex = baseLink.lastIndexOf('#');
         const originalName =
             hashIndex !== -1 ? decodeURIComponent(baseLink.substring(hashIndex + 1)) : '';
@@ -413,7 +415,11 @@ export function prependNodeName(link: any, prefix: any) {
  * @param {number} timeout - 超时时间（毫秒）
  * @returns {Promise<Response>} 响应
  */
-export function createTimeoutFetch(input: any, init: Record<string, any> = {}, timeout = 10000) {
+export function createTimeoutFetch(
+    input: RequestInfo | URL,
+    init: RequestInit & { cf?: Record<string, unknown> } = {},
+    timeout = 10000
+) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -443,9 +449,9 @@ export function createTimeoutFetch(input: any, init: Record<string, any> = {}, t
  * @returns {Promise<Response>} 响应
  */
 export async function retryFetch(
-    input: any,
-    init: Record<string, any> = {},
-    options: Record<string, any> = {}
+    input: RequestInfo | URL,
+    init: RequestInit & { cf?: Record<string, unknown> } = {},
+    options: { maxRetries?: number; timeout?: number; baseDelay?: number } = {}
 ) {
     const { maxRetries = 3, timeout = 10000, baseDelay = 1000 } = options;
 
@@ -484,11 +490,11 @@ export async function retryFetch(
  * @param {string} context - 操作上下文
  * @returns {Promise<any>} 操作结果
  */
-export async function safeStorageOperation(
-    operation: any,
-    fallback: KvRecord | null = null,
+export async function safeStorageOperation<T = unknown>(
+    operation: () => T | Promise<T>,
+    fallback: T | null = null,
     context = ''
-) {
+): Promise<T | null> {
     try {
         return await operation();
     } catch (error) {
@@ -503,7 +509,7 @@ export async function safeStorageOperation(
  * @param {string} message - 日志消息
  * @param {any} data - 附加数据
  */
-export function log(level: any, message: any, data: KvRecord | null = null) {
+export function log(level: string, message: string, data: KvRecord | null = null) {
     const timestamp = new Date().toISOString();
     const logEntry = {
         timestamp,
@@ -534,7 +540,7 @@ export function log(level: any, message: any, data: KvRecord | null = null) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<string>} 回调令牌
  */
-export async function getCallbackToken(env: any) {
+export async function getCallbackToken(env: Env) {
     const secret = env.COOKIE_SECRET || 'default-callback-secret';
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secret);
@@ -561,11 +567,11 @@ export async function getCallbackToken(env: any) {
  * @param {Object} config - 原始配置对象
  * @returns {Object} - 处理后的配置对象
  */
-export function migrateConfigSettings(config: any) {
-    const migratedConfig = { ...config };
+export function migrateConfigSettings(config: Record<string, unknown>): MisubSettings {
+    const migratedConfig = { ...config } as MisubSettings;
 
     // [Fix] 强制转换为布尔值，防止 KV 中存储了字符串"false"导致判断错误
-    const toBoolean = (val: any) => {
+    const toBoolean = (val: unknown) => {
         if (typeof val === 'string') {
             return val.toLowerCase() === 'true';
         }
@@ -619,7 +625,11 @@ export function migrateConfigSettings(config: any) {
  * @param {Object} headers - 额外的HTTP头
  * @returns {Response}
  */
-export function createJsonResponse(data: any, status = 200, headers: Record<string, any> = {}) {
+export function createJsonResponse(
+    data: unknown,
+    status = 200,
+    headers: Record<string, string> = {}
+) {
     return new Response(JSON.stringify(data), {
         status,
         headers: {
@@ -635,10 +645,10 @@ export function createJsonResponse(data: any, status = 200, headers: Record<stri
  * @param {URL} requestUrl - 当前请求 URL
  * @returns {URL} - 规范化后的基础 URL
  */
-export function getPublicBaseUrl(env: any, requestUrl: any) {
+export function getPublicBaseUrl(env: Env, requestUrl: URL | string) {
     const configured = (env?.MISUB_CALLBACK_URL || env?.MISUB_PUBLIC_URL || '').trim();
     if (!configured) {
-        return new URL(requestUrl.origin);
+        return new URL(requestUrl instanceof URL ? requestUrl.origin : new URL(requestUrl).origin);
     }
 
     const hasProtocol = /^https?:\/\//i.test(configured);
@@ -656,9 +666,14 @@ export function getPublicBaseUrl(env: any, requestUrl: any) {
 export class APIError extends Error {
     status: number;
     code: string;
-    details: any;
+    details: unknown;
 
-    constructor(message: any, status = 500, code = 'INTERNAL_ERROR', details = null) {
+    constructor(
+        message: string,
+        status = 500,
+        code = 'INTERNAL_ERROR',
+        details: unknown = null
+    ) {
         super(message);
         this.name = 'APIError';
         this.status = status;
@@ -672,7 +687,7 @@ export class APIError extends Error {
  * @param {string} str - 需要转义的字符串
  * @returns {string} - 转义后的字符串
  */
-export function escapeHtml(str: any) {
+export function escapeHtml(str: unknown) {
     if (typeof str !== 'string') return str;
     return str
         .replace(/&/g, '&amp;')
@@ -693,7 +708,7 @@ export class RequestBodyTooLargeError extends Error {
     status: number;
     code: string;
 
-    constructor(limitBytes: any) {
+    constructor(limitBytes: number) {
         super(`Request JSON body too large (max ${limitBytes} bytes)`);
         this.name = 'RequestBodyTooLargeError';
         this.status = 413;
@@ -701,7 +716,7 @@ export class RequestBodyTooLargeError extends Error {
     }
 }
 
-export async function readJsonWithLimit(request: any, limitBytes = JSON_BODY_LIMITS.normal) {
+export async function readJsonWithLimit(request: Request, limitBytes = JSON_BODY_LIMITS.normal) {
     const contentLength =
         request?.headers?.get?.('Content-Length') || request?.headers?.get?.('content-length');
     if (contentLength) {
@@ -724,10 +739,10 @@ export async function readJsonWithLimit(request: any, limitBytes = JSON_BODY_LIM
  * @param {number} status - HTTP状态码 (默认500)
  * @returns {Response}
  */
-export function createErrorResponse(error: any, status = 500) {
+export function createErrorResponse(error: unknown, status = 500) {
     let message = 'Internal Server Error';
     let code = 'INTERNAL_ERROR';
-    let details: any = null;
+    let details: unknown = null;
 
     if (error instanceof APIError) {
         status = error.status;
@@ -758,7 +773,7 @@ export function createErrorResponse(error: any, status = 500) {
  * @param {Array} profiles - 订阅组列表
  * @returns {boolean} 是否发生了迁移
  */
-export function migrateProfileIds(profiles: any) {
+export function migrateProfileIds(profiles: unknown) {
     if (!Array.isArray(profiles)) return false;
     let migrated = false;
     for (const p of profiles) {
@@ -773,7 +788,7 @@ export function migrateProfileIds(profiles: any) {
 /**
  * 安全的 UTF-8 到 Base64 编码 (替代已弃用的 unescape/encodeURIComponent 方案)
  */
-export function base64EncodeUtf8(str: any) {
+export function base64EncodeUtf8(str: string) {
     if (!str) return '';
     try {
         const bytes = new TextEncoder().encode(str);
@@ -788,7 +803,7 @@ export function base64EncodeUtf8(str: any) {
 /**
  * 安全的 Base64 到 UTF-8 解码
  */
-export function base64DecodeUtf8(base64: any) {
+export function base64DecodeUtf8(base64: string) {
     if (!base64) return '';
     try {
         const binString = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
