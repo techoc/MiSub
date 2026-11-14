@@ -13,7 +13,7 @@ import { confirmAction } from './useConfirm.ts';
 export function useBackupLogic() {
     const { showToast } = useToastStore();
 
-    const downloadJson = (data: any, filename: any) => {
+    const downloadJson = (data: unknown, filename: string) => {
         const jsonString = JSON.stringify(data, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -64,7 +64,7 @@ export function useBackupLogic() {
         input.type = 'file';
         input.accept = 'application/json';
         input.onchange = (event) => {
-            const file = (event.target as Record<string, any>).files[0];
+            const file = (event.target as HTMLInputElement | null)?.files?.[0];
             if (!file) return;
 
             const reader = new FileReader();

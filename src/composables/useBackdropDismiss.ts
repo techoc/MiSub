@@ -1,16 +1,16 @@
-export function useBackdropDismiss(onDismiss: any, canDismiss = () => true) {
+export function useBackdropDismiss(onDismiss: () => void, canDismiss = () => true) {
     let pointerDownStartedOnBackdrop = false;
 
-    const handleBackdropPointerDown = (event: any) => {
+    const handleBackdropPointerDown = (event: PointerEvent) => {
         pointerDownStartedOnBackdrop = event.target === event.currentTarget;
     };
 
-    const handleBackdropClick = (event: any) => {
+    const handleBackdropClick = (event: MouseEvent) => {
         const shouldDismiss = pointerDownStartedOnBackdrop && event.target === event.currentTarget;
         pointerDownStartedOnBackdrop = false;
 
         if (shouldDismiss && canDismiss()) {
-            onDismiss(event);
+            onDismiss();
         }
     };
 

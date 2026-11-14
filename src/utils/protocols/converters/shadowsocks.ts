@@ -1,10 +1,12 @@
 import { base64Encode } from '../common/base64.ts';
 
+import type { ProxyNode } from '../../../../types/models.ts';
+
 /**
  * Shadowsocks配置转换为URL
  * 支持完整参数：SS2022、插件(obfs/v2ray-plugin)、UDP
  */
-export function convertShadowsocksToUrl(proxy: any) {
+export function convertShadowsocksToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port || !proxy.cipher || !proxy.password) {
             return null;
@@ -38,7 +40,7 @@ export function convertShadowsocksToUrl(proxy: any) {
             // 插件选项
             if (proxy['plugin-opts']) {
                 const opts = proxy['plugin-opts'];
-                const pluginOpts: any[] = [];
+                const pluginOpts: string[] = [];
 
                 if (proxy.plugin === 'obfs' || proxy.plugin === 'obfs-local') {
                     if (opts.mode) pluginOpts.push(`obfs=${opts.mode}`);
@@ -86,7 +88,7 @@ export function convertShadowsocksToUrl(proxy: any) {
 /**
  * ShadowsocksR配置转换为URL
  */
-export function convertShadowsocksRToUrl(proxy: any) {
+export function convertShadowsocksRToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port || !proxy.password) {
             return null;

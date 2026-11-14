@@ -57,7 +57,7 @@
         return props.totalPages > 1;
     });
 
-    const pageInput = ref<any>('');
+    const pageInput = ref<string | number>('');
 
     watch(
         () => props.currentPage,
@@ -67,8 +67,8 @@
         { immediate: true }
     );
 
-    function emitPageChange(page: any) {
-        const parsed = parseInt(page, 10);
+    function emitPageChange(page: number | string) {
+        const parsed = parseInt(String(page), 10);
         if (Number.isNaN(parsed)) return;
 
         const clamped = Math.min(Math.max(parsed, 1), Math.max(props.totalPages, 1));
@@ -80,8 +80,11 @@
         emitPageChange(pageInput.value);
     }
 
-    function handleItemsPerPageChange(event: any) {
-        emit('update:itemsPerPage', parseInt(event.target.value, 10));
+    function handleItemsPerPageChange(event: Event) {
+        emit(
+            'update:itemsPerPage',
+            parseInt((event.target as HTMLSelectElement | null)?.value ?? '', 10)
+        );
     }
 </script>
 

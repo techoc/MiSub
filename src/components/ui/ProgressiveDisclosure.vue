@@ -24,7 +24,7 @@
         level: {
             type: Number,
             default: 1,
-            validator: (value) => (value as any) >= 1 && (value as any) <= 3,
+            validator: (value: unknown) => Number(value) >= 1 && Number(value) <= 3,
         },
     });
 
@@ -40,7 +40,7 @@
     };
 
     const levelClasses = computed(() => {
-        const levels = {
+        const levels: Record<number, { title: string; container: string; padding: string }> = {
             1: {
                 title: 'text-lg font-bold text-gray-900 dark:text-white',
                 container:
@@ -58,7 +58,7 @@
                 padding: 'p-3',
             },
         };
-        return (levels as Record<string, any>)[props.level];
+        return levels[props.level];
     });
 </script>
 

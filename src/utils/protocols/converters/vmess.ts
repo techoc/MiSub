@@ -1,10 +1,12 @@
 import { base64Encode } from '../common/base64.ts';
 
+import type { ProxyNode } from '../../../../types/models.ts';
+
 /**
  * VMess配置转换为URL
  * 支持完整参数：TLS、WebSocket、gRPC、HTTP/2、fingerprint
  */
-export function convertVmessToUrl(proxy: any) {
+export function convertVmessToUrl(proxy: ProxyNode): string | null {
     try {
         // 兼容 uuid 和 UUID 两种写法
         const uuid = proxy.uuid || proxy.UUID;
@@ -12,7 +14,7 @@ export function convertVmessToUrl(proxy: any) {
             return null;
         }
 
-        const config: Record<string, any> = {
+        const config: Record<string, string> = {
             v: '2',
             ps: proxy.name || proxy['server-name'] || 'VMess',
             add: proxy.server,
@@ -122,10 +124,10 @@ export function convertVmessToUrl(proxy: any) {
         }
 
         // 清理空字段，减少 URL 长度
-        const cleanConfig = {};
+        const cleanConfig: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(config)) {
             if (value !== '' && value !== undefined && value !== null) {
-                (cleanConfig as Record<string, any>)[key] = value;
+                cleanConfig[key] = value;
             }
         }
 

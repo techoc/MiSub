@@ -6,7 +6,7 @@
 
 const isDev = import.meta.env.DEV;
 
-export function createStorageCache(keyBase: any, ttlMs: any) {
+export function createStorageCache(keyBase: string, ttlMs: number) {
     const DATA_KEY = keyBase;
     const TS_KEY = `${keyBase}_ts`;
 
@@ -29,7 +29,7 @@ export function createStorageCache(keyBase: any, ttlMs: any) {
         }
     }
 
-    function set(data: any) {
+    function set(data: unknown) {
         try {
             sessionStorage.setItem(DATA_KEY, JSON.stringify(data));
             sessionStorage.setItem(TS_KEY, String(Date.now()));

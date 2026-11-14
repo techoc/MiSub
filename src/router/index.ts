@@ -10,10 +10,10 @@ import { t } from '../i18n/index.ts';
  * - 需要翻译的页面放 `meta.titleKey`（i18n key）
  * - 品牌名等无需翻译的放 `meta.title`（字面量）
  */
-export function translateRouteTitle(route: any, t: any) {
-    const key = route?.meta?.titleKey;
-    if (key) return t(key);
-    return route?.meta?.title ? String(route.meta.title) : '';
+export function translateRouteTitle(route: unknown, t: (key: string) => string): string {
+    const meta = (route as { meta?: { titleKey?: string; title?: unknown } } | null)?.meta;
+    if (meta?.titleKey) return t(meta.titleKey);
+    return meta?.title ? String(meta.title) : '';
 }
 
 // Lazy load views for better performance
@@ -27,8 +27,10 @@ const HomeView = () => import('../views/HomeView.vue'); // [NEW] Wrapper View
 
 let authContextResolver = () => ({ state: 'loading', loginPath: '/login' });
 
-export function configureAuthGuard(resolver: any) {
-    authContextResolver = typeof resolver === 'function' ? resolver : authContextResolver;
+export function configureAuthGuard(resolver: unknown) {
+    if (typeof resolver === 'function') {
+        authContextResolver = resolver as typeof authContextResolver;
+    }
 }
 
 const routes = [

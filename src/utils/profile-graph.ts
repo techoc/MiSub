@@ -10,45 +10,53 @@
  * @param {Array} allProfiles - 所有 Profile 对象列表
  * @returns {boolean} true 表示会导致循环引用，必须禁止
  */
-export function wouldCreateCycle(targetProfileId: any, candidateId: any, allProfiles: any[] = []) {
+export function wouldCreateCycle(
+    targetProfileId: unknown,
+    candidateId: unknown,
+    allProfiles: unknown[] = []
+): boolean {
     if (!targetProfileId || !candidateId) return false;
     if (targetProfileId === candidateId) return true;
 
-    const profileMap = new Map();
+    const profileMap = new Map<string, Record<string, unknown>>();
     allProfiles.forEach((p) => {
-        if (p && p.id) profileMap.set(p.id, p);
-        if (p && p.customId) profileMap.set(p.customId, p);
+        const record = p as Record<string, unknown> | null;
+        if (record && record.id) profileMap.set(String(record.id), record);
+        if (record && record.customId) profileMap.set(String(record.customId), record);
     });
 
-    const targetProfile = profileMap.get(targetProfileId);
-    const targetIds = new Set([targetProfileId]);
+    const targetProfile = profileMap.get(String(targetProfileId));
+    const targetIds = new Set<string>([String(targetProfileId)]);
     if (targetProfile) {
-        if (targetProfile.id) targetIds.add(targetProfile.id);
-        if (targetProfile.customId) targetIds.add(targetProfile.customId);
+        if (targetProfile.id) targetIds.add(String(targetProfile.id));
+        if (targetProfile.customId) targetIds.add(String(targetProfile.customId));
     }
 
-    const candidateProfile = profileMap.get(candidateId);
+    const candidateProfile = profileMap.get(String(candidateId));
     if (candidateProfile) {
-        if (candidateProfile.id && targetIds.has(candidateProfile.id)) return true;
-        if (candidateProfile.customId && targetIds.has(candidateProfile.customId)) return true;
+        if (candidateProfile.id && targetIds.has(String(candidateProfile.id))) return true;
+        if (candidateProfile.customId && targetIds.has(String(candidateProfile.customId)))
+            return true;
     }
 
     // 从 candidate 出发进行 BFS/DFS 遍历，查看其依赖链路上是否包含 target Profile
-    const visited = new Set();
-    const queue = [candidateId];
+    const visited = new Set<string>();
+    const queue: string[] = [String(candidateId)];
 
     while (queue.length > 0) {
         const currId = queue.shift();
+        if (!currId) break;
         if (targetIds.has(currId)) return true;
         if (visited.has(currId)) continue;
         visited.add(currId);
 
         const curr = profileMap.get(currId);
         if (curr && Array.isArray(curr.subProfiles)) {
-            for (const nextId of curr.subProfiles) {
-                if (targetIds.has(nextId)) return true;
-                if (!visited.has(nextId)) {
-                    queue.push(nextId);
+            for (const nextId of curr.subProfiles as unknown[]) {
+                const nextKey = String(nextId);
+                if (targetIds.has(nextKey)) return true;
+                if (!visited.has(nextKey)) {
+                    queue.push(nextKey);
                 }
             }
         }

@@ -49,21 +49,21 @@
         size: {
             type: String,
             default: 'md',
-            validator: (value) => ['sm', 'md', 'lg'].includes(value as any),
+            validator: (value: unknown) => ['sm', 'md', 'lg'].includes(String(value)),
         },
     });
 
     const emit = defineEmits(['update:modelValue']);
 
-    const updateValue = (event: any) => {
-        emit('update:modelValue', event.target.value);
+    const updateValue = (event: Event) => {
+        emit('update:modelValue', (event.target as HTMLInputElement | null)?.value ?? '');
     };
 
     const hasIcon = computed(() => props.icon !== null);
     const hasPrefix = computed(() => props.prefix !== '');
 
     // 尺寸映射支持
-    const sizeMap = {
+    const sizeMap: Record<string, { input: string; label: string; icon: string }> = {
         sm: {
             input: 'py-1.5 text-xs misub-radius-md px-2',
             label: 'text-xs mb-1 ml-1',
@@ -81,7 +81,7 @@
         },
     };
 
-    const currentSize = computed(() => (sizeMap as Record<string, any>)[props.size] || sizeMap.md);
+    const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
 </script>
 
 <template>
