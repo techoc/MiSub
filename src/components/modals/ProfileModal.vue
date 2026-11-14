@@ -10,6 +10,7 @@
     import { useSettingsStore } from '../../stores/settings.ts';
     import { useI18n } from '@/i18n/index.ts';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.ts';
+    import type { ProfileItem, SubscriptionItem } from '../../../types/models.ts';
 
     const { t } = useI18n();
     const dataStore = useDataStore();
@@ -26,12 +27,12 @@
 
     const emit = defineEmits(['update:show', 'save']);
 
-    const localProfile = ref<any>({});
+    const localProfile = ref<Partial<ProfileItem>>({});
     const subscriptionSearchTerm = ref('');
     const subProfileSearchTerm = ref('');
     const nodeSearchTerm = ref('');
     const activeResourceTab = ref('subscriptions');
-    const activeManualNodeGroupFilter = ref<any>(null);
+    const activeManualNodeGroupFilter = ref<string | undefined>(undefined);
     const showAdvanced = ref(false);
     const uiText = computed(() => ({
         prefixTitle: t('profileModal.nodeNameVisibility'),
@@ -54,7 +55,7 @@
     ];
 
     // 国家/地区代码到旗帜和中文名称的映射
-    const countryCodeMap = {
+    const countryCodeMap: Record<string, string[]> = {
         hk: ['🇭🇰', '香港'],
         tw: ['🇨🇳', '台湾', '臺灣'],
         sg: ['🇸🇬', '新加坡', '狮城'],
@@ -111,13 +112,9 @@
         nz: ['🇳🇿', '新西兰', '紐西蘭'],
     };
 
-    const selectableSubscriptions = computed(() => {
-        return (props.allSubscriptions || []).filter(
-            (sub: any) =>
-                (sub as Record<string, any>).enabled &&
-                (sub.url as any as any as any) &&
-                /^https?:\/\//.test(sub.url as any as any as any)
-        );
+    const selectableSubscriptions = computed<SubscriptionItem[]>(() => {
+        const subs = (props.allSubscriptions || []) as SubscriptionItem[];
+        return subs.filter((sub) => sub.enabled && sub.url && /^https?:\/\//.test(sub.url));
     });
 
     const filteredSubscriptions = computed(() => {
@@ -127,12 +124,10 @@
             return validSubs;
         }
         const lowerCaseSearchTerm = subscriptionSearchTerm.value.toLowerCase();
-        const alternativeTerms = (countryCodeMap as Record<string, any>)[lowerCaseSearchTerm] || [];
+        const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
-        return validSubs.filter((sub: any) => {
-            const subNameLower = (sub as Error).name
-                ? (sub.name.toLowerCase() as any as any as any)
-                : '';
+        return validSubs.filter((sub) => {
+            const subNameLower = sub.name ? sub.name.toLowerCase() : '';
 
             if (subNameLower.includes(lowerCaseSearchTerm)) {
                 return true;
@@ -148,8 +143,7 @@
     });
 
     const selectableSubProfiles = computed(() => {
-        const currentId =
-            (localProfile.value as Record<string, any> | undefined)?.id || props.profile?.id;
+        const currentId = localProfile.value.id || props.profile?.id;
         return (dataStore.profiles || []).filter((p) => {
             if (!p) return false;
             if (currentId && (p.id === currentId || p.customId === currentId)) {
@@ -165,7 +159,7 @@
             return list;
         }
         const lowerCaseSearchTerm = subProfileSearchTerm.value.toLowerCase();
-        const alternativeTerms = (countryCodeMap as Record<string, any>)[lowerCaseSearchTerm] || [];
+        const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
         return list.filter((p) => {
             const pNameLower = p.name ? p.name.toLowerCase() : '';
@@ -189,16 +183,14 @@
         });
     });
 
-    const filteredManualNodes = computed(() => {
-        let nodes = props.allManualNodes;
+    const filteredManualNodes = computed<SubscriptionItem[]>(() => {
+        let nodes = (props.allManualNodes || []) as SubscriptionItem[];
 
         if (activeManualNodeGroupFilter.value) {
             if (activeManualNodeGroupFilter.value === DEFAULT_GROUP_KEY) {
-                nodes = nodes!.filter((n) => !(n as Record<string, any>).group);
+                nodes = nodes!.filter((n) => !n.group);
             } else {
-                nodes = nodes!.filter(
-                    (n) => (n as Record<string, any>).group === activeManualNodeGroupFilter.value
-                );
+                nodes = nodes!.filter((n) => n.group === activeManualNodeGroupFilter.value);
             }
         }
 
@@ -206,12 +198,10 @@
             return nodes;
         }
         const lowerCaseSearchTerm = nodeSearchTerm.value.toLowerCase();
-        const alternativeTerms = (countryCodeMap as Record<string, any>)[lowerCaseSearchTerm] || [];
+        const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
-        return nodes!.filter((node: any) => {
-            const nodeNameLower = (node as Error).name
-                ? (node.name.toLowerCase() as any as any as any)
-                : '';
+        return nodes!.filter((node) => {
+            const nodeNameLower = node.name ? node.name.toLowerCase() : '';
 
             if (nodeNameLower.includes(lowerCaseSearchTerm)) {
                 return true;
@@ -341,7 +331,7 @@
         emit('save', profileToSave);
     };
 
-    const toggleSelection = (listName: any, id: any) => {
+    const toggleSelection = (listName: string, id: string) => {
         const list = localProfile.value[listName];
         const index = list.indexOf(id);
         if (index > -1) {
@@ -351,21 +341,21 @@
         }
     };
 
-    const handleSelectAll = (listName: any, sourceArray: any) => {
-        const currentSelection = new Set(localProfile.value[listName]);
-        sourceArray.forEach((item: any) => currentSelection.add(item.id));
+    const handleSelectAll = (listName: string, sourceArray: SubscriptionItem[]) => {
+        const currentSelection = new Set<string>(localProfile.value[listName]);
+        sourceArray.forEach((item) => currentSelection.add(item.id));
         localProfile.value[listName] = Array.from(currentSelection);
     };
 
-    const handleDeselectAll = (listName: any, sourceArray: any) => {
-        const sourceIds = sourceArray.map((item: any) => item.id);
+    const handleDeselectAll = (listName: string, sourceArray: SubscriptionItem[]) => {
+        const sourceIds = sourceArray.map((item) => item.id);
         localProfile.value[listName] = localProfile.value[listName].filter(
-            (id: any) => !sourceIds.includes(id)
+            (id: string) => !sourceIds.includes(id)
         );
     };
 
     // 处理拖拽排序后的 ID 顺序更新
-    const updateSelectedIds = (listName: any, newIds: any) => {
+    const updateSelectedIds = (listName: string, newIds: string[]) => {
         localProfile.value[listName] = newIds;
     };
 </script>
