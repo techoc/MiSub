@@ -99,7 +99,7 @@ export function resolveGeneratorOptions(
 
     for (const [name, apply] of SEARCH_PARAM_OPTIONS) {
         if (!searchParams.has(name)) continue;
-        const parsed = parseBooleanParam(searchParams.get(name));
+        const parsed = parseBooleanParam((searchParams as unknown as URLSearchParams).get(name));
         if (parsed !== null) apply(options, parsed);
     }
 

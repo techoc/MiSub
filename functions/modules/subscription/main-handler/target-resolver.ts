@@ -92,13 +92,13 @@ export async function resolveSubscriptionTargets({
     let shouldEnableUdp = true;
 
     const initEngineFlags = (targetProf: ProfileItem | null) => {
-        const profileSub = targetProf?.subconverter || {};
+        const profileSub = (targetProf?.subconverter || {}) as { engineMode?: string };
         const globalSub = config.subconverter || {};
         const effectiveEngine = resolveEffectiveEngine({
             searchParams: url.searchParams,
             userAgent: userAgentHeader,
             profileEngineMode: profileSub.engineMode,
-            globalEngineMode: globalSub.engineMode,
+            globalEngineMode: globalSub.engineMode as string | undefined,
         });
         isExternalMode = effectiveEngine === 'external';
         useBuiltin = !isExternalMode;

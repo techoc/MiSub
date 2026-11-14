@@ -8,6 +8,8 @@
     import Modal from '../forms/Modal.vue';
     import { handleError } from '../../utils/errorHandler.ts';
     import { generateNodeId } from '../../utils/id.ts';
+
+    import type { SubscriptionDraft } from '../../../types/models.ts';
     import { api, APIError } from '../../lib/http.ts';
     import FormatDetector from './SubscriptionImport/FormatDetector.vue';
     import ImportForm from './SubscriptionImport/ImportForm.vue';
@@ -16,8 +18,6 @@
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
     import { readFilesAsText } from '../../utils/importFile.ts';
     import { buildAutoGroupName } from '../../utils/auto-group-name.ts';
-
-    import type { SubscriptionDraft } from '../../../types/models.ts';
 
     const isDev = import.meta.env.DEV;
 
@@ -83,7 +83,7 @@
         targetGroupName: string,
         sourceLabel: string
     ): boolean => {
-        const nodes: ImportedNode[] = (Array.isArray(backendNodes) ? backendNodes : []).map(
+        const nodes: SubscriptionDraft[] = (Array.isArray(backendNodes) ? backendNodes : []).map(
             (node: unknown) => {
                 const record = (node || {}) as Record<string, unknown>;
                 return {

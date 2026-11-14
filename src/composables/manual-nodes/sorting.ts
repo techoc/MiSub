@@ -4,7 +4,10 @@ export function buildAutoSortedSubscriptions<T extends KvRecord>(
     allSubscriptions: T[],
     manualNodes: T[]
 ): T[] {
-    const subs = allSubscriptions.filter((s) => s.url && /^https?:\/\//.test(s.url));
+    const subs = allSubscriptions.filter((s) => {
+        const url = String(s.url ?? '');
+        return url && /^https?:\/\//.test(url);
+    });
     const nodes = [...manualNodes];
 
     const regionKeywords: Record<string, RegExp[]> = {
@@ -39,8 +42,8 @@ export function buildAutoSortedSubscriptions<T extends KvRecord>(
         const effectiveIndexB = indexB === -1 ? Infinity : indexB;
 
         // Primary Sort: Group
-        const groupA = a.group || '';
-        const groupB = b.group || '';
+        const groupA = String(a.group || '');
+        const groupB = String(b.group || '');
         if (groupA !== groupB) {
             if (!groupA) return 1; // Empty group last
             if (!groupB) return -1;
@@ -48,7 +51,7 @@ export function buildAutoSortedSubscriptions<T extends KvRecord>(
         }
 
         if (effectiveIndexA !== effectiveIndexB) return effectiveIndexA - effectiveIndexB;
-        return a.name.localeCompare(b.name, 'zh-CN');
+        return String(a.name ?? '').localeCompare(String(b.name ?? ''), 'zh-CN');
     });
 
     return [...nodes, ...subs];

@@ -235,7 +235,7 @@ async function runSubscriptionPipeline(context: PipelineContext): Promise<Respon
         isProfileExpired,
     });
 
-    const profileSub = currentProfile?.subconverter || {};
+    const profileSub = (currentProfile?.subconverter || {}) as Record<string, unknown>;
     const globalSub = config.subconverter || {};
 
     const globalTemplateUrl = resolveTemplateUrl(
@@ -469,7 +469,8 @@ async function runSubscriptionPipeline(context: PipelineContext): Promise<Respon
         }
 
         const backend =
-            url.searchParams.get('backend') || profileSub.backend || globalSub.defaultBackend;
+            url.searchParams.get('backend') ||
+            String(profileSub.backend || globalSub.defaultBackend || '');
         const externalNodeList = isProfileExpired ? DEFAULT_EXPIRED_NODE + '\n' : combinedNodeList;
         const externalUrl = buildExternalSubconverterUrl({
             backend,

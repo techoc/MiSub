@@ -299,12 +299,12 @@ export async function handleProfileMode(
         targetSubscriptions.map((sub) =>
             fetchSubscriptionNodes(
                 String(sub.url || ''),
-                sub.name,
+                String(sub.name ?? ''),
                 userAgent,
-                sub.customUserAgent,
+                sub.customUserAgent as string | null | undefined,
                 false,
-                sub.exclude,
-                sub.fetchProxy,
+                sub.exclude as string | undefined,
+                sub.fetchProxy as string | null | undefined,
                 skipCertVerify,
                 Boolean(sub?.plusAsSpace),
                 sub?.enableNodeCache === true,

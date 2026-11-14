@@ -162,9 +162,9 @@
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
         return list.filter((p) => {
-            const pNameLower = p.name ? p.name.toLowerCase() : '';
-            const pDescLower = p.description ? p.description.toLowerCase() : '';
-            const pIdLower = p.customId ? p.customId.toLowerCase() : '';
+            const pNameLower = p.name ? String(p.name).toLowerCase() : '';
+            const pDescLower = p.description ? String(p.description).toLowerCase() : '';
+            const pIdLower = p.customId ? String(p.customId).toLowerCase() : '';
 
             if (
                 pNameLower.includes(lowerCaseSearchTerm) ||
@@ -332,7 +332,7 @@
     };
 
     const toggleSelection = (listName: string, id: string) => {
-        const list = localProfile.value[listName];
+        const list = localProfile.value[listName] as string[];
         const index = list.indexOf(id);
         if (index > -1) {
             list.splice(index, 1);
@@ -342,16 +342,15 @@
     };
 
     const handleSelectAll = (listName: string, sourceArray: SubscriptionItem[]) => {
-        const currentSelection = new Set<string>(localProfile.value[listName]);
+        const currentSelection = new Set<string>(localProfile.value[listName] as string[]);
         sourceArray.forEach((item) => currentSelection.add(item.id));
         localProfile.value[listName] = Array.from(currentSelection);
     };
 
     const handleDeselectAll = (listName: string, sourceArray: SubscriptionItem[]) => {
         const sourceIds = sourceArray.map((item) => item.id);
-        localProfile.value[listName] = localProfile.value[listName].filter(
-            (id: string) => !sourceIds.includes(id)
-        );
+        const currentList = localProfile.value[listName] as string[];
+        localProfile.value[listName] = currentList.filter((id) => !sourceIds.includes(id));
     };
 
     // 处理拖拽排序后的 ID 顺序更新

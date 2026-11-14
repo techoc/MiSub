@@ -120,10 +120,10 @@ const normalizeUrlForDedup = (url: unknown): string => {
 const getNodePriorityScore = (node: SubscriptionItem): number => {
     let score = 0;
     if (node.enabled) score += 8;
-    if (node.name && node.name.trim()) score += 4;
-    if (node.group && node.group.trim()) score += 2;
+    if (String(node.name ?? '').trim()) score += 4;
+    if (String(node.group ?? '').trim()) score += 2;
     if (node.colorTag) score += 1;
-    if (node.notes && node.notes.trim()) score += 1;
+    if (String(node.notes ?? '').trim()) score += 1;
     return score;
 };
 

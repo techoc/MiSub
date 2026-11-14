@@ -112,12 +112,14 @@
         return (ruleTemplates.value || [])
             .filter((item) => item && item.enabled !== false && item.id)
             .map((item) => ({
-                id: `custom:${item.id}`,
-                name: item.name || t('transformSelector.unnamedTemplate'),
-                url: `custom:${item.id}`,
+                id: `custom:${String(item.id)}`,
+                name: String(item.name || t('transformSelector.unnamedTemplate')),
+                url: `custom:${String(item.id)}`,
                 group: t('transformSelector.customTemplateGroup'),
                 sourceType: 'custom-template',
-                description: item.description || t('transformSelector.customTemplateDescription'),
+                description: String(
+                    item.description || t('transformSelector.customTemplateDescription')
+                ),
             }));
     });
 

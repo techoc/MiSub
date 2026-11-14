@@ -195,10 +195,12 @@
     };
 
     const groupDetectedName = (group: SubscriptionGroup | null | undefined) => {
-        const hit = (group?.items || []).find(
-            (item) => typeof item?.detectedName === 'string' && item.detectedName.trim()
-        );
-        if (hit) return hit.detectedName.trim();
+        const hit = (group?.items || []).find((item) => {
+            const detected = item?.detectedName;
+            return typeof detected === 'string' && detected.trim();
+        });
+        const detectedName = hit?.detectedName;
+        if (typeof detectedName === 'string') return detectedName.trim();
         if (group?.host) return prettifyHost(group.host);
         return '';
     };

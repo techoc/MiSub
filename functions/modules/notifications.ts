@@ -111,7 +111,7 @@ export async function checkAndNotify(sub: SubscriptionItem, settings: MisubSetti
         const daysRemaining = Math.ceil((expiryDate.getTime() - now) / ONE_DAY_MS);
 
         if (daysRemaining <= (settings.NotifyThresholdDays || 7)) {
-            if (!sub.lastNotifiedExpire || now - sub.lastNotifiedExpire > ONE_DAY_MS) {
+            if (!sub.lastNotifiedExpire || now - Number(sub.lastNotifiedExpire) > ONE_DAY_MS) {
                 const message = `🗓️ <b>订阅临期提醒</b> 🗓️
 
 <b>订阅名称:</b> <code>${tgEscape(sub.name || '未命名')}</code>
@@ -133,7 +133,7 @@ export async function checkAndNotify(sub: SubscriptionItem, settings: MisubSetti
         const usagePercent = Math.round((used / Number(total || 0)) * 100);
 
         if (usagePercent >= (settings.NotifyThresholdPercent || 90)) {
-            if (!sub.lastNotifiedTraffic || now - sub.lastNotifiedTraffic > ONE_DAY_MS) {
+            if (!sub.lastNotifiedTraffic || now - Number(sub.lastNotifiedTraffic) > ONE_DAY_MS) {
                 const message = `📈 <b>流量预警提醒</b> 📈
 
 <b>订阅名称:</b> <code>${tgEscape(sub.name || '未命名')}</code>
@@ -337,12 +337,14 @@ export async function handleCronTrigger(env: Env) {
 
     const nodeCountChanges: NodeCountChange[] = [];
     for (const sub of allSubs) {
-        if (sub.nodeCountChange) {
+        const change = sub.nodeCountChange as
+            { previous?: number; current?: number; diff?: number } | undefined;
+        if (change) {
             nodeCountChanges.push({
                 name: sub.name,
-                previous: sub.nodeCountChange.previous,
-                current: sub.nodeCountChange.current,
-                diff: sub.nodeCountChange.diff,
+                previous: Number(change.previous ?? 0),
+                current: Number(change.current ?? 0),
+                diff: Number(change.diff ?? 0),
             });
             delete sub.nodeCountChange;
         }

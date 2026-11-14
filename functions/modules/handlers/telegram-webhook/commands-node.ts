@@ -564,7 +564,9 @@ export async function handleInfoCommand(
         const protocol = nodeUrl.split('://')[0].toUpperCase();
         const status = node.enabled ? '✅ 启用' : '⛔ 禁用';
         const createdAt = node.created_at
-            ? new Date(node.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
+            ? new Date(String(node.created_at)).toLocaleString('zh-CN', {
+                  timeZone: 'Asia/Shanghai',
+              })
             : '未知';
 
         // 脱敏显示服务器地址

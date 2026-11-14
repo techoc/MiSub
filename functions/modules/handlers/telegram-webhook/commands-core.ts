@@ -143,10 +143,10 @@ export async function handleListCommand(
 
         // 按分组过滤（null = 不过滤，'__none__' = 仅未分组）
         if (groupFilter === '__none__') {
-            userNodes = userNodes.filter((n) => !(n.group || '').trim());
+            userNodes = userNodes.filter((n) => !String(n.group ?? '').trim());
             title += ' · 未分组';
         } else if (groupFilter) {
-            userNodes = userNodes.filter((n) => (n.group || '').trim() === groupFilter);
+            userNodes = userNodes.filter((n) => String(n.group ?? '').trim() === groupFilter);
             title += ` · ${groupFilter}`;
         }
 

@@ -22,7 +22,7 @@ export interface SubscriptionUserInfo {
     total?: number;
     /** 到期时间戳（秒） */
     expire?: number;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /** 订阅条目（KV misub_subscriptions_v1 / profiles 内的元素，或手动节点） */
@@ -55,7 +55,7 @@ export interface SubscriptionItem {
     plusAsSpace?: boolean;
     customUserAgent?: string;
     /** 长尾字段随协议/版本扩展 */
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /** 尚未落库的订阅草稿：id 由后端保存流程补齐 */
@@ -76,7 +76,7 @@ export interface ProfileItem {
     ruleLevel?: string;
     clashRuleLevel?: string;
     expiresAt?: string | number | null;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -99,9 +99,9 @@ export interface MisubSettings {
     generatorOptions?: {
         ipv6?: boolean;
         allowLan?: boolean;
-        dns?: Record<string, any>;
-        singbox?: Record<string, any>;
-        [key: string]: any;
+        dns?: Record<string, unknown>;
+        singbox?: Record<string, unknown>;
+        [key: string]: unknown;
     };
     [key: string]: any;
 }

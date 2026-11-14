@@ -208,8 +208,8 @@ export async function handleSortCommand(
                 break;
             case 'time':
                 sortedIndices.sort((a, b) => {
-                    const ta = new Date(userNodes[a].created_at || 0).getTime();
-                    const tb = new Date(userNodes[b].created_at || 0).getTime();
+                    const ta = new Date(String(userNodes[a].created_at || 0)).getTime();
+                    const tb = new Date(String(userNodes[b].created_at || 0)).getTime();
                     return tb - ta; // 新的在前
                 });
                 break;
