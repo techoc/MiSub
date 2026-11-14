@@ -4,27 +4,47 @@
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
     import { useI18n } from '../../../i18n/index.ts';
+    import type { PropType } from 'vue';
+
+    /** 外部 API token 条目 */
+    interface ExternalApiTokenEntry {
+        name: string;
+        token: string;
+    }
+
+    /** 外部 API 设置 */
+    interface ExternalApiSettingsShape {
+        enabled?: boolean;
+        tokens?: ExternalApiTokenEntry[];
+        [key: string]: unknown;
+    }
+
+    /** 设置对象中本组件用到的字段 */
+    interface SystemSettingsShape {
+        externalApi?: ExternalApiSettingsShape;
+        [key: string]: unknown;
+    }
 
     const props = defineProps({
         settings: {
             type: Object,
             required: true,
         },
-        exportBackup: Function as any,
-        importBackup: Function as any,
-        handleReset: Function as any,
+        exportBackup: Function as PropType<() => void>,
+        importBackup: Function as PropType<() => void>,
+        handleReset: Function as PropType<() => void>,
     });
 
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const passwordForm = ref<any>({
+    const passwordForm = ref({
         newPassword: '',
         confirmPassword: '',
     });
     const isUpdatingPassword = ref(false);
 
-    const ensureExternalApiDefaults = (settings: any) => {
+    const ensureExternalApiDefaults = (settings: SystemSettingsShape) => {
         if (!settings.externalApi || typeof settings.externalApi !== 'object') {
             settings.externalApi = { enabled: false, tokens: [{ name: 'default', token: '' }] };
             return;
@@ -38,10 +58,16 @@
             return;
         }
 
-        settings.externalApi.tokens = settings.externalApi.tokens.map((item: any, index: any) => ({
-            name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
-            token: String(item?.token || '').trim(),
-        }));
+        settings.externalApi.tokens = settings.externalApi.tokens.map(
+            (item: unknown, index: number) => {
+                const entry = (item || {}) as { name?: unknown; token?: unknown };
+                const fallbackName = `token-${index + 1}`;
+                return {
+                    name: String(entry.name || fallbackName).trim() || fallbackName,
+                    token: String(entry.token || '').trim(),
+                };
+            }
+        );
     };
 
     const buildExternalApiToken = () => {
@@ -55,15 +81,16 @@
 
     ensureExternalApiDefaults(props.settings);
 
-    const handleGenerateExternalApiToken = (settings: any) => {
+    const handleGenerateExternalApiToken = (settings: SystemSettingsShape) => {
         ensureExternalApiDefaults(settings);
-        settings.externalApi.tokens[0].token = buildExternalApiToken();
+        const tokens = settings.externalApi?.tokens ?? [];
+        if (tokens[0]) tokens[0].token = buildExternalApiToken();
         showToast(t('systemSettings.externalApiTokenGenerated'), 'success');
     };
 
-    const handleCopyExternalApiToken = async (settings: any) => {
+    const handleCopyExternalApiToken = async (settings: SystemSettingsShape) => {
         ensureExternalApiDefaults(settings);
-        const token = settings.externalApi.tokens[0]?.token || '';
+        const token = settings.externalApi?.tokens?.[0]?.token || '';
         if (!token) {
             showToast(t('systemSettings.externalApiTokenEmpty'), 'error');
             return;
