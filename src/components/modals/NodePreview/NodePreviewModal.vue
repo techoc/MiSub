@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
     import type { SubscriptionDraft } from '../../../../types/models.ts';
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
@@ -14,6 +13,40 @@
     import NodeCard from './components/NodeCard.vue';
     import NodePagination from './components/NodePagination.vue';
     import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.ts';
+
+    /** 预览节点（/api/subscription_nodes 返回项） */
+    interface PreviewNode {
+        name: string;
+        url: string;
+        protocol: string;
+        region: string;
+        server?: string;
+        port?: string | number;
+        [key: string]: unknown;
+    }
+
+    /** 节点统计 */
+    interface NodePreviewStats {
+        protocols?: Record<string, number>;
+        regions?: Record<string, number>;
+    }
+
+    /** 节点预览接口响应 */
+    interface NodePreviewResponse {
+        success?: boolean;
+        error?: string;
+        nodes?: PreviewNode[];
+        stats?: NodePreviewStats;
+    }
+
+    /** 解析后的节点信息 */
+    interface ParsedNodeInfo {
+        name: string;
+        server: string;
+        port: string | number;
+        protocol: string;
+        region: string;
+    }
 
     const isDev = import.meta.env.DEV;
     const { t } = useI18n();
@@ -42,7 +75,7 @@
     // 响应式数据
     const loading = ref(false);
     const error = ref('');
-    const allNodes = ref<any[]>([]); // 存储所有节点
+    const allNodes = ref<PreviewNode[]>([]); // 存储所有节点
     const currentPage = ref(1);
     const pageSize = ref(24);
     const viewMode = ref('list'); // 'list' 或 'card'
@@ -63,10 +96,10 @@
     const searchQuery = ref('');
 
     // 统计信息
-    const protocolStats = ref<any>({});
-    const regionStats = ref<any>({});
-    const availableProtocols = ref<any[]>([]);
-    const availableRegions = ref<any[]>([]);
+    const protocolStats = ref<Record<string, number>>({});
+    const regionStats = ref<Record<string, number>>({});
+    const availableProtocols = ref<string[]>([]);
+    const availableRegions = ref<string[]>([]);
 
     // 复制状态
     const copiedNodeId = ref('');
@@ -75,7 +108,7 @@
     const pickingMode = ref(false);
     const selectedUrls = ref(new Set<string>());
 
-    const toggleNodeSelection = (url: any) => {
+    const toggleNodeSelection = (url: string) => {
         if (selectedUrls.value.has(url)) {
             selectedUrls.value.delete(url);
         } else {
@@ -84,9 +117,7 @@
     };
 
     const selectAll = () => {
-        filteredNodes.value.forEach((node) =>
-            selectedUrls.value.add((node as Record<string, any>).url)
-        );
+        filteredNodes.value.forEach((node) => selectedUrls.value.add(node.url));
     };
 
     const clearSelection = () => {
@@ -111,13 +142,9 @@
             // For now, we'll use bulk import logic to create manual nodes
             const nodesToAdd: SubscriptionDraft[] = urls.map((url) => {
                 // Try to find full node object from allNodes
-                const originalNode = allNodes.value.find(
-                    (n) => (n as Record<string, any>).url === url
-                );
+                const originalNode = allNodes.value.find((n) => n.url === url);
                 return {
-                    name: ((originalNode as Error | undefined)?.name || 'Pick')
-                        .split('#')[0]
-                        .trim(),
+                    name: (originalNode?.name || 'Pick').split('#')[0].trim(),
                     url: url,
                     enabled: true,
                 };
@@ -158,16 +185,12 @@
 
         // 协议过滤
         if (protocolFilter.value && protocolFilter.value !== 'all') {
-            result = result.filter(
-                (node) => (node as Record<string, any>).protocol === protocolFilter.value
-            );
+            result = result.filter((node) => node.protocol === protocolFilter.value);
         }
 
         // 地区过滤
         if (regionFilter.value && regionFilter.value !== 'all') {
-            result = result.filter(
-                (node) => (node as Record<string, any>).region === regionFilter.value
-            );
+            result = result.filter((node) => node.region === regionFilter.value);
         }
 
         // 搜索过滤
@@ -175,9 +198,9 @@
             const query = searchQuery.value.toLowerCase().trim();
             result = result.filter(
                 (node) =>
-                    (node as Error).name.toLowerCase().includes(query) ||
-                    (node as Record<string, any>).protocol.toLowerCase().includes(query) ||
-                    (node as Record<string, any>).region.toLowerCase().includes(query)
+                    node.name.toLowerCase().includes(query) ||
+                    node.protocol.toLowerCase().includes(query) ||
+                    node.region.toLowerCase().includes(query)
             );
         }
 
@@ -264,7 +287,7 @@
         error.value = '';
 
         try {
-            const requestData: Record<string, any> = {
+            const requestData: Record<string, unknown> = {
                 userAgent: 'v2rayN/7.23',
             };
 
@@ -284,7 +307,7 @@
                 console.debug('[Preview] Sending request to:', props.apiEndpoint, requestData);
             }
 
-            const data = await api.post(props.apiEndpoint, requestData);
+            const data = await api.post<NodePreviewResponse>(props.apiEndpoint, requestData);
             if (isDev) {
                 console.debug('[Preview] Data received:', data);
             }
@@ -368,7 +391,7 @@
     };
 
     // 复制节点链接
-    const copyNodeUrl = async (node: any, nodeId: any) => {
+    const copyNodeUrl = async (node: PreviewNode, nodeId: string) => {
         try {
             await navigator.clipboard.writeText(node.url);
             copiedNodeId.value = nodeId;
@@ -391,8 +414,8 @@
     };
 
     // 获取协议类型的显示样式
-    const getProtocolStyle = (protocol: any) => {
-        const styles = {
+    const getProtocolStyle = (protocol: string): string => {
+        const styles: Record<string, string> = {
             vmess: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
             vless: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
             trojan: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
@@ -405,17 +428,17 @@
             anytls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
             unknown: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
         };
-        return (styles as Record<string, any>)[protocol] || styles.unknown;
+        return styles[protocol] || styles.unknown;
     };
 
     // 获取地区 Emoji
-    const getRegionEmoji = (region: any) => {
+    const getRegionEmoji = (region: string): string => {
         if (!region) return '🌐';
-        if ((REGION_EMOJI as Record<string, any>)[region])
-            return (REGION_EMOJI as Record<string, any>)[region];
+        const regionEmoji = (REGION_EMOJI as Record<string, string>)[region];
+        if (regionEmoji) return regionEmoji;
 
         // 英文代码别名。中文地区名以 geo-utils 的旗帜表为准，台湾固定为 🇨🇳。
-        const regionMap = {
+        const regionMap: Record<string, string> = {
             HK: '🇭🇰',
             'Hong Kong': '🇭🇰',
             香港: '🇭🇰',
@@ -484,8 +507,7 @@
             土耳其: '🇹🇷',
         };
 
-        if ((regionMap as Record<string, any>)[region])
-            return (regionMap as Record<string, any>)[region];
+        if (regionMap[region]) return regionMap[region];
 
         // 尝试在字符串中查找 Emoji
         const emojiMatch = region.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
@@ -495,8 +517,8 @@
     };
 
     // 解析节点信息
-    const parseNodeInfo = (node: any) => {
-        const result = {
+    const parseNodeInfo = (node: PreviewNode): ParsedNodeInfo => {
+        const result: ParsedNodeInfo = {
             name: node.name,
             server: node.server || '',
             port: node.port || '',
@@ -524,7 +546,10 @@
                         bytes[i] = binaryString.charCodeAt(i);
                     }
                     const jsonString = new TextDecoder('utf-8').decode(bytes);
-                    const nodeConfig = JSON.parse(jsonString);
+                    const nodeConfig = JSON.parse(jsonString) as {
+                        add?: string;
+                        port?: string | number;
+                    };
                     result.server = nodeConfig.add || result.server;
                     result.port = nodeConfig.port || result.port;
                 } catch (e) {
@@ -548,7 +573,7 @@
     };
 
     // 分页控件
-    const goToPage = (page: any) => {
+    const goToPage = (page: number) => {
         if (page >= 1 && page <= totalPages.value) {
             currentPage.value = page;
         }
