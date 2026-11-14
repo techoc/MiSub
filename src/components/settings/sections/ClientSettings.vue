@@ -6,26 +6,46 @@
     import { api } from '../../../lib/http.ts';
     import SectionHeader from '../SectionHeader.vue';
 
-    const clients = ref<any[]>([]);
+    /** 客户端条目（/api/clients 返回的 KV 记录） */
+    interface ClientConfig {
+        id: string;
+        name: string;
+        icon: string;
+        description: string;
+        platforms: string[];
+        url: string;
+        repo: string;
+        [key: string]: unknown;
+    }
+
+    const clients = ref<ClientConfig[]>([]);
     const loading = ref(false);
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
     const showEditModal = ref(false);
-    const editingClient = ref<any>({});
+    const editingClient = ref<ClientConfig>({
+        id: '',
+        name: '',
+        icon: '',
+        description: '',
+        platforms: [],
+        url: '',
+        repo: '',
+    });
     const isNew = ref(false);
     const saving = ref(false);
     const ordering = ref(false);
-    const iconFileInput = ref<any>(null);
+    const iconFileInput = ref<HTMLInputElement | null>(null);
     const uploadingIcon = ref(false);
     const isDataIcon = computed(() => {
-        const icon = (editingClient.value as Record<string, any> | undefined)?.icon;
+        const icon = editingClient.value.icon;
         return typeof icon === 'string' && icon.startsWith('data:');
     });
     const iconInputValue = computed({
         get() {
-            const icon = (editingClient.value as Record<string, any> | undefined)?.icon;
-            if (!icon || (typeof icon === 'string' && icon.startsWith('data:'))) return '';
+            const icon = editingClient.value.icon;
+            if (!icon || icon.startsWith('data:')) return '';
             return icon;
         },
         set(value) {
@@ -69,8 +89,9 @@
         },
     ];
 
-    const handleIconFileSelect = (event: any) => {
-        const file = event.target.files?.[0];
+    const handleIconFileSelect = (event: Event) => {
+        const input = event.target as HTMLInputElement | null;
+        const file = input?.files?.[0];
         if (!file) return;
 
         const allowedTypes = [
@@ -95,7 +116,7 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             const result = e.target?.result;
-            if (result) {
+            if (typeof result === 'string' && result) {
                 editingClient.value = {
                     ...editingClient.value,
                     icon: result,
@@ -109,11 +130,11 @@
         };
         reader.readAsDataURL(file);
 
-        event.target.value = '';
+        if (input) input.value = '';
     };
 
     const triggerIconFileSelect = () => {
-        (iconFileInput.value as Record<string, any> | undefined)?.click();
+        iconFileInput.value?.click();
     };
 
     const clearIcon = () => {
@@ -174,11 +195,13 @@
         showEditModal.value = true;
     };
 
-    const handleEdit = (client: any) => {
+    const handleEdit = (client: ClientConfig) => {
         isNew.value = false;
-        editingClient.value = JSON.parse(JSON.stringify(client));
-        if (!(editingClient.value as Record<string, any>).platforms)
-            (editingClient.value as Record<string, any>).platforms = [];
+        const cloned = JSON.parse(JSON.stringify(client)) as ClientConfig;
+        editingClient.value = {
+            ...cloned,
+            platforms: Array.isArray(cloned.platforms) ? cloned.platforms : [],
+        };
         showEditModal.value = true;
     };
 
@@ -202,7 +225,7 @@
         }
     };
 
-    const moveClient = async (index: any, direction: any) => {
+    const moveClient = async (index: number, direction: number) => {
         const targetIndex = index + direction;
         if (targetIndex < 0 || targetIndex >= clients.value.length) return;
         const next = [...clients.value];
@@ -214,8 +237,7 @@
     };
 
     const handleSave = async () => {
-        if (!(editingClient.value as Error).name)
-            return showToast(t('settings.clientNameRequired'), 'error');
+        if (!editingClient.value.name) return showToast(t('settings.clientNameRequired'), 'error');
 
         saving.value = true;
         try {
@@ -240,9 +262,9 @@
     };
 
     const showDeleteConfirm = ref(false);
-    const clientToDeleteId = ref<any>(null);
+    const clientToDeleteId = ref<string | null>(null);
 
-    const handleDelete = (id: any) => {
+    const handleDelete = (id: string) => {
         clientToDeleteId.value = id;
         showDeleteConfirm.value = true;
     };
@@ -261,7 +283,7 @@
         }
     };
 
-    const getPlatformClass = (platform: any) => {
+    const getPlatformClass = (platform: string) => {
         const option = platformOptions.find((opt) => opt.value === platform);
         return option
             ? option.class
@@ -346,7 +368,7 @@
                         <p class="text-xs text-gray-500 truncate">{{ client.description }}</p>
                         <div class="flex flex-wrap gap-1 mt-2">
                             <span
-                                v-for="p in client.platforms as any[]"
+                                v-for="p in client.platforms"
                                 :key="p"
                                 class="px-1.5 py-0.5 text-[10px] rounded"
                                 :class="getPlatformClass(p)"
