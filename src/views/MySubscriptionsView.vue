@@ -11,6 +11,8 @@
     import { useI18n } from '../i18n/index.ts';
     import { resolveProfileFocus } from '../utils/dashboard-deeplink.ts';
 
+    import type { ProfileItem } from '../../types/models.ts';
+
     const { t } = useI18n();
     const route = useRoute();
 
@@ -22,12 +24,12 @@
     // --- Dashboard deep-link (?focus=profiles) ---
     // The health card "创建组合订阅" links here with `?focus=profiles`. We use it
     // to open the "add profile" flow directly instead of dropping the query.
-    const profilesSectionRef = ref<any>(null);
+    const profilesSectionRef = ref<HTMLElement | null>(null);
 
     function applyFocusFromQuery() {
         if (!resolveProfileFocus(route.query?.focus)) return;
         nextTick(() => {
-            (profilesSectionRef.value as Record<string, any> | undefined)?.scrollIntoView({
+            profilesSectionRef.value?.scrollIntoView({
                 behavior: 'smooth',
                 block: 'start',
             });
@@ -61,7 +63,7 @@
     const { subscriptions } = storeToRefs(dataStore);
     const { manualNodes } = useManualNodes(markDirty);
 
-    const handleProfileReorder = (profileId: any, direction: any) => {
+    const handleProfileReorder = (profileId: string, direction: string) => {
         const fromIndex = profiles.value.findIndex(
             (profile) => profile.id === profileId || profile.customId === profileId
         );
@@ -83,10 +85,10 @@
         () => import('../components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
-    const previewProfileId = ref<any>(null);
+    const previewProfileId = ref('');
     const previewProfileName = ref('');
 
-    const handlePreviewProfile = (profileId: any) => {
+    const handlePreviewProfile = (profileId: string) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             previewProfileId.value = profileId;
@@ -107,9 +109,9 @@
     const logProfileName = ref('');
 
     const showCopyModal = ref(false);
-    const showCopyModalProfile = ref<any>(null);
+    const showCopyModalProfile = ref<ProfileItem | null>(null);
 
-    const handleOpenCopy = (profileId: any) => {
+    const handleOpenCopy = (profileId: string) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             showCopyModalProfile.value = profile;
@@ -117,7 +119,7 @@
         }
     };
 
-    const handleViewLogs = (profileId: any) => {
+    const handleViewLogs = (profileId: string) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             logProfileName.value = profile.name;
@@ -132,7 +134,7 @@
     const qrCodeTitle = ref('');
     const { settings } = storeToRefs(dataStore); // Check if settings is already imported or available from dataStore
 
-    const handleQRCode = (profileId: any) => {
+    const handleQRCode = (profileId: string) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             if (!settings.value.profileToken) {
@@ -223,7 +225,7 @@
         <CopyLinkModal
             v-if="showCopyModal && showCopyModalProfile"
             v-model:show="showCopyModal"
-            :profile="showCopyModalProfile"
+            :profile="showCopyModalProfile ?? undefined"
             :token="settings?.profileToken"
         />
     </div>
