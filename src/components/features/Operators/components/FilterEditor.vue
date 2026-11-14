@@ -12,30 +12,62 @@
     const emit = defineEmits(['update:modelValue']);
     const { t } = useI18n();
 
+    /** 过滤参数分组：include/exclude 用 rules，protocols/regions 用 values */
+    interface FilterParamGroup {
+        enabled: boolean;
+        rules?: FilterRule[];
+        values?: string[];
+        [key: string]: unknown;
+    }
+
+    /** 单条正则规则 */
+    interface FilterRule {
+        pattern: string;
+        flags?: string;
+    }
+
+    /** 过滤参数键 */
+    type FilterParamKey = 'include' | 'exclude' | 'protocols' | 'regions';
+
+    type FilterParams = Record<FilterParamKey, FilterParamGroup>;
+
+    /** 名称规则（include/exclude）键，供模板 v-for 保持联合类型 */
+    const ruleGroupTypes: Array<'include' | 'exclude'> = ['include', 'exclude'];
+
+    /** 用默认值补齐单个分组（未知字段原样保留） */
+    const withDefaults = (source: unknown, listKey: 'rules' | 'values'): FilterParamGroup => {
+        const record: Partial<FilterParamGroup> =
+            source && typeof source === 'object' ? (source as Partial<FilterParamGroup>) : {};
+        return { enabled: false, [listKey]: [], ...record } as FilterParamGroup;
+    };
+
     // Local working copy with defaults
-    const params = computed({
-        get: () => ({
-            include: { enabled: false, rules: [], ...props.modelValue.include },
-            exclude: { enabled: false, rules: [], ...props.modelValue.exclude },
-            protocols: { enabled: false, values: [], ...props.modelValue.protocols },
-            regions: { enabled: false, values: [], ...props.modelValue.regions },
-        }),
+    const params = computed<FilterParams>({
+        get: () => {
+            const source = (props.modelValue || {}) as Record<string, unknown>;
+            return {
+                include: withDefaults(source.include, 'rules'),
+                exclude: withDefaults(source.exclude, 'rules'),
+                protocols: withDefaults(source.protocols, 'values'),
+                regions: withDefaults(source.regions, 'values'),
+            };
+        },
         set: (val) => emit('update:modelValue', val),
     });
 
-    const updateParam = (key: any, value: any) => {
-        const newParams = { ...params.value, [key]: value };
+    const updateParam = (key: FilterParamKey, value: FilterParamGroup) => {
+        const newParams: FilterParams = { ...params.value, [key]: value };
         emit('update:modelValue', newParams);
     };
 
-    const addRule = (type: any) => {
-        const current = { ...(params.value as Record<string, any>)[type] };
+    const addRule = (type: 'include' | 'exclude') => {
+        const current = { ...params.value[type] };
         current.rules = [...(current.rules || []), { pattern: '', flags: 'i' }];
         updateParam(type, current);
     };
 
-    const normalizeRuleFlags = (type: any, index: any) => {
-        const current = { ...(params.value as Record<string, any>)[type] };
+    const normalizeRuleFlags = (type: 'include' | 'exclude', index: number) => {
+        const current = { ...params.value[type] };
         current.rules = [...(current.rules || [])];
         const rule = current.rules[index];
         if (!rule) return;
@@ -43,16 +75,16 @@
         updateParam(type, current);
     };
 
-    const removeRule = (type: any, index: any) => {
-        const current = { ...(params.value as Record<string, any>)[type] };
-        current.rules = [...current.rules];
+    const removeRule = (type: 'include' | 'exclude', index: number) => {
+        const current = { ...params.value[type] };
+        current.rules = [...(current.rules || [])];
         current.rules.splice(index, 1);
         updateParam(type, current);
     };
 
     const commonProtocols = ['vless', 'vmess', 'trojan', 'ss', 'hysteria2', 'socks'];
     const commonRegions = ['香港', '美国', '日本', '新加坡', '台湾', '韩国', '英国', '德国'];
-    const regionLabels = {
+    const regionLabels: Record<string, string> = {
         香港: 'Hong Kong',
         美国: 'United States',
         日本: 'Japan',
@@ -62,15 +94,16 @@
         英国: 'United Kingdom',
         德国: 'Germany',
     };
-    const statusLabel = (enabled: any) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
-    const regionLabel = (region: any) =>
+    const statusLabel = (enabled: unknown) =>
+        t(enabled ? 'operators.statusOn' : 'operators.statusOff');
+    const regionLabel = (region: string) =>
         t('operators.regionLabel', {
-            region: (regionLabels as Record<string, any>)[region] || region,
+            region: regionLabels[region] || region,
         });
 
-    const toggleValue = (type: any, value: any) => {
-        const current = { ...(params.value as Record<string, any>)[type] };
-        const values = new Set(current.values || []);
+    const toggleValue = (type: 'protocols' | 'regions', value: string) => {
+        const current = { ...params.value[type] };
+        const values = new Set<string>(current.values || []);
         if (values.has(value)) {
             values.delete(value);
         } else {
@@ -175,7 +208,7 @@
         </div>
 
         <!-- Name Rules (Include/Exclude) -->
-        <div v-for="type in ['include', 'exclude']" :key="type" class="space-y-2">
+        <div v-for="type in ruleGroupTypes" :key="type" class="space-y-2">
             <div class="flex items-center justify-between">
                 <label
                     class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight"
