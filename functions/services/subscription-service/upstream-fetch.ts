@@ -16,11 +16,26 @@ export const FETCH_CONFIG = {
     RETRYABLE_STATUS: [500, 502, 503, 504, 429], // 可重试的 HTTP 状态码
 };
 
+/** 重试选项 */
+interface FetchRetryOptions {
+    timeout?: number;
+    maxRetries?: number;
+    baseDelay?: number;
+    retryableStatus?: number[];
+}
+
+/** 并发队列条目 */
+interface QueueEntry {
+    task: () => unknown;
+    resolve: (value: unknown) => void;
+    reject: (reason?: unknown) => void;
+}
+
 export async function fetchWithRetry(
-    url: any,
-    init: Record<string, any> = {},
-    options: Record<string, any> = {}
-) {
+    url: string,
+    init: RequestInit = {},
+    options: FetchRetryOptions = {}
+): Promise<Response> {
     const {
         timeout = FETCH_CONFIG.TIMEOUT,
         maxRetries = FETCH_CONFIG.MAX_RETRIES,
@@ -28,8 +43,8 @@ export async function fetchWithRetry(
         retryableStatus = FETCH_CONFIG.RETRYABLE_STATUS,
     } = options;
 
-    let lastError;
-    let lastResponse;
+    let lastError: unknown;
+    let lastResponse: Response | undefined;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
@@ -93,7 +108,7 @@ export async function fetchWithRetry(
 /**
  * 确保配置是数组格式（处理 D1 数据库可能返回的 JSON 字符串）
  */
-export function ensureArray(data: any) {
+export function ensureArray(data: unknown): unknown[] {
     if (!data) return [];
     if (Array.isArray(data)) return data;
     if (typeof data === 'string') {
@@ -112,15 +127,17 @@ export function ensureArray(data: any) {
  * @param {number} limit - 最大并发数
  * @returns {Function} - 包装函数
  */
-export function createConcurrencyLimiter(limit: any) {
+export function createConcurrencyLimiter(limit: number) {
     const safeLimit = Math.max(1, limit || 1); // 防御性检查，确保至少为 1
     let running = 0;
-    const queue: any[] = [];
+    const queue: QueueEntry[] = [];
 
     const runNext = () => {
         if (running >= safeLimit || queue.length === 0) return;
         running++;
-        const { task, resolve, reject } = queue.shift();
+        const entry = queue.shift();
+        if (!entry) return;
+        const { task, resolve, reject } = entry;
         // 使用 Promise.resolve().then() 包装，确保同步异常也能被捕获
         Promise.resolve()
             .then(task)
@@ -132,9 +149,9 @@ export function createConcurrencyLimiter(limit: any) {
             });
     };
 
-    return (task: any) =>
-        new Promise((resolve, reject) => {
-            queue.push({ task, resolve, reject });
+    return <T>(task: () => T | Promise<T>): Promise<T> =>
+        new Promise<T>((resolve, reject) => {
+            queue.push({ task, resolve: resolve as (value: unknown) => void, reject });
             runNext();
         });
 }

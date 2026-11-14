@@ -5,7 +5,21 @@
 import { DATA_KEYS, resolveKV } from './shared.ts';
 import { D1StorageAdapter } from './d1-adapter.ts';
 
-let _globalSettingsCache = {
+import type { KvRecord } from '../../types/models.ts';
+
+interface SettingsMemoEntry {
+    data: KvRecord | null;
+    timestamp: number;
+}
+
+/** settings 读取用到的适配器最小面 */
+interface SettingsCacheAdapter {
+    kv?: object;
+    db?: object;
+    get?: (key: string) => Promise<unknown>;
+}
+
+let _globalSettingsCache: SettingsMemoEntry = {
     data: null,
     timestamp: 0,
 };
@@ -19,7 +33,7 @@ const SETTINGS_CACHE_TTL_MS = 10 * 1000; // 10秒缓存过时
  * 用普通 Map（而非 WeakMap）以便 clear() 能一并失效；键是 env 绑定对象，
  * 在 isolate 生命周期内稳定，不会累积。
  */
-const adapterSettingsMemos = new Map();
+const adapterSettingsMemos = new Map<object, SettingsMemoEntry>();
 
 export class SettingsCache {
     /**
@@ -29,21 +43,21 @@ export class SettingsCache {
      * @param {Object} [adapter] - 可选：当前请求的存储适配器。传入时按其底层
      *   绑定做 memo，且只信任 adapter 读取结果（保证与 storageType 一致的数据源）。
      */
-    static async get(env: any, adapter: unknown = null) {
+    static async get(env: Env, adapter: unknown = null): Promise<KvRecord | null> {
         const now = Date.now();
-        if (adapter) {
-            const scope =
-                (adapter as Record<string, any>).kv || (adapter as Record<string, any>).db || null;
-            let settings: any = null;
+        const adapterRecord = adapter as SettingsCacheAdapter | null;
+        if (adapterRecord) {
+            const scope = adapterRecord.kv || adapterRecord.db || null;
+            let settings: KvRecord | null = null;
             if (scope) {
                 const memo = adapterSettingsMemos.get(scope);
                 if (memo && now - memo.timestamp < SETTINGS_CACHE_TTL_MS) {
                     return memo.data;
                 }
             }
-            if (typeof (adapter as Record<string, any>).get === 'function') {
+            if (typeof adapterRecord.get === 'function') {
                 try {
-                    settings = await (adapter as Record<string, any>).get(DATA_KEYS.SETTINGS);
+                    settings = (await adapterRecord.get(DATA_KEYS.SETTINGS)) as KvRecord | null;
                 } catch (adapterError) {
                     console.warn(
                         '[Storage Cache] Adapter read failed:',
@@ -65,11 +79,11 @@ export class SettingsCache {
         }
 
         try {
-            let settings: any = null;
+            let settings: KvRecord | null = null;
             if (env.MISUB_DB) {
                 try {
                     const d1Adapter = new D1StorageAdapter(env.MISUB_DB);
-                    settings = await d1Adapter.get(DATA_KEYS.SETTINGS);
+                    settings = (await d1Adapter.get(DATA_KEYS.SETTINGS)) as KvRecord | null;
                 } catch (d1Error) {
                     console.warn(
                         '[Storage Cache] Failed to read from D1:',

@@ -29,7 +29,7 @@ const REAL_PROXY_PROTOCOLS = [
 /**
  * 判断是否是真实代理节点，排除流量/到期/公告等系统伪节点
  */
-export function isRealProxyNode(node: any) {
+export function isRealProxyNode(node: unknown): boolean {
     if (typeof node !== 'string') return false;
     const trimmed = node.trim().toLowerCase();
     if (!trimmed) return false;
@@ -49,22 +49,24 @@ export function isRealProxyNode(node: any) {
  * @param {Headers|Object} headers 响应头（fetch Headers 或普通对象）
  * @returns {string} 解析出的名称，取不到时返回空字符串
  */
-export function parseSubscriptionProfileTitle(headers: any) {
-    const read = (name: any) => {
+export function parseSubscriptionProfileTitle(headers: unknown): string {
+    const headerRecord = (headers || {}) as Record<string, unknown>;
+    const read = (name: string): string => {
         if (!headers) return '';
         try {
-            if (typeof headers.get === 'function') return headers.get(name) || '';
+            const record = headers as { get?: (key: string) => string | null };
+            if (typeof record.get === 'function') return record.get(name) || '';
         } catch {
             /* ignore */
         }
         const lower = name.toLowerCase();
-        for (const key of Object.keys(headers || {})) {
-            if (key.toLowerCase() === lower) return String(headers[key] || '');
+        for (const key of Object.keys(headerRecord)) {
+            if (key.toLowerCase() === lower) return String(headerRecord[key] || '');
         }
         return '';
     };
 
-    const decodeBase64 = (value: any) => {
+    const decodeBase64 = (value: string): string => {
         try {
             const binary = atob(value);
             const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
@@ -138,7 +140,7 @@ const NON_AIRPORT_HOSTS = [
     /\.onrender\.com$/i,
 ];
 
-export function inferAirportRootDomain(sourceUrl: any) {
+export function inferAirportRootDomain(sourceUrl: unknown): string {
     const raw = String(sourceUrl || '').trim();
     if (!/^https?:\/\//i.test(raw)) return '';
 
@@ -244,13 +246,16 @@ const NOISY_SITE_TITLES = [
     /^未找到/i,
 ];
 
-export async function fetchAirportSiteTitle(rootDomain: any, options: Record<string, any> = {}) {
-    const { timeout = 5000 } = options;
+export async function fetchAirportSiteTitle(
+    rootDomain: unknown,
+    options: Record<string, unknown> = {}
+): Promise<string> {
+    const timeoutMs = Number((options as { timeout?: unknown }).timeout) || 5000;
     const domain = String(rootDomain || '').trim();
     if (!domain || !domain.includes('.')) return '';
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
         const response = await fetch(`https://${domain}/`, {
             method: 'GET',
