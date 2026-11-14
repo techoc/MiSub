@@ -72,7 +72,7 @@ export async function fetchWithRetry(url, init: Record<string, any> = {}, option
 
             const delay = baseDelay * Math.pow(2, attempt);
             console.warn(
-                `[Retry] ${error.message} (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms`
+                `[Retry] ${(error as Error).message} (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms`
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
         }
@@ -111,7 +111,7 @@ export function ensureArray(data) {
 export function createConcurrencyLimiter(limit) {
     const safeLimit = Math.max(1, limit || 1); // 防御性检查，确保至少为 1
     let running = 0;
-    const queue = [];
+    const queue: any[] = [];
 
     const runNext = () => {
         if (running >= safeLimit || queue.length === 0) return;

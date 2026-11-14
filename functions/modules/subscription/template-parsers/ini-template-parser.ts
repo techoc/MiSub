@@ -38,7 +38,7 @@ function parseGroupLine(line) {
     if (bodyParts.length === 0) return null;
 
     const type = bodyParts[0];
-    const members = [];
+    const members: any[] = [];
     const options = {};
 
     for (const part of bodyParts.slice(1)) {
@@ -128,9 +128,9 @@ function parseAclProxyGroupLine(line) {
 
     const name = parts[0];
     const type = parts[1];
-    const members = [];
-    const filters = [];
-    const options = {};
+    const members: any[] = [];
+    const filters: any[] = [];
+    const options: Record<string, any> = {};
 
     for (const part of parts.slice(2)) {
         if (part.startsWith('[]')) {

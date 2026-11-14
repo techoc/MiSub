@@ -80,7 +80,7 @@ export async function handlePublicPreviewRequest(request, env) {
 
         return createJsonResponse(result);
     } catch (e) {
-        return createErrorResponse(`Preview failed: ${e.message}`, e.status || 500);
+        return createErrorResponse(`Preview failed: ${(e as Error).message}`, (e as Record<string, any>).status || 500);
     }
 }
 
@@ -164,9 +164,9 @@ export async function handleSubscriptionNodesRequest(request, env) {
     } catch (e) {
         return createJsonResponse(
             {
-                error: `获取节点列表失败: ${e.message}`,
+                error: `获取节点列表失败: ${(e as Error).message}`,
             },
-            e.status || 500
+            (e as Record<string, any>).status || 500
         );
     }
 }

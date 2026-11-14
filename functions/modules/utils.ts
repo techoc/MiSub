@@ -76,7 +76,7 @@ async function safeKvGet(kv, key) {
         return await kv.get(key);
     } catch (error) {
         if (isStorageUnavailableError(error)) {
-            console.warn(`[Auth Storage] KV get skipped for ${key}: ${error.message}`);
+            console.warn(`[Auth Storage] KV get skipped for ${key}: ${(error as Error).message}`);
             return null;
         }
         throw error;
@@ -96,7 +96,7 @@ async function getAdminPasswordFromKv(env) {
     } catch (error) {
         if (isStorageUnavailableError(error)) {
             console.warn(
-                `[Auth Storage] KV get failed for SYSTEM_ADMIN_PASSWORD: ${error.message}`
+                `[Auth Storage] KV get failed for SYSTEM_ADMIN_PASSWORD: ${(error as Error).message}`
             );
         }
         throw error;
@@ -110,7 +110,7 @@ async function safeKvPut(kv, key, value) {
         return true;
     } catch (error) {
         if (isStorageUnavailableError(error)) {
-            console.warn(`[Auth Storage] KV put skipped for ${key}: ${error.message}`);
+            console.warn(`[Auth Storage] KV put skipped for ${key}: ${(error as Error).message}`);
             return false;
         }
         throw error;
@@ -456,7 +456,7 @@ export async function retryFetch(input, init: Record<string, any> = {}, options:
             const delay = baseDelay * Math.pow(2, attempt);
             console.warn(
                 `[Retry] Request failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms:`,
-                error.message
+                (error as Error).message
             );
 
             // 等待延迟
@@ -706,7 +706,7 @@ export async function readJsonWithLimit(request, limitBytes = JSON_BODY_LIMITS.n
 export function createErrorResponse(error, status = 500) {
     let message = 'Internal Server Error';
     let code = 'INTERNAL_ERROR';
-    let details = null;
+    let details: any = null;
 
     if (error instanceof APIError) {
         status = error.status;

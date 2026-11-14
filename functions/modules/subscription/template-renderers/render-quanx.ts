@@ -10,7 +10,7 @@ function buildProxyLine(proxy) {
     if (!server || !port) return null;
 
     if (type === 'trojan') {
-        const extras = [];
+        const extras: any[] = [];
         if (proxy.network === 'ws') {
             extras.push('obfs=ws');
             const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
@@ -26,7 +26,7 @@ function buildProxyLine(proxy) {
         return `trojan=${server}:${port}, password=${proxy.password || ''}${extras.length ? `, ${extras.join(', ')}` : ''}, tag=${name}`;
     }
     if (type === 'ss' || type === 'shadowsocks') {
-        const extras = [];
+        const extras: any[] = [];
         const plugin = proxy.plugin || '';
         const opts = proxy['plugin-opts'] || proxy.pluginOpts || {};
         if (plugin === 'obfs-local' || proxy.obfs) {
@@ -42,7 +42,7 @@ function buildProxyLine(proxy) {
         return `shadowsocks=${server}:${port}, method=${proxy.cipher || 'aes-128-gcm'}, password=${proxy.password || ''}${extras.length ? `, ${extras.join(', ')}` : ''}, tag=${name}`;
     }
     if (type === 'vmess') {
-        const extras = [];
+        const extras: any[] = [];
         const sni = proxy.servername ?? proxy.sni;
         const hasTlsLayer = proxy.tls || sni !== undefined;
         if (proxy.network === 'ws') {
@@ -102,7 +102,7 @@ function buildProxyLine(proxy) {
         return `vless=${server}:${port}, password=${proxy.uuid || ''}${extras.length ? `, ${extras.join(', ')}` : ''}, tag=${name}`;
     }
     if (type === 'http' || type === 'https') {
-        const extras = [];
+        const extras: any[] = [];
         const sni = proxy.servername ?? proxy.sni;
         if (type === 'https') extras.push('over-tls=true');
         if (sni !== undefined) extras.push(`tls-host=${sni}`);
@@ -114,7 +114,7 @@ function buildProxyLine(proxy) {
         return null;
     }
     if (type === 'tuic') {
-        const extras = [];
+        const extras: any[] = [];
         if (proxy.uuid) extras.push(proxy.uuid || '');
         if (proxy.password) extras.push(proxy.password || '');
         const sni = proxy.servername ?? proxy.sni;

@@ -33,6 +33,7 @@ import {
 } from './commands-data.ts';
 import { sendTelegramMessage } from './telegram-api.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 // ==================== 命令路由 ====================
 
 /**

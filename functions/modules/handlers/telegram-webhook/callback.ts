@@ -37,6 +37,7 @@ import {
 } from './commands-node.ts';
 import { handleBindCommand, handleDupCommand } from './commands-data.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 // ==================== Callback Query 处理 ====================
 
 /**
@@ -168,7 +169,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
             const sep = rest.indexOf('_');
             const type = rest.slice(0, sep);
             const raw = rest.slice(sep + 1);
-            let groupFilter = null;
+            let groupFilter: any = null;
             if (raw === '__all__') groupFilter = null;
             else if (raw === '__none__') groupFilter = '__none__';
             else {
@@ -419,7 +420,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                     }
 
                     // 构建操作按钮
-                    const buttons = [];
+                    const buttons: any[] = [];
 
                     // 第一行：启用/禁用，复制
                     const toggleCmd =
@@ -761,7 +762,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
                     // Need to map filtered index to real storage index/ID
                     const allNodes = await getUserNodes(userId, env);
-                    let targetItem = null;
+                    let targetItem: any = null;
 
                     if (type === 'sub') {
                         const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));

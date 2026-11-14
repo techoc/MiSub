@@ -28,7 +28,7 @@ function unquote(value) {
 }
 
 function splitArgs(input) {
-    const args = [];
+    const args: string[] = [];
     let current = '';
     let quote = '';
     let escaped = false;

@@ -81,7 +81,7 @@ function clashProxyToSurgeResult(proxy) {
     const port = proxy.port;
 
     // 构造参数列表（第一个元素是 "name = type"，后跟位置参数，再跟具名参数）
-    const parts = [];
+    const parts: any[] = [];
 
     if (type === 'ss' || type === 'shadowsocks') {
         // 格式: name = ss, server, port, encrypt-method=xxx, password=xxx
@@ -348,7 +348,7 @@ function buildWireGuardResult(name, proxy) {
     }
 
     // Peer 配置
-    const peerParts = [];
+    const peerParts: string[] = [];
     if (proxy['public-key']) {
         peerParts.push(`public-key = ${proxy['public-key']}`);
     }
@@ -427,8 +427,8 @@ export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any
         .map((line) => line.trim())
         .filter((line) => line && !line.startsWith('#'));
 
-    const results = [];
-    const proxyNames = [];
+    const results: any[] = [];
+    const proxyNames: any[] = [];
 
     // 转换为 Clash 代理对象
     const proxies = urlsToClashProxies(nodeUrls, options);
@@ -446,20 +446,20 @@ export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any
     }
 
     const usedNames = new Map();
-    const finalResults = [];
-    const finalProxyNames = [];
+    const finalResults: any[] = [];
+    const finalProxyNames: any[] = [];
 
     for (let i = 0; i < results.length; i++) {
         const baseName = proxyNames[i];
         const uniqueName = getUniqueName(baseName, usedNames);
         if (uniqueName !== baseName) {
             const updatedResult = { ...results[i] };
-            updatedResult.proxyLine = results[i].proxyLine.replace(
+            updatedResult.proxyLine = (results[i].proxyLine as Record<string, any>).replace(
                 `${baseName} = `,
                 `${uniqueName} = `
             );
             if (updatedResult.wireguardSection) {
-                updatedResult.wireguardSection = results[i].wireguardSection.replace(
+                updatedResult.wireguardSection = (results[i].wireguardSection as Record<string, any>).replace(
                     new RegExp(
                         `WG_${escapeRegExp(baseName.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_'))}`,
                         'g'
@@ -484,7 +484,7 @@ export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any
         .filter((r) => r.wireguardSection)
         .map((r) => r.wireguardSection);
 
-    const sections = [];
+    const sections: string[] = [];
     const managedLine = managedConfigUrl
         ? `#!MANAGED-CONFIG ${managedConfigUrl} interval=${interval} strict=false\n\n`
         : '';
@@ -504,7 +504,7 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
     const proxiesForGrouping = finalProxyNames.map((name, index) => ({
         tag: name,
         name: name,
-        metadata: finalResults[index].clashProxy?.metadata || {},
+        metadata: (finalResults[index].clashProxy as Record<string, any> | undefined)?.metadata || {},
     }));
 
     // 生成策略组

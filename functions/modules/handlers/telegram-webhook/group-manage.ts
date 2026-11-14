@@ -9,6 +9,7 @@ import { createRequestCache, getCachedStorageAdapter, getCachedSubscriptions } f
 import { editTelegramMessage, sendTelegramMessage } from './telegram-api.ts';
 import { getUserNodes } from './user-access.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 节点分组选择面板：列出所有分组及数量，点击进入该分组列表。
  *
@@ -46,10 +47,10 @@ export async function handleGroupSelect(
     }
 
     // 构建分组按钮（每行 2 个）
-    const buttons = [];
+    const buttons: any[] = [];
     const entries = Array.from(groupCounts.entries()).sort((a, b) => b[1] - a[1]);
     for (let i = 0; i < entries.length; i += 2) {
-        const row = [];
+        const row: Array<{ text: string; callback_data: string }> = [];
         for (let j = i; j < Math.min(i + 2, entries.length); j++) {
             const [name, count] = entries[j];
             // callback_data 有 64 字节限制，长组名需要截断
@@ -117,7 +118,7 @@ export async function handleGroupManage(
         (ungrouped > 0 ? `，${ungrouped} 项未分组` : '') +
         '\n\n点击分组可重命名或删除：';
 
-    const buttons = [];
+    const buttons: any[] = [];
     Array.from(groupCounts.entries())
         .sort((a, b) => b[1] - a[1])
         .forEach(([name, count]) => {
@@ -265,8 +266,8 @@ export function parseTargetArgs(args) {
 
     // 支持逗号分隔的多个值
     const parts = arg.split(/[,，\s]+/).filter((p) => p);
-    const indices = [];
-    const ids = [];
+    const indices: number[] = [];
+    const ids: any[] = [];
 
     for (const part of parts) {
         const num = parseInt(part);

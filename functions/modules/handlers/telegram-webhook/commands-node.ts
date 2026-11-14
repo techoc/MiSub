@@ -10,6 +10,7 @@ import { parseTargetArgs } from './group-manage.ts';
 import { sendTelegramMessage } from './telegram-api.ts';
 import { getNodesWithMapping, getUserNodes } from './user-access.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 处理 /delete 命令
  */
@@ -38,7 +39,7 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
             return;
         }
 
-        let indicesToDelete = [];
+        let indicesToDelete: any[] = [];
 
         if (target.type === 'all') {
             indicesToDelete = indexMapping;
@@ -63,7 +64,7 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
         }
 
         // 收集要删除的 ID
-        const deletedIds = [];
+        const deletedIds: any[] = [];
         for (const idx of indicesToDelete) {
             if (allSubscriptions[idx]) {
                 deletedIds.push(allSubscriptions[idx].id);
@@ -72,7 +73,7 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
 
         // 删除节点（从后往前删除以保持索引正确）
         indicesToDelete.sort((a, b) => b - a);
-        const deletedNames = [];
+        const deletedNames: any[] = [];
         for (const idx of indicesToDelete) {
             deletedNames.push(allSubscriptions[idx].name);
             allSubscriptions.splice(idx, 1);
@@ -128,7 +129,7 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
         console.info(`[Telegram Push] User ${userId} deleted ${deletedNames.length} nodes`);
     } catch (error) {
         console.error('[Telegram Push] Delete command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 删除失败: ${error.message}`, env);
+        await sendTelegramMessage(chatId, `❌ 删除失败: ${(error as Error).message}`, env);
     }
 }
 
@@ -193,7 +194,7 @@ export async function handleToggleCommand(chatId, userId, args, env, enable) {
             return;
         }
 
-        const toggledNames = [];
+        const toggledNames: any[] = [];
         for (const idx of indicesToToggle) {
             allSubscriptions[idx].enabled = enable;
             toggledNames.push(allSubscriptions[idx].name);
@@ -213,7 +214,7 @@ export async function handleToggleCommand(chatId, userId, args, env, enable) {
         console.error(`[Telegram Push] Toggle command failed:`, error);
         await sendTelegramMessage(
             chatId,
-            `❌ ${enable ? '启用' : '禁用'}失败: ${error.message}`,
+            `❌ ${enable ? '启用' : '禁用'}失败: ${(error as Error).message}`,
             env
         );
     }
@@ -271,7 +272,7 @@ export async function handleSearchCommand(chatId, userId, args, env) {
         await sendTelegramMessage(chatId, message, env);
     } catch (error) {
         console.error('[Telegram Push] Search command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 搜索失败: ${error.message}`, env);
+        await sendTelegramMessage(chatId, `❌ 搜索失败: ${(error as Error).message}`, env);
     }
 }
 
@@ -357,7 +358,7 @@ export async function handleSubCommand(chatId, args, env, request, requestCache:
         }
     } catch (error) {
         console.error('[Telegram Push] Sub command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${escapeHtml(error.message)}`, env);
+        await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${escapeHtml((error as Error).message)}`, env);
     }
 }
 
@@ -403,7 +404,7 @@ export async function handleSubCommandSimple(chatId, env, requestCache: KvRecord
         await sendTelegramMessage(chatId, message, env);
     } catch (error) {
         console.error('[Telegram Push] Sub command simple failed:', error);
-        await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${escapeHtml(error.message)}`, env);
+        await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${escapeHtml((error as Error).message)}`, env);
     }
 }
 
@@ -461,7 +462,7 @@ export async function handleRenameCommand(chatId, userId, args, env) {
         );
     } catch (error) {
         console.error('[Telegram Push] Rename command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 重命名失败: ${escapeHtml(error.message)}`, env);
+        await sendTelegramMessage(chatId, `❌ 重命名失败: ${escapeHtml((error as Error).message)}`, env);
     }
 }
 
@@ -543,7 +544,7 @@ export async function handleInfoCommand(chatId, userId, args, env) {
         await sendTelegramMessage(chatId, message, env, { reply_markup: keyboard });
     } catch (error) {
         console.error('[Telegram Push] Info command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 获取详情失败: ${escapeHtml(error.message)}`, env);
+        await sendTelegramMessage(chatId, `❌ 获取详情失败: ${escapeHtml((error as Error).message)}`, env);
     }
 }
 
@@ -605,7 +606,7 @@ export async function handleCopyCommand(chatId, userId, args, env) {
         }
     } catch (error) {
         console.error('[Telegram Push] Copy command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 复制失败: ${escapeHtml(error.message)}`, env);
+        await sendTelegramMessage(chatId, `❌ 复制失败: ${escapeHtml((error as Error).message)}`, env);
     }
 }
 
@@ -671,6 +672,6 @@ export async function handleExportCommand(chatId, userId, args, env) {
         );
     } catch (error) {
         console.error('[Telegram Push] Export command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 导出失败: ${escapeHtml(error.message)}`, env);
+        await sendTelegramMessage(chatId, `❌ 导出失败: ${escapeHtml((error as Error).message)}`, env);
     }
 }

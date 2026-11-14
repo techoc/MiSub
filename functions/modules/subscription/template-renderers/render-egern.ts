@@ -16,7 +16,7 @@ function s(val) {
 
 function mapTransport(proxy) {
     const network = String(proxy.network || 'tcp').toLowerCase();
-    const transport = {};
+    const transport: Record<string, any> = {};
 
     const tls =
         proxy.tls || !!proxy['reality-opts']
@@ -62,7 +62,7 @@ function mapTransport(proxy) {
     }
 
     if (transport.tls && proxy['reality-opts']) {
-        transport.tls.reality = {
+        (transport.tls as Record<string, any>).reality = {
             public_key: s(
                 proxy['reality-opts']?.['public-key'] || proxy['reality-opts']?.publicKey
             ),
@@ -81,7 +81,7 @@ function mapProxy(proxy) {
     const uuid = s(proxy.uuid);
 
     if (type === 'trojan') {
-        const mapped = {
+        const mapped: Record<string, any> = {
             trojan: {
                 name,
                 server,
@@ -101,7 +101,7 @@ function mapProxy(proxy) {
                 path: s(wsOpts?.path || '/'),
             };
             const host = s(wsOpts?.headers?.Host || wsOpts?.host);
-            if (host) mapped.trojan.websocket.host = host;
+            if (host) (mapped.trojan.websocket as Record<string, any>).host = host;
         } else {
             const transport = mapTransport(proxy);
             if (transport) mapped.trojan.transport = transport;
@@ -110,7 +110,7 @@ function mapProxy(proxy) {
     }
 
     if (type === 'vless') {
-        const mapped = {
+        const mapped: Record<string, any> = {
             vless: {
                 name,
                 server,
@@ -127,7 +127,7 @@ function mapProxy(proxy) {
     }
 
     if (type === 'vmess') {
-        const mapped = {
+        const mapped: Record<string, any> = {
             vmess: {
                 name,
                 server,
@@ -142,7 +142,7 @@ function mapProxy(proxy) {
     }
 
     if (type === 'ss' || type === 'shadowsocks') {
-        const mapped = {
+        const mapped: Record<string, any> = {
             shadowsocks: {
                 name,
                 server,
@@ -179,7 +179,7 @@ function mapProxy(proxy) {
     }
 
     if (type === 'hysteria2' || type === 'hy2') {
-        const mapped = {
+        const mapped: Record<string, any> = {
             hysteria2: {
                 name,
                 server,
@@ -194,7 +194,7 @@ function mapProxy(proxy) {
     }
 
     if (type === 'tuic') {
-        const mapped = {
+        const mapped: Record<string, any> = {
             tuic: {
                 name,
                 server,
@@ -221,7 +221,7 @@ function mapProxy(proxy) {
     }
 
     if (type === 'anytls') {
-        const mapped = {
+        const mapped: Record<string, any> = {
             anytls: {
                 name,
                 server,

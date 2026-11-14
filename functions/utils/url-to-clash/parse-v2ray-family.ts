@@ -35,7 +35,7 @@ export function parseVlessUrl(url) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `VLESS-${server}`,
             type: 'vless',
             server,
@@ -51,7 +51,7 @@ export function parseVlessUrl(url) {
 
         // WebSocket 配置
         if (network === 'ws') {
-            const wsOpts = {};
+            const wsOpts: Record<string, any> = {};
             if (params.get('path')) wsOpts.path = params.get('path');
             if (params.get('host')) {
                 wsOpts.headers = { Host: params.get('host') };
@@ -63,7 +63,7 @@ export function parseVlessUrl(url) {
 
         // xHTTP 配置
         if (network === 'xhttp') {
-            const xhttpOpts = {};
+            const xhttpOpts: Record<string, any> = {};
 
             const path = params.get('xhttp-path') || params.get('path');
 
@@ -97,7 +97,7 @@ export function parseVlessUrl(url) {
                     // HTTP 头名大小写不敏感，小写 host 也要让位，避免同一头出现两份。
                     if (extraHeaders) {
                         const mergedHeaders = { ...extraHeaders };
-                        if (xhttpOpts.headers?.Host) {
+                        if ((xhttpOpts.headers as Record<string, any> | undefined)?.Host) {
                             for (const key of Object.keys(mergedHeaders)) {
                                 if (key.toLowerCase() === 'host') {
                                     delete mergedHeaders[key];
@@ -133,7 +133,7 @@ export function parseVlessUrl(url) {
 
         // HTTPUpgrade 配置
         if (network === 'httpupgrade') {
-            const httpupgradeOpts = {};
+            const httpupgradeOpts: Record<string, any> = {};
             if (params.get('path')) httpupgradeOpts.path = params.get('path');
             if (params.get('host')) httpupgradeOpts.host = params.get('host');
             if (Object.keys(httpupgradeOpts).length > 0) {
@@ -246,7 +246,7 @@ export function parseTrojanUrl(url) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `Trojan-${server}`,
             type: 'trojan',
             server,
@@ -262,7 +262,7 @@ export function parseTrojanUrl(url) {
 
         // WebSocket 配置
         if (network === 'ws') {
-            const wsOpts = {};
+            const wsOpts: Record<string, any> = {};
             if (params.get('path')) wsOpts.path = params.get('path');
             if (params.get('host')) {
                 wsOpts.headers = { Host: params.get('host') };
@@ -359,7 +359,7 @@ export function parseVmessUrl(url) {
         const jsonStr = new TextDecoder('utf-8').decode(bytes);
         const config = JSON.parse(jsonStr);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: config.ps || `VMess-${config.add}`,
             type: 'vmess',
             server: config.add || config.host || config.sni || '',
@@ -377,7 +377,7 @@ export function parseVmessUrl(url) {
 
         // WebSocket 配置
         if (network === 'ws') {
-            const wsOpts = {};
+            const wsOpts: Record<string, any> = {};
             if (config.path) wsOpts.path = config.path;
             if (config.host) {
                 wsOpts.headers = { Host: config.host };
@@ -399,7 +399,7 @@ export function parseVmessUrl(url) {
 
         // H2 (HTTP/2) 配置
         if (network === 'h2') {
-            const h2Opts = {};
+            const h2Opts: Record<string, any> = {};
             if (config.path) h2Opts.path = config.path;
             if (config.host) h2Opts.host = config.host.split(',').map((h) => h.trim());
             if (Object.keys(h2Opts).length > 0) {
@@ -420,7 +420,7 @@ export function parseVmessUrl(url) {
 
         // QUIC 配置
         if (network === 'quic') {
-            const quicOpts = {};
+            const quicOpts: Record<string, any> = {};
             if (config.type) quicOpts.header = { type: config.type };
             if (config.host) quicOpts.security = config.host;
             if (config.path) quicOpts.key = config.path;

@@ -90,7 +90,7 @@ function buildProxyLine(proxy) {
         return `${name} = hysteria2, ${server}, ${port}, ${extras.join(', ')}`;
     }
     if (type === 'tuic') {
-        const extras = [];
+        const extras: any[] = [];
         const sni = proxy.servername ?? proxy.sni;
         if (sni !== undefined) extras.push(`sni=${sni}`);
         if (proxy['congestion-control'])
@@ -131,7 +131,7 @@ function buildProxyLine(proxy) {
         return `${name} = wireguard, section-name=${sectionName}`;
     }
     if (type === 'http' || type === 'https' || type === 'socks5') {
-        const extras = [];
+        const extras: any[] = [];
         if (proxy.username) extras.push(`username=${proxy.username}`);
         if (proxy.password) extras.push(`password=${proxy.password}`);
         if (type === 'https') extras.push('tls=true');
@@ -213,7 +213,7 @@ function buildWireGuardSection(proxy) {
     }
 
     // Peer
-    const peerParts = [];
+    const peerParts: string[] = [];
 
     peerParts.push(`public-key = ${proxy['public-key']}`);
 

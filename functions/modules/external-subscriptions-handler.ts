@@ -14,6 +14,7 @@ import { isRemoteSubscription, toExternalSubscription } from './external-api-map
 import { handleNodeCountRequest } from './handlers/node-handler.ts';
 import { getProcessedUserAgent } from '../utils/format-utils.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 function nowIso() {
     return new Date().toISOString();
 }
@@ -43,7 +44,7 @@ async function getSubscriptionById(storageAdapter, id) {
 
 async function removeSubscriptionIdFromProfiles(storageAdapter, id) {
     const profiles = await storageAdapter.getAllProfiles();
-    const affected = [];
+    const affected: any[] = [];
     for (const profile of profiles) {
         const subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
         if (!subscriptions.includes(id)) continue;
@@ -112,8 +113,8 @@ export async function inspectRemoteSubscription(env, payload: Record<string, any
             effectiveUserAgent,
             fetchProxyUsed: runtime.fetchProxy || '',
             plusAsSpace: runtime.plusAsSpace,
-            nodeCount: Number(body.data.count) || 0,
-            userInfo: body.data.userInfo || null,
+            nodeCount: Number((body.data as Record<string, any>).count) || 0,
+            userInfo: (body.data as Record<string, any>).userInfo || null,
         };
     }
 
@@ -198,7 +199,7 @@ export async function handleExternalSubscriptionsRequest(request, env, selector:
         if (!targets.length)
             return createExternalError('subscription_not_found', 'Subscription not found', 404);
 
-        const results = [];
+        const results: any[] = [];
         for (const current of targets) {
             const inspection = await inspectRemoteSubscription(env, current);
             const updated = await persistSubscriptionRefresh(storageAdapter, current, inspection);

@@ -11,6 +11,7 @@ import {
     encodeArrayBufferToBase64,
 } from '../utils/node-cleaner.ts';
 
+import type { KvRecord } from '../../../types/models.ts';
 /**
  * 获取单个订阅的节点
  * @param {string} url - 订阅URL
@@ -155,16 +156,16 @@ export async function fetchSubscriptionNodes(
         };
     } catch (e) {
         if (shouldDebug) {
-            console.debug(`[DEBUG PREVIEW] Error: ${e.message}`);
+            console.debug(`[DEBUG PREVIEW] Error: ${(e as Error).message}`);
         }
-        const cachedResult = await fallbackToNodeCache(e.message, false);
+        const cachedResult = await fallbackToNodeCache((e as Error).message, false);
         if (cachedResult) return cachedResult;
         return {
             subscriptionName,
             url,
             success: false,
             nodes: [],
-            error: e.message,
+            error: (e as Error).message,
         };
     }
 }

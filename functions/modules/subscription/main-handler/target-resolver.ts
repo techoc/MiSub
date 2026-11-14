@@ -39,7 +39,7 @@ export async function resolveSubscriptionTargets({
     let subName = config.FileName;
     let isProfileExpired = false; // Moved declaration here
 
-    let currentProfile = null;
+    let currentProfile: any = null;
     let isExternalMode = false;
     let useBuiltin = true;
     let shouldSkipCertificateVerify = false;
@@ -103,7 +103,7 @@ export async function resolveSubscriptionTargets({
                 targetMisubs = [];
                 const relatedIds = [
                     ...(Array.isArray(profile.subscriptions)
-                        ? profile.subscriptions.map((item) =>
+                        ? (profile.subscriptions as Record<string, any>).map((item) =>
                               typeof item === 'object' ? item.id : item
                           )
                         : []),
@@ -130,7 +130,7 @@ export async function resolveSubscriptionTargets({
                             baseSub &&
                             baseSub.enabled &&
                             typeof baseSub.url === 'string' &&
-                            baseSub.url.startsWith('http')
+                            (baseSub.url as Record<string, any>).startsWith('http')
                         ) {
                             // 如果是对象，则合并覆盖配置（Profile 级别的设置优先级更高）
                             const sub = isObject ? { ...baseSub, ...item } : baseSub;
@@ -148,7 +148,7 @@ export async function resolveSubscriptionTargets({
                             node &&
                             node.enabled &&
                             typeof node.url === 'string' &&
-                            !node.url.startsWith('http')
+                            !(node.url as Record<string, any>).startsWith('http')
                         ) {
                             targetMisubs.push(node);
                         }
@@ -178,7 +178,7 @@ export async function resolveSubscriptionTargets({
                                 new Set([profile.id, profile.customId].filter(Boolean))
                             );
                             if (subResult.success && Array.isArray(subResult.nodes)) {
-                                subResult.nodes.forEach((node) => {
+                                (subResult.nodes as Record<string, any>).forEach((node) => {
                                     targetMisubs.push({
                                         id: `nested-${subProfileId}-${node.url}`,
                                         name: node.name,

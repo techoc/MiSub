@@ -81,18 +81,18 @@ export function buildTransformTemplateContext({
         regionGroups: JSON.stringify(normalizedRegionGroups, null, 2),
         regionGroupNames: normalizedRegionGroups.map((group) => group.name).join(', '),
         regionGroupCounts: normalizedRegionGroups
-            .map((group) => `${group.name}:${group.count ?? (group.tags?.length || 0)}`)
+            .map((group) => `${group.name}:${group.count ?? ((group.tags as Record<string, any> | undefined)?.length || 0)}`)
             .join(', '),
         regionGroupList: normalizedRegionGroups
-            .map((group) => `${group.name}(${group.count ?? (group.tags?.length || 0)})`)
+            .map((group) => `${group.name}(${group.count ?? ((group.tags as Record<string, any> | undefined)?.length || 0)})`)
             .join('\n'),
         protocolGroups: JSON.stringify(normalizedProtocolGroups, null, 2),
         protocolGroupNames: normalizedProtocolGroups.map((group) => group.name).join(', '),
         protocolGroupCounts: normalizedProtocolGroups
-            .map((group) => `${group.name}:${group.count ?? (group.lines?.length || 0)}`)
+            .map((group) => `${group.name}:${group.count ?? ((group.lines as Record<string, any> | undefined)?.length || 0)}`)
             .join(', '),
         protocolGroupList: normalizedProtocolGroups
-            .map((group) => `${group.name}(${group.count ?? (group.lines?.length || 0)})`)
+            .map((group) => `${group.name}(${group.count ?? ((group.lines as Record<string, any> | undefined)?.length || 0)})`)
             .join('\n'),
         primaryStrategyChain,
         regionStrategyChain: regionNames.join(', '),

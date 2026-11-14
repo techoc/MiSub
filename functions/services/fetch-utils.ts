@@ -54,7 +54,7 @@ export async function fetchWithRetry(url, init: Record<string, any> = {}, option
             // 指数退避策略: 1s, 2s, 4s...
             const delay = baseDelay * Math.pow(2, attempt);
             console.warn(
-                `[Fetch Retry] Attempt ${attempt + 1}/${maxRetries} failed for ${url}: ${error.message}. Retrying in ${delay / 1000}s...`
+                `[Fetch Retry] Attempt ${attempt + 1}/${maxRetries} failed for ${url}: ${(error as Error).message}. Retrying in ${delay / 1000}s...`
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
         }
@@ -69,7 +69,7 @@ export async function fetchWithRetry(url, init: Record<string, any> = {}, option
  * @returns {Function} - 包装函数 (task => Promise)
  */
 export function createConcurrencyLimiter(limit) {
-    const queue = [];
+    const queue: any[] = [];
     let active = 0;
 
     const runNext = () => {
@@ -149,7 +149,7 @@ export async function collectWithinTimeout(promises, timeoutMs) {
         return []; // 暂时返回空，因为下面逻辑太复杂，我们在替换时直接复用原有逻辑或者改进。
     } else {
         // 全都完成了
-        results = raceResult.filter((r) => r.status === 'fulfilled' && r.value).map((r) => r.value);
+        results = (raceResult as Record<string, any>).filter((r) => r.status === 'fulfilled' && r.value).map((r) => r.value);
     }
 
     return results;
@@ -164,7 +164,7 @@ export async function collectWithinTimeout(promises, timeoutMs) {
  * @returns {Promise<any[]>} - 在超时前所有成功 resolve 的结果数组
  */
 export async function robustCollect(taskFactories, timeoutMs) {
-    const results = [];
+    const results: any[] = [];
     const controller = new AbortController();
 
     // 超时中止
@@ -180,8 +180,8 @@ export async function robustCollect(taskFactories, timeoutMs) {
             }
         } catch (e) {
             // 被 controller.abort() 的 AbortError 和常规执行错误都会在这里被忽略
-            if (e.name !== 'AbortError') {
-                console.warn('[robustCollect] Task error:', e.message);
+            if ((e as Error).name !== 'AbortError') {
+                console.warn('[robustCollect] Task error:', (e as Error).message);
             }
         }
     });

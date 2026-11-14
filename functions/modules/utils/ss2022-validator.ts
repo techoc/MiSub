@@ -55,7 +55,7 @@ export function validateSS2022Node(nodeUrl) {
             }
             decoded = new TextDecoder('utf-8').decode(bytes);
         } catch (e) {
-            return { valid: true, warning: `无法解码 SS 节点: ${e.message}` };
+            return { valid: true, warning: `无法解码 SS 节点: ${(e as Error).message}` };
         }
 
         // 分离加密方式和密码
@@ -94,7 +94,7 @@ export function validateSS2022Node(nodeUrl) {
             // 对于 SS 2022,这是不符合规范的
             return {
                 valid: false,
-                error: `SS 2022 密码不是有效的 Base64: ${e.message}`,
+                error: `SS 2022 密码不是有效的 Base64: ${(e as Error).message}`,
                 details: {
                     cipher,
                     password: password.substring(0, 20) + '...',
@@ -106,7 +106,7 @@ export function validateSS2022Node(nodeUrl) {
         if (keyBytes !== expectedLength) {
             // 根据实际密钥长度推荐正确的加密方式
             let suggestion = '请联系节点提供商修正配置';
-            let suggestedCipher = null;
+            let suggestedCipher: any = null;
 
             for (const [cipherName, requiredLength] of Object.entries(SS2022_KEY_LENGTHS)) {
                 if (requiredLength === keyBytes) {
@@ -133,7 +133,7 @@ export function validateSS2022Node(nodeUrl) {
     } catch (e) {
         return {
             valid: true,
-            warning: `验证 SS 节点时出错: ${e.message}`,
+            warning: `验证 SS 节点时出错: ${(e as Error).message}`,
         };
     }
 }
@@ -191,7 +191,7 @@ export function fixSS2022Node(nodeUrl) {
         return {
             fixed: false,
             originalUrl: nodeUrl,
-            error: `修复失败: ${e.message}`,
+            error: `修复失败: ${(e as Error).message}`,
         };
     }
 }

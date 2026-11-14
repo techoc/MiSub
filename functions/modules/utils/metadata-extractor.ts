@@ -50,7 +50,7 @@ export function extractNodeMetadata(name) {
     const autoFlag = flag || getRegionEmoji(region);
 
     // 3. 提取技术标签 (Tags)
-    const tags = [];
+    const tags: any[] = [];
     let tMatch;
     TAG_REGEX.lastIndex = 0;
     while ((tMatch = TAG_REGEX.exec(name)) !== null) {

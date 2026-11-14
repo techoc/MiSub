@@ -242,7 +242,7 @@ export async function clearAllNodeCaches(storageAdapter, options: Record<string,
         let cleared = 0;
         let failed = 0;
         let skipped = 0;
-        let cursor = null;
+        let cursor: any = null;
         const preserveKeys = new Set(
             Array.isArray(options?.preserveKeys)
                 ? options.preserveKeys.filter(isSubscriptionNodeCacheKey)
@@ -257,7 +257,7 @@ export async function clearAllNodeCaches(storageAdapter, options: Record<string,
             // 判断存储适配器类型并正确调用
             if (storageAdapter.kv && typeof storageAdapter.kv.list === 'function') {
                 // 直接使用 KV namespace
-                const listOptions = { prefix: CACHE_CONFIG.KEY_PREFIX };
+                const listOptions: Record<string, any> = { prefix: CACHE_CONFIG.KEY_PREFIX };
                 if (cursor) {
                     listOptions.cursor = cursor;
                 }

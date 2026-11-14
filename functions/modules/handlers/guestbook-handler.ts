@@ -176,7 +176,7 @@ export async function handleGuestbookPost(request, env) {
         });
     } catch (e) {
         console.error('[Guestbook Error] Post:', e);
-        return createErrorResponse(e.status === 413 ? e.message : '提交留言失败', e.status || 500);
+        return createErrorResponse((e as Record<string, any>).status === 413 ? (e as Error).message : '提交留言失败', e.status || 500);
     }
 }
 
@@ -223,7 +223,7 @@ export async function handleGuestbookManageAction(request, env) {
         }
 
         let updatedMessage = messages[index];
-        let notificationMsg = null;
+        let notificationMsg: any = null;
 
         if (action === 'delete') {
             messages.splice(index, 1);
@@ -260,6 +260,6 @@ export async function handleGuestbookManageAction(request, env) {
         });
     } catch (e) {
         console.error('[Guestbook Manage Error] Action:', e);
-        return createErrorResponse(`操作失败: ${e.message}`, e.status || 500);
+        return createErrorResponse(`操作失败: ${(e as Error).message}`, (e as Record<string, any>).status || 500);
     }
 }

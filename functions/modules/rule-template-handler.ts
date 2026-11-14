@@ -36,12 +36,12 @@ function hasIniShape(content) {
 export function normalizeCustomRuleTemplates(input = []) {
     if (!Array.isArray(input)) return [];
     const seen = new Set();
-    const normalized = [];
+    const normalized: any[] = [];
 
     for (const item of input.slice(0, MAX_TEMPLATE_COUNT)) {
         if (!item || typeof item !== 'object') continue;
 
-        const content = typeof item.content === 'string' ? item.content.trim() : '';
+        const content = typeof item.content === 'string' ? (item.content as Record<string, any>).trim() : '';
         if (!content || content.length > MAX_TEMPLATE_CONTENT_LENGTH || !hasIniShape(content))
             continue;
 
@@ -140,7 +140,7 @@ export async function handleRuleTemplatesRequest(request, env) {
         return createJsonResponse(
             {
                 success: false,
-                message: `自定义规则模板操作失败: ${error.message || '服务器内部错误'}`,
+                message: `自定义规则模板操作失败: ${(error as Error).message || '服务器内部错误'}`,
             },
             500
         );

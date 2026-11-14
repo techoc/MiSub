@@ -117,8 +117,8 @@ export function applyFilterRules(validNodes, sub) {
     const dividerIndex = lines.findIndex((line) => line === '---');
     const hasDivider = dividerIndex !== -1;
 
-    let excludeLines = [];
-    let keepLines = [];
+    let excludeLines: any[] = [];
+    let keepLines: any[] = [];
 
     if (hasDivider) {
         lines.slice(0, dividerIndex).forEach((l) => {
@@ -161,7 +161,7 @@ export function applyFilterRules(validNodes, sub) {
 
 function buildRuleSet(lines, stripKeepPrefix = false) {
     const protocols = new Set();
-    const patterns = [];
+    const patterns: any[] = [];
 
     for (const rawLine of lines) {
         let line = rawLine.trim();
@@ -198,7 +198,7 @@ function buildSafeRegex(patterns) {
     try {
         return new RegExp(patterns.join('|'), 'i');
     } catch (e) {
-        console.warn('Invalid include/exclude regex, skipped:', e.message);
+        console.warn('Invalid include/exclude regex, skipped:', (e as Error).message);
         return null;
     }
 }
@@ -245,7 +245,7 @@ function filterNodes(nodes, rules, mode = 'exclude') {
 export function adaptLegacyTransform(config) {
     if (!config || !config.enabled) return [];
 
-    const ops = [];
+    const ops: any[] = [];
 
     // 1. 过滤器 (Filter)
     const filter = config.filter;

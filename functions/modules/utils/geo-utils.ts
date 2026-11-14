@@ -482,7 +482,7 @@ export function calculateRegionStats(nodes) {
     });
 
     // 添加百分比信息
-    for (const [region, count] of Object.entries(stats)) {
+    for (const [region, count] of Object.entries(stats) as [string, number][]) {
         stats[region] = {
             count,
             percentage: Math.round((count / total) * 100),

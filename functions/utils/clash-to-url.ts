@@ -66,7 +66,7 @@ export function convertClashProxyToUrl(proxy) {
             const userInfo = base64Encode(`${proxy.cipher}:${proxy.password}`);
             let url = `ss://${userInfo}@${uriServer}:${port}`;
             if (proxy.plugin) {
-                const params = [];
+                const params: any[] = [];
                 params.push(`plugin=${encodeURIComponent(proxy.plugin)}`);
                 const pluginOpts = proxy['plugin-opts'];
                 if (pluginOpts) {
@@ -140,7 +140,7 @@ export function convertClashProxyToUrl(proxy) {
         }
 
         if (type === 'trojan') {
-            const params = [];
+            const params: any[] = [];
             const network = proxy.network || 'tcp';
             if (network !== 'tcp') params.push(`type=${encodeURIComponent(network)}`);
             const wsOpts = proxy.wsOpts || proxy['ws-opts'];
@@ -269,7 +269,7 @@ export function convertClashProxyToUrl(proxy) {
         }
 
         if (type === 'hysteria2' || type === 'hy2' || type === 'hy') {
-            const params = [];
+            const params: any[] = [];
             const password = proxy.password || proxy.auth || '';
             if (proxy.obfs) params.push(`obfs=${encodeURIComponent(proxy.obfs)}`);
             if (proxy['obfs-password'])
@@ -296,7 +296,7 @@ export function convertClashProxyToUrl(proxy) {
         }
 
         if (type === 'hysteria') {
-            const params = [];
+            const params: any[] = [];
             const password = proxy.password || proxy.auth || '';
             if (proxy.protocol === 'udp') params.push('protocol=udp');
             if (proxy.sni !== undefined) params.push(`sni=${encodeURIComponent(proxy.sni)}`);
@@ -325,7 +325,7 @@ export function convertClashProxyToUrl(proxy) {
         }
 
         if (type === 'snell') {
-            const params = [];
+            const params: any[] = [];
             if (proxy.version) params.push(`version=${proxy.version}`);
             if (proxy.reuse !== undefined) params.push(`reuse=${proxy.reuse}`);
             if (proxy.tfo !== undefined) params.push(`tfo=${proxy.tfo}`);
@@ -347,7 +347,7 @@ export function convertClashProxyToUrl(proxy) {
                 username && password
                     ? `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`
                     : '';
-            const params = [];
+            const params: any[] = [];
             if (proxy.padding !== undefined) params.push(`padding=${proxy.padding}`);
             if (proxy['extra-headers'])
                 params.push(`extra-headers=${encodeURIComponent(proxy['extra-headers'])}`);
@@ -358,7 +358,7 @@ export function convertClashProxyToUrl(proxy) {
 
         if (type === 'anytls') {
             const password = proxy.password || '';
-            const params = [];
+            const params: any[] = [];
             if (proxy.sni !== undefined) params.push(`sni=${encodeURIComponent(proxy.sni)}`);
             if (proxy.alpn) {
                 const alpn = Array.isArray(proxy.alpn) ? proxy.alpn.join(',') : proxy.alpn;
@@ -383,7 +383,7 @@ export function convertClashProxyToUrl(proxy) {
             const auth = password
                 ? `${encodeURIComponent(uuid)}:${encodeURIComponent(password)}`
                 : encodeURIComponent(uuid);
-            const params = [];
+            const params: any[] = [];
             if (proxy.sni !== undefined) params.push(`sni=${encodeURIComponent(proxy.sni)}`);
             if (proxy.alpn) {
                 const alpn = Array.isArray(proxy.alpn) ? proxy.alpn.join(',') : proxy.alpn;
@@ -442,7 +442,7 @@ export function convertClashProxyToUrl(proxy) {
             //     params.set('address', addr);
             // }
             // IPv6 Support
-            const addresses = [];
+            const addresses: any[] = [];
             const ipv4 = proxy.ip || proxy['local-address'];
             if (ipv4) {
                 if (Array.isArray(ipv4)) {

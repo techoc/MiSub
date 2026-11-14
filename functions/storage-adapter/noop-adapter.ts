@@ -25,4 +25,13 @@ export class NoopStorageAdapter {
     async getAllProfiles() {
         return [];
     }
+    // 批量写接口与 put() 语义保持一致：无存储时视为成功、不落盘。
+    // （telegram 回调流程会调用 putAll*；此前缺失会让该路径抛 TypeError，
+    //  put() 一直是静默成功的，对齐之。）
+    async putAllSubscriptions() {
+        return true;
+    }
+    async putAllProfiles() {
+        return true;
+    }
 }

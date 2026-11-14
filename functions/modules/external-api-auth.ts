@@ -1,5 +1,6 @@
 import { createExternalError, getExternalApiSettings } from './external-api-utils.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 export async function authenticateExternalApiRequest(request, env, storageAdapter: KvRecord | null = null) {
     const settings = await getExternalApiSettings(env, storageAdapter);
     if (settings.enabled !== true) {

@@ -53,7 +53,7 @@ export async function handleParseSubscription(request, env) {
         return createJsonResponse(
             {
                 success: false,
-                error: `解析失败: ${error.message}`,
+                error: `解析失败: ${(error as Error).message}`,
             },
             500
         );

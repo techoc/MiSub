@@ -23,7 +23,7 @@ for (const method of CONSOLE_METHODS) {
     originalConsole[method] = console[method]?.bind(console);
 }
 
-let appliedLevel = null;
+let appliedLevel: any = null;
 
 function normalizeLevel(value) {
     const level = String(value ?? '')

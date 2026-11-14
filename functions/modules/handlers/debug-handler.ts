@@ -77,11 +77,11 @@ export async function handleDebugSubscriptionRequest(request, env) {
                 userAgent: userAgent,
             },
             subscriptionInfo: {
-                totalSubscriptions: nodeResult.subscriptions?.length || 0,
+                totalSubscriptions: (nodeResult.subscriptions as Record<string, any> | undefined)?.length || 0,
                 successfulSubscriptions:
-                    nodeResult.subscriptions?.filter((s) => s.success).length || 0,
+                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter((s) => s.success).length || 0,
                 failedSubscriptions:
-                    nodeResult.subscriptions?.filter((s) => !s.success).length || 0,
+                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter((s) => !s.success).length || 0,
             },
             nodeInfo: {
                 totalNodes: nodeResult.totalCount || 0,
@@ -89,7 +89,7 @@ export async function handleDebugSubscriptionRequest(request, env) {
                 regions: nodeResult.stats?.regions || {},
             },
             detailedSubscriptions:
-                nodeResult.subscriptions?.map((sub) => ({
+                (nodeResult.subscriptions as Record<string, any> | undefined)?.map((sub) => ({
                     name: sub.subscriptionName,
                     url: redactUrl(sub.url),
                     success: sub.success,
@@ -114,8 +114,8 @@ export async function handleDebugSubscriptionRequest(request, env) {
     } catch (e) {
         return createJsonResponse(
             {
-                error: `调试失败: ${e.message}`,
-                stack: e.stack,
+                error: `调试失败: ${(e as Error).message}`,
+                stack: (e as Error).stack,
             },
             500
         );
@@ -187,7 +187,7 @@ export async function handleSystemInfoRequest(request, env) {
             systemInfo,
         });
     } catch (e) {
-        return createErrorResponse(`获取系统信息失败: ${e.message}`, 500);
+        return createErrorResponse(`获取系统信息失败: ${(e as Error).message}`, 500);
     }
 }
 
@@ -260,7 +260,7 @@ export async function handleStorageTestRequest(request, env) {
     } catch (e) {
         return createJsonResponse(
             {
-                error: `存储测试失败: ${e.message}`,
+                error: `存储测试失败: ${(e as Error).message}`,
                 storageType: await StorageFactory.getStorageType(env),
             },
             500
@@ -291,7 +291,7 @@ export async function handleExportDataRequest(request, env) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const exportData = {
+        const exportData: Record<string, any> = {
             exportInfo: {
                 timestamp: new Date().toISOString(),
                 version: '2.0.0',
@@ -322,13 +322,13 @@ export async function handleExportDataRequest(request, env) {
             exportData,
             metadata: {
                 size: exportSize,
-                subscriptionsCount: exportData.data.subscriptions?.length || 0,
-                profilesCount: exportData.data.profiles?.length || 0,
+                subscriptionsCount: (exportData.data.subscriptions as Record<string, any> | undefined)?.length || 0,
+                profilesCount: (exportData.data.profiles as Record<string, any> | undefined)?.length || 0,
                 settingsCount: Object.keys(exportData.data.settings || {}).length,
             },
         });
     } catch (e) {
-        return createErrorResponse(`数据导出失败: ${e.message}`, 500);
+        return createErrorResponse(`数据导出失败: ${(e as Error).message}`, 500);
     }
 }
 
@@ -380,7 +380,7 @@ export async function handlePreviewContentRequest(request, env) {
         // 检测内容类型
         const isBase64 = /^[A-Za-z0-9+/=]+$/s.test(rawContent.replace(/\s/g, ''));
         let decodedContent = rawContent;
-        let contentInfo = {
+        let contentInfo: Record<string, any> = {
             originalLength: contentLength,
             isBase64,
             contentType: 'unknown',
@@ -396,7 +396,7 @@ export async function handlePreviewContentRequest(request, env) {
                 contentInfo.decodedLength = decodedContent.length;
                 contentInfo.decodeSuccess = true;
             } catch (e) {
-                contentInfo.decodeError = e.message;
+                contentInfo.decodeError = (e as Error).message;
                 contentInfo.decodeSuccess = false;
             }
         }
@@ -429,7 +429,7 @@ export async function handlePreviewContentRequest(request, env) {
             fullContent: request.fullExport ? decodedContent : null,
         });
     } catch (e) {
-        return createErrorResponse(`内容预览失败: ${e.message}`, e.status || 500);
+        return createErrorResponse(`内容预览失败: ${(e as Error).message}`, (e as Record<string, any>).status || 500);
     }
 }
 
@@ -462,6 +462,6 @@ export async function handleTestNotificationRequest(request, env) {
             );
         }
     } catch (e) {
-        return createErrorResponse(e.message, e.status || 500);
+        return createErrorResponse((e as Error).message, (e as Record<string, any>).status || 500);
     }
 }

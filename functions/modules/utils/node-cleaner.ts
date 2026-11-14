@@ -167,7 +167,7 @@ export function encodeArrayBufferToBase64(buffer) {
  */
 export function buildRuleSet(lines, stripKeepPrefix = false) {
     const protocols = new Set();
-    const patterns = [];
+    const patterns: any[] = [];
 
     const lineArray = Array.isArray(lines)
         ? lines
@@ -210,7 +210,7 @@ export function buildSafeRegex(patterns) {
     try {
         return new RegExp(patterns.join('|'), 'i');
     } catch (e) {
-        console.warn('Invalid include/exclude regex, skipped:', e.message);
+        console.warn('Invalid include/exclude regex, skipped:', (e as Error).message);
         return null;
     }
 }
@@ -223,8 +223,8 @@ export function parseFilterRuleText(ruleText) {
               .map((line) => line.trim())
               .filter(Boolean);
 
-    const includeLines = [];
-    const excludeLines = [];
+    const includeLines: string[] = [];
+    const excludeLines: string[] = [];
     let afterDivider = false;
 
     for (const line of lines) {

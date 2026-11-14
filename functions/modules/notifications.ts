@@ -135,7 +135,7 @@ export async function handleCronTrigger(env) {
     let changesMade = false;
     let updatedCount = 0;
     let failedCount = 0;
-    const failedSubscriptions = [];
+    const failedSubscriptions: any[] = [];
 
     async function processSubscription(sub) {
         try {
@@ -168,8 +168,8 @@ export async function handleCronTrigger(env) {
             let hasTrafficUpdate = false;
             let hasNodeCountUpdate = false;
 
-            if (trafficResult.status === 'fulfilled' && trafficResult.value.ok) {
-                const userInfoHeader = trafficResult.value.headers.get('subscription-userinfo');
+            if (trafficResult.status === 'fulfilled' && (trafficResult as Record<string, any>).value.ok) {
+                const userInfoHeader = (trafficResult as Record<string, any>).value.headers.get('subscription-userinfo');
                 if (userInfoHeader) {
                     const info = {};
                     userInfoHeader.split(';').forEach((part) => {
@@ -185,8 +185,8 @@ export async function handleCronTrigger(env) {
                 }
             }
 
-            if (nodeCountResult.status === 'fulfilled' && nodeCountResult.value.ok) {
-                const text = await nodeCountResult.value.text();
+            if (nodeCountResult.status === 'fulfilled' && (nodeCountResult as Record<string, any>).value.ok) {
+                const text = await (nodeCountResult as Record<string, any>).value.text();
                 let decoded = '';
                 try {
                     decoded = atob(text.replace(/\s/g, ''));
@@ -230,13 +230,13 @@ export async function handleCronTrigger(env) {
             return {
                 name: sub.name,
                 success: false,
-                error: e.message,
+                error: (e as Error).message,
             };
         }
     }
 
     async function runWithConcurrency(items, concurrency, fn) {
-        const results = [];
+        const results: any[] = [];
         const executing = new Set();
         for (const item of items) {
             const promise = fn(item).then((result) => {
@@ -283,7 +283,7 @@ export async function handleCronTrigger(env) {
 
     console.info(`[Cron] Completed in ${duration}ms:`, summary.summary);
 
-    const nodeCountChanges = [];
+    const nodeCountChanges: any[] = [];
     for (const sub of allSubs) {
         if (sub.nodeCountChange) {
             nodeCountChanges.push({
@@ -335,7 +335,7 @@ export async function handleCronTrigger(env) {
         if (failedSubscriptions.length > 0) {
             updateMessage += `\n❌ <b>失败详情:</b>\n`;
             failedSubscriptions.slice(0, 5).forEach((f) => {
-                const errorShort = f.error.length > 30 ? f.error.substring(0, 30) + '...' : f.error;
+                const errorShort = (f.error as Record<string, any>).length > 30 ? f.error.substring(0, 30) + '...' : f.error;
                 updateMessage += `• ${tgEscape(f.name)}: <code>${tgEscape(errorShort)}</code>\n`;
             });
         }

@@ -40,7 +40,7 @@ function parseIpCnHtml(html) {
     const descriptionParts = splitIpCnLocation(description);
 
     if (tableParts.length > 0) {
-        const result = {
+        const result: Record<string, any> = {
             country: tableParts[0],
             city: tableParts.slice(1).join(' '),
         };
@@ -156,7 +156,7 @@ async function fetchIpGeolocation(clientIp) {
     )
         return null;
 
-    let result = {};
+    let result: Record<string, any> = {};
     for (const provider of IP_GEOLOCATION_PROVIDERS) {
         if (provider.supports && !provider.supports(clientIp)) continue;
         try {
@@ -331,7 +331,7 @@ export async function debugTgNotification(settings, message) {
     } catch (error) {
         return {
             success: false,
-            error: `Network/Fetch Error: ${error.message}`,
+            error: `Network/Fetch Error: ${(error as Error).message}`,
         };
     }
 }

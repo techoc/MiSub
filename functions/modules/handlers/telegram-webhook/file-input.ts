@@ -9,6 +9,7 @@ import { extractSubscriptionUrls } from './message-text.ts';
 import { handleNodeInput } from './node-input.ts';
 import { sendTelegramMessage } from './telegram-api.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 /** Telegram 单文件下载大小上限（字节），防止大文件拖垮 Worker */
 const TG_MAX_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -41,13 +42,13 @@ async function downloadTelegramFile(message, config) {
         `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(doc.file_id)}`
     );
     const fileData = await fileRes.json();
-    if (!fileData?.ok || !fileData.result?.file_path) {
+    if (!fileData?.ok || !(fileData.result as Record<string, any> | undefined)?.file_path) {
         throw new Error('获取文件路径失败（文件可能已过期）');
     }
 
     // 2. 下载正文
     const contentRes = await fetch(
-        `https://api.telegram.org/file/bot${token}/${fileData.result.file_path}`
+        `https://api.telegram.org/file/bot${token}/${(fileData.result as Record<string, any>).file_path}`
     );
     if (!contentRes.ok) {
         throw new Error(`下载文件失败（HTTP ${contentRes.status}）`);
@@ -56,7 +57,7 @@ async function downloadTelegramFile(message, config) {
     const text = await contentRes.text();
     return {
         text,
-        fileName: doc.file_name || fileData.result.file_path.split('/').pop() || 'file',
+        fileName: doc.file_name || (fileData.result as Record<string, any>).file_path.split('/').pop() || 'file',
     };
 }
 
@@ -129,7 +130,7 @@ export async function handleFileInput(chatId, message, userId, config, env, requ
         return createJsonResponse({ ok: true });
     } catch (error) {
         console.error('[Telegram Push] File handling error:', error);
-        await sendTelegramMessage(chatId, `❌ 处理文件失败：${error.message}`, env);
+        await sendTelegramMessage(chatId, `❌ 处理文件失败：${(error as Error).message}`, env);
         return createJsonResponse({ ok: true });
     }
 }

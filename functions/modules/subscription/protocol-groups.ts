@@ -10,7 +10,7 @@ export const PROTOCOL_GROUP_PATTERNS = [
 ];
 
 export function groupNodeLinesByProtocol(nodeLines = []) {
-    const grouped = [];
+    const grouped: any[] = [];
     for (const { name, pattern } of PROTOCOL_GROUP_PATTERNS) {
         const matched = nodeLines.filter(({ line }) => pattern.test(line));
         if (matched.length > 0) {

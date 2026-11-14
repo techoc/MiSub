@@ -86,7 +86,7 @@ function clashProxyToLoonResult(proxy) {
     const server = proxy.server;
     const port = proxy.port;
 
-    const parts = [];
+    const parts: any[] = [];
 
     if (type === 'ss' || type === 'shadowsocks') {
         parts.push(`${name} = Shadowsocks`);
@@ -305,9 +305,9 @@ export function generateBuiltinLoonConfig(nodeList, options: Record<string, any>
         .map((line) => line.trim())
         .filter((line) => line && !line.startsWith('#'));
 
-    const proxyLines = [];
-    const proxyNames = [];
-    const proxiesWithMetadata = [];
+    const proxyLines: string[] = [];
+    const proxyNames: any[] = [];
+    const proxiesWithMetadata: any[] = [];
     const usedNames = new Map();
 
     // 转换为 Clash 代理对象
@@ -333,7 +333,7 @@ export function generateBuiltinLoonConfig(nodeList, options: Record<string, any>
         return `[Proxy]\nDIRECT = direct\n`;
     }
 
-    const sections = [];
+    const sections: string[] = [];
     if (managedConfigUrl) {
         sections.push(`#!MANAGED-CONFIG ${managedConfigUrl} interval=${interval} strict=false`);
     }

@@ -15,7 +15,7 @@ export class KVStorageAdapter {
 
     async get(key) {
         try {
-            const raw = await this.kv.get(key);
+            const raw = await (this.kv as Record<string, any>).get(key);
             if (raw === null || raw === undefined) return null;
             try {
                 return JSON.parse(raw);
@@ -31,7 +31,7 @@ export class KVStorageAdapter {
     async put(key, value) {
         try {
             const data = typeof value === 'string' ? value : JSON.stringify(value);
-            await this.kv.put(key, data);
+            await (this.kv as Record<string, any>).put(key, data);
             return true;
         } catch (error) {
             console.error(`[KV] Failed to put key ${key}:`, error);
@@ -41,7 +41,7 @@ export class KVStorageAdapter {
 
     async delete(key) {
         try {
-            await this.kv.delete(key);
+            await (this.kv as Record<string, any>).delete(key);
             return true;
         } catch (error) {
             console.error(`[KV] Failed to delete key ${key}:`, error);
@@ -51,7 +51,7 @@ export class KVStorageAdapter {
 
     async list(prefix) {
         try {
-            const result = await this.kv.list({ prefix });
+            const result = await (this.kv as Record<string, any>).list({ prefix });
             return result.keys || [];
         } catch (error) {
             console.error(`[KV] Failed to list keys with prefix ${prefix}:`, error);

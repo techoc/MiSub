@@ -3,6 +3,7 @@
  * 处理各种API请求
  */
 
+import type { KvRecord } from '../../types/models.ts';
 import { StorageFactory, SettingsCache, STORAGE_TYPES } from '../storage-adapter.ts';
 import {
     getCookieSecret,
@@ -150,8 +151,8 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
     const currentMap = new Map(currentItems.map((item) => [item.id, item]));
     const finalMap = new Map(finalItems.map((item) => [item.id, item]));
 
-    const puts = [];
-    const deletes = [];
+    const puts: Promise<boolean | unknown>[] = [];
+    const deletes: Promise<boolean | unknown>[] = [];
 
     for (const item of finalItems) {
         const existing = currentMap.get(item.id);
@@ -219,23 +220,26 @@ export async function handleDataRequest(env, context: PagesEventContext | null =
             isDefaultPassword: await isUsingDefaultPassword(env),
         };
         try {
-            const taskContext = context || { env };
+            const taskContext: PagesEventContext | { env: Env; waitUntil?: PagesEventContext['waitUntil'] } = context || { env };
             const runPromise = maybeRunScheduledTasks(taskContext, { source: 'admin-api' });
             if (typeof taskContext.waitUntil !== 'function') {
-                runPromise.catch((error) =>
-                    console.warn('[ScheduledTasks] lazy check failed:', error?.message || error)
+                runPromise.catch((error: unknown) =>
+                    console.warn(
+                        '[ScheduledTasks] lazy check failed:',
+                        error instanceof Error ? error.message : error
+                    )
                 );
             }
         } catch (taskError) {
             console.warn(
                 '[ScheduledTasks] lazy check init failed:',
-                taskError?.message || taskError
+                taskError instanceof Error ? taskError.message : taskError
             );
         }
         return createJsonResponse({ misubs, profiles, ruleTemplates, config });
     } catch (e) {
         console.error('[API Error /data] Failed to read from storage', {
-            error: e?.message,
+            error: e instanceof Error ? e.message : e,
             storageType,
             hasKv: !!StorageFactory.resolveKV(env),
             hasD1: !!env?.MISUB_DB,
@@ -272,11 +276,11 @@ export async function handleMisubsSave(request, env) {
                 {
                     success: false,
                     message:
-                        parseError.status === 413
-                            ? parseError.message
+                        (parseError as { status?: number }).status === 413
+                            ? (parseError as Error).message
                             : '请求数据格式错误，请检查数据格式',
                 },
-                parseError.status || 400
+                (parseError as { status?: number }).status || 400
             );
         }
 
@@ -353,7 +357,7 @@ export async function handleMisubsSave(request, env) {
 
             // [Fix] Sync sortIndex back to diff for correct row-level persistence
             if (diff?.profiles) {
-                const profileMap = new Map(finalProfiles.map((p) => [p.id, p]));
+                const profileMap = new Map<string, KvRecord>(finalProfiles.map((p) => [p.id, p]));
                 if (diff.profiles.added)
                     diff.profiles.added = diff.profiles.added.map((p) => ({
                         ...p,
@@ -375,7 +379,7 @@ export async function handleMisubsSave(request, env) {
 
             // [Fix] Sync sortIndex back to diff for correct row-level persistence
             if (diff?.subscriptions) {
-                const subMap = new Map(finalMisubs.map((s) => [s.id, s]));
+                const subMap = new Map<string, KvRecord>(finalMisubs.map((s) => [s.id, s]));
                 if (diff.subscriptions.added)
                     diff.subscriptions.added = diff.subscriptions.added.map((s) => ({
                         ...s,
@@ -434,7 +438,7 @@ export async function handleMisubsSave(request, env) {
                         : false,
                 ]);
 
-                const saveTasks = [];
+                const saveTasks: Promise<boolean>[] = [];
                 if (!subsHandled) saveTasks.push(storageAdapter.put(KV_KEY_SUBS, finalMisubs));
                 if (!profilesHandled)
                     saveTasks.push(storageAdapter.put(KV_KEY_PROFILES, finalProfiles));
@@ -447,7 +451,7 @@ export async function handleMisubsSave(request, env) {
                     syncCollectionRowLevel(storageAdapter, 'profiles', finalProfiles),
                 ]);
 
-                const saveTasks = [];
+                const saveTasks: Promise<boolean>[] = [];
                 if (!subsHandled) saveTasks.push(storageAdapter.put(KV_KEY_SUBS, finalMisubs));
                 if (!profilesHandled)
                     saveTasks.push(storageAdapter.put(KV_KEY_PROFILES, finalProfiles));
@@ -460,7 +464,7 @@ export async function handleMisubsSave(request, env) {
             return createJsonResponse(
                 {
                     success: false,
-                    message: `数据保存失败: ${storageError.message || '存储服务暂时不可用，请稍后重试'}`,
+                    message: `数据保存失败: ${(storageError as Error).message || '存储服务暂时不可用，请稍后重试'}`,
                 },
                 500
             );
@@ -477,7 +481,7 @@ export async function handleMisubsSave(request, env) {
             );
         } catch (cacheError) {
             // 缓存清除失败不影响保存结果
-            console.warn('[API] Failed to clear node caches:', cacheError.message);
+            console.warn('[API] Failed to clear node caches:', (cacheError as Error).message);
         }
 
         // 步骤7: 返回保存后的数据，确保前端能更新状态
@@ -494,7 +498,7 @@ export async function handleMisubsSave(request, env) {
         return createJsonResponse(
             {
                 success: false,
-                message: `保存失败: ${e.message || '服务器内部错误，请稍后重试'}`,
+                message: `保存失败: ${(e as Error).message || '服务器内部错误，请稍后重试'}`,
             },
             500
         );
@@ -646,13 +650,19 @@ export async function handleSettingsSave(request, env) {
             const d1Adapter = StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
             await d1Adapter.put(KV_KEY_SETTINGS, finalSettings);
         } catch (syncError) {
-            console.warn('[API] Failed to sync settings to D1:', syncError?.message || syncError);
+            console.warn(
+                '[API] Failed to sync settings to D1:',
+                syncError instanceof Error ? syncError.message : syncError
+            );
         }
         try {
             const kvAdapter = StorageFactory.createAdapter(env, STORAGE_TYPES.KV);
             await kvAdapter.put(KV_KEY_SETTINGS, finalSettings);
         } catch (syncError) {
-            console.warn('[API] Failed to sync settings to KV:', syncError?.message || syncError);
+            console.warn(
+                '[API] Failed to sync settings to KV:',
+                syncError instanceof Error ? syncError.message : syncError
+            );
         }
         SettingsCache.clear();
 
@@ -671,7 +681,7 @@ export async function handleSettingsSave(request, env) {
             try {
                 await clearAllNodeCaches(storageAdapter);
             } catch (cacheError) {
-                console.warn('[API] Failed to clear node caches:', cacheError.message);
+                console.warn('[API] Failed to clear node caches:', (cacheError as Error).message);
             }
 
             const message = `⚙️ *MiSub 设置更新* ⚙️\n\n您的 MiSub 应用设置已成功更新。`;
@@ -702,7 +712,8 @@ export async function handleSettingsReset(env) {
 
         // 如果存在双存储配置，尝试同时清理另一端
         try {
-            if (storageAdapter.type === STORAGE_TYPES.D1) {
+            // noop 适配器没有 type 字段(保持既有运行时行为);此处仅做类型收窄
+            if ((storageAdapter as { type?: string }).type === STORAGE_TYPES.D1) {
                 const kvNs = StorageFactory.resolveKV(env);
                 if (kvNs) await kvNs.delete(KV_KEY_SETTINGS);
             } else if (env.MISUB_DB) {
@@ -710,7 +721,7 @@ export async function handleSettingsReset(env) {
                 await d1Adapter.delete(KV_KEY_SETTINGS);
             }
         } catch (syncError) {
-            console.warn('[API Reset] Dual storage sync cleanup failed:', syncError.message);
+            console.warn('[API Reset] Dual storage sync cleanup failed:', (syncError as Error).message);
         }
 
         // 清除内存缓存

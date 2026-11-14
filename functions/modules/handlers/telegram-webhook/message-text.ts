@@ -53,7 +53,7 @@ export function extractNodeUrls(text) {
         'socks5://',
         'socks5-tls://',
     ];
-    const urls = [];
+    const urls: any[] = [];
     const lines = text.split('\n');
 
     for (const line of lines) {
@@ -82,7 +82,7 @@ export function extractNodeUrls(text) {
 export function extractSubscriptionUrls(text) {
     const matches = String(text || '').match(/https?:\/\/[^\s<>"'，。、；：！？）】]+/gi) || [];
     const seen = new Set();
-    const urls = [];
+    const urls: any[] = [];
     for (const raw of matches) {
         // 去掉尾部常见的标点残留
         const url = raw.replace(/[.,;:!?]+$/, '');

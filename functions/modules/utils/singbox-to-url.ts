@@ -23,7 +23,7 @@ function b64url(input) {
 
 function tlsParams(outbound) {
     const tls = outbound.tls || {};
-    const params = [];
+    const params: any[] = [];
     if (tls.enabled) {
         if (tls.server_name) params.push(['sni', tls.server_name]);
         if (tls.insecure) params.push(['allowInsecure', '1']);

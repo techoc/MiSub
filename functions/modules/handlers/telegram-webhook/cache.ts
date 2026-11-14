@@ -6,6 +6,7 @@
 import { StorageFactory } from '../../../storage-adapter.ts';
 import { KV_KEY_SETTINGS } from '../../config.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 // ==================== 存储与配置 ====================
 
 /**

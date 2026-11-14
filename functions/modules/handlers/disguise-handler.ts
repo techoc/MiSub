@@ -3,6 +3,7 @@ import { KV_KEY_SETTINGS } from '../config.ts';
 import { createDisguiseResponse } from '../disguise-page.ts';
 import { authMiddleware } from '../auth-middleware.ts';
 
+import type { KvRecord } from '../../../types/models.ts';
 function normalizeLoginPath(customLoginPath) {
     if (typeof customLoginPath !== 'string') return '/login';
     const normalized = customLoginPath.trim().replace(/^\/+/, '');

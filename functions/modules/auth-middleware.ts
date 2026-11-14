@@ -14,6 +14,7 @@ import {
 } from './utils.ts';
 import { StorageFactory } from '../storage-adapter.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 function normalizeSecret(value) {
     return String(value ?? '')
         .replace(/\uFEFF/g, '')
@@ -348,7 +349,7 @@ export async function handleLogin(request, env) {
             const token = await createSignedToken(secret, String(Date.now()));
             const isSecure = request.url.startsWith('https');
             const cookieString = `${COOKIE_NAME}=${token}; Path=/; HttpOnly; ${isSecure ? 'Secure;' : ''} SameSite=Lax; Max-Age=${SESSION_DURATION / 1000}`;
-            const responseBody = { success: true };
+            const responseBody: Record<string, any> = { success: true };
             if (await isUsingDefaultAdminPassword(env)) {
                 responseBody.securityWarning = {
                     type: 'default_admin_password',

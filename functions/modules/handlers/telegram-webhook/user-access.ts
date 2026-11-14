@@ -139,8 +139,8 @@ export async function getNodesWithMapping(userId, env) {
     const config = await getTelegramPushConfig(env);
     const permission = checkUserPermission(userId, config);
 
-    const userNodes = [];
-    const indexMapping = []; // userIndex -> allIndex
+    const userNodes: any[] = [];
+    const indexMapping: any[] = []; // userIndex -> allIndex
 
     allSubscriptions.forEach((sub, allIndex) => {
         if (permission.allowed || (sub.source === 'telegram' && sub.telegram_user_id === userId)) {

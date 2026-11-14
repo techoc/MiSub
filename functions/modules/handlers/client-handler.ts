@@ -404,6 +404,6 @@ export async function handleClientRequest(request, env) {
                 503
             );
         }
-        return createErrorResponse(`Operation failed: ${e.message}`, 500);
+        return createErrorResponse(`Operation failed: ${(e as Error).message}`, 500);
     }
 }

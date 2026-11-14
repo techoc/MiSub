@@ -25,7 +25,7 @@ function buildProxyLine(proxy) {
         return `${name} = trojan, ${server}, ${port}, ${extras.join(', ')}`;
     }
     if (type === 'ss' || type === 'shadowsocks') {
-        const extras = [];
+        const extras: any[] = [];
         const plugin = proxy.plugin || '';
         const opts = proxy['plugin-opts'] || proxy.pluginOpts || {};
         if (plugin === 'obfs-local' || proxy.obfs) {
@@ -47,7 +47,7 @@ function buildProxyLine(proxy) {
         const cipher = proxy.cipher || 'auto';
         const uuid = `"${proxy.uuid || ''}"`;
         const alterId = proxy.alterId || 0;
-        const extras = [];
+        const extras: any[] = [];
 
         if (proxy.tls || sni !== undefined) extras.push('over-tls=true');
         if (proxy.network === 'ws') {
@@ -144,7 +144,7 @@ function buildProxyLine(proxy) {
         if (!proxy['private-key'] || !proxy['public-key']) {
             return null;
         }
-        const extras = [];
+        const extras: any[] = [];
         // IPv4
         if (proxy.ip) {
             const ipv4 = Array.isArray(proxy.ip)
@@ -190,7 +190,7 @@ function buildProxyLine(proxy) {
         }
 
         // Peer
-        const peer = [];
+        const peer: any[] = [];
 
         peer.push(`public-key="${proxy['public-key']}"`);
 

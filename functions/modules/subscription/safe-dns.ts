@@ -51,7 +51,7 @@ function parseOverride(raw) {
     try {
         const parsed = yaml.load(raw.trim());
         if (!isObject(parsed)) return {};
-        return isObject(parsed.dns) ? parsed.dns : parsed;
+        return isObject((parsed as Record<string, any>).dns) ? parsed.dns : parsed;
     } catch {
         return {};
     }
@@ -351,7 +351,7 @@ function parseSingboxResolver(value, tag, detour) {
     const type = parsed.protocol.slice(0, -1);
     const server = parsed.hostname.replace(/^\[|\]$/g, '');
     const serverPort = Number(parsed.port) || (type === 'https' ? 443 : type === 'tls' ? 853 : 53);
-    const result = { tag, type, server, server_port: serverPort, detour };
+    const result: Record<string, any> = { tag, type, server, server_port: serverPort, detour };
     if (type === 'https') result.path = parsed.pathname || '/dns-query';
     if (type === 'tls') result.tls = { enabled: true, server_name: server };
     return result;

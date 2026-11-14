@@ -73,6 +73,7 @@ import { normalizeSubconverterBackend } from './subscription/main-handler.ts';
 import { maybeRunScheduledTasks } from './scheduled-task-runner.ts';
 import { handleExternalNodesCallbackRequest } from '../services/external-nodes-callback-service.ts';
 import { handleExternalApiRequest } from './external-api-router.ts';
+import type { KvRecord } from '../../types/models.ts';
 
 // 常量定义
 const OLD_KV_KEY = 'misub_data_v1';
@@ -283,7 +284,8 @@ export async function handleApiRequest(
             });
         }
 
-        return await handleDataRequest(env, context || { env });
+        // 缺失的 context 字段由 handleDataRequest 内部可选处理(保持既有运行时行为)
+        return await handleDataRequest(env, context || ({ env } as PagesEventContext));
     }
 
     // [New] GitHub Proxy Route (Public)
@@ -346,10 +348,10 @@ export async function handleApiRequest(
             if (!kv) {
                 // 列出 env 中所有 key 及其类型，帮助诊断绑定情况
                 const envKeys = env
-                    ? Object.keys(env).map((k) => {
-                          const v = env[k];
+                    ? Object.keys(env).map((k: string) => {
+                          const v = (env as Record<string, unknown>)[k];
                           const t = typeof v;
-                          const isKVLike = v && t === 'object' && typeof v.get === 'function';
+                          const isKVLike = !!v && t === 'object' && typeof (v as { get?: unknown }).get === 'function';
                           return `${k}(${t}${isKVLike ? ',KV-like' : ''})`;
                       })
                     : [];
@@ -359,20 +361,20 @@ export async function handleApiRequest(
             const testValue = 'test_' + Math.random().toString(36).slice(2);
 
             // 写入
-            let putError = null;
+            let putError: string | null = null;
             try {
                 await kv.put(testKey, testValue);
             } catch (e) {
-                putError = e.message;
+                putError = (e as Error).message;
             }
 
             // 读回
-            let readBack = null;
-            let getError = null;
+            let readBack: unknown = null;
+            let getError: string | null = null;
             try {
                 readBack = await kv.get(testKey);
             } catch (e) {
-                getError = e.message;
+                getError = (e as Error).message;
             }
 
             // 清理
@@ -381,15 +383,15 @@ export async function handleApiRequest(
             } catch (_) {}
 
             // 读取实际数据键
-            let subsRaw = null;
-            let subsError = null;
+            let subsRaw: unknown = null;
+            let subsError: string | null = null;
             try {
                 subsRaw = await kv.get('misub_subscriptions_v1');
             } catch (e) {
-                subsError = e.message;
+                subsError = (e as Error).message;
             }
 
-            let settingsRaw = null;
+            let settingsRaw: unknown = null;
             try {
                 settingsRaw = await kv.get('worker_settings_v1');
             } catch (_) {}
@@ -405,13 +407,17 @@ export async function handleApiRequest(
                     getError,
                 },
                 actualData: {
-                    subscriptions: subsRaw ? `存在，长度=${subsRaw.length}` : 'null（空）',
-                    settings: settingsRaw ? `存在，长度=${settingsRaw.length}` : 'null（空）',
+                    subscriptions: subsRaw
+                        ? `存在，长度=${(subsRaw as string).length}`
+                        : 'null（空）',
+                    settings: settingsRaw
+                        ? `存在，长度=${(settingsRaw as string).length}`
+                        : 'null（空）',
                     subsError,
                 },
             });
         } catch (e) {
-            return createJsonResponse({ success: false, error: e.message });
+            return createJsonResponse({ success: false, error: (e as Error).message });
         }
     }
 
@@ -459,7 +465,7 @@ export async function handleApiRequest(
                 const name = await fetchAirportSiteTitle(rootDomain, { timeout: 5000 });
                 return createJsonResponse({ success: true, name, rootDomain });
             } catch (error) {
-                return createErrorResponse(`识别失败: ${error.message}`, 400);
+                return createErrorResponse(`识别失败: ${(error as Error).message}`, 400);
             }
         }
 
@@ -567,9 +573,10 @@ export async function handleSubconverterTestRequest(request, env) {
     try {
         requestData = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
     } catch (e) {
+        const status = (e as { status?: number }).status;
         return createErrorResponse(
-            e.status === 413 ? e.message : 'Invalid JSON format',
-            e.status || 400
+            status === 413 ? (e as Error).message : 'Invalid JSON format',
+            status || 400
         );
     }
 
@@ -582,7 +589,7 @@ export async function handleSubconverterTestRequest(request, env) {
             {
                 success: false,
                 error: '转换后端地址无效，请填写域名或 http(s) URL。',
-                details: error.message,
+                details: (error as Error).message,
             },
             400
         );
@@ -647,10 +654,10 @@ export async function handleSubconverterTestRequest(request, env) {
         );
     } catch (error) {
         clearTimeout(timeoutId);
-        const isTimeout = error.name === 'AbortError';
+        const isTimeout = (error as Error).name === 'AbortError';
         console.error('[Subconverter Test] Error:', {
             backend: endpoint ? `${endpoint.origin}${endpoint.pathname}` : '[invalid]',
-            error: error.message,
+            error: (error as Error).message,
             type: isTimeout ? 'timeout' : 'network',
         });
         return createJsonResponse(
@@ -660,7 +667,7 @@ export async function handleSubconverterTestRequest(request, env) {
                 endpoint: endpoint ? `${endpoint.origin}${endpoint.pathname}` : null,
                 error: isTimeout
                     ? `测试超时（${normalizedTimeout}ms）`
-                    : `无法连接转换后端：${error.message}`,
+                    : `无法连接转换后端：${(error as Error).message}`,
                 errorType: isTimeout ? 'timeout' : 'network',
             },
             502
@@ -683,9 +690,10 @@ export async function handleExternalFetchRequest(request, env) {
     try {
         requestData = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
     } catch (e) {
+        const status = (e as { status?: number }).status;
         return createErrorResponse(
-            e.status === 413 ? e.message : 'Invalid JSON format',
-            e.status || 400
+            status === 413 ? (e as Error).message : 'Invalid JSON format',
+            status || 400
         );
     }
 
@@ -781,23 +789,23 @@ export async function handleExternalFetchRequest(request, env) {
         let errorMessage;
         let errorDetails;
 
-        if (error.name === 'AbortError') {
+        if ((error as Error).name === 'AbortError') {
             errorMessage = `Request timeout after ${timeout}ms`;
             errorDetails = { type: 'timeout', timeout };
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        } else if ((error as Error).message.includes('network') || (error as Error).message.includes('fetch')) {
             errorMessage = 'Network error - unable to reach the server';
-            errorDetails = { type: 'network', originalError: error.message };
-        } else if (error.message.includes('DNS')) {
+            errorDetails = { type: 'network', originalError: (error as Error).message };
+        } else if ((error as Error).message.includes('DNS')) {
             errorMessage = 'DNS resolution failed';
-            errorDetails = { type: 'dns', originalError: error.message };
+            errorDetails = { type: 'dns', originalError: (error as Error).message };
         } else {
-            errorMessage = `Request failed: ${error.message}`;
-            errorDetails = { type: 'unknown', originalError: error.message };
+            errorMessage = `Request failed: ${(error as Error).message}`;
+            errorDetails = { type: 'unknown', originalError: (error as Error).message };
         }
 
         console.error(`[External Fetch] Error:`, {
             url: redactUrl(externalUrl),
-            error: error.message,
+            error: (error as Error).message,
             errorType: errorDetails.type,
         });
 
@@ -859,11 +867,11 @@ async function handleCronStatusRequest(env) {
                 syncTimeout,
                 enableParallel,
             },
-            totalSubscriptions: lastExecution?.result?.totalSubscriptions || 0,
-            successfulSyncs: lastExecution?.result?.successfulSyncs || 0,
-            failedSyncs: lastExecution?.result?.failedSyncs || 0,
-            lastSync: lastExecution?.timestamp || null,
-            details: lastExecution?.result?.details || [],
+            totalSubscriptions: (lastExecution as KvRecord | null)?.result?.totalSubscriptions || 0,
+            successfulSyncs: (lastExecution as KvRecord | null)?.result?.successfulSyncs || 0,
+            failedSyncs: (lastExecution as KvRecord | null)?.result?.failedSyncs || 0,
+            lastSync: (lastExecution as KvRecord | null)?.timestamp || null,
+            details: (lastExecution as KvRecord | null)?.result?.details || [],
             lastExecution,
             timestamp: new Date().toISOString(),
         };

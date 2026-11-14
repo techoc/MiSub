@@ -25,7 +25,7 @@ function ensureArray(data) {
 function adaptLegacyTransform(config) {
     if (!config || !config.enabled) return [];
 
-    const ops = [];
+    const ops: any[] = [];
     const filter = config.filter;
     if (
         filter &&
@@ -151,7 +151,7 @@ export async function handleProfileMode(
             : (await storageAdapter.get(KV_KEY_SUBS)) || [];
     const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 
-    const targetMisubs = [];
+    const targetMisubs: any[] = [];
     const profileSubIds = (profile.subscriptions || []).map((item) =>
         typeof item === 'object' ? item.id : item
     );
@@ -162,7 +162,7 @@ export async function handleProfileMode(
         }
     });
 
-    const targetManualNodes = [];
+    const targetManualNodes: any[] = [];
     const profileNodeIds = profile.manualNodes || [];
     if (Array.isArray(profileNodeIds)) {
         profileNodeIds.forEach((id) => {
@@ -184,7 +184,7 @@ export async function handleProfileMode(
     }
     // 处理手工节点（直接解析节点URL），并将用户自定义名称写入 URL。
     const manualNodeResults = allManualNodes.map((node) => {
-        const customName = typeof node.name === 'string' ? node.name.trim() : '';
+        const customName = typeof node.name === 'string' ? (node.name as Record<string, any>).trim() : '';
         const effectiveUrl = customName ? applyManualNodeName(node.url, customName) : node.url;
 
         const nodeInfo = parseNodeInfo(effectiveUrl);
@@ -228,7 +228,7 @@ export async function handleProfileMode(
 
     // 3. 处理嵌套的组合订阅 (Sub-Profiles)
     const profileSubProfileIds = profile.subProfiles || [];
-    const nestedSubProfileResults = [];
+    const nestedSubProfileResults: any[] = [];
     if (Array.isArray(profileSubProfileIds) && profileSubProfileIds.length > 0 && depth < 3) {
         const nextVisited = new Set(visited);
         if (profile.id) nextVisited.add(profile.id);
@@ -275,7 +275,7 @@ export async function handleProfileMode(
     ];
 
     // 统计所有节点
-    const allNodes = [];
+    const allNodes: any[] = [];
     allResults.forEach((result) => {
         if (result.success) {
             allNodes.push(...result.nodes);

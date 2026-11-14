@@ -2,6 +2,7 @@ import { StorageFactory } from '../storage-adapter.ts';
 import { KV_KEY_SETTINGS } from './config.ts';
 import { createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 export async function getExternalStorageAdapter(env) {
     if (env?.__TEST_STORAGE_ADAPTER) return env.__TEST_STORAGE_ADAPTER;
     const storageType = await StorageFactory.getStorageType(env);
@@ -18,13 +19,13 @@ export function createRequestId() {
 }
 
 export function createExternalSuccess(data, status = 200, meta = undefined) {
-    const body = { success: true, data };
+    const body: Record<string, any> = { success: true, data };
     if (meta) body.meta = meta;
     return createJsonResponse(body, status);
 }
 
 export function createExternalError(code, message, status = 400, details = undefined) {
-    const error = { code, message };
+    const error: Record<string, any> = { code, message };
     if (details !== undefined) error.details = details;
     return createJsonResponse({ success: false, error }, status);
 }

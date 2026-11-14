@@ -159,7 +159,7 @@ export async function generateCombinedNodeList(
         return Boolean(url) && !/^https?:\/\//i.test(url);
     });
 
-    let manualProcessedLines = [];
+    let manualProcessedLines: any[] = [];
     for (const sub of manualSubSourceGroups) {
         try {
             const rawUrl = typeof sub?.url === 'string' ? sub.url.trim() : '';

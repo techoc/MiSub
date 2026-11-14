@@ -32,7 +32,7 @@ function parseSurgeOrQxLine(line) {
         /^([^=]+?)\s*=\s*(shadowsocks|ss|ssr|vmess|vless|trojan|hysteria2?|hy2|hysteria|tuic|snell|anytls|socks5|http|https|wireguard)\s*,\s*([^,]+?)\s*,\s*(\d+)(.*)$/i
     );
     if (match) {
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: match[1].trim(),
             type: match[2].toLowerCase(),
             server: match[3].trim(),
@@ -74,11 +74,11 @@ function parseSurgeOrQxLine(line) {
                         proxy.cipher = v;
                     if (k === 'obfs') {
                         proxy.pluginOpts = proxy.pluginOpts || {};
-                        proxy.pluginOpts.mode = v;
+                        (proxy.pluginOpts as Record<string, any>).mode = v;
                     }
                     if (k === 'obfs-host') {
                         proxy.pluginOpts = proxy.pluginOpts || {};
-                        proxy.pluginOpts.host = v;
+                        (proxy.pluginOpts as Record<string, any>).host = v;
                     }
                     if (k === 'version') proxy.version = parseInt(v);
                     if (k === 'reuse' && v === 'true') proxy.reuse = true;
@@ -116,7 +116,7 @@ function parseSurgeOrQxLine(line) {
         /^(shadowsocks|ss|ssr|vmess|vless|trojan|hysteria2?|hy2|hysteria|tuic|snell|anytls|socks5|http|https|wireguard)\s*=\s*([^,:]+?)\s*:\s*(\d+)(.*)$/i
     );
     if (match) {
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: 'Untitled',
             type: match[1].toLowerCase(),
             server: match[2].trim(),
@@ -157,7 +157,7 @@ function parseSurgeOrQxLine(line) {
                         if (v === 'over-tls') proxy.tls = true;
                         else {
                             proxy.pluginOpts = proxy.pluginOpts || {};
-                            proxy.pluginOpts.mode = v;
+                            (proxy.pluginOpts as Record<string, any>).mode = v;
                         }
                     }
                     if (k === 'vless-flow') proxy.flow = v;
@@ -193,7 +193,7 @@ function parseSurgeOrQxLine(line) {
 export function extractValidNodes(text) {
     if (!text || typeof text !== 'string') return [];
 
-    let nodes = [];
+    let nodes: string[] = [];
 
     // 0. 尝试解析为 sing-box / JSON 配置（outbounds 列表）
     const trimmed = text.trim();
@@ -216,7 +216,7 @@ export function extractValidNodes(text) {
         try {
             const yamlObj = yaml.load(text);
             // 兼容 proxies 和 Proxy 字段
-            const proxies = yamlObj.proxies || yamlObj.Proxy;
+            const proxies = (yamlObj as Record<string, any>).proxies || yamlObj.Proxy;
 
             if (Array.isArray(proxies)) {
                 proxies.forEach((proxy) => {
@@ -323,7 +323,7 @@ export function parseNodeList(content, options: Record<string, any> = {}) {
             let fixedUrl = fixNodeUrlEncoding(nodeUrl, options);
 
             // 2. [新增] 验证和修复 SS 2022 节点 & 过滤传统 SS 算法
-            let ss2022Warning = null;
+            let ss2022Warning: any = null;
             if (fixedUrl.startsWith('ss://')) {
                 // 2.1 提取加密算法
                 let method = '';
@@ -439,7 +439,7 @@ export function parseNodeList(content, options: Record<string, any> = {}) {
                 // VLESS 链接格式:
                 // 1. 标准: vless://uuid@host:port
                 // 2. Base64: vless://base64(uuid@host:port)
-                let id = null;
+                let id: any = null;
 
                 // 尝试标准格式 vless://uuid@host:port 优先
                 const matchStandard = fixedUrl.match(/^vless:\/\/([0-9a-fA-F-]{36})@/);
@@ -518,7 +518,7 @@ export function parseNodeList(content, options: Record<string, any> = {}) {
             // 6. 添加元数据提取 (Intelligence)
             const metadata = extractNodeMetadata(nodeInfo.name);
 
-            const result = {
+            const result: Record<string, any> = {
                 url: fixedUrl,
                 ...nodeInfo,
                 metadata: metadata,
@@ -615,7 +615,7 @@ export function parseSnellUrl(url) {
             return null;
         }
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             type: 'snell',
             name: name,
             server: server,
@@ -722,6 +722,6 @@ export function validateSnellNode(url) {
 
         return { valid: true, proxy };
     } catch (e) {
-        return { valid: false, error: e.message };
+        return { valid: false, error: (e as Error).message };
     }
 }

@@ -19,7 +19,7 @@ const ERROR_REPORT_COOLDOWN_MS = 10 * 60 * 1000;
 const MAX_PERSISTED_REPORTS_PER_MINUTE = 6;
 
 let recentReportFingerprints = new Map();
-let persistedReportTimestamps = [];
+let persistedReportTimestamps: number[] = [];
 
 function getKV(env) {
     return env?.MISUB_KV || null;
@@ -128,8 +128,8 @@ export async function handleErrorReportRequest(request, env) {
     } catch (error) {
         console.error('[ErrorReport] Failed to save report:', error);
         return createErrorResponse(
-            error.status === 413 ? error.message : 'Failed to save error report',
-            error.status || 500
+            (error as Record<string, any>).status === 413 ? (error as Error).message : 'Failed to save error report',
+            (error as Record<string, any>).status || 500
         );
     }
 }

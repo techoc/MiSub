@@ -39,7 +39,7 @@ export function parseHttpsUrl(url, isTls = true) {
             username = decodeURIComponent(userInfo);
         }
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `HTTPS-${server}`,
             type: 'http',
             server,
@@ -110,7 +110,7 @@ export function parseSocks5Url(url) {
             params.get('tls') === '1' ||
             params.get('tls') === 'true' ||
             params.get('secure') === '1';
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `SOCKS5-${server}`,
             type: useTls ? 'socks5-tls' : 'socks5',
             server,

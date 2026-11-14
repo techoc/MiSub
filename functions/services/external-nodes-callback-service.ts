@@ -51,7 +51,7 @@ function base64UrlToBytes(value) {
         typeof atob === 'function'
             ? atob(padded)
             : Buffer.from(padded, 'base64').toString('binary');
-    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return Uint8Array.from(binary, (char) => (char as Record<string, any>).charCodeAt(0));
 }
 
 function encodePayload(payload) {

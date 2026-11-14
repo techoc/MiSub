@@ -13,6 +13,7 @@ import {
 import { detectNodeProtocol, isManualNode, toExternalManualNode } from './external-api-mappers.ts';
 import { parseNodeList } from './utils/node-parser.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 function nowIso() {
     return new Date().toISOString();
 }
@@ -42,7 +43,7 @@ async function getManualNodeById(storageAdapter, id) {
 
 async function removeManualNodeIdFromProfiles(storageAdapter, id) {
     const profiles = await storageAdapter.getAllProfiles();
-    const affected = [];
+    const affected: any[] = [];
     for (const profile of profiles) {
         const manualNodes = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
         if (!manualNodes.includes(id)) continue;

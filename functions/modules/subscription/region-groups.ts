@@ -75,9 +75,9 @@ export function groupNodeLinesByRegion(nodes = [], options: Record<string, any> 
         // 1. 用户自定义规则优先，用于修正自动地区识别误判
         if (override) {
             region = override.region;
-        } else if (node.metadata && node.metadata.region && node.metadata.region !== '其他') {
+        } else if (node.metadata && (node.metadata as Record<string, any>).region && node.metadata.region !== '其他') {
             // 2. 使用预提取的元数据
-            region = node.metadata.region;
+            region = (node.metadata as Record<string, any>).region;
         } else {
             // 3. 回退到正则匹配逻辑
             for (const { name: groupName, pattern } of REGION_GROUP_PATTERNS) {
@@ -104,7 +104,7 @@ export function groupNodeLinesByRegion(nodes = [], options: Record<string, any> 
         groups.get(groupName).push(node);
     });
 
-    const result = [];
+    const result: any[] = [];
     groups.forEach((matchedNodes, name) => {
         result.push({
             name,

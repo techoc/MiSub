@@ -122,7 +122,7 @@ export function parseSsUrl(url) {
             return null;
         }
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `SS-${server}`,
             type: 'ss',
             server,
@@ -147,7 +147,7 @@ export function parseSsUrl(url) {
                 // 协议兼容性映射 (TLS / Host)
                 if (
                     pluginDetails.opts.tls ||
-                    pluginDetails.opts.mode?.includes('tls') ||
+                    (pluginDetails.opts.mode as Record<string, any> | undefined)?.includes('tls') ||
                     pluginDetails.opts.security === 'tls'
                 ) {
                     proxy.tls = true;
@@ -195,7 +195,7 @@ export function parseSsrUrl(url) {
             passwordEndIndex !== -1 ? passwordPart.substring(0, passwordEndIndex) : passwordPart;
         const password = base64Decode(passwordBase64);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: `SSR-${server}`,
             type: 'ssr',
             server,

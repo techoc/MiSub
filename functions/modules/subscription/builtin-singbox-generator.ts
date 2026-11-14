@@ -55,7 +55,7 @@ function buildOutbound(proxy) {
     const port = parsePort(proxy.port);
     if (!port) return null;
 
-    const outbound = { tag, type: 'direct' };
+    const outbound: Record<string, any> = { tag, type: 'direct' };
 
     if (type === 'ss' || type === 'shadowsocks') {
         outbound.type = 'shadowsocks';
@@ -90,17 +90,17 @@ function buildOutbound(proxy) {
                 server_name: proxy.sni || proxy.servername || server,
             };
             if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
-                outbound.tls.insecure = true;
+                (outbound.tls as Record<string, any>).insecure = true;
             }
         }
         outbound.transport = {
             type: proxy.network === 'ws' ? 'ws' : 'tcp',
         };
         if (proxy['ws-opts']?.path || proxy.wsOpts?.path) {
-            outbound.transport.path = proxy['ws-opts']?.path || proxy.wsOpts?.path;
+            (outbound.transport as Record<string, any>).path = proxy['ws-opts']?.path || proxy.wsOpts?.path;
         }
         const host = proxy['ws-opts']?.headers?.Host || proxy.wsOpts?.headers?.Host;
-        if (host) outbound.transport.headers = { Host: host };
+        if (host) (outbound.transport as Record<string, any>).headers = { Host: host };
     } else if (type === 'vless') {
         outbound.type = 'vless';
         outbound.server = server;
@@ -110,18 +110,18 @@ function buildOutbound(proxy) {
             outbound.transport = { type: proxy.network };
             if (proxy.network === 'ws') {
                 const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
-                if (wsOpts?.path) outbound.transport.path = wsOpts.path;
+                if (wsOpts?.path) (outbound.transport as Record<string, any>).path = wsOpts.path;
                 if (wsOpts?.headers?.Host)
-                    outbound.transport.headers = { Host: wsOpts.headers.Host };
+                    (outbound.transport as Record<string, any>).headers = { Host: wsOpts.headers.Host };
             } else if (proxy.network === 'grpc') {
                 const grpcOpts = proxy['grpc-opts'] || proxy.grpcOpts;
                 if (grpcOpts?.['grpc-service-name'])
-                    outbound.transport.service_name = grpcOpts['grpc-service-name'];
+                    (outbound.transport as Record<string, any>).service_name = grpcOpts['grpc-service-name'];
             } else if (proxy.network === 'xhttp') {
                 const xhttpOpts = proxy['xhttp-opts'] || proxy.xhttpOpts;
-                if (xhttpOpts?.path) outbound.transport.path = xhttpOpts.path;
-                if (xhttpOpts?.host) outbound.transport.host = xhttpOpts.host;
-                if (xhttpOpts?.mode) outbound.transport.mode = xhttpOpts.mode;
+                if (xhttpOpts?.path) (outbound.transport as Record<string, any>).path = xhttpOpts.path;
+                if (xhttpOpts?.host) (outbound.transport as Record<string, any>).host = xhttpOpts.host;
+                if (xhttpOpts?.mode) (outbound.transport as Record<string, any>).mode = xhttpOpts.mode;
             }
         }
         if (proxy.flow) outbound.flow = proxy.flow;
@@ -189,7 +189,7 @@ function buildOutbound(proxy) {
             enabled: true,
             server_name: proxy.sni || proxy.servername || server,
         };
-        if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+        if (proxy.alpn) (outbound.tls as Record<string, any>).alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
     } else if (type === 'anytls') {
         outbound.type = 'anytls';
         outbound.server = server;
@@ -245,19 +245,19 @@ function buildOutbound(proxy) {
 
     if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
         outbound.tls = outbound.tls || {};
-        outbound.tls.enabled = true;
-        outbound.tls.insecure = true;
+        (outbound.tls as Record<string, any>).enabled = true;
+        (outbound.tls as Record<string, any>).insecure = true;
     }
     if (
         (proxy.sni || proxy.servername) &&
-        ((type !== 'ss' && type !== 'shadowsocks') || proxy.tls || outbound.tls?.enabled)
+        ((type !== 'ss' && type !== 'shadowsocks') || proxy.tls || (outbound.tls as Record<string, any> | undefined)?.enabled)
     ) {
         outbound.tls = outbound.tls || {};
-        outbound.tls.server_name = proxy.sni || proxy.servername;
+        (outbound.tls as Record<string, any>).server_name = proxy.sni || proxy.servername;
     }
     if (proxy['client-fingerprint']) {
         outbound.tls = outbound.tls || {};
-        outbound.tls.utls = { enabled: true, fingerprint: proxy['client-fingerprint'] };
+        (outbound.tls as Record<string, any>).utls = { enabled: true, fingerprint: proxy['client-fingerprint'] };
     }
 
     if (proxy.tfo) {
@@ -283,9 +283,9 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
         .map((line) => line.trim())
         .filter((line) => line && !line.startsWith('#'));
 
-    const outbounds = [];
+    const outbounds: any[] = [];
     const usedNames = new Map();
-    const nodeEntries = [];
+    const nodeEntries: any[] = [];
 
     const proxies = urlsToClashProxies(nodeUrls, options);
 
@@ -389,7 +389,7 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
         ...(domesticDns ? [] : [getSingboxForeignRuleSet(dnsDetour)]),
         ...Object.values(ruleSetsMap).filter(
             (ruleSet) =>
-                ruleSet.tag !== SINGBOX_CN_RULE_SET && ruleSet.tag !== SINGBOX_FOREIGN_RULE_SET
+                (ruleSet as Record<string, any>).tag !== SINGBOX_CN_RULE_SET && ruleSet.tag !== SINGBOX_FOREIGN_RULE_SET
         ),
     ];
 

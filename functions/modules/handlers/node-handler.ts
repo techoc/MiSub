@@ -98,10 +98,10 @@ export async function handleNodeCountRequest(request, env) {
             return createErrorResponse('Invalid or missing url', 400);
         }
 
-        const result = { count: 0, userInfo: null };
+        const result: Record<string, any> = { count: 0, userInfo: null };
         let trafficRequestSucceeded = false;
         let nodeCountRequestSucceeded = false;
-        let fetchError = null;
+        let fetchError: any = null;
 
         let requestUrl = subUrl;
         const requestedUserAgent =
@@ -151,9 +151,9 @@ export async function handleNodeCountRequest(request, env) {
             const extractUserInfoFromBody = (decodedText) => {
                 if (!decodedText) return null;
 
-                const info = {};
+                const info: Record<string, any> = {};
                 // 解析所有 URI fragment（# 后面的部分）
-                const fragments = [];
+                const fragments: any[] = [];
                 const lines = decodedText.split('\n');
                 for (const line of lines) {
                     const hashIdx = line.indexOf('#');
@@ -383,16 +383,16 @@ export async function handleNodeCountRequest(request, env) {
                 if (fetchError) {
                     if (
                         fetchError.name === 'AbortError' ||
-                        fetchError.message?.includes('timeout')
+                        (fetchError.message as Record<string, any> | undefined)?.includes('timeout')
                     ) {
                         errorType = 'timeout';
                         errorMessage = '订阅请求超时';
-                    } else if (fetchError.message?.includes('HTTP')) {
+                    } else if ((fetchError.message as Record<string, any> | undefined)?.includes('HTTP')) {
                         errorType = 'server';
                         errorMessage = fetchError.message;
                     } else if (
-                        fetchError.message?.includes('network') ||
-                        fetchError.message?.includes('fetch')
+                        (fetchError.message as Record<string, any> | undefined)?.includes('network') ||
+                        (fetchError.message as Record<string, any> | undefined)?.includes('fetch')
                     ) {
                         errorType = 'network';
                         errorMessage = '网络连接失败';
@@ -475,7 +475,7 @@ export async function handleNodeCountRequest(request, env) {
             console.error('Node count processing error:', e);
             return createJsonResponse({
                 success: false,
-                error: `处理失败: ${e.message}`,
+                error: `处理失败: ${(e as Error).message}`,
                 errorType: 'processing_error',
             });
         }
@@ -485,7 +485,7 @@ export async function handleNodeCountRequest(request, env) {
             data: result,
         });
     } catch (e) {
-        return createErrorResponse(`获取节点数量失败: ${e.message}`, 500);
+        return createErrorResponse(`获取节点数量失败: ${(e as Error).message}`, 500);
     }
 }
 
@@ -576,11 +576,11 @@ export async function handleBatchUpdateNodesRequest(request, env) {
 
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (!(response as Record<string, any>).ok) {
+                    throw new Error(`HTTP ${(response as Record<string, any>).status}: ${response.statusText}`);
                 }
 
-                const text = await response.text();
+                const text = await (response as Record<string, any>).text();
 
                 // 使用与预览功能相同的解码和节点统计逻辑
                 let nodeCount = 0;
@@ -626,7 +626,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                     subscriptionName: subscription.name,
                     success: false,
                     nodeCount: 0,
-                    error: e.message,
+                    error: (e as Error).message,
                     lastUpdated: new Date().toISOString(),
                 };
             }
@@ -650,7 +650,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
             },
         });
     } catch (e) {
-        return createErrorResponse(`批量更新失败: ${e.message}`, 500);
+        return createErrorResponse(`批量更新失败: ${(e as Error).message}`, 500);
     }
 }
 
@@ -684,10 +684,10 @@ export async function handleCleanNodesRequest(request, env) {
             }
 
             // 去重处理
-            const uniqueNodes = [];
+            const uniqueNodes: any[] = [];
             const seenUrls = new Set();
 
-            previewResult.nodes.forEach((node) => {
+            (previewResult.nodes as Record<string, any>).forEach((node) => {
                 if (node.url && !seenUrls.has(node.url)) {
                     seenUrls.add(node.url);
                     uniqueNodes.push(node);
@@ -697,9 +697,9 @@ export async function handleCleanNodesRequest(request, env) {
             return createJsonResponse({
                 success: true,
                 profileId,
-                originalCount: previewResult.nodes.length,
+                originalCount: (previewResult.nodes as Record<string, any>).length,
                 cleanedCount: uniqueNodes.length,
-                removedDuplicates: previewResult.nodes.length - uniqueNodes.length,
+                removedDuplicates: (previewResult.nodes as Record<string, any>).length - uniqueNodes.length,
                 cleanedNodes: uniqueNodes,
             });
         } else {
@@ -707,7 +707,7 @@ export async function handleCleanNodesRequest(request, env) {
             return createErrorResponse('全局节点清理功能暂未实现，请指定profileId', 501);
         }
     } catch (e) {
-        return createErrorResponse(`节点清理失败: ${e.message}`, 500);
+        return createErrorResponse(`节点清理失败: ${(e as Error).message}`, 500);
     }
 }
 
@@ -782,7 +782,7 @@ export async function handleHealthCheckRequest(request, env) {
     } catch (e) {
         return createJsonResponse(
             {
-                error: `健康检查失败: ${e.message}`,
+                error: `健康检查失败: ${(e as Error).message}`,
             },
             500
         );

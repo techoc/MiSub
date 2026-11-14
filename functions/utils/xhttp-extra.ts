@@ -81,7 +81,7 @@ function xmuxToReuseSettings(xmux) {
 }
 
 function parseDownloadSettings(settings) {
-    const ds = {};
+    const ds: Record<string, any> = {};
 
     setNonEmptyString(settings, 'address', ds, 'server');
     if (typeof settings.port === 'number' && Number.isFinite(settings.port)) {
@@ -147,7 +147,7 @@ function parseDownloadSettings(settings) {
 }
 
 function reuseSettingsToXmux(reuse) {
-    const xmux = {};
+    const xmux: Record<string, any> = {};
     const set = (sourceKey, targetKey) => {
         const value = reuse[sourceKey];
         if (typeof value === 'string') {
@@ -171,7 +171,7 @@ function reuseSettingsToXmux(reuse) {
 }
 
 function serializeDownloadSettings(ds, upstream) {
-    const out = {};
+    const out: Record<string, any> = {};
     const context = isPlainObject(upstream) ? upstream : null;
 
     // mihomo 对 download-settings 的 server/port 也会回退到上行；
@@ -235,7 +235,7 @@ function serializeDownloadSettings(ds, upstream) {
 
     if (security === 'reality') {
         out.security = 'reality';
-        const realitySettings = {};
+        const realitySettings: Record<string, any> = {};
         if (dsPublicKey !== '') {
             realitySettings.publicKey = dsPublicKey;
             setNonEmptyString(dsReality, 'short-id', realitySettings, 'shortId');
@@ -253,7 +253,7 @@ function serializeDownloadSettings(ds, upstream) {
         out.realitySettings = realitySettings;
     } else if (security === 'tls') {
         out.security = 'tls';
-        const tlsSettings = {};
+        const tlsSettings: Record<string, any> = {};
         if (effectiveServerName !== '') {
             tlsSettings.serverName = effectiveServerName;
         }
@@ -272,7 +272,7 @@ function serializeDownloadSettings(ds, upstream) {
         }
     }
 
-    const xhttpSettings = {};
+    const xhttpSettings: Record<string, any> = {};
     if (typeof ds.path === 'string' && ds.path !== '') xhttpSettings.path = ds.path;
     if (typeof ds.host === 'string' && ds.host !== '') xhttpSettings.host = ds.host;
     if (isPlainObject(ds.headers)) {
@@ -309,7 +309,7 @@ function serializeDownloadSettings(ds, upstream) {
  * @returns {Object} mihomo xhttp-opts 附加字段（kebab-case）；无有效字段时为空对象
  */
 export function parseXhttpExtra(extra) {
-    const opts = {};
+    const opts: Record<string, any> = {};
     if (!isPlainObject(extra)) return opts;
 
     if (extra.noGRPCHeader === true) {
@@ -390,7 +390,7 @@ export function parseXhttpExtra(extra) {
 export function serializeXhttpExtra(xhttpOpts, upstream: KvRecord | null = null) {
     if (!isPlainObject(xhttpOpts)) return null;
 
-    const extra = {};
+    const extra: Record<string, any> = {};
     const getString = (sourceKey, targetKey) => {
         if (typeof xhttpOpts[sourceKey] === 'string' && xhttpOpts[sourceKey] !== '') {
             extra[targetKey] = xhttpOpts[sourceKey];

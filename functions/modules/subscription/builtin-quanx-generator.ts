@@ -77,7 +77,7 @@ function buildQxLine(proxy) {
     if (type === 'ss' || type === 'shadowsocks') {
         const method = proxy.cipher || 'aes-128-gcm';
         const password = proxy.password || '';
-        const extraParts = [];
+        const extraParts: any[] = [];
 
         // 插件支持
         const plugin = proxy.plugin || '';
@@ -102,7 +102,7 @@ function buildQxLine(proxy) {
         const uuid = proxy.uuid || '';
         const method = normalizeQxVmessMethod(proxy.cipher);
         const aid = Number.isFinite(Number(proxy.alterId)) ? Number(proxy.alterId) : 0;
-        const extraParts = [];
+        const extraParts: any[] = [];
         const sni = proxy.sni || proxy.servername;
         const hasTlsLayer = proxy.tls || sni;
         if (proxy.network === 'ws' || proxy['ws-opts']) {
@@ -122,7 +122,7 @@ function buildQxLine(proxy) {
 
     if (type === 'trojan') {
         const password = proxy.password || '';
-        const extraParts = [];
+        const extraParts: any[] = [];
         if (proxy.network === 'ws' || proxy['ws-opts']) {
             extraParts.push('obfs=ws');
             const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
@@ -189,7 +189,7 @@ function buildQxLine(proxy) {
     if (type === 'http' || type === 'https') {
         const username = proxy.username || '';
         const password = proxy.password || '';
-        const extraParts = [];
+        const extraParts: any[] = [];
         if (type === 'https') extraParts.push('over-tls=true');
         if (proxy.sni || proxy.servername)
             extraParts.push(`tls-host=${proxy.sni || proxy.servername}`);
@@ -204,7 +204,7 @@ function buildQxLine(proxy) {
     }
 
     if (type === 'tuic') {
-        const parts = [];
+        const parts: any[] = [];
         if (proxy.uuid) parts.push(proxy.uuid || '');
         if (proxy.password) parts.push(proxy.password || '');
         if (proxy.sni || proxy.servername) parts.push(`sni=${proxy.sni || proxy.servername}`);
@@ -267,8 +267,8 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
         .map((line) => line.trim())
         .filter((line) => line && !line.startsWith('#'));
 
-    const proxyLines = [];
-    const proxiesWithMetadata = [];
+    const proxyLines: string[] = [];
+    const proxiesWithMetadata: any[] = [];
     const usedNames = new Map();
 
     // 转换为 Clash 代理对象
@@ -298,7 +298,7 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
         return `#!MANAGED-CONFIG http://example.com interval=86400 strict=false\n\n[general]\nserver_check_url = http://www.gstatic.com/generate_204\nexcluded_routes = 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10, 10.0.0.0/8\n\n[dns]\n${dnsLines}\n\n[server_remote]\n\n[server_local]\n\n[rewrite_remote]\n\n[rewrite_local]\n\n[mitm]\n`;
     }
 
-    const sections = [];
+    const sections: any[] = [];
     if (managedConfigUrl) {
         sections.push(`#!MANAGED-CONFIG ${managedConfigUrl} interval=${interval} strict=false`);
     }

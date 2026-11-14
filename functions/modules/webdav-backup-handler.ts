@@ -425,7 +425,7 @@ export async function performWebdavBackup(env, options: Record<string, any> = {}
         await updateBackupStatus(env, {
             lastBackupAt: new Date().toISOString(),
             lastBackupStatus: 'failed',
-            lastBackupMessage: error.message || '备份失败',
+            lastBackupMessage: (error as Error).message || '备份失败',
         });
         throw error;
     }
@@ -457,8 +457,8 @@ export async function handleWebdavBackupTest(request, env) {
         return createJsonResponse({ success: true, message: 'WebDAV 连接测试成功' });
     } catch (error) {
         return createJsonResponse(
-            { success: false, message: error.message || 'WebDAV 连接测试失败' },
-            error.status || 400
+            { success: false, message: (error as Error).message || 'WebDAV 连接测试失败' },
+            (error as Record<string, any>).status || 400
         );
     }
 }
@@ -474,8 +474,8 @@ export async function handleManualWebdavBackup(request, env) {
         return createJsonResponse(result);
     } catch (error) {
         return createJsonResponse(
-            { success: false, message: error.message || '备份失败' },
-            error.status || 500
+            { success: false, message: (error as Error).message || '备份失败' },
+            (error as Record<string, any>).status || 500
         );
     }
 }
@@ -494,8 +494,8 @@ export async function handleBackupExport(request, env) {
         return createJsonResponse({ success: true, exportData: payload });
     } catch (error) {
         return createJsonResponse(
-            { success: false, message: error.message || '导出失败' },
-            error.status || 500
+            { success: false, message: (error as Error).message || '导出失败' },
+            (error as Record<string, any>).status || 500
         );
     }
 }
@@ -509,8 +509,8 @@ export async function handleBackupRestore(request, env) {
         return createJsonResponse(result);
     } catch (error) {
         return createJsonResponse(
-            { success: false, message: error.message || '恢复失败' },
-            error.status || 400
+            { success: false, message: (error as Error).message || '恢复失败' },
+            (error as Record<string, any>).status || 400
         );
     }
 }
@@ -548,7 +548,7 @@ export async function handleWebdavBackupList(request, env) {
         return createJsonResponse({ success: true, data: files });
     } catch (error) {
         return createJsonResponse(
-            { success: false, message: error.message || '获取备份列表失败', data: [] },
+            { success: false, message: (error as Error).message || '获取备份列表失败', data: [] },
             400
         );
     }
@@ -573,8 +573,8 @@ export async function handleWebdavRestore(request, env) {
         return createJsonResponse(result);
     } catch (error) {
         return createJsonResponse(
-            { success: false, message: error.message || '恢复失败' },
-            error.status || 400
+            { success: false, message: (error as Error).message || '恢复失败' },
+            (error as Record<string, any>).status || 400
         );
     }
 }

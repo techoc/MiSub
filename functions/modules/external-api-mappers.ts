@@ -104,7 +104,7 @@ export function toExternalProfile(profile) {
 }
 
 export function toInternalProfilePatch(payload: Record<string, any> = {}) {
-    const internal = {};
+    const internal: Record<string, any> = {};
     if ('name' in payload) internal.name = payload.name;
     if ('description' in payload) internal.description = payload.description;
     if ('enabled' in payload) internal.enabled = payload.enabled;

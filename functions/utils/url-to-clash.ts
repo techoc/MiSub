@@ -45,7 +45,7 @@ export function urlToClashProxy(url) {
                 server = authority.slice(0, split);
                 port = Number(authority.slice(split + 1));
             }
-            const proxy = {
+            const proxy: Record<string, any> = {
                 name: extractName(url) || `Mieru-${server}`,
                 type: 'mieru',
                 server,
@@ -147,10 +147,10 @@ export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
             const HAS_EMOJI_REGEX = /([\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F30D}-\u{1F30F}])/u;
             if (
                 options.addFlagEmoji !== false &&
-                proxy.metadata.flag &&
+                (proxy.metadata as Record<string, any>).flag &&
                 !HAS_EMOJI_REGEX.test(proxy.name)
             ) {
-                proxy.name = `${proxy.metadata.flag} ${proxy.name}`;
+                proxy.name = `${(proxy.metadata as Record<string, any>).flag} ${proxy.name}`;
             }
 
             return proxy;

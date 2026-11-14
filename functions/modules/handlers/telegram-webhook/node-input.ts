@@ -21,6 +21,7 @@ import {
 import { sendTelegramMessage } from './telegram-api.ts';
 import { checkRateLimit, getUserBoundProfileId } from './user-access.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 处理节点输入（核心逻辑）
  */
@@ -84,7 +85,7 @@ export async function handleNodeInput(
             importType === 'subscription'
                 ? [...subscriptionUrls]
                 : [...subscriptionUrls, ...nodeUrls];
-        const addedNodes = [];
+        const addedNodes: any[] = [];
         const ignoredUrls = [];
 
         for (const url of allUrls) {
@@ -144,7 +145,7 @@ export async function handleNodeInput(
             }
         } catch (verifyError) {
             console.error('[Telegram Push] KV Verification error:', verifyError);
-            if (verifyError.message.includes('Verification Failed')) throw verifyError;
+            if ((verifyError as Error).message.includes('Verification Failed')) throw verifyError;
         }
 
         // 4. 自动关联到订阅组 (分类处理)
@@ -212,7 +213,7 @@ export async function handleNodeInput(
                 `📋 信息：\n` +
                 `• 名称: ${escapeHtml(node.name)}\n` +
                 // 对于订阅源显示域名，对于节点显示协议
-                `• 类型: ${isSub ? new URL(node.url).hostname : node.url.split('://')[0].toUpperCase()}`;
+                `• 类型: ${isSub ? new URL(node.url).hostname : (node.url as Record<string, any>).split('://')[0].toUpperCase()}`;
 
             if (boundProfileName) {
                 message += `\n• 已关联: ${escapeHtml(boundProfileName)}`;
@@ -223,7 +224,7 @@ export async function handleNodeInput(
             message = `✅ <b>成功添加 ${addedNodes.length} 个项目</b>${ignoreMsg}\n\n`;
             addedNodes.slice(0, 5).forEach((node, index) => {
                 const isSub = /^https?:\/\//i.test(node.url);
-                const label = isSub ? '[订阅]' : `[${node.url.split('://')[0].toUpperCase()}]`;
+                const label = isSub ? '[订阅]' : `[${(node.url as Record<string, any>).split('://')[0].toUpperCase()}]`;
                 message += `${index + 1}. ${escapeHtml(node.name)} ${label}\n`;
             });
             if (addedNodes.length > 5) {
@@ -245,7 +246,7 @@ export async function handleNodeInput(
         console.error('[Telegram Push] Node addition failed:', error);
         await sendTelegramMessage(
             chatId,
-            `❌ <b>添加失败</b>\n\n错误: ${escapeHtml(error.message)}`,
+            `❌ <b>添加失败</b>\n\n错误: ${escapeHtml((error as Error).message)}`,
             env
         );
         return createJsonResponse({ ok: true });

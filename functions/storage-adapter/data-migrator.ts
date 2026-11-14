@@ -77,7 +77,7 @@ export class DataMigrator {
                     return true;
                 } catch (error) {
                     results.keys[key] = 'failed';
-                    results.errors.push(`${key} 迁移失败: ${error.message}`);
+                    results.errors.push(`${key} 迁移失败: ${(error as Error).message}`);
                     return false;
                 }
             };
@@ -97,7 +97,7 @@ export class DataMigrator {
                         if (key) await copyKey(key);
                     }
                 } catch (error) {
-                    results.errors.push(`前缀 ${prefix} 枚举失败: ${error.message}`);
+                    results.errors.push(`前缀 ${prefix} 枚举失败: ${(error as Error).message}`);
                 }
             }
 
@@ -115,7 +115,7 @@ export class DataMigrator {
                 }
             } catch (error) {
                 results.keys[DATA_KEYS.SETTINGS] = 'failed';
-                results.errors.push(`设置迁移失败: ${error.message}`);
+                results.errors.push(`设置迁移失败: ${(error as Error).message}`);
             }
 
             return results;
@@ -152,7 +152,7 @@ export class DataMigrator {
                 invalidateD1CollectionCache(d1Adapter.db, 'subscriptions');
             }
         } catch (error) {
-            results.errors.push(`订阅主行迁移失败: ${error.message}`);
+            results.errors.push(`订阅主行迁移失败: ${(error as Error).message}`);
         }
 
         try {
@@ -163,11 +163,11 @@ export class DataMigrator {
                     await d1Adapter.putProfile(item);
                     results.profiles += 1;
                 }
-                await d1Adapter.db.prepare('DELETE FROM profiles WHERE id = ?').bind('main').run();
+                await (d1Adapter.db as Record<string, any>).prepare('DELETE FROM profiles WHERE id = ?').bind('main').run();
                 invalidateD1CollectionCache(d1Adapter.db, 'profiles');
             }
         } catch (error) {
-            results.errors.push(`订阅组主行迁移失败: ${error.message}`);
+            results.errors.push(`订阅组主行迁移失败: ${(error as Error).message}`);
         }
 
         return results;
@@ -188,7 +188,7 @@ export class DataMigrator {
                 .prepare('SELECT data FROM subscriptions WHERE id = ?')
                 .bind('main')
                 .first(),
-            d1Adapter.db.prepare('SELECT data FROM profiles WHERE id = ?').bind('main').first(),
+            (d1Adapter.db as Record<string, any>).prepare('SELECT data FROM profiles WHERE id = ?').bind('main').first(),
         ]);
 
         const hasLegacySubscriptions = Array.isArray(

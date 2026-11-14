@@ -33,7 +33,7 @@ export class SettingsCache {
         const now = Date.now();
         if (adapter) {
             const scope = adapter.kv || adapter.db || null;
-            let settings = null;
+            let settings: any = null;
             if (scope) {
                 const memo = adapterSettingsMemos.get(scope);
                 if (memo && now - memo.timestamp < SETTINGS_CACHE_TTL_MS) {
@@ -44,7 +44,7 @@ export class SettingsCache {
                 try {
                     settings = await adapter.get(DATA_KEYS.SETTINGS);
                 } catch (adapterError) {
-                    console.warn('[Storage Cache] Adapter read failed:', adapterError.message);
+                    console.warn('[Storage Cache] Adapter read failed:', (adapterError as Error).message);
                 }
             }
             if (settings && scope) {
@@ -61,13 +61,13 @@ export class SettingsCache {
         }
 
         try {
-            let settings = null;
+            let settings: any = null;
             if (env.MISUB_DB) {
                 try {
                     const d1Adapter = new D1StorageAdapter(env.MISUB_DB);
                     settings = await d1Adapter.get(DATA_KEYS.SETTINGS);
                 } catch (d1Error) {
-                    console.warn('[Storage Cache] Failed to read from D1:', d1Error.message);
+                    console.warn('[Storage Cache] Failed to read from D1:', (d1Error as Error).message);
                 }
             }
 
@@ -77,7 +77,7 @@ export class SettingsCache {
                     const raw = await kvNs.get(DATA_KEYS.SETTINGS);
                     settings = raw ? JSON.parse(raw) : null;
                 } catch (kvError) {
-                    console.warn('[Storage Cache] Failed to read from KV:', kvError.message);
+                    console.warn('[Storage Cache] Failed to read from KV:', (kvError as Error).message);
                 }
             }
 

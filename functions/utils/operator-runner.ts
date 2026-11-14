@@ -21,7 +21,7 @@ function normalizeRules(rules) {
         return [];
     }
 
-    let normalized = [];
+    let normalized: any[] = [];
     for (const rule of rules) {
         if (typeof rule === 'string') {
             // 支持在单个算子输入中通过 | 或 换行符 传递多个子规则
@@ -122,7 +122,7 @@ function opRename(nodes, params) {
                     if (
                         typeof rule === 'object' &&
                         rule.replacement &&
-                        rule.replacement.includes('{')
+                        (rule.replacement as Record<string, any>).includes('{')
                     ) {
                         return {
                             ...rule,

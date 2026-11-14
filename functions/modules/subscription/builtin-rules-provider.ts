@@ -193,13 +193,13 @@ export function pruneProxyGroups(proxyGroups, proxies) {
  */
 function _generateRegionGroups(proxies, options: Record<string, any> = {}) {
     const regions = generateRegionData(proxies, options);
-    const regionSelectGroups = []; // 地区选择组（顶级按钮）
-    const regionSupportGroups = []; // 地区辅助组（隐藏/末尾）
-    const regionNames = [];
+    const regionSelectGroups: any[] = []; // 地区选择组（顶级按钮）
+    const regionSupportGroups: any[] = []; // 地区辅助组（隐藏/末尾）
+    const regionNames: any[] = [];
 
     regions.forEach((r) => {
         // 为每个地区生成一个更简洁的辅助测速组名
-        const autoGroupName = `⚡️ ${r.name.replace('节点', '')} - 自动测速`;
+        const autoGroupName = `⚡️ ${(r.name as Record<string, any>).replace('节点', '')} - 自动测速`;
         regionNames.push(r.name);
 
         // [地区选择组] 内部包含测速组和具体节点

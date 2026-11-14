@@ -34,7 +34,7 @@ function buildOutbound(proxy) {
     if (!serverPort) return null;
 
     if (type === 'http' || type === 'https') {
-        const outbound = {
+        const outbound: Record<string, any> = {
             tag,
             type: 'http',
             server,
@@ -68,7 +68,7 @@ function buildOutbound(proxy) {
     }
 
     if (type === 'ss' || type === 'shadowsocks') {
-        const outbound = {
+        const outbound: Record<string, any> = {
             tag,
             type: 'shadowsocks',
             server,
@@ -92,7 +92,7 @@ function buildOutbound(proxy) {
     }
 
     if (type === 'vmess') {
-        const outbound = {
+        const outbound: Record<string, any> = {
             tag,
             type: 'vmess',
             server,
@@ -133,13 +133,13 @@ function buildOutbound(proxy) {
                 insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
             };
             if (proxy.alpn)
-                outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+                (outbound.tls as Record<string, any>).alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
         }
         return outbound;
     }
 
     if (type === 'vless') {
-        const outbound = {
+        const outbound: Record<string, any> = {
             tag,
             type: 'vless',
             server,
@@ -180,7 +180,7 @@ function buildOutbound(proxy) {
 
             const fingerprint = proxy['client-fingerprint'] || proxy.clientFingerprint || proxy.fp;
             if (fingerprint) {
-                outbound.tls.utls = {
+                (outbound.tls as Record<string, any>).utls = {
                     enabled: true,
                     fingerprint: fingerprint,
                 };
@@ -188,13 +188,13 @@ function buildOutbound(proxy) {
 
             const realityOpts = proxy['reality-opts'] || proxy.realityOpts;
             if (realityOpts) {
-                outbound.tls.reality = {
+                (outbound.tls as Record<string, any>).reality = {
                     enabled: true,
                     public_key: realityOpts['public-key'] || realityOpts.publicKey || '',
                     short_id: realityOpts['short-id'] || realityOpts.shortId || '',
                 };
                 if (realityOpts['spider-x'] || realityOpts.spiderX) {
-                    outbound.tls.reality.spider_x = realityOpts['spider-x'] || realityOpts.spiderX;
+                    (outbound.tls as Record<string, any>).reality.spider_x = realityOpts['spider-x'] || realityOpts.spiderX;
                 }
             }
         }
@@ -217,7 +217,7 @@ function buildOutbound(proxy) {
     }
 
     if (type === 'tuic') {
-        const outbound = {
+        const outbound: Record<string, any> = {
             tag,
             type: 'tuic',
             server,
@@ -280,7 +280,7 @@ function buildGroupOutbounds(groups) {
         const members = ['urltest'].includes(mappedType)
             ? stripPolicyMembersForAutoGroup(rawMembers)
             : rawMembers;
-        const outbound = {
+        const outbound: Record<string, any> = {
             tag: sanitizeTag(group.name),
             type: mappedType,
             outbounds: withPolicyFallbacks(members, mappedType),
@@ -376,7 +376,7 @@ function buildRuleSets(rules, dnsDetour = DNS_PROXY_GROUP) {
             download_detour: dnsDetour,
         }));
 
-    const implicitRuleSets = [];
+    const implicitRuleSets: any[] = [];
     const seen = new Set();
 
     rules.forEach((rule) => {

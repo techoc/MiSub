@@ -36,7 +36,7 @@ export class D1StorageAdapter {
             return type === 'json' ? JSON.parse(result.data) : result.data;
         } catch (error) {
             // 如果是表不存在的错误，说明 D1 还未初始化或未被使用，直接返回 null
-            if (error.message && error.message.includes('no such table')) {
+            if ((error as Error).message && (error as Error).message.includes('no such table')) {
                 return null;
             }
             console.error(`[D1] Failed to get key ${key}:`, error);
@@ -110,7 +110,7 @@ export class D1StorageAdapter {
                 { name: 'profiles', keyField: 'id' },
                 { name: 'settings', keyField: 'key' },
             ];
-            const keys = [];
+            const keys: any[] = [];
             const effectivePrefix = prefix || '';
             const matchesKnownKey =
                 DATA_KEYS.SUBSCRIPTIONS.startsWith(effectivePrefix) ||
@@ -187,10 +187,10 @@ export class D1StorageAdapter {
     async getAllSubscriptions() {
         return readCachedD1Collection(this.db, 'subscriptions', async () => {
             try {
-                const results = await this.db.prepare('SELECT data FROM subscriptions').all();
+                const results = await (this.db as Record<string, any>).prepare('SELECT data FROM subscriptions').all();
                 if (!Array.isArray(results?.results)) return [];
 
-                const all = [];
+                const all: any[] = [];
                 results.results.forEach((row) => {
                     const parsed = JSON.parse(row.data);
                     if (Array.isArray(parsed)) {
@@ -242,10 +242,10 @@ export class D1StorageAdapter {
     async getAllProfiles() {
         return readCachedD1Collection(this.db, 'profiles', async () => {
             try {
-                const results = await this.db.prepare('SELECT data FROM profiles').all();
+                const results = await (this.db as Record<string, any>).prepare('SELECT data FROM profiles').all();
                 if (!Array.isArray(results?.results)) return [];
 
-                const all = [];
+                const all: any[] = [];
                 results.results.forEach((row) => {
                     const parsed = JSON.parse(row.data);
                     if (Array.isArray(parsed)) {
@@ -325,7 +325,7 @@ export class D1StorageAdapter {
     }
 
     async deleteProfileById(id) {
-        const result = await this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
+        const result = await (this.db as Record<string, any>).prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
         invalidateD1CollectionCache(this.db, 'profiles');
         return Boolean(result?.success);
     }
@@ -338,7 +338,7 @@ export class D1StorageAdapter {
         const CHUNK_SIZE = 90;
         const uniqueIds = Array.from(new Set(ids));
         try {
-            const directHits = [];
+            const directHits: any[] = [];
             for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
                 const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
                 const placeholders = chunk.map(() => '?').join(',');

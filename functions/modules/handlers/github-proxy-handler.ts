@@ -77,11 +77,11 @@ export async function handleGithubReleaseRequest(request, env) {
 
         // Extract only needed fields
         const simplifiedData = {
-            tag_name: data.tag_name,
-            html_url: data.html_url,
-            published_at: data.published_at,
-            name: data.name,
-            body: data.body || '',
+            tag_name: (data as Record<string, any>).tag_name,
+            html_url: (data as Record<string, any>).html_url,
+            published_at: (data as Record<string, any>).published_at,
+            name: (data as Error).name,
+            body: (data as Record<string, any>).body || '',
         };
 
         const cachePayload = {

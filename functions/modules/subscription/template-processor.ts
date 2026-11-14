@@ -105,7 +105,7 @@ function hasEquivalentRegionGroup(model, region) {
 }
 
 function dedupeGroupsByName(model) {
-    const mergedGroups = [];
+    const mergedGroups: any[] = [];
     const seen = new Map();
 
     model.groups.forEach((group) => {
@@ -177,7 +177,7 @@ function expandMagicPlaceholders(model) {
     model.groups.forEach((group) => {
         if (!Array.isArray(group.members)) return;
 
-        const newMembers = [];
+        const newMembers: any[] = [];
         group.members.forEach((member) => {
             if (member === '<%regionStrategyChain%>') {
                 newMembers.push(...regionNames);
@@ -311,7 +311,7 @@ function ensureAiPolicy(model) {
     const existingRules = new Set(
         model.rules.map((rule) => `${rule.type}|${rule.value}|${rule.policy}`)
     );
-    const aiRules = [];
+    const aiRules: any[] = [];
     AI_SERVICE_RULES.forEach((service) =>
         service.domains.forEach((domain) => {
             const rule = {

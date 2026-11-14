@@ -120,7 +120,7 @@ export async function fetchTransformTemplate(storageAdapter, templateUrl, forceR
             isCacheYoungerThan(cachedTemplate, cacheConfig.maxAgeSeconds * 1000)
         ) {
             console.warn(
-                `[TemplateCache] Revalidation failed, falling back to cached template: ${error.message}`
+                `[TemplateCache] Revalidation failed, falling back to cached template: ${(error as Error).message}`
             );
             return cachedTemplate.nodes;
         }

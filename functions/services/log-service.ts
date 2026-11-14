@@ -124,10 +124,10 @@ async function readLogsFromStorage(storage) {
     );
 }
 // 全局内存队列，用于削峰填谷和防写竞争
-let logBatch = [];
+let logBatch: any[] = [];
 let isFlushing = false;
 let recentLogFingerprints = new Map();
-let persistedLogTimestamps = [];
+let persistedLogTimestamps: number[] = [];
 
 function cleanupLogBudgets(now = Date.now()) {
     persistedLogTimestamps = persistedLogTimestamps.filter((ts) => now - ts < 60 * 1000);

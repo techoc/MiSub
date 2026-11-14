@@ -94,7 +94,7 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
         .map((id) => byId.get(id))
         .filter((item) => item && isManualNode(item));
 
-    const results = [];
+    const results: any[] = [];
     for (const current of remoteSubscriptions) {
         const inspection = await inspectRemoteSubscription(env, current);
         const timestamp = nowIso();

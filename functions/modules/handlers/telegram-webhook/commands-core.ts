@@ -8,6 +8,7 @@ import { createRequestCache, getCachedProfiles, getCachedSettings } from './cach
 import { editTelegramMessage, sendTelegramMessage } from './telegram-api.ts';
 import { getUserBoundProfileId, getUserNodes } from './user-access.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
 // ==================== 命令处理器 ====================
 
 /**
@@ -201,7 +202,7 @@ export async function handleListCommand(
         message += '\n点击序号查看详情和操作';
 
         // 构建按钮：当前页节点的快捷按钮
-        const nodeButtons = [];
+        const nodeButtons: any[] = [];
         for (let i = startIdx; i < endIdx; i++) {
             const isSubList = type === 'sub';
             // 如果是混合列表('all'), 检测URL; 如果明确是 'sub', 则就是sub.
@@ -219,7 +220,7 @@ export async function handleListCommand(
         }
 
         // 分页按钮
-        const navButtons = [];
+        const navButtons: any[] = [];
         const typePrefix = type !== 'all' ? `${type}_` : '';
 
         if (currentPage > 0) {
@@ -259,7 +260,7 @@ export async function handleListCommand(
         }
     } catch (error) {
         console.error('[Telegram Push] List command failed:', error);
-        await sendTelegramMessage(chatId, `\u274C 获取列表失败: ${error.message}`, env); // ❌
+        await sendTelegramMessage(chatId, `\u274C 获取列表失败: ${(error as Error).message}`, env); // ❌
     }
 }
 
@@ -338,7 +339,7 @@ export async function handleStatsCommand(chatId, userId, env, requestCache: KvRe
         await sendTelegramMessage(chatId, message, env, { requestCache });
     } catch (error) {
         console.error('[Telegram Push] Stats command failed:', error);
-        await sendTelegramMessage(chatId, `\u274C 获取统计失败: ${error.message}`, env, {
+        await sendTelegramMessage(chatId, `\u274C 获取统计失败: ${(error as Error).message}`, env, {
             requestCache,
         }); // ❌
     }

@@ -279,7 +279,7 @@ function parseIpv6(value) {
     const parseSide = (side) => {
         if (!side) return [];
         const parts = side.split(':');
-        const output = [];
+        const output: number[] = [];
         for (const part of parts) {
             if (!part) return null;
             if (part.includes('.')) {

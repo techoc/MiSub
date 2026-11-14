@@ -34,7 +34,7 @@ export function parseHysteria2Url(url) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `Hysteria2-${server}`,
             type: 'hysteria2',
             server,
@@ -164,7 +164,7 @@ export function parseTuicUrl(url) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `TUIC-${server}`,
             type: 'tuic',
             server,
@@ -320,7 +320,7 @@ export function parseWireguardUrl(url) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `WireGuard-${server}`,
             type: 'wireguard',
             server,
@@ -433,7 +433,7 @@ export function parseSnellUrl(url) {
 
         if (!psk) psk = params.get('psk') || params.get('password') || '';
 
-        const proxy = { name: name || `Snell-${server}`, type: 'snell', server, port, psk };
+        const proxy: Record<string, any> = { name: name || `Snell-${server}`, type: 'snell', server, port, psk };
         const version = params.get('version');
         if (version) proxy.version = parseInt(version);
         const reuse = params.get('reuse');
@@ -491,7 +491,7 @@ export function parseAnytlsUrl(url) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy = {
+        const proxy: Record<string, any> = {
             name: name || `AnyTLS-${server}`,
             type: 'anytls',
             server,
