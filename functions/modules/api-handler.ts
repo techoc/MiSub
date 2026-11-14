@@ -3,7 +3,7 @@
  * 处理各种API请求
  */
 
-import type { KvRecord } from '../../types/models.ts';
+import type { KvRecord, MisubSettings, ProfileItem } from '../../types/models.ts';
 import { StorageFactory, SettingsCache, STORAGE_TYPES } from '../storage-adapter.ts';
 import {
     getCookieSecret,
@@ -38,14 +38,35 @@ import { listRuleTemplates } from './rule-template-handler.ts';
 
 const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
 
-function normalizeLoginPath(customLoginPath: any) {
+/** api-handler 用到的存储适配器最小面（KV/D1/Noop 的结构化视图） */
+interface ApiStorageAdapter {
+    type?: string;
+    get(key: string): Promise<unknown>;
+    put(key: string, value: unknown): Promise<unknown>;
+    delete(key: string): Promise<unknown>;
+    getAllSubscriptions?(): Promise<KvRecord[]>;
+    getAllProfiles?(): Promise<KvRecord[]>;
+    putProfile?(item: KvRecord): Promise<unknown>;
+    putSubscription?(item: KvRecord): Promise<unknown>;
+    deleteProfileById?(id: string): Promise<unknown>;
+    deleteSubscriptionById?(id: string): Promise<unknown>;
+}
+
+/** 行级 diff 载荷 */
+interface RowLevelDiff {
+    added?: KvRecord[];
+    updated?: KvRecord[];
+    removed?: string[];
+}
+
+function normalizeLoginPath(customLoginPath: unknown) {
     if (typeof customLoginPath !== 'string') return '/login';
     const normalized = customLoginPath.trim().replace(/^\/+/, '');
     return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
 }
 
-function normalizeProfile(profile: Record<string, any> = {}) {
-    const normalized = { ...profile };
+function normalizeProfile(profile: Record<string, unknown> = {}): ProfileItem {
+    const normalized = { ...profile } as ProfileItem;
     normalized.subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
     normalized.manualNodes = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
     normalized.subProfiles = Array.isArray(profile.subProfiles) ? profile.subProfiles : [];
@@ -55,8 +76,11 @@ function normalizeProfile(profile: Record<string, any> = {}) {
     return normalized;
 }
 
-async function attachProfileDownloadCounts(storageAdapter: any, profiles: any) {
-    if (!Array.isArray(profiles) || profiles.length === 0) return profiles;
+async function attachProfileDownloadCounts(
+    storageAdapter: ApiStorageAdapter,
+    profiles: unknown
+): Promise<ProfileItem[]> {
+    if (!Array.isArray(profiles) || profiles.length === 0) return profiles as ProfileItem[];
 
     const counts = await Promise.all(
         profiles.map((profile) =>
@@ -72,8 +96,10 @@ async function attachProfileDownloadCounts(storageAdapter: any, profiles: any) {
     );
 }
 
-function isStorageUnavailableError(error: any) {
-    const message = String(error?.message || error || '').toLowerCase();
+function isStorageUnavailableError(error: unknown) {
+    const message = String(
+        (error as { message?: string } | undefined)?.message || error || ''
+    ).toLowerCase();
     return (
         message.includes('kv storage is paused') ||
         message.includes('storage is paused') ||
@@ -86,19 +112,24 @@ function isStorageUnavailableError(error: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Object>} 存储适配器实例
  */
-async function getStorageAdapter(env: any) {
+async function getStorageAdapter(env: Env): Promise<ApiStorageAdapter> {
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }
 
-function isSimpleArrayDiff(diff: any) {
+function isSimpleArrayDiff(diff: unknown): boolean {
     if (!diff || typeof diff !== 'object') return false;
     const allowedKeys = ['added', 'updated', 'removed'];
-    if (!Object.keys(diff).every((key) => allowedKeys.includes(key))) return false;
-    return ['added', 'updated', 'removed'].every((key) => Array.isArray(diff[key] || []));
+    const record = diff as Record<string, unknown>;
+    if (!Object.keys(record).every((key) => allowedKeys.includes(key))) return false;
+    return ['added', 'updated', 'removed'].every((key) => Array.isArray(record[key] || []));
 }
 
-async function applyRowLevelDiff(storageAdapter: any, type: any, diff: any) {
+async function applyRowLevelDiff(
+    storageAdapter: ApiStorageAdapter,
+    type: string,
+    diff: unknown
+) {
     const isProfile = type === 'profiles';
     const putItem = isProfile
         ? storageAdapter.putProfile?.bind(storageAdapter)
@@ -116,18 +147,22 @@ async function applyRowLevelDiff(storageAdapter: any, type: any, diff: any) {
         return false;
     }
 
-    const { added = [], updated = [], removed = [] } = diff;
+    const { added = [], updated = [], removed = [] } = diff as RowLevelDiff;
 
     await Promise.all([
-        ...added.map((item: any) => putItem(item)),
-        ...updated.map((item: any) => putItem(item)),
-        ...removed.map((id: any) => deleteItem(id)),
+        ...added.map((item) => putItem(item)),
+        ...updated.map((item) => putItem(item)),
+        ...removed.map((id) => deleteItem(id)),
     ]);
 
     return true;
 }
 
-async function syncCollectionRowLevel(storageAdapter: any, type: any, finalItems: any) {
+async function syncCollectionRowLevel(
+    storageAdapter: ApiStorageAdapter,
+    type: string,
+    finalItems: unknown
+) {
     const isProfile = type === 'profiles';
     const getAll = isProfile
         ? storageAdapter.getAllProfiles?.bind(storageAdapter)
@@ -149,7 +184,7 @@ async function syncCollectionRowLevel(storageAdapter: any, type: any, finalItems
     }
 
     const currentItems = await getAll();
-    const currentMap = new Map(currentItems.map((item: any) => [item.id, item]));
+    const currentMap = new Map(currentItems.map((item) => [item.id, item]));
     const finalMap = new Map(finalItems.map((item) => [item.id, item]));
 
     const puts: Promise<boolean | unknown>[] = [];
@@ -177,7 +212,7 @@ async function syncCollectionRowLevel(storageAdapter: any, type: any, finalItems
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleDataRequest(env: any, context: PagesEventContext | null = null) {
+export async function handleDataRequest(env: Env, context: PagesEventContext | null = null) {
     let storageType = 'unknown';
     try {
         storageType = await StorageFactory.getStorageType(env);
@@ -267,7 +302,7 @@ import { applyPatch } from './patch-utils.ts';
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleMisubsSave(request: any, env: any) {
+export async function handleMisubsSave(request: Request, env: Env) {
     try {
         // 步骤1: 解析请求体
         let requestData;
@@ -290,14 +325,14 @@ export async function handleMisubsSave(request: any, env: any) {
         const { misubs, profiles, diff } = requestData;
         const storageAdapter = await getStorageAdapter(env);
 
-        let finalMisubs = misubs;
-        let finalProfiles = profiles;
+        let finalMisubs: KvRecord[] = misubs;
+        let finalProfiles: KvRecord[] = profiles;
 
         // 步骤1.5: 检查是否为 Diff 模式
         if (diff) {
             console.info('[API] Processing Diff Patch...');
             // 获取当前数据
-            const [currentMisubs, currentProfiles] = await Promise.all([
+            const [rawCurrentMisubs, rawCurrentProfiles] = await Promise.all([
                 typeof storageAdapter.getAllSubscriptions === 'function'
                     ? storageAdapter.getAllSubscriptions()
                     : storageAdapter.get(KV_KEY_SUBS).then((res) => res || []),
@@ -305,6 +340,12 @@ export async function handleMisubsSave(request: any, env: any) {
                     ? storageAdapter.getAllProfiles()
                     : storageAdapter.get(KV_KEY_PROFILES).then((res) => res || []),
             ]);
+            const currentMisubs: KvRecord[] = Array.isArray(rawCurrentMisubs)
+                ? rawCurrentMisubs
+                : [];
+            const currentProfiles: KvRecord[] = Array.isArray(rawCurrentProfiles)
+                ? rawCurrentProfiles
+                : [];
 
             // 应用补丁
             if (diff.subscriptions) {
@@ -361,15 +402,15 @@ export async function handleMisubsSave(request: any, env: any) {
             // [Fix] Sync sortIndex back to diff for correct row-level persistence
             if (diff?.profiles) {
                 const profileMap = new Map<string, KvRecord>(
-                    finalProfiles.map((p: any) => [p.id, p])
+                    finalProfiles.map((p): [string, KvRecord] => [p.id, p])
                 );
                 if (diff.profiles.added)
-                    diff.profiles.added = diff.profiles.added.map((p: any) => ({
+                    diff.profiles.added = diff.profiles.added.map((p: KvRecord) => ({
                         ...p,
                         sortIndex: profileMap.get(p.id)?.sortIndex,
                     }));
                 if (diff.profiles.updated)
-                    diff.profiles.updated = diff.profiles.updated.map((p: any) => ({
+                    diff.profiles.updated = diff.profiles.updated.map((p: KvRecord) => ({
                         ...p,
                         sortIndex: profileMap.get(p.id)?.sortIndex,
                     }));
@@ -384,14 +425,16 @@ export async function handleMisubsSave(request: any, env: any) {
 
             // [Fix] Sync sortIndex back to diff for correct row-level persistence
             if (diff?.subscriptions) {
-                const subMap = new Map<string, KvRecord>(finalMisubs.map((s: any) => [s.id, s]));
+                const subMap = new Map<string, KvRecord>(
+                    finalMisubs.map((s): [string, KvRecord] => [s.id, s])
+                );
                 if (diff.subscriptions.added)
-                    diff.subscriptions.added = diff.subscriptions.added.map((s: any) => ({
+                    diff.subscriptions.added = diff.subscriptions.added.map((s: KvRecord) => ({
                         ...s,
                         sortIndex: subMap.get(s.id)?.sortIndex,
                     }));
                 if (diff.subscriptions.updated)
-                    diff.subscriptions.updated = diff.subscriptions.updated.map((s: any) => ({
+                    diff.subscriptions.updated = diff.subscriptions.updated.map((s: KvRecord) => ({
                         ...s,
                         sortIndex: subMap.get(s.id)?.sortIndex,
                     }));
@@ -411,8 +454,8 @@ export async function handleMisubsSave(request: any, env: any) {
         if (finalMisubs && finalMisubs.length > 0) {
             try {
                 const notificationPromises = finalMisubs
-                    .filter((sub: any) => sub?.enabled && sub.url && sub.url.startsWith('http'))
-                    .map((sub: any) =>
+                    .filter((sub) => sub?.enabled && sub.url && sub.url.startsWith('http'))
+                    .map((sub: KvRecord) =>
                         checkAndNotify(sub, settings, env).catch((notifyError) => {
                             console.warn(
                                 '[API] Notification failed for subscription:',
@@ -443,7 +486,7 @@ export async function handleMisubsSave(request: any, env: any) {
                         : false,
                 ]);
 
-                const saveTasks: Promise<boolean>[] = [];
+                const saveTasks: Promise<unknown>[] = [];
                 if (!subsHandled) saveTasks.push(storageAdapter.put(KV_KEY_SUBS, finalMisubs));
                 if (!profilesHandled)
                     saveTasks.push(storageAdapter.put(KV_KEY_PROFILES, finalProfiles));
@@ -456,7 +499,7 @@ export async function handleMisubsSave(request: any, env: any) {
                     syncCollectionRowLevel(storageAdapter, 'profiles', finalProfiles),
                 ]);
 
-                const saveTasks: Promise<boolean>[] = [];
+                const saveTasks: Promise<unknown>[] = [];
                 if (!subsHandled) saveTasks.push(storageAdapter.put(KV_KEY_SUBS, finalMisubs));
                 if (!profilesHandled)
                     saveTasks.push(storageAdapter.put(KV_KEY_PROFILES, finalProfiles));
@@ -517,7 +560,7 @@ export async function handleMisubsSave(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-function redactSettingsForResponse(settings: Record<string, any> = {}) {
+function redactSettingsForResponse(settings: MisubSettings = {}) {
     return {
         ...settings,
         webdavBackup: settings.webdavBackup
@@ -526,7 +569,7 @@ function redactSettingsForResponse(settings: Record<string, any> = {}) {
     };
 }
 
-export async function handleSettingsGet(env: any) {
+export async function handleSettingsGet(env: Env) {
     try {
         const settings = (await SettingsCache.get(env)) || {};
         return createJsonResponse(redactSettingsForResponse({ ...defaultSettings, ...settings }));
@@ -548,7 +591,7 @@ export async function handleSettingsGet(env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSettingsSave(request: any, env: any) {
+export async function handleSettingsSave(request: Request, env: Env) {
     try {
         const newSettings = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
 
@@ -587,12 +630,12 @@ export async function handleSettingsSave(request: any, env: any) {
             'preview',
         ]);
 
-        const normalizePathRoot = (value: any) => {
+        const normalizePathRoot = (value: unknown) => {
             if (typeof value !== 'string') return '';
             return value.trim().replace(/^\/+/, '').split('/')[0].toLowerCase();
         };
 
-        const rejectReservedValue = (value: any, fieldLabel: any) => {
+        const rejectReservedValue = (value: unknown, fieldLabel: string) => {
             const pathRoot = normalizePathRoot(value);
             if (pathRoot && reservedPathRoots.has(pathRoot)) {
                 return createJsonResponse(
@@ -623,7 +666,8 @@ export async function handleSettingsSave(request: any, env: any) {
         }
 
         const storageAdapter = await getStorageAdapter(env);
-        const oldSettings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+        const oldSettings =
+            ((await storageAdapter.get(KV_KEY_SETTINGS)) as MisubSettings) || {};
         if (newSettings.webdavBackup && oldSettings.webdavBackup) {
             const incomingPassword = newSettings.webdavBackup.password;
             if (incomingPassword === '' || incomingPassword == null) {
@@ -711,7 +755,7 @@ export async function handleSettingsSave(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSettingsReset(env: any) {
+export async function handleSettingsReset(env: Env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
 
@@ -754,7 +798,7 @@ export async function handleSettingsReset(env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicProfilesRequest(env: any) {
+export async function handlePublicProfilesRequest(env: Env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const cachedSettings = await SettingsCache.get(env);
@@ -797,10 +841,10 @@ export async function handlePublicProfilesRequest(env: any) {
         };
 
         // 过滤出公开且启用的订阅组
-        const publicProfiles = profiles
+        const publicProfiles = (Array.isArray(profiles) ? profiles : [])
             .map(normalizeProfile)
-            .filter((p: any) => p.isPublic && p.enabled)
-            .map((p: any) => ({
+            .filter((p) => p.isPublic && p.enabled)
+            .map((p) => ({
                 id: p.id,
                 name: p.name,
                 description: p.description || '',
@@ -847,13 +891,13 @@ export async function handlePublicProfilesRequest(env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicConfig(request: any, env: any) {
+export async function handlePublicConfig(request: Request, env: Env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
 
         // Merge with default settings to ensure enablePublicPage exists
-        const mergedSettings = { ...defaultSettings, ...settings };
+        const mergedSettings = { ...defaultSettings, ...settings } as MisubSettings;
         const configuredLoginPath = normalizeLoginPath(mergedSettings.customLoginPath);
         let isLoginPath = configuredLoginPath === '/login';
         try {
@@ -893,7 +937,7 @@ export async function handlePublicConfig(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleUpdatePassword(request: any, env: any) {
+export async function handleUpdatePassword(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
