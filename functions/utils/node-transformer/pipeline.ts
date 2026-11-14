@@ -23,6 +23,8 @@ import {
 } from './render.ts';
 import { makeComparator } from './sort.ts';
 
+import type { KvRecord } from '../../../types/models.ts';
+
 // ============ 主管道函数 ============
 
 /**
@@ -34,7 +36,7 @@ import { makeComparator } from './sort.ts';
 /**
  * 将 URL 列表转换为结构化 Record 列表
  */
-export function nodeUrlsToRecords(nodeUrls: any, options: Record<string, any> = {}) {
+export function nodeUrlsToRecords(nodeUrls: unknown, options: Record<string, unknown> = {}) {
     const input = Array.isArray(nodeUrls)
         ? nodeUrls.map((s) => String(s || '').trim()).filter(Boolean)
         : [];
@@ -56,14 +58,16 @@ export function nodeUrlsToRecords(nodeUrls: any, options: Record<string, any> = 
             metadata: metadata, // 注入完整元数据
         };
 
-        return options.ensureRegion ? ensureRegionInfo(record, options.enableEmoji) : record;
+        return options.ensureRegion
+            ? ensureRegionInfo(record, Boolean(options.enableEmoji))
+            : record;
     });
 }
 
 /**
  * 将 Record 列表写回 URL 列表
  */
-export function recordsToNodeUrls(records: any) {
+export function recordsToNodeUrls(records: unknown) {
     if (!Array.isArray(records)) return [];
     return records.map((r) => {
         // 如果名称发生变化（例如被正则重命名或脚本重命名），同步更新 URL
@@ -75,14 +79,16 @@ export function recordsToNodeUrls(records: any) {
 }
 
 export function applyNodeTransformPipeline(
-    nodeUrls: any,
-    transformConfig: Record<string, any> = {}
-) {
+    nodeUrls: unknown,
+    transformConfig: Record<string, unknown> = {}
+): string[] {
     const cfg = normalizeConfig(transformConfig);
-    if (!cfg.enabled) return nodeUrls;
+    if (!cfg.enabled) return Array.isArray(nodeUrls) ? (nodeUrls as string[]) : [];
 
-    const sortKeys = cfg.sort.enabled ? cfg.sort.keys || [] : [];
-    const sortKeySet = new Set(sortKeys.map((k: any) => String(k?.key || '')));
+    const sortKeys: unknown[] = cfg.sort.enabled ? cfg.sort.keys || [] : [];
+    const sortKeySet = new Set(
+        sortKeys.map((k: unknown) => String((k as KvRecord | null)?.key || ''))
+    );
     const needServerPort =
         (cfg.dedup.enabled && cfg.dedup.mode !== 'url') ||
         cfg.rename.template.enabled ||
@@ -111,14 +117,14 @@ export function applyNodeTransformPipeline(
 
     if (cfg.filter.protocols.enabled && cfg.filter.protocols.values.length > 0) {
         const allowedProtocols = new Set(
-            cfg.filter.protocols.values.map((value: any) => normalizeProtocol(value))
+            cfg.filter.protocols.values.map((value: unknown) => normalizeProtocol(value))
         );
         records = records.filter((r) => allowedProtocols.has(r.protocol));
     }
 
     if (cfg.filter.regions.enabled && cfg.filter.regions.values.length > 0) {
         const allowedRegions = new Set(
-            cfg.filter.regions.values.map((value: any) => toRegionZh(value))
+            cfg.filter.regions.values.map((value: unknown) => toRegionZh(value))
         );
         records = records
             .map((r) => ensureRegionInfo(r, cfg.enableEmoji))

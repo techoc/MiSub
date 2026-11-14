@@ -1,7 +1,7 @@
 import { NODE_PROTOCOL_REGEX } from '@/constants/nodeProtocols.ts';
 import { DEFAULT_GROUP_KEY } from './groups.ts';
 
-export const countryCodeMap = {
+export const countryCodeMap: Record<string, string[]> = {
     hk: ['🇭🇰', '香港', 'HK'],
     tw: ['🇨🇳', '台湾', '臺灣'],
     sg: ['🇸🇬', '新加坡', '狮城'],
@@ -58,11 +58,12 @@ export const countryCodeMap = {
     nz: ['🇳🇿', '新西兰', '紐西蘭'],
 };
 
-export function isManualNodeEntry(item: any) {
-    if (!item.url) return false;
-    if (typeof item.url !== 'string') return false;
+export function isManualNodeEntry(item: unknown): boolean {
+    const rawUrl = (item as { url?: unknown } | null | undefined)?.url;
+    if (!rawUrl) return false;
+    if (typeof rawUrl !== 'string') return false;
 
-    const trimmedUrl = item.url.trim();
+    const trimmedUrl = rawUrl.trim();
     if (!trimmedUrl) return false;
 
     if (!/^https?:\/\//i.test(trimmedUrl)) return NODE_PROTOCOL_REGEX.test(trimmedUrl);
@@ -77,14 +78,20 @@ export function isManualNodeEntry(item: any) {
     }
 }
 
-export function filterManualNodes(nodes: any, searchTerm: any, activeColorFilter: any) {
-    let filtered = nodes;
+export function filterManualNodes(
+    nodes: unknown,
+    searchTerm: unknown,
+    activeColorFilter: unknown
+): Record<string, unknown>[] {
+    let filtered: Record<string, unknown>[] = Array.isArray(nodes)
+        ? (nodes as Record<string, unknown>[])
+        : [];
 
     if (activeColorFilter) {
         if (activeColorFilter === DEFAULT_GROUP_KEY) {
-            filtered = filtered.filter((n: any) => !n.group);
+            filtered = filtered.filter((n) => !n.group);
         } else {
-            filtered = filtered.filter((n: any) => n.group === activeColorFilter);
+            filtered = filtered.filter((n) => n.group === activeColorFilter);
         }
     }
 
@@ -92,12 +99,13 @@ export function filterManualNodes(nodes: any, searchTerm: any, activeColorFilter
         return filtered;
     }
 
-    const searchQuery = searchTerm.toLowerCase().trim();
-    const alternativeTerms = (countryCodeMap as Record<string, any>)[searchQuery] || [];
+    const searchQuery = String(searchTerm).toLowerCase().trim();
+    const alternativeTerms = countryCodeMap[searchQuery] || [];
 
-    return filtered.filter((node: any) => {
-        if (!node.name) return false;
-        const nodeName = node.name.toLowerCase();
+    return filtered.filter((node) => {
+        const rawName = node.name;
+        if (typeof rawName !== 'string' || !rawName) return false;
+        const nodeName = rawName.toLowerCase();
         if (nodeName.includes(searchQuery)) return true;
         for (const altTerm of alternativeTerms) {
             if (nodeName.includes(altTerm.toLowerCase())) return true;
