@@ -388,7 +388,15 @@ export async function onRequest(context: PagesEventContext) {
             () =>
                 csrfOriginMiddleware(
                     request,
-                    () => securityHeadersMiddleware(request, handleRequest),
+                    // handleRequest 的每个分支运行时都返回 Response；其静态联合里
+                    // 的 Record<string, any> / undefined 来自个别 handler 的宽松
+                    // 返回类型标注（见 handleSubscriptionNodesRequest 等），而非真实
+                    // 返回值。这里在中间件边界收窄，避免逐请求改这些 handler。
+                    () =>
+                        securityHeadersMiddleware(
+                            request,
+                            handleRequest as () => Promise<Response>
+                        ),
                     corsOptions
                 ),
             corsOptions

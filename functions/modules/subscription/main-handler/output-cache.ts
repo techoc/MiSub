@@ -28,8 +28,43 @@ const BYPASS_PARAMS = ['refresh', 'nocache', 'debug', 'callback_token'];
 
 const HINTS_PROP = '__misubOutputCacheHints';
 
+/** 命中路径补记日志/计数所需的最小上下文 */
+export interface OutputCacheHints {
+    downloadCountKey?: string;
+    loggable?: boolean;
+    enableAccessLog?: boolean;
+    targetFormat?: string;
+    token?: string | number | null;
+    profileIdentifier?: string | number | null;
+    subName?: string;
+    [key: string]: unknown;
+}
+
+/** 缓存条目 */
+export interface OutputCacheEntry {
+    storedAt: number;
+    status: number;
+    bytes: number;
+    etag: string;
+    headers: Array<[string, string]>;
+    body: string;
+    hints: OutputCacheHints;
+}
+
+/** 编排器传入的上下文（PagesEventContext 在管线中附加字段后的形状） */
+interface OutputCacheContext {
+    request: Request;
+    isAuthenticated?: boolean;
+    [key: string]: unknown;
+}
+
+/** 把外部传入的 context 归一为可索引记录 */
+function asContext(context: unknown): OutputCacheContext | null {
+    return (context as OutputCacheContext | null | undefined) || null;
+}
+
 /** key -> entry；value.hints 记录命中路径补记日志/计数所需的最小上下文 */
-const outputCacheEntries = new Map();
+const outputCacheEntries = new Map<string, OutputCacheEntry>();
 let outputCacheTotalBytes = 0;
 
 export function resetOutputCacheForTests() {
@@ -53,16 +88,19 @@ export function invalidateOutputCache() {
  * target-resolver 挂 downloadCountKey；编排器在访问日志分支挂
  * loggable/targetFormat/subName 等。
  */
-export function setOutputCacheHints(context: any, partial: any) {
+export function setOutputCacheHints(context: unknown, partial: OutputCacheHints) {
     if (!context) return;
-    context[HINTS_PROP] = { ...(context[HINTS_PROP] || {}), ...partial };
+    const record = context as Record<string, unknown>;
+    const current = (record[HINTS_PROP] as OutputCacheHints | undefined) || {};
+    record[HINTS_PROP] = { ...current, ...partial };
 }
 
-export function getOutputCacheHints(context: any) {
-    return context?.[HINTS_PROP] || null;
+export function getOutputCacheHints(context: unknown): OutputCacheHints | null {
+    const ctx = asContext(context);
+    return (ctx?.[HINTS_PROP] as OutputCacheHints | undefined) || null;
 }
 
-export function isCacheableRequest(request: any) {
+export function isCacheableRequest(request: Request | null | undefined): boolean {
     if (!request || request.method !== 'GET') return false;
     try {
         const url = new URL(request.url);
@@ -72,7 +110,7 @@ export function isCacheableRequest(request: any) {
     }
 }
 
-export function isCacheableResponse(response: any) {
+export function isCacheableResponse(response: Response | null | undefined): boolean {
     if (!response || response.status !== 200) return false;
     const contentType = response.headers?.get?.('Content-Type') || '';
     // 伪装页/浏览器落地页是 text/html；订阅输出永远是 yaml/json/纯文本
@@ -84,7 +122,7 @@ export function isCacheableResponse(response: any) {
  * 64-bit 指纹（FNV-1a + djb2 各 32 位），纯同步、跨 isolate 稳定，
  * 仅用于 304 协商，不需要加密强度。
  */
-export function computeOutputEtag(body: any) {
+export function computeOutputEtag(body: unknown): string {
     const text = String(body ?? '');
     let fnv = 0x811c9dc5;
     let djb = 5381;
@@ -96,7 +134,7 @@ export function computeOutputEtag(body: any) {
     return `W/"misub-${fnv.toString(16).padStart(8, '0')}${djb.toString(16).padStart(8, '0')}"`;
 }
 
-function buildCacheKey(request: any) {
+function buildCacheKey(request: Request): string | null {
     let url;
     try {
         url = new URL(request.url);
@@ -107,7 +145,7 @@ function buildCacheKey(request: any) {
     return `${request.method} ${url.pathname}${url.search} ua=${ua}`;
 }
 
-function dropEntry(key: any) {
+function dropEntry(key: string): void {
     const entry = outputCacheEntries.get(key);
     if (entry) {
         outputCacheTotalBytes -= entry.bytes;
@@ -115,13 +153,13 @@ function dropEntry(key: any) {
     }
 }
 
-function purgeExpired(now: any) {
+function purgeExpired(now: number): void {
     for (const [key, entry] of outputCacheEntries) {
         if (now - entry.storedAt > OUTPUT_CACHE_TTL_MS) dropEntry(key);
     }
 }
 
-function evictIfNeeded(incomingBytes: any) {
+function evictIfNeeded(incomingBytes: number): void {
     while (
         outputCacheEntries.size > 0 &&
         (outputCacheEntries.size >= OUTPUT_CACHE_MAX_ENTRIES ||
@@ -136,7 +174,10 @@ function evictIfNeeded(incomingBytes: any) {
 /**
  * 命中查询。返回 Response 或 null。onHit(entry) 供编排器补记日志/计数。
  */
-export function matchCachedOutput(request: any, { onHit }: Record<string, any> = {}) {
+export function matchCachedOutput(
+    request: Request,
+    { onHit }: { onHit?: (entry: OutputCacheEntry) => void } = {}
+): Response | null {
     if (!isCacheableRequest(request)) return null;
     const key = buildCacheKey(request);
     if (!key) return null;
@@ -169,17 +210,18 @@ export function matchCachedOutput(request: any, { onHit }: Record<string, any> =
  * 把管线产出写入缓存；返回可能补上 ETag 的新 Response（调用方直接透传给客户端）。
  * 不满足缓存条件的响应原样返回。
  */
-export async function storeOutput(context: any, response: any) {
-    if (!context || !isCacheableRequest(context.request)) return response;
+export async function storeOutput(context: unknown, response: Response): Promise<Response> {
+    const ctx = asContext(context);
+    if (!ctx || !isCacheableRequest(ctx.request)) return response;
     if (!isCacheableResponse(response)) return response;
     // 登录态响应永不入缓存：同一 URL+UA 下管理员看到的内容可能与匿名不同（伪装）
-    if (context.isAuthenticated) return response;
+    if (ctx.isAuthenticated) return response;
 
     const body = await response.text();
     const bytes = new TextEncoder().encode(body).length;
     if (!body || bytes > OUTPUT_CACHE_MAX_ENTRY_BYTES) return response;
 
-    const key = buildCacheKey(context.request);
+    const key = buildCacheKey(ctx.request);
     if (!key) return response;
 
     purgeExpired(Date.now());
@@ -187,7 +229,7 @@ export async function storeOutput(context: any, response: any) {
     dropEntry(key); // 覆盖旧条目时先释放其容量
 
     const etag = computeOutputEtag(body);
-    const entry = {
+    const entry: OutputCacheEntry = {
         storedAt: Date.now(),
         status: response.status,
         bytes,
