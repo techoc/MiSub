@@ -9,7 +9,22 @@ import { REGION_EMOJI, REGION_KEYWORDS } from './geo-data.ts';
 // 数据表已拆分至 geo-data.js；这里原样重新导出，保持既有 import 路径不变。
 export { REGION_KEYWORDS, REGION_EMOJI } from './geo-data.ts';
 
-function normalizeBase64(input: any) {
+/** 关键词表/Emoji 表按任意地区名索引 */
+const REGION_KEYWORD_MAP = REGION_KEYWORDS as Record<string, string[]>;
+const REGION_EMOJI_MAP = REGION_EMOJI as Record<string, string>;
+
+/** 节点解析结果 */
+interface ParsedNodeInfo {
+    protocol: string;
+    name: string;
+    region: string;
+    server?: string;
+    port?: string | number;
+    url?: unknown;
+    [key: string]: unknown;
+}
+
+function normalizeBase64(input: unknown): string {
     let s = String(input || '')
         .trim()
         .replace(/\s+/g, '');
@@ -26,14 +41,14 @@ function normalizeBase64(input: any) {
     return s;
 }
 
-function isLikelyBase64(input: any) {
+function isLikelyBase64(input: unknown): boolean {
     const s = String(input || '').trim();
     if (!s) return false;
     if (!/^[A-Za-z0-9+/=_-]+$/.test(s)) return false;
     return s.length >= 6;
 }
 
-function tryDecodeBase64(input: any) {
+function tryDecodeBase64(input: unknown): string | null {
     if (!isLikelyBase64(input)) return null;
     try {
         return atob(normalizeBase64(input));
@@ -42,7 +57,7 @@ function tryDecodeBase64(input: any) {
     }
 }
 
-function parseHostPort(value: any) {
+function parseHostPort(value: unknown): { server: string; port: string } {
     let segment = String(value || '');
     if (!segment) return { server: '', port: '' };
     const cut = segment.search(/[/?#]/);
@@ -70,7 +85,7 @@ function parseHostPort(value: any) {
  * @param {string} nodeName - 节点名称
  * @returns {string} 识别出的地区，如未识别返回"其他"
  */
-export function extractNodeRegion(nodeName: any) {
+export function extractNodeRegion(nodeName: unknown): string {
     if (!nodeName || typeof nodeName !== 'string') {
         return '其他';
     }
@@ -126,8 +141,8 @@ export function getSupportedRegions() {
  * @param {string} region - 地区名称
  * @returns {string[]} 该地区的所有关键词，如地区不存在返回空数组
  */
-export function getRegionKeywords(region: any) {
-    return (REGION_KEYWORDS as Record<string, any>)[region] || [];
+export function getRegionKeywords(region: string): string[] {
+    return REGION_KEYWORD_MAP[region] || [];
 }
 
 /**
@@ -135,10 +150,8 @@ export function getRegionKeywords(region: any) {
  * @param {string} region - 地区名称
  * @returns {string} 对应的 Emoji，如果未找到则返回空字符串
  */
-export function getRegionEmoji(region: any) {
-    return (
-        (REGION_EMOJI as Record<string, any>)[region] || (region === '其他' || !region ? '🌍' : '')
-    );
+export function getRegionEmoji(region: string): string {
+    return REGION_EMOJI_MAP[region] || (region === '其他' || !region ? '🌍' : '');
 }
 
 /**
@@ -147,13 +160,13 @@ export function getRegionEmoji(region: any) {
  * @param {string} region - 要检查的地区
  * @returns {boolean} 是否包含该地区
  */
-export function containsRegion(nodeName: any, region: any) {
-    if (!nodeName || !region || !(REGION_KEYWORDS as Record<string, any>)[region]) {
+export function containsRegion(nodeName: unknown, region: string): boolean {
+    if (!nodeName || typeof nodeName !== 'string' || !region || !REGION_KEYWORD_MAP[region]) {
         return false;
     }
 
     const normalizedNodeName = nodeName.toLowerCase();
-    const keywords = (REGION_KEYWORDS as Record<string, any>)[region];
+    const keywords = REGION_KEYWORD_MAP[region];
 
     for (const keyword of keywords) {
         if (normalizedNodeName.includes(keyword.toLowerCase())) {
@@ -169,7 +182,7 @@ export function containsRegion(nodeName: any, region: any) {
  * @param {string} nodeUrl - 节点URL
  * @returns {Object} 节点详细信息
  */
-export function parseNodeInfo(nodeUrl: any) {
+export function parseNodeInfo(nodeUrl: unknown): ParsedNodeInfo {
     if (!nodeUrl || typeof nodeUrl !== 'string') {
         return {
             protocol: 'unknown',
@@ -474,21 +487,21 @@ export function parseNodeInfo(nodeUrl: any) {
  * @param {Array} nodes - 节点数组
  * @returns {Object} 地区统计信息
  */
-export function calculateRegionStats(nodes: any) {
-    const stats = {};
+export function calculateRegionStats(
+    nodes: Array<{ name?: string }>
+): Record<string, number | { count: number; percentage: number }> {
+    const stats: Record<string, number | { count: number; percentage: number }> = {};
     const total = nodes.length;
 
-    nodes.forEach((node: any) => {
+    nodes.forEach((node) => {
         const region = extractNodeRegion(node.name || '');
-        (stats as Record<string, any>)[region] = ((stats as Record<string, any>)[region] || 0) + 1;
+        stats[region] = (Number(stats[region]) || 0) + 1;
     });
 
     // 添加百分比信息
-    for (const [region, count] of Object.entries(stats) as [string, number][]) {
-        (stats as Record<string, any>)[region] = {
-            count,
-            percentage: Math.round((count / total) * 100),
-        };
+    for (const region of Object.keys(stats)) {
+        const count = Number(stats[region]) || 0;
+        stats[region] = { count, percentage: Math.round((count / total) * 100) };
     }
 
     return stats;

@@ -448,7 +448,7 @@ export async function handleProfileMode(
                 ...nodeInfo,
                 subscriptionName:
                     originalNode?.subscriptionName ||
-                    (nodeInfo as Record<string, unknown>).subscriptionName ||
+                    String(nodeInfo.subscriptionName || '') ||
                     '未知',
             };
         });
