@@ -76,10 +76,10 @@ export { applyFilterRules } from './subscription-service/filter-rules.ts';
  * @returns {Promise<string>} - 组合后的节点列表
  */
 export async function generateCombinedNodeList(
-    context: any,
-    config: any,
-    userAgent: any,
-    misubs: any,
+    context: KvRecord,
+    config: KvRecord,
+    userAgent: string,
+    misubs: KvRecord[],
     prependedContent = '',
     profilePrefixSettings: KvRecord | null = null,
     debug = false,
@@ -125,7 +125,10 @@ export async function generateCombinedNodeList(
     // --- 阶段 1: 数据准备与手动节点处理 ---
 
     // [增强修复] 定义统一的订阅源级转换中枢
-    const applySubscriptionTransforms = async (nodes: any, subSource: any) => {
+    const applySubscriptionTransforms = async (
+        nodes: string[],
+        subSource: KvRecord
+    ): Promise<string[]> => {
         if (!nodes || nodes.length === 0) return [];
 
         let currentNodes = [...nodes];
@@ -155,13 +158,13 @@ export async function generateCombinedNodeList(
     };
 
     // 重构后的手动节点处理逻辑
-    const manualSubSourceGroups = misubs.filter((sub: any) => {
+    const manualSubSourceGroups = misubs.filter((sub: KvRecord) => {
         if (sub?.isFromSubProfile) return true;
         const url = typeof sub?.url === 'string' ? sub.url.trim() : '';
         return Boolean(url) && !/^https?:\/\//i.test(url);
     });
 
-    let manualProcessedLines: any[] = [];
+    let manualProcessedLines: string[] = [];
     for (const sub of manualSubSourceGroups) {
         try {
             const rawUrl = typeof sub?.url === 'string' ? sub.url.trim() : '';
@@ -197,7 +200,7 @@ export async function generateCombinedNodeList(
     const processedManualNodeList = manualProcessedLines.join('\n');
 
     const httpSubs = misubs.filter(
-        (sub: any) =>
+        (sub: KvRecord) =>
             !sub?.isFromSubProfile &&
             sub &&
             sub.url &&
@@ -212,7 +215,7 @@ export async function generateCombinedNodeList(
      * @param {Object} sub - 订阅对象
      * @returns {Promise<string>} - 处理后的节点列表
      */
-    const fetchSingleSubscription = async (sub: any) => {
+    const fetchSingleSubscription = async (sub: KvRecord): Promise<string> => {
         const cacheEnabled = sub?.enableNodeCache === true;
         const storage = context?.storage;
         const recordEmptyRuntimeInfo = () => {
@@ -389,8 +392,10 @@ export async function generateCombinedNodeList(
     };
 
     // 使用并发控制器限制同时请求数量，避免网络拥塞
-    const subPromises = httpSubs.map((sub: any) => limiter(() => fetchSingleSubscription(sub)));
-    const processedSubContents = await Promise.all(subPromises);
+    const subPromises = httpSubs.map((sub: KvRecord) =>
+        limiter(() => fetchSingleSubscription(sub))
+    );
+    const processedSubContents = (await Promise.all(subPromises)) as string[];
 
     // --- 阶段 1: 原始数据汇聚 (Raw Data Aggregation) ---
     const rawCombinedLines = (processedManualNodeList + '\n' + processedSubContents.join('\n'))
@@ -408,7 +413,7 @@ export async function generateCombinedNodeList(
     // --- 阶段 2: 核心转换引擎 (Logic Transformation Engine) ---
     // 优先级: 订阅组 Operator Chain > 全局默认 Operator Chain > 旧版 Node Pipeline (桥接模式)
 
-    let activeOperators: any[] = [];
+    let activeOperators: unknown[] = [];
 
     // 获取工作流配置（支持字符串自动解析）
     if (profilePrefixSettings?.operators) {

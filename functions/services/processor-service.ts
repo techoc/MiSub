@@ -202,10 +202,10 @@ export class ProcessorService {
 
         // 1. Fetch and combine nodes
         const combinedNodeList = await generateCombinedNodeList(
-            context,
+            context as KvRecord,
             { ...config, enableAccessLog: false },
-            userAgent,
-            targetMisubs,
+            userAgent as string,
+            targetMisubs as KvRecord[],
             String(prependedContent ?? ''),
             (generationSettings as KvRecord | null) ?? null,
             Boolean(isDebugToken),
