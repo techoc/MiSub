@@ -6,11 +6,36 @@
  */
 
 import { generateCombinedNodeList } from '../../../services/subscription-service.ts';
+
+import type { KvRecord } from '../../../../types/models.ts';
 import {
     isLikelyPartialAggregateNodeList,
     isSuspiciousNodeCountDrop,
     setCache,
 } from '../../../services/node-cache-service.ts';
+
+/** refreshSubscriptionNodes 入参 */
+interface RefreshSubscriptionNodesInput {
+    context: KvRecord;
+    request: Request;
+    url: URL;
+    config: KvRecord;
+    allProfiles: KvRecord[];
+    userAgentHeader: string;
+    targetFormat: string;
+    profileIdentifier: unknown;
+    token: unknown;
+    subName: string;
+    targetMisubs: KvRecord[];
+    prependedContentForSubconverter: string;
+    ruleLevel: string;
+    urlInclude?: string | null;
+    urlExclude?: string | null;
+    urlRename?: string | null;
+    urlEmoji?: string | null;
+    cacheKey: string;
+    storageAdapter: Parameters<typeof setCache>[0];
+}
 
 export async function refreshSubscriptionNodes({
     context,
@@ -32,7 +57,7 @@ export async function refreshSubscriptionNodes({
     urlEmoji,
     cacheKey,
     storageAdapter,
-}: any) {
+}: RefreshSubscriptionNodesInput) {
     // 组合节点列表
     // 传递 context 对象以获取请求信息用于日志记录
     context.startTime = Date.now();
@@ -62,8 +87,7 @@ export async function refreshSubscriptionNodes({
 
     const activeProfile = profileIdentifier
         ? allProfiles.find(
-              (p: any) =>
-                  (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
+              (p) => (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
           )
         : null;
 
@@ -102,7 +126,7 @@ export async function refreshSubscriptionNodes({
     const profileNodeTransform = activeProfile?.nodeTransform ?? null;
     const profileNodeTransformPresetId = activeProfile?.nodeTransformPresetId || '';
     const profilePresetNodeTransform = profileNodeTransformPresetId
-        ? globalNodeTransformPresets.find((item: any) => item?.id === profileNodeTransformPresetId)
+        ? globalNodeTransformPresets.find((item) => item?.id === profileNodeTransformPresetId)
               ?.config || null
         : null;
     const hasProfileNodeTransform =
@@ -127,7 +151,7 @@ export async function refreshSubscriptionNodes({
     // [Subconverter API] 动态注入更名算子 (rename=old@new|A@B)
     if (urlRename) {
         const renameGroups = urlRename.split('|');
-        renameGroups.forEach((group: any) => {
+        renameGroups.forEach((group: string) => {
             const [regex, replace] = group.split('@');
             if (regex) {
                 generationSettings.operators.push({
@@ -171,15 +195,18 @@ export async function refreshSubscriptionNodes({
         }
     );
     const sourceNames = targetMisubs
-        .filter((s: any) => typeof s?.url === 'string' && s.url.startsWith('http'))
-        .map((s: any) => s.name || s.url);
+        .filter((s) => typeof s?.url === 'string' && s.url.startsWith('http'))
+        .map((s) => s.name || s.url);
     // 仅在至少一个订阅源真正从远程拉取成功时才刷新缓存时间
     // 如果没有 HTTP 订阅源（纯手动节点/过期订阅组），则始终写入缓存
     const stats = context.generationStats;
     if (!stats?.sourceCount || stats.upstreamSuccessCount > 0) {
         const cacheSaved = await setCache(storageAdapter, cacheKey, freshNodes, sourceNames);
         const freshNodeCount = freshNodes.split('\n').filter((line) => line.trim()).length;
-        const existingCache = cacheSaved ? null : await storageAdapter.get(cacheKey);
+        const existingCache = (cacheSaved ? null : await storageAdapter.get(cacheKey)) as {
+            nodeCount?: number;
+            nodes?: string;
+        } | null;
         const existingNodeCount =
             existingCache?.nodeCount ||
             String(existingCache?.nodes || '')

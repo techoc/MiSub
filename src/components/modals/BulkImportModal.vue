@@ -63,7 +63,7 @@
     /**
      * 文件导入：读取文件 → 后端解析 → 交回父级批量写入。
      */
-    const handleFiles = async (fileList: any) => {
+    const handleFiles = async (fileList: unknown) => {
         isProcessing.value = true;
         errorMessage.value = '';
         successMessage.value = '';
@@ -82,15 +82,18 @@
                 throw new Error(parseResult.error || t('importNodes.parseFileFailed'));
             }
 
-            const nodes = (parseResult.data?.nodes || []).map((node: any) => ({
-                id: generateNodeId(),
-                name: node.name || 'Unknown',
-                url: node.url,
-                enabled: true,
-                protocol: node.protocol || 'unknown',
-                source: 'import',
-                group: selectedGroup.value || null,
-            }));
+            const nodes = ((parseResult.data?.nodes || []) as unknown[]).map((node) => {
+                const record = (node || {}) as Record<string, unknown>;
+                return {
+                    id: generateNodeId(),
+                    name: (record.name as string) || 'Unknown',
+                    url: record.url as string,
+                    enabled: true,
+                    protocol: (record.protocol as string) || 'unknown',
+                    source: 'import',
+                    group: selectedGroup.value || null,
+                };
+            });
 
             if (nodes.length === 0) {
                 parseStatus.value = '';
@@ -98,8 +101,7 @@
             }
 
             const uniqueNodes = nodes.filter(
-                (node: any, index: any, self: any) =>
-                    index === self.findIndex((n: any) => n.url === node.url)
+                (node, index, self) => index === self.findIndex((n) => n.url === node.url)
             );
             const duplicateCount = nodes.length - uniqueNodes.length;
 
