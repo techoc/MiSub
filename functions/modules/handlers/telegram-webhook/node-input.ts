@@ -22,20 +22,40 @@ import { sendTelegramMessage } from './telegram-api.ts';
 import { checkRateLimit, getUserBoundProfileId } from './user-access.ts';
 
 import type { KvRecord } from '../../../../types/models.ts';
+
+/** 批量导入选项 */
+interface ImportOptions {
+    groupName?: string;
+    source?: string;
+    fileName?: string;
+    now?: Date;
+}
+
+/** 本模块新增的节点/订阅条目 */
+interface ImportedNode {
+    id: string;
+    name: string;
+    url: string;
+    enabled: boolean;
+    source: string;
+    group: string;
+    telegram_user_id: string | number;
+    created_at: string;
+}
+
 /**
  * 处理节点输入（核心逻辑）
  */
 export async function handleNodeInput(
-    chatId: any,
-    text: any,
-    userId: any,
-    env: any,
+    chatId: string | number,
+    text: string,
+    userId: string | number,
+    env: Env,
     requestCache: KvRecord | null = null,
-    options = {}
+    options: ImportOptions = {}
 ) {
     // 同一批导入的节点共用一个分组名（文件导入用文件名，文本导入用时间）
-    const importGroupName =
-        (options as Record<string, any>).groupName || buildImportGroupName(options);
+    const importGroupName = options.groupName || buildImportGroupName(options);
     try {
         const cache = requestCache || createRequestCache();
         const config = await getTelegramPushConfig(env, cache);
@@ -48,12 +68,12 @@ export async function handleNodeInput(
         }
 
         // 1. 尝试提取节点链接 (SS, VLESS 等)
-        let nodeUrls = extractNodeUrls(text);
+        let nodeUrls: string[] = extractNodeUrls(text);
         let importType = 'node'; // node | subscription
 
         // 2. 提取订阅链接（支持一条消息里多行/多个订阅链接）
-        const subscriptionUrls = extractSubscriptionUrls(text).filter(
-            (url) => !nodeUrls.includes(url)
+        const subscriptionUrls: string[] = extractSubscriptionUrls(text).filter(
+            (url: string) => !nodeUrls.includes(url)
         );
 
         if (nodeUrls.length > 0 && subscriptionUrls.length > 0) {
@@ -86,12 +106,12 @@ export async function handleNodeInput(
             importType === 'subscription'
                 ? [...subscriptionUrls]
                 : [...subscriptionUrls, ...nodeUrls];
-        const addedNodes: any[] = [];
-        const ignoredUrls: any[] = [];
+        const addedNodes: ImportedNode[] = [];
+        const ignoredUrls: string[] = [];
 
         for (const url of allUrls) {
             // 去重检测
-            const exists = allSubscriptions.some((sub: any) => sub.url === url);
+            const exists = allSubscriptions.some((sub: KvRecord) => sub.url === url);
             if (exists) {
                 ignoredUrls.push(url);
                 continue;
@@ -102,7 +122,7 @@ export async function handleNodeInput(
                 ? `订阅源 ${new URL(url).hostname}`
                 : extractNodeName(url);
 
-            const node = {
+            const node: ImportedNode = {
                 id: generateId(),
                 name: defaultName,
                 url: url,
@@ -138,7 +158,7 @@ export async function handleNodeInput(
         try {
             const verifySubs = await storageAdapter.getAllSubscriptions();
             const isVerified = addedNodes.every((added) =>
-                verifySubs.some((s: any) => s.id === added.id)
+                verifySubs.some((s: KvRecord) => s.id === added.id)
             );
             if (!isVerified) {
                 console.warn('[Telegram Push] KV Verification failed');
@@ -154,7 +174,7 @@ export async function handleNodeInput(
         const boundProfileId = getUserBoundProfileId(config, userId);
         if (boundProfileId) {
             const profiles = await storageAdapter.getAllProfiles();
-            const targetProfile = profiles.find((p: any) => p.id === boundProfileId);
+            const targetProfile = profiles.find((p: KvRecord) => p.id === boundProfileId);
 
             if (targetProfile) {
                 // 分类 ID
@@ -200,7 +220,7 @@ export async function handleNodeInput(
         }
 
         // 6. 发送反馈消息
-        let message: any;
+        let message = '';
         const totalIgnored = ignoredUrls.length;
         const ignoreMsg = totalIgnored > 0 ? `\n⚠️ 已跳过 ${totalIgnored} 个重复链接` : '';
 
@@ -214,7 +234,7 @@ export async function handleNodeInput(
                 `📋 信息：\n` +
                 `• 名称: ${escapeHtml(node.name)}\n` +
                 // 对于订阅源显示域名，对于节点显示协议
-                `• 类型: ${isSub ? new URL(node.url).hostname : (node.url as Record<string, any>).split('://')[0].toUpperCase()}`;
+                `• 类型: ${isSub ? new URL(node.url).hostname : node.url.split('://')[0].toUpperCase()}`;
 
             if (boundProfileName) {
                 message += `\n• 已关联: ${escapeHtml(boundProfileName)}`;
@@ -225,9 +245,7 @@ export async function handleNodeInput(
             message = `✅ <b>成功添加 ${addedNodes.length} 个项目</b>${ignoreMsg}\n\n`;
             addedNodes.slice(0, 5).forEach((node, index) => {
                 const isSub = /^https?:\/\//i.test(node.url);
-                const label = isSub
-                    ? '[订阅]'
-                    : `[${(node.url as Record<string, any>).split('://')[0].toUpperCase()}]`;
+                const label = isSub ? '[订阅]' : `[${node.url.split('://')[0].toUpperCase()}]`;
                 message += `${index + 1}. ${escapeHtml(node.name)} ${label}\n`;
             });
             if (addedNodes.length > 5) {
