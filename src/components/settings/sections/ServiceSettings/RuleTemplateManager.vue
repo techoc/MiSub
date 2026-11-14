@@ -39,20 +39,28 @@ overwrite_original_rules=true`;
         enabled: true,
     });
 
-    const localTemplates = ref<any[]>([]);
+    /** 规则模板条目 */
+    interface RuleTemplateEntry {
+        id: string;
+        name: string;
+        description?: string;
+        type?: string;
+        content?: string;
+        enabled?: boolean;
+        [key: string]: unknown;
+    }
+
+    const localTemplates = ref<RuleTemplateEntry[]>([]);
     const selectedId = ref('');
     const isSaving = ref(false);
     const isLoading = ref(false);
 
     const selectedTemplate = computed(
-        () =>
-            localTemplates.value.find(
-                (item) => (item as Record<string, any>).id === selectedId.value
-            ) || null
+        () => localTemplates.value.find((item) => item.id === selectedId.value) || null
     );
     const hasTemplates = computed(() => localTemplates.value.length > 0);
 
-    function cloneTemplates(items: any) {
+    function cloneTemplates(items: unknown): RuleTemplateEntry[] {
         return JSON.parse(JSON.stringify(Array.isArray(items) ? items : []));
     }
 
@@ -63,9 +71,7 @@ overwrite_original_rules=true`;
         }
         if (
             selectedId.value &&
-            !localTemplates.value.some(
-                (item) => (item as Record<string, any>).id === selectedId.value
-            )
+            !localTemplates.value.some((item) => item.id === selectedId.value)
         ) {
             selectedId.value = localTemplates.value[0]?.id || '';
         }
@@ -84,7 +90,7 @@ overwrite_original_rules=true`;
         selectedId.value = template.id;
     }
 
-    function duplicateTemplate(template: any) {
+    function duplicateTemplate(template: RuleTemplateEntry) {
         if (!template) return;
         const copy = cloneTemplates([template])[0];
         copy.id = `${template.id || 'custom'}-copy-${Date.now().toString(36)}`;
@@ -93,11 +99,9 @@ overwrite_original_rules=true`;
         selectedId.value = copy.id;
     }
 
-    function removeTemplate(template: any) {
+    function removeTemplate(template: RuleTemplateEntry) {
         if (!template) return;
-        localTemplates.value = localTemplates.value.filter(
-            (item) => (item as Record<string, any>).id !== template.id
-        );
+        localTemplates.value = localTemplates.value.filter((item) => item.id !== template.id);
         selectedId.value = localTemplates.value[0]?.id || '';
     }
 
@@ -116,11 +120,7 @@ overwrite_original_rules=true`;
         try {
             const saved = await dataStore.saveRuleTemplates(localTemplates.value);
             localTemplates.value = cloneTemplates(saved);
-            if (
-                !localTemplates.value.some(
-                    (item) => (item as Record<string, any>).id === selectedId.value
-                )
-            ) {
+            if (!localTemplates.value.some((item) => item.id === selectedId.value)) {
                 selectedId.value = localTemplates.value[0]?.id || '';
             }
         } finally {
