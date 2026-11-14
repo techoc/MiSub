@@ -6,7 +6,39 @@
 /**
  * SS 2022 加密方式与密钥长度映射表
  */
-const SS2022_KEY_LENGTHS = {
+/** 校验结果里的诊断细节 */
+interface SS2022ValidationDetails {
+    cipher?: string;
+    password?: string;
+    expectedKeyLength?: number;
+    actualKeyLength?: number;
+    suggestedCipher?: string | null;
+    suggestion?: string;
+}
+
+/** 单节点校验结果 */
+interface SS2022ValidationResult {
+    valid: boolean;
+    warning?: string;
+    error?: string;
+    details?: SS2022ValidationDetails;
+}
+
+/** 批量校验结果中的无效/告警条目 */
+interface SS2022InvalidNode {
+    index: number;
+    url: unknown;
+    error?: string;
+    details?: SS2022ValidationDetails;
+}
+
+interface SS2022WarningNode {
+    index: number;
+    url: unknown;
+    warning?: string;
+}
+
+const SS2022_KEY_LENGTHS: Record<string, number> = {
     '2022-blake3-aes-128-gcm': 16,
     '2022-blake3-aes-256-gcm': 32,
 };
@@ -16,7 +48,7 @@ const SS2022_KEY_LENGTHS = {
  * @param {string} nodeUrl - SS 节点 URL
  * @returns {Object} 验证结果
  */
-export function validateSS2022Node(nodeUrl: any) {
+export function validateSS2022Node(nodeUrl: unknown): SS2022ValidationResult {
     if (!nodeUrl || typeof nodeUrl !== 'string') {
         return { valid: true };
     }
@@ -73,7 +105,7 @@ export function validateSS2022Node(nodeUrl: any) {
         }
 
         // 获取期望的密钥长度
-        const expectedLength = (SS2022_KEY_LENGTHS as Record<string, any>)[cipher];
+        const expectedLength = SS2022_KEY_LENGTHS[cipher];
         if (!expectedLength) {
             return {
                 valid: true,
@@ -106,7 +138,7 @@ export function validateSS2022Node(nodeUrl: any) {
         if (keyBytes !== expectedLength) {
             // 根据实际密钥长度推荐正确的加密方式
             let suggestion = '请联系节点提供商修正配置';
-            let suggestedCipher: any = null;
+            let suggestedCipher: string | null = null;
 
             for (const [cipherName, requiredLength] of Object.entries(SS2022_KEY_LENGTHS)) {
                 if (requiredLength === keyBytes) {
@@ -143,7 +175,7 @@ export function validateSS2022Node(nodeUrl: any) {
  * @param {string} nodeUrl - 原始 SS 节点 URL
  * @returns {Object} 修复结果
  */
-export function fixSS2022Node(nodeUrl: any) {
+export function fixSS2022Node(nodeUrl: string) {
     const validation = validateSS2022Node(nodeUrl);
 
     if (validation.valid || !validation.details?.suggestedCipher) {
@@ -201,12 +233,19 @@ export function fixSS2022Node(nodeUrl: any) {
  * @param {Array<string>} nodeUrls - 节点 URL 列表
  * @returns {Object} 验证统计
  */
-export function validateNodeList(nodeUrls: any) {
+export function validateNodeList(nodeUrls: unknown) {
     if (!Array.isArray(nodeUrls)) {
         return { error: '输入必须是数组' };
     }
 
-    const results = {
+    const results: {
+        total: number;
+        valid: number;
+        invalid: number;
+        warnings: number;
+        invalidNodes: SS2022InvalidNode[];
+        warningNodes: SS2022WarningNode[];
+    } = {
         total: nodeUrls.length,
         valid: 0,
         invalid: 0,
@@ -220,7 +259,7 @@ export function validateNodeList(nodeUrls: any) {
 
         if (!validation.valid) {
             results.invalid++;
-            (results.invalidNodes as any[]).push({
+            results.invalidNodes.push({
                 index,
                 url,
                 error: validation.error,
@@ -228,7 +267,7 @@ export function validateNodeList(nodeUrls: any) {
             });
         } else if (validation.warning) {
             results.warnings++;
-            (results.warningNodes as any[]).push({
+            results.warningNodes.push({
                 index,
                 url,
                 warning: validation.warning,

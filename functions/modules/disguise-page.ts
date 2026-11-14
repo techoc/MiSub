@@ -11,7 +11,7 @@
  * @param {Object} [disguiseConfig] 伪装配置；若配置了 redirectUrl，则「返回首页」指向该地址
  * @returns {Response} HTML响应
  */
-export function renderDisguisePage(disguiseConfig: any) {
+export function renderDisguisePage(disguiseConfig: unknown) {
     const homeHref = resolveHomeHref(disguiseConfig);
     const homeLink = homeHref
         ? `<a href="${escapeHtml(homeHref)}" class="home-link">返回首页</a>`
@@ -205,9 +205,13 @@ export function renderDisguisePage(disguiseConfig: any) {
  * @param {string} [baseUrl]
  * @returns {Response}
  */
-export function createDisguiseResponse(disguiseConfig: any, baseUrl: any) {
-    if (disguiseConfig && disguiseConfig.pageType === 'redirect' && disguiseConfig.redirectUrl) {
-        const redirectUrl = normalizeRedirectUrl(disguiseConfig.redirectUrl, baseUrl);
+export function createDisguiseResponse(
+    disguiseConfig: unknown,
+    baseUrl: string | null | undefined
+) {
+    const config = (disguiseConfig || {}) as { pageType?: unknown; redirectUrl?: unknown };
+    if (config.pageType === 'redirect' && config.redirectUrl) {
+        const redirectUrl = normalizeRedirectUrl(config.redirectUrl, baseUrl);
         if (redirectUrl) {
             return new Response(null, {
                 status: 302,
@@ -226,7 +230,7 @@ export function createDisguiseResponse(disguiseConfig: any, baseUrl: any) {
 }
 
 /** 转义 HTML 属性/文本，避免配置里的引号破坏页面结构。 */
-function escapeHtml(value: any) {
+function escapeHtml(value: unknown): string {
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -241,9 +245,10 @@ function escapeHtml(value: any) {
  * @param {Object} [disguiseConfig]
  * @returns {string} 空字符串表示不渲染该链接
  */
-function resolveHomeHref(disguiseConfig: any) {
-    if (disguiseConfig && typeof disguiseConfig.redirectUrl === 'string') {
-        const trimmed = disguiseConfig.redirectUrl.trim();
+function resolveHomeHref(disguiseConfig: unknown): string {
+    const config = (disguiseConfig || {}) as { redirectUrl?: unknown };
+    if (typeof config.redirectUrl === 'string') {
+        const trimmed = config.redirectUrl.trim();
         if (trimmed) {
             const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed);
             if (!hasScheme && !trimmed.startsWith('/') && !trimmed.startsWith('//')) {
@@ -258,7 +263,7 @@ function resolveHomeHref(disguiseConfig: any) {
     return '';
 }
 
-function normalizeRedirectUrl(rawUrl: any, baseUrl: any) {
+function normalizeRedirectUrl(rawUrl: unknown, baseUrl: string | null | undefined): string | null {
     if (typeof rawUrl !== 'string') {
         return null;
     }

@@ -15,7 +15,7 @@ export function generateId() {
 /**
  * 从节点URL提取名称
  */
-export function extractNodeName(url: any) {
+export function extractNodeName(url: string): string {
     try {
         const hashIndex = url.indexOf('#');
         if (hashIndex !== -1) {
@@ -36,7 +36,7 @@ export function extractNodeName(url: any) {
 /**
  * 提取节点链接（支持多种协议）
  */
-export function extractNodeUrls(text: any): any[] {
+export function extractNodeUrls(text: string): string[] {
     const protocols = [
         'ss://',
         'ssr://',
@@ -53,7 +53,7 @@ export function extractNodeUrls(text: any): any[] {
         'socks5://',
         'socks5-tls://',
     ];
-    const urls: any[] = [];
+    const urls: string[] = [];
     const lines = text.split('\n');
 
     for (const line of lines) {
@@ -79,10 +79,10 @@ export function extractNodeUrls(text: any): any[] {
  * @param {string} text
  * @returns {string[]} 去重后的订阅链接
  */
-export function extractSubscriptionUrls(text: any) {
+export function extractSubscriptionUrls(text: string): string[] {
     const matches = String(text || '').match(/https?:\/\/[^\s<>"'，。、；：！？）】]+/gi) || [];
-    const seen = new Set();
-    const urls: any[] = [];
+    const seen = new Set<string>();
+    const urls: string[] = [];
     for (const raw of matches) {
         // 去掉尾部常见的标点残留
         const url = raw.replace(/[.,;:!?]+$/, '');
@@ -109,8 +109,19 @@ export function extractSubscriptionUrls(text: any) {
  * @param {Date}   [options.now] 时间（便于测试注入）
  * @returns {string} 形如「TG-文件 nodes 2026-09-15」或「TG-导入 2026-09-15 18:30」
  */
-export function buildImportGroupName({ source = 'text', fileName = '', now = new Date() } = {}) {
-    const pad = (n: any) => String(n).padStart(2, '0');
+/** buildImportGroupName 入参 */
+interface ImportGroupNameOptions {
+    source?: string;
+    fileName?: string;
+    now?: Date;
+}
+
+export function buildImportGroupName({
+    source = 'text',
+    fileName = '',
+    now = new Date(),
+}: ImportGroupNameOptions = {}): string {
+    const pad = (n: number): string => String(n).padStart(2, '0');
     const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
     if (source === 'file' && fileName) {
