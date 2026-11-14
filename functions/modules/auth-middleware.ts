@@ -15,7 +15,29 @@ import {
 import { StorageFactory } from '../storage-adapter.ts';
 
 import type { KvRecord } from '../../types/models.ts';
-function normalizeSecret(value: any) {
+
+/** 认证会话诊断结果 */
+interface AuthSessionDiagnostic {
+    isAuthenticated: boolean;
+    reason: string;
+    cookieHeaderPresent: boolean;
+    authSessionCookieCount: number;
+    token: {
+        exists: boolean;
+        decodeMode: string;
+        length: number;
+        partCount: number;
+    };
+    verify: {
+        success: boolean;
+        hasTimestamp: boolean;
+        isExpired: boolean | null;
+        sessionAgeMs: number | null;
+    };
+    shouldRenew: boolean;
+}
+
+function normalizeSecret(value: unknown): string {
     return String(value ?? '')
         .replace(/\uFEFF/g, '')
         .replace(/[\u200B-\u200D]/g, '')
@@ -23,7 +45,7 @@ function normalizeSecret(value: any) {
         .replace(/^['"]|['"]$/g, '');
 }
 
-function buildRequestMeta(request: any, env: any) {
+function buildRequestMeta(request: Request, env: Env) {
     return {
         url: request?.url,
         method: request?.method,
@@ -38,7 +60,7 @@ function buildRequestMeta(request: any, env: any) {
     };
 }
 
-async function isUsingDefaultAdminPassword(env: any) {
+async function isUsingDefaultAdminPassword(env: Env): Promise<boolean> {
     const debugInfo = await getAuthDebugInfo(env);
     return debugInfo?.adminPassword?.isDefaultFallback === true;
 }
@@ -49,7 +71,7 @@ async function isUsingDefaultAdminPassword(env: any) {
  * @param {string} data - 要签名的数据
  * @returns {Promise<string>} 签名后的令牌
  */
-export async function createSignedToken(key: any, data: any) {
+export async function createSignedToken(key: string, data: string): Promise<string> {
     if (!key || !data) throw new Error('Key and data are required for signing.');
     const encoder = new TextEncoder();
     const keyData = encoder.encode(key);
@@ -73,7 +95,7 @@ export async function createSignedToken(key: any, data: any) {
  * @param {string} token - 要验证的令牌
  * @returns {Promise<string|null>} 验证成功返回数据，失败返回 null
  */
-export async function verifySignedToken(key: any, token: any) {
+export async function verifySignedToken(key: string, token: string): Promise<string | null> {
     if (!key || !token) return null;
     const parts = token.split('.');
     if (parts.length !== 2) return null;
@@ -116,8 +138,11 @@ export async function verifySignedToken(key: any, token: any) {
  * @param {Object} env
  * @returns {Promise<Object>}
  */
-export async function getAuthSessionDiagnostic(request: any, env: any) {
-    const result: Record<string, any> = {
+export async function getAuthSessionDiagnostic(
+    request: Request,
+    env: Env
+): Promise<AuthSessionDiagnostic> {
+    const result: AuthSessionDiagnostic = {
         isAuthenticated: false,
         reason: 'unknown',
         cookieHeaderPresent: false,
@@ -148,8 +173,8 @@ export async function getAuthSessionDiagnostic(request: any, env: any) {
 
     const matchedCookies = cookieHeader
         .split(';')
-        .map((c: any) => c.trim())
-        .filter((c: any) => c.startsWith(`${COOKIE_NAME}=`));
+        .map((c) => c.trim())
+        .filter((c) => c.startsWith(`${COOKIE_NAME}=`));
 
     result.authSessionCookieCount = matchedCookies.length;
     if (matchedCookies.length === 0) {
@@ -222,11 +247,11 @@ export async function getAuthSessionDiagnostic(request: any, env: any) {
  * @returns {Promise<Response>}
  */
 export async function renewAuthSession(
-    request: any,
-    env: any,
-    response: any,
+    request: Request,
+    env: Env,
+    response: Response,
     diagnostic: KvRecord | null = null
-) {
+): Promise<Response> {
     const authDiagnostic = diagnostic || (await getAuthSessionDiagnostic(request, env));
     if (!authDiagnostic?.isAuthenticated || !authDiagnostic.shouldRenew) {
         return response;
@@ -253,7 +278,7 @@ export async function renewAuthSession(
  * @param {Object} env
  * @returns {Promise<Object>}
  */
-export async function getLoginPasswordDiagnostic(request: any, env: any) {
+export async function getLoginPasswordDiagnostic(request: Request, env: Env) {
     const debugInfo = await getAuthDebugInfo(env);
     const result = {
         success: false,
@@ -271,7 +296,7 @@ export async function getLoginPasswordDiagnostic(request: any, env: any) {
         },
     };
 
-    let payload;
+    let payload: Record<string, unknown>;
     try {
         payload = await readJsonWithLimit(request, JSON_BODY_LIMITS.auth);
     } catch (_) {
@@ -303,7 +328,7 @@ export async function getLoginPasswordDiagnostic(request: any, env: any) {
  * @param {Object} env - Cloudflare 环境对象
  * @returns {Promise<boolean>} 是否认证通过
  */
-export async function authMiddleware(request: any, env: any) {
+export async function authMiddleware(request: Request, env: Env): Promise<boolean> {
     const logMeta = buildRequestMeta(request, env);
     try {
         const diagnostic = await getAuthSessionDiagnostic(request, env);
@@ -320,13 +345,13 @@ export async function authMiddleware(request: any, env: any) {
  * @param {Object} env - Cloudflare 环境对象
  * @returns {Promise<Response>} 登录响应
  */
-export async function handleLogin(request: any, env: any) {
+export async function handleLogin(request: Request, env: Env): Promise<Response> {
     if (request.method !== 'POST') {
         return new Response('Method Not Allowed', { status: 405 });
     }
 
     const logMeta = buildRequestMeta(request, env);
-    let payload;
+    let payload: Record<string, unknown>;
     try {
         payload = await readJsonWithLimit(request, JSON_BODY_LIMITS.auth);
     } catch (e) {
@@ -354,7 +379,7 @@ export async function handleLogin(request: any, env: any) {
             const token = await createSignedToken(secret, String(Date.now()));
             const isSecure = request.url.startsWith('https');
             const cookieString = `${COOKIE_NAME}=${token}; Path=/; HttpOnly; ${isSecure ? 'Secure;' : ''} SameSite=Lax; Max-Age=${SESSION_DURATION / 1000}`;
-            const responseBody: Record<string, any> = { success: true };
+            const responseBody: Record<string, unknown> = { success: true };
             if (await isUsingDefaultAdminPassword(env)) {
                 responseBody.securityWarning = {
                     type: 'default_admin_password',
@@ -383,7 +408,7 @@ export async function handleLogin(request: any, env: any) {
  * 处理用户登出
  * @returns {Promise<Response>} 登出响应
  */
-export async function handleLogout(request: any) {
+export async function handleLogout(request: Request): Promise<Response> {
     const headers = new Headers({ 'Content-Type': 'application/json' });
     const isSecure = typeof request?.url === 'string' && request.url.startsWith('https');
     const secureFlag = isSecure ? 'Secure;' : '';
