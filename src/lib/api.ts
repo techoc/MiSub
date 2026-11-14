@@ -130,7 +130,7 @@ function normalizeApiFailure(
         data,
     };
 }
-export async function fetchInitialData() {
+export async function fetchInitialData(): Promise<ApiResult> {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -276,9 +276,7 @@ export async function resetSettings() {
  * @param {string[]} subscriptionIds - 要更新的订阅ID数组
  * @returns {Promise<Object>} - 更新结果
  */
-export async function batchUpdateNodes(
-    subscriptionIds: string[]
-): Promise<BatchUpdateResult> {
+export async function batchUpdateNodes(subscriptionIds: string[]): Promise<BatchUpdateResult> {
     let timeoutId;
     try {
         const controller = new AbortController();
