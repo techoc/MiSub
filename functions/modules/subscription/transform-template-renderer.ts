@@ -1,4 +1,7 @@
-export function renderTransformTemplate(templateText: any, context: Record<string, any> = {}) {
+export function renderTransformTemplate(
+    templateText: string,
+    context: Record<string, unknown> = {}
+): string {
     if (typeof templateText !== 'string' || templateText.trim() === '') return templateText;
 
     const replacements = {
@@ -57,7 +60,7 @@ export function buildTransformTemplateContext({
     nodeCount = 0,
     regionGroups = [],
     protocolGroups = [],
-}: Record<string, any> = {}) {
+}: Record<string, unknown> = {}) {
     const normalizedRegionGroups = Array.isArray(regionGroups) ? regionGroups : [];
     const normalizedProtocolGroups = Array.isArray(protocolGroups) ? protocolGroups : [];
     const regionNames = normalizedRegionGroups.map((group) => group.name).filter(Boolean);
@@ -81,30 +84,18 @@ export function buildTransformTemplateContext({
         regionGroups: JSON.stringify(normalizedRegionGroups, null, 2),
         regionGroupNames: normalizedRegionGroups.map((group) => group.name).join(', '),
         regionGroupCounts: normalizedRegionGroups
-            .map(
-                (group) =>
-                    `${group.name}:${group.count ?? ((group.tags as Record<string, any> | undefined)?.length || 0)}`
-            )
+            .map((group) => `${group.name}:${group.count ?? group.tags?.length ?? 0}`)
             .join(', '),
         regionGroupList: normalizedRegionGroups
-            .map(
-                (group) =>
-                    `${group.name}(${group.count ?? ((group.tags as Record<string, any> | undefined)?.length || 0)})`
-            )
+            .map((group) => `${group.name}(${group.count ?? group.tags?.length ?? 0})`)
             .join('\n'),
         protocolGroups: JSON.stringify(normalizedProtocolGroups, null, 2),
         protocolGroupNames: normalizedProtocolGroups.map((group) => group.name).join(', '),
         protocolGroupCounts: normalizedProtocolGroups
-            .map(
-                (group) =>
-                    `${group.name}:${group.count ?? ((group.lines as Record<string, any> | undefined)?.length || 0)}`
-            )
+            .map((group) => `${group.name}:${group.count ?? group.lines?.length ?? 0}`)
             .join(', '),
         protocolGroupList: normalizedProtocolGroups
-            .map(
-                (group) =>
-                    `${group.name}(${group.count ?? ((group.lines as Record<string, any> | undefined)?.length || 0)})`
-            )
+            .map((group) => `${group.name}(${group.count ?? group.lines?.length ?? 0})`)
             .join('\n'),
         primaryStrategyChain,
         regionStrategyChain: regionNames.join(', '),

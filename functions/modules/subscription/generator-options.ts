@@ -1,5 +1,5 @@
 import type { KvRecord } from '../../../types/models.ts';
-const toBoolean = (value: any, fallback = false) => {
+const toBoolean = (value: unknown, fallback = false): boolean => {
     if (typeof value === 'string') {
         const normalized = value.trim().toLowerCase();
         if (normalized === 'true' || normalized === '1') return true;
@@ -25,14 +25,18 @@ export const DEFAULT_GENERATOR_OPTIONS = Object.freeze({
     }),
 });
 
-export function normalizeGeneratorOptions(value: Record<string, any> = {}) {
-    const input = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-    const dns =
-        input.dns && typeof input.dns === 'object' && !Array.isArray(input.dns) ? input.dns : {};
-    const singbox =
+export function normalizeGeneratorOptions(value: Record<string, unknown> = {}) {
+    const input = (
+        value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+    ) as Record<string, unknown>;
+    const dns = (
+        input.dns && typeof input.dns === 'object' && !Array.isArray(input.dns) ? input.dns : {}
+    ) as Record<string, unknown>;
+    const singbox = (
         input.singbox && typeof input.singbox === 'object' && !Array.isArray(input.singbox)
             ? input.singbox
-            : {};
+            : {}
+    ) as Record<string, unknown>;
 
     return {
         ipv6: toBoolean(input.ipv6, DEFAULT_GENERATOR_OPTIONS.ipv6),
@@ -60,7 +64,10 @@ export function normalizeGeneratorOptions(value: Record<string, any> = {}) {
     };
 }
 
-const SEARCH_PARAM_OPTIONS: Array<[string, (options: any, value: boolean) => void]> = [
+/** normalizeGeneratorOptions 的产物形状 */
+type GeneratorOptions = ReturnType<typeof normalizeGeneratorOptions>;
+
+const SEARCH_PARAM_OPTIONS: Array<[string, (options: GeneratorOptions, value: boolean) => void]> = [
     ['ipv6', (options, value) => (options.ipv6 = value)],
     ['allow-lan', (options, value) => (options.allowLan = value)],
     ['allowLan', (options, value) => (options.allowLan = value)],
@@ -74,7 +81,7 @@ const SEARCH_PARAM_OPTIONS: Array<[string, (options: any, value: boolean) => voi
     ['tun-strict-route', (options, value) => (options.singbox.tunStrictRoute = value)],
 ];
 
-function parseBooleanParam(value: any) {
+function parseBooleanParam(value: unknown): boolean | null {
     const normalized = String(value || '')
         .trim()
         .toLowerCase();
@@ -84,7 +91,7 @@ function parseBooleanParam(value: any) {
 }
 
 export function resolveGeneratorOptions(
-    value: Record<string, any> = {},
+    value: Record<string, unknown> = {},
     searchParams: KvRecord | null = null
 ) {
     const options = normalizeGeneratorOptions(value);
@@ -99,7 +106,10 @@ export function resolveGeneratorOptions(
     return options;
 }
 
-export function applyDnsGeneratorOptions(dnsConfig: any, options: Record<string, any> = {}) {
+export function applyDnsGeneratorOptions(
+    dnsConfig: Record<string, unknown>,
+    options: Record<string, unknown> = {}
+) {
     const normalized = normalizeGeneratorOptions({ dns: options });
     dnsConfig.enable = normalized.dns.enable;
     dnsConfig.ipv6 = normalized.dns.ipv6;

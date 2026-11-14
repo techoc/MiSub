@@ -298,7 +298,7 @@ export async function handleProfileMode(
     const subscriptionResults = await Promise.all(
         targetSubscriptions.map((sub) =>
             fetchSubscriptionNodes(
-                sub.url,
+                String(sub.url || ''),
                 sub.name,
                 userAgent,
                 sub.customUserAgent,

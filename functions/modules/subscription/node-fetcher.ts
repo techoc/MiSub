@@ -28,9 +28,9 @@ import type { KvRecord } from '../../../types/models.ts';
  * @returns {Promise<Object>} 节点获取结果
  */
 export async function fetchSubscriptionNodes(
-    url: any,
-    subscriptionName: any,
-    userAgent: any,
+    url: string,
+    subscriptionName: string,
+    userAgent: string,
     customUserAgent: string | null = null,
     debug = false,
     excludeRules = '',
@@ -51,7 +51,10 @@ export async function fetchSubscriptionNodes(
      *   与缓存写入时一致才回退——用户刚改过滤导致的 0 节点是预期结果，不得用旧缓存顶替
      * @returns {Promise<Object|null>} 回退结果，无法回退时返回 null
      */
-    const fallbackToNodeCache = async (upstreamError: any, requireFingerprintMatch: any) => {
+    const fallbackToNodeCache = async (
+        upstreamError: unknown,
+        requireFingerprintMatch: boolean
+    ) => {
         if (!enableNodeCache || !storageAdapter || !subscription) return null;
         try {
             const cached = await readSubscriptionNodeCache(storageAdapter, subscription);
@@ -175,7 +178,10 @@ export async function fetchSubscriptionNodes(
  * @param {Array} nodes
  * @param {string} ruleText
  */
-function applyExcludeRulesToNodes(nodes: any, ruleText: any) {
+function applyExcludeRulesToNodes<T extends { protocol?: string; name?: string }>(
+    nodes: T[],
+    ruleText: string
+): T[] {
     if (!ruleText || !ruleText.trim()) return nodes;
     const { includeRules, excludeRules } = parseFilterRuleText(ruleText);
 
