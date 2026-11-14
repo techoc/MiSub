@@ -10,6 +10,7 @@ export interface ExternalStorageAdapter {
     getAllSubscriptions(): Promise<unknown[]>;
     getAllProfiles(): Promise<unknown[]>;
     getProfileById(id: string): Promise<Record<string, unknown> | null>;
+    getSubscriptionById(id: string): Promise<Record<string, unknown> | null>;
     putProfile(profile: unknown): Promise<unknown>;
     putSubscription(subscription: unknown): Promise<unknown>;
     deleteProfileById(id: string): Promise<unknown>;

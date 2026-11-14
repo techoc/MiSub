@@ -13,7 +13,31 @@ import {
 import { detectNodeProtocol, isManualNode, toExternalManualNode } from './external-api-mappers.ts';
 import { parseNodeList } from './utils/node-parser.ts';
 
+import type { ExternalStorageAdapter } from './external-api-utils.ts';
 import type { KvRecord } from '../../types/models.ts';
+
+/** 手动节点记录（外部 API 读写的形状） */
+interface ManualNodeRecord {
+    id: string;
+    name: string;
+    url: string;
+    enabled?: boolean;
+    group?: string;
+    tags?: string[];
+    remarks?: string;
+    sortIndex?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: unknown;
+}
+
+/** 订阅组记录（仅声明本模块用到的字段） */
+interface ManualNodeProfile {
+    id: string;
+    manualNodes?: unknown[];
+    [key: string]: unknown;
+}
+
 function nowIso() {
     return new Date().toISOString();
 }
@@ -26,32 +50,44 @@ function generateId(prefix = 'node') {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function nextSortIndex(items: any) {
+function nextSortIndex(items: unknown[]): number {
     return (
-        items.reduce((max: any, item: any) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1
+        items.reduce(
+            (max: number, item: unknown) =>
+                Math.max(max, Number((item as { sortIndex?: unknown } | null)?.sortIndex) || 0),
+            0
+        ) + 1
     );
 }
 
-async function loadManualNodes(storageAdapter: any): Promise<any[]> {
-    const all = await storageAdapter.getAllSubscriptions();
+async function loadManualNodes(
+    storageAdapter: ExternalStorageAdapter
+): Promise<ManualNodeRecord[]> {
+    const all = (await storageAdapter.getAllSubscriptions()) as ManualNodeRecord[];
     return sortBySortIndex(all.filter(isManualNode));
 }
 
-async function getManualNodeById(storageAdapter: any, id: any) {
+async function getManualNodeById(
+    storageAdapter: ExternalStorageAdapter,
+    id: string
+): Promise<ManualNodeRecord | null> {
     const item = await storageAdapter.getSubscriptionById(id);
     if (!item || !isManualNode(item)) return null;
-    return item;
+    return item as ManualNodeRecord;
 }
 
-async function removeManualNodeIdFromProfiles(storageAdapter: any, id: any) {
-    const profiles = await storageAdapter.getAllProfiles();
-    const affected: any[] = [];
+async function removeManualNodeIdFromProfiles(
+    storageAdapter: ExternalStorageAdapter,
+    id: string
+): Promise<string[]> {
+    const profiles = (await storageAdapter.getAllProfiles()) as ManualNodeProfile[];
+    const affected: string[] = [];
     for (const profile of profiles) {
         const manualNodes = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
         if (!manualNodes.includes(id)) continue;
         const updated = {
             ...profile,
-            manualNodes: manualNodes.filter((item: any) => item !== id),
+            manualNodes: manualNodes.filter((item: unknown) => item !== id),
             updatedAt: nowIso(),
         };
         await storageAdapter.putProfile(updated);
@@ -61,14 +97,20 @@ async function removeManualNodeIdFromProfiles(storageAdapter: any, id: any) {
 }
 
 export async function handleExternalManualNodesRequest(
-    request: any,
-    env: any,
+    request: Request,
+    env: Env,
     selector: string | KvRecord | null = null
 ) {
     const storageAdapter = await getExternalStorageAdapter(env);
     const url = new URL(request.url);
-    const action = typeof selector === 'object' && selector ? selector.action || null : null;
-    const id = typeof selector === 'object' && selector ? selector.id || null : selector;
+    const action: unknown =
+        typeof selector === 'object' && selector ? selector.action || null : null;
+    const id: string | null =
+        typeof selector === 'object' && selector
+            ? String(selector.id || '') || null
+            : typeof selector === 'string'
+              ? selector
+              : null;
 
     if (action === 'validate') {
         if (request.method !== 'POST')
@@ -111,7 +153,7 @@ export async function handleExternalManualNodesRequest(
         const groupFilter = (url.searchParams.get('group') || '').trim();
         const protocolFilter = (url.searchParams.get('protocol') || '').trim().toLowerCase();
         const keyword = (url.searchParams.get('keyword') || '').trim().toLowerCase();
-        const filtered = all.filter((item) => {
+        const filtered = all.filter((item: ManualNodeRecord) => {
             if (enabledFilter !== undefined && (item.enabled !== false) !== enabledFilter)
                 return false;
             if (groupFilter && String(item.group || '') !== groupFilter) return false;
