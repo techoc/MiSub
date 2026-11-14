@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { inferAirportRootDomain } from '../../functions/services/subscription-service.js';
+import { inferAirportRootDomain } from '../../functions/services/subscription-service.ts';
 import { inferAirportRootDomain as inferFrontend } from '../../src/utils/airport-domain.js';
 
 describe('inferAirportRootDomain', () => {

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
-import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.js';
-import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';
-import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
+import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.ts';
+import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.ts';
+import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.ts';
+import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
 import { TRANSFORM_ASSETS } from '../../src/constants/transform-assets.js';
-import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.js';
+import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.ts';
 
 /**
  * Aethersailor/Custom_OpenClash_Rules 模板兼容性回归（upstream issue #332）。

@@ -4,7 +4,7 @@ import {
     getTemplateCompatibility,
     normalizeTemplateTarget,
     shouldApplyExternalTemplateForTarget,
-} from '../../functions/modules/subscription/template-compatibility.js';
+} from '../../functions/modules/subscription/template-compatibility.ts';
 
 describe('Template compatibility', () => {
     it('should normalize target formats', () => {

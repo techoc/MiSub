@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { renderClashFromIniTemplate } from '../../functions/modules/subscription/template-pipeline.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
+import { renderClashFromIniTemplate } from '../../functions/modules/subscription/template-pipeline.ts';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.ts';
 import {
     resolveSafeDnsConfig,
     DNS_PROXY_GROUP,
-} from '../../functions/modules/subscription/safe-dns.js';
+} from '../../functions/modules/subscription/safe-dns.ts';
 import yaml from 'js-yaml';
 
 const sampleNodeList = [

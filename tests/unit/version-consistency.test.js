@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SYSTEM_CONSTANTS } from '../../functions/modules/config.js';
+import { SYSTEM_CONSTANTS } from '../../functions/modules/config.ts';
 
 /**
  * 应用版本号散落在多处展示位，历史上靠手工同步，容易漏改。

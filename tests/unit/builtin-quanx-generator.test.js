@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/builtin-quanx-generator.js';
+import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/builtin-quanx-generator.ts';
 import { parseQuantumultXConfig } from '../../src/utils/protocols/quantumultx-parser.js';
 
 describe('Quantumult X 内置生成器', () => {

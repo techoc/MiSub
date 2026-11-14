@@ -2,7 +2,7 @@
     import { computed } from 'vue';
     import { useI18n } from '../../../../i18n/index.js';
     import draggable from 'vuedraggable';
-    import { REGION_EMOJI } from '../../../../../functions/modules/utils/geo-utils.js';
+    import { REGION_EMOJI } from '../../../../../functions/modules/utils/geo-utils.ts';
 
     const props = defineProps({
         modelValue: {

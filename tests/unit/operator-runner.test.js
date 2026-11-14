@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runOperatorChain } from '../../functions/utils/operator-runner.js';
+import { runOperatorChain } from '../../functions/utils/operator-runner.ts';
 
 describe('operator runner', () => {
     it('applies alternation regex include rules and a separate exclude rule', async () => {

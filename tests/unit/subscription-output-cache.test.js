@@ -93,7 +93,7 @@ describe('subscription rendered-output cache (isolate-level)', () => {
 
     async function callHandler(adapter, requestUrl, headers = {}) {
         const { handleMisubRequest } =
-            await import('../../functions/modules/subscription/main-handler.js');
+            await import('../../functions/modules/subscription/main-handler.ts');
         const waitUntilPromises = [];
         const response = await handleMisubRequest({
             request: new Request(requestUrl, { headers }),
@@ -319,7 +319,7 @@ describe('download counter stays off the response hot path', () => {
 
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const waitUntilPromises = [];
             const response = await handleMisubRequest({
                 request: new Request('https://misub.example/profiles/mygroup?target=nodes', {

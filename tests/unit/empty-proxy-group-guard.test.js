@@ -3,9 +3,9 @@ import yaml from 'js-yaml';
 import {
     renderClashFromIniTemplate,
     renderSingboxFromIniTemplate,
-} from '../../functions/modules/subscription/template-pipeline.js';
-import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
-import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.js';
+} from '../../functions/modules/subscription/template-pipeline.ts';
+import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
+import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.ts';
 
 const proxies = [
     {

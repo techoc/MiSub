@@ -96,7 +96,7 @@ describe('WebDAV backup payload and restore', () => {
 
     it('builds data-only payload with complete business collections but without settings', async () => {
         const { buildBackupPayload } =
-            await import('../../functions/modules/webdav-backup-handler.js');
+            await import('../../functions/modules/webdav-backup-handler.ts');
         const payload = await buildBackupPayload(createEnv(), {
             scope: 'dataOnly',
             trigger: 'manual',
@@ -120,7 +120,7 @@ describe('WebDAV backup payload and restore', () => {
 
     it('builds data-and-settings payload while excluding WebDAV config and runtime secrets', async () => {
         const { buildBackupPayload } =
-            await import('../../functions/modules/webdav-backup-handler.js');
+            await import('../../functions/modules/webdav-backup-handler.ts');
         const payload = await buildBackupPayload(
             createEnv({ cronSecret: 'keep-cron-for-restore', FileName: 'MiSubTest' }),
             { scope: 'dataAndSettings' }
@@ -138,7 +138,7 @@ describe('WebDAV backup payload and restore', () => {
 
     it('restores data-only backups by replacing MiSub collections without touching settings or unknown keys', async () => {
         const { restoreBackupPayload } =
-            await import('../../functions/modules/webdav-backup-handler.js');
+            await import('../../functions/modules/webdav-backup-handler.ts');
         const env = createEnv({ FileName: 'Before' });
         const restorePayload = {
             version: 1,
@@ -173,7 +173,7 @@ describe('WebDAV backup payload and restore', () => {
 
     it('restores data-and-settings backups but preserves current WebDAV config', async () => {
         const { restoreBackupPayload } =
-            await import('../../functions/modules/webdav-backup-handler.js');
+            await import('../../functions/modules/webdav-backup-handler.ts');
         const env = createEnv({ FileName: 'Before' });
         const currentWebdav = JSON.parse(env.MISUB_KV.dump().worker_settings_v1).webdavBackup;
 
@@ -238,7 +238,7 @@ describe('WebDAV backup payload and restore', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         const { listWebdavBackupFiles, fetchWebdavBackupFile } =
-            await import('../../functions/modules/webdav-backup-handler.js');
+            await import('../../functions/modules/webdav-backup-handler.ts');
         const env = createEnv();
         const files = await listWebdavBackupFiles(env);
 
@@ -261,7 +261,7 @@ describe('WebDAV backup payload and restore', () => {
 
     it('formats backup filenames in UTC+8', async () => {
         const { formatBackupFilename } =
-            await import('../../functions/modules/webdav-backup-handler.js');
+            await import('../../functions/modules/webdav-backup-handler.ts');
         const now = new Date('2026-08-10T16:30:45.000Z');
 
         expect(formatBackupFilename('backup-{datetime}-{date}.json', now)).toBe(

@@ -11,7 +11,7 @@
     import NodeList from './components/NodeList.vue';
     import NodeCard from './components/NodeCard.vue';
     import NodePagination from './components/NodePagination.vue';
-    import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.js';
+    import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.ts';
 
     const isDev = import.meta.env.DEV;
     const { t } = useI18n();

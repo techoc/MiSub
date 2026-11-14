@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import yaml from 'js-yaml';
-import { transformBuiltinSubscription } from '../../functions/modules/subscription/transformer-factory.js';
+import { transformBuiltinSubscription } from '../../functions/modules/subscription/transformer-factory.ts';
 
 const NODE_LIST = [
     'trojan://password@1.2.3.4:443?sni=example.com#HK-01',

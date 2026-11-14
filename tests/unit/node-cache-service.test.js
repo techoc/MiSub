@@ -12,7 +12,7 @@ import {
     getCacheConfig,
     isSuspiciousNodeCountDrop,
     isLikelyPartialAggregateNodeList,
-} from '../../functions/services/node-cache-service.js';
+} from '../../functions/services/node-cache-service.ts';
 
 function createStorage(initialData = {}) {
     const data = new Map(Object.entries(initialData));

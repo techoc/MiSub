@@ -60,7 +60,7 @@ describe('handleSystemInfoRequest', () => {
 
     it('uses row-level helper APIs for D1-backed statistics', async () => {
         const { handleSystemInfoRequest } =
-            await import('../../functions/modules/handlers/debug-handler.js');
+            await import('../../functions/modules/handlers/debug-handler.ts');
 
         getAllSubscriptions.mockResolvedValue([
             { id: 'sub-1', enabled: true },

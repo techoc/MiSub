@@ -5,7 +5,7 @@ import { fetchSettings, saveSettings, resetSettings } from '../lib/api.js';
 import { useBackupLogic } from './useBackupLogic.js';
 import { t, setLocale } from '../i18n/index.js';
 import { confirmAction } from './useConfirm.js';
-import { normalizeDnsMode } from '../../functions/modules/subscription/safe-dns.js';
+import { normalizeDnsMode } from '../../functions/modules/subscription/safe-dns.ts';
 
 function normalizeExternalApiConfig(value) {
     const defaults = DEFAULT_SETTINGS.externalApi;

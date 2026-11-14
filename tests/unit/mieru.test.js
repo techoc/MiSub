@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import yaml from 'js-yaml';
-import { generateBuiltinClashConfig, generateProxiesOnly } from '../../functions/modules/subscription/builtin-clash-generator.js';
-import { parseNodeList } from '../../functions/modules/utils/node-parser.js';
-import { fetchSubscriptionNodes } from '../../functions/modules/subscription/node-fetcher.js';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
-import { urlToClashProxy } from '../../functions/utils/url-to-clash.js';
+import { generateBuiltinClashConfig, generateProxiesOnly } from '../../functions/modules/subscription/builtin-clash-generator.ts';
+import { parseNodeList } from '../../functions/modules/utils/node-parser.ts';
+import { fetchSubscriptionNodes } from '../../functions/modules/subscription/node-fetcher.ts';
+import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.ts';
+import { urlToClashProxy } from '../../functions/utils/url-to-clash.ts';
 
 const MIHOMO_MIERU_YAML = `proxies:
   - name: Mieru 文档节点

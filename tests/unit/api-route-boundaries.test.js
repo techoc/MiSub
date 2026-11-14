@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { handleApiRequest } from '../../functions/modules/api-router.js';
-import { SettingsCache } from '../../functions/storage-adapter.js';
+import { handleApiRequest } from '../../functions/modules/api-router.ts';
+import { SettingsCache } from '../../functions/storage-adapter.ts';
 
 function createKv(initial = {}) {
     const values = new Map(Object.entries(initial));

@@ -1,11 +1,11 @@
 import yaml from 'js-yaml';
 import { pathToFileURL } from 'node:url';
-import { PINNED_RULE_REVISIONS } from '../functions/modules/subscription/builtin-rules-provider.js';
+import { PINNED_RULE_REVISIONS } from '../functions/modules/subscription/builtin-rules-provider.ts';
 import {
     DNS_PROXY_GROUP,
     SINGBOX_CN_RULE_SET,
     SINGBOX_FOREIGN_RULE_SET,
-} from '../functions/modules/subscription/safe-dns.js';
+} from '../functions/modules/subscription/safe-dns.ts';
 
 function assert(condition, message) {
     if (!condition) throw new Error(message);

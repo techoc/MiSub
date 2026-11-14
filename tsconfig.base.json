@@ -4,11 +4,16 @@
         "target": "ES2022",
         "module": "esnext",
         "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
         "lib": ["ES2022"],
         // 渐进迁移：.js 文件参与解析但不做类型检查，.ts/.vue(lang=ts) 受 strict 约束
         "allowJs": true,
         "checkJs": false,
         "strict": true,
+        // 务实策略（2026-11-14）：strict 其余部分全开；noImplicitAny 暂关，
+        // 隐式 any 参数先兜底，真实类型错误已逐个手修。把隐式参数补上显式
+        // 标注后即可移除本项（收紧任务，见 AGENTS.md）。
+        "noImplicitAny": false,
         "noEmit": true,
         "skipLibCheck": true,
         "esModuleInterop": true,

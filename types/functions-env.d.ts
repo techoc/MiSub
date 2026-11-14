@@ -41,23 +41,13 @@ declare global {
         [key: string]: unknown;
     }
 
-    /** Cloudflare Pages Functions 请求上下文（官方 EventContext 的最小镜像） */
-    interface EventContext<
-        E = Env,
-        Params extends string = string,
-        Data extends Record<string, unknown> = Record<string, unknown>,
-    > {
-        request: Request;
-        function: string;
-        waitUntil: (promise: Promise<unknown>) => void;
-        passThroughOnException: () => void;
-        next: (input?: Request | string, init?: RequestInit) => Promise<Response>;
-        params: Params extends string
-            ? Record<Params, string | string[]>
-            : Record<string, string | string[]>;
-        env: E;
-        data: Data;
-    }
+    /**
+     * Pages Functions 请求上下文简写。
+     * 底层形状来自 @cloudflare/workers-types 自带的
+     * `EventContext<Env, P, Data>`（type alias），这里固定泛型参数方便使用；
+     * 不要再声明同名 interface——会与该 type alias 冲突。
+     */
+    type PagesEventContext = EventContext<Env, string, Record<string, unknown>>;
 }
 
 export {};

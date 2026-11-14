@@ -1,8 +1,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { handleApiRequest } from '../../functions/modules/api-router.js';
-import { corsMiddleware, csrfOriginMiddleware } from '../../functions/middleware/cors.js';
+import { handleApiRequest } from '../../functions/modules/api-router.ts';
+import { corsMiddleware, csrfOriginMiddleware } from '../../functions/middleware/cors.ts';
 
 const SRC_ROOT = path.resolve(process.cwd(), 'src');
 

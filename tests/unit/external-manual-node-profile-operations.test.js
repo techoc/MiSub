@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { handleApiRequest } from '../../functions/modules/api-router.js';
+import { handleApiRequest } from '../../functions/modules/api-router.ts';
 
 function createKv(initial = {}) {
     const values = new Map(

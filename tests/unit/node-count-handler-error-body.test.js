@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { handleNodeCountRequest } from '../../functions/modules/handlers/node-handler.js';
-import { StorageFactory } from '../../functions/storage-adapter.js';
+import { handleNodeCountRequest } from '../../functions/modules/handlers/node-handler.ts';
+import { StorageFactory } from '../../functions/storage-adapter.ts';
 
 function createAdapter({ settings = {}, subscriptions = [] } = {}) {
     const store = new Map([

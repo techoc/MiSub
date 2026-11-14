@@ -8,7 +8,7 @@ import {
     putExternalNodes,
     shouldUseExternalNodesCallback,
     verifyExternalNodesToken,
-} from '../../functions/services/external-nodes-callback-service.js';
+} from '../../functions/services/external-nodes-callback-service.ts';
 
 function createMemoryD1() {
     const settings = new Map();

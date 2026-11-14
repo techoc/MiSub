@@ -6,7 +6,7 @@ import {
     getLocalizedTransformAssetByUrl,
     localizeTransformAsset,
 } from '../../src/constants/transform-assets.js';
-import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
+import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
 import { t } from '../../src/i18n/index.js';
 
 describe('Transform assets', () => {

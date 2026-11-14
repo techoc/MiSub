@@ -67,7 +67,7 @@ describe('handleProfileMode preview transforms', () => {
         });
 
         const { handleProfileMode } =
-            await import('../../functions/modules/subscription/profile-handler.js');
+            await import('../../functions/modules/subscription/profile-handler.ts');
         const result = await handleProfileMode(
             new Request('https://example.com/api/subscription_nodes'),
             {},
@@ -96,7 +96,7 @@ describe('handleProfileMode preview transforms', () => {
             get: vi.fn().mockResolvedValue({ defaultOperators: [] }),
         });
 
-        const { handleProfileMode } = await import('../../functions/modules/subscription/profile-handler.js');
+        const { handleProfileMode } = await import('../../functions/modules/subscription/profile-handler.ts');
         const result = await handleProfileMode(
             new Request('https://example.com/api/subscription_nodes'), {}, 'profile-http', 'MiSub-Test/1.0', false, false
         );
@@ -138,7 +138,7 @@ describe('handleProfileMode preview transforms', () => {
         });
 
         const { handleProfileMode } =
-            await import('../../functions/modules/subscription/profile-handler.js');
+            await import('../../functions/modules/subscription/profile-handler.ts');
         const result = await handleProfileMode(
             new Request('https://example.com/api/subscription_nodes'),
             {},

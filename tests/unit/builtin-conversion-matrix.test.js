@@ -1,11 +1,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { ProcessorService } from '../../functions/services/processor-service.js';
+import { ProcessorService } from '../../functions/services/processor-service.ts';
 import {
     resolveBuiltinEngineFlags,
     resolveEffectiveEngine,
     resolveExternalTemplateConfigUrl,
     resolveTemplateSource,
-} from '../../functions/modules/subscription/main-handler.js';
+} from '../../functions/modules/subscription/main-handler.ts';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';
 const HIDDIFY_UA = 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box';

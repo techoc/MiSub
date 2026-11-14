@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
+import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.ts';
 import {
     renderClashFromIniTemplate,
     renderLoonFromIniTemplate,
     renderQuanxFromIniTemplate,
     renderSingboxFromIniTemplate,
     renderSurgeFromIniTemplate,
-} from '../../functions/modules/subscription/template-pipeline.js';
-import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
-import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.js';
+} from '../../functions/modules/subscription/template-pipeline.ts';
+import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
+import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.ts';
 
 const SS2022_V2RAY_PLUGIN_NODE =
     'ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206TldSak1UVmxNVFZtTWpnMU5HRTVaRGsxT1dJd1pUUm1ZbVJrTnpkaU5qTT0@cf.090227.xyz:8080?plugin=v2ray-plugin%3Bmode%3Dwebsocket%3Bhost%3Dss.2227tsj.workers.dev%3Bpath%3D%2F%3Fenc%5C%3D2022-blake3-aes-256-gcm%3Bmux%3D0#2022-blake3-aes-256-gcm';

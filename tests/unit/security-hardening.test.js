@@ -3,23 +3,23 @@ import {
     handleApiRequest,
     handleExternalFetchRequest,
     handleSubconverterTestRequest,
-} from '../../functions/modules/api-router.js';
+} from '../../functions/modules/api-router.ts';
 import {
     handleDebugSubscriptionRequest,
     handleExportDataRequest,
     handlePreviewContentRequest,
-} from '../../functions/modules/handlers/debug-handler.js';
+} from '../../functions/modules/handlers/debug-handler.ts';
 import {
     handleLogin,
     createSignedToken,
     getAuthSessionDiagnostic,
     renewAuthSession,
-} from '../../functions/modules/auth-middleware.js';
-import { SESSION_DURATION, SESSION_RENEW_THRESHOLD } from '../../functions/modules/config.js';
-import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
-import { logAccessSuccess } from '../../functions/modules/subscription/access-logger.js';
-import { LogService } from '../../functions/services/log-service.js';
-import { onRequest } from '../../functions/[[path]].js';
+} from '../../functions/modules/auth-middleware.ts';
+import { SESSION_DURATION, SESSION_RENEW_THRESHOLD } from '../../functions/modules/config.ts';
+import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.ts';
+import { logAccessSuccess } from '../../functions/modules/subscription/access-logger.ts';
+import { LogService } from '../../functions/services/log-service.ts';
+import { onRequest } from '../../functions/[[path]].ts';
 
 function createKv(initial = {}) {
     const values = new Map(Object.entries(initial));

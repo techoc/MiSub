@@ -6,9 +6,9 @@ import { wouldCreateCycle } from '../../src/utils/profile-graph.js';
 import SubProfileSelector from '../../src/components/modals/ProfileModal/SubProfileSelector.vue';
 import ProfileCard from '../../src/components/profiles/ProfileCard.vue';
 import { createI18n } from '../../src/i18n/index.js';
-import { handleProfileMode } from '../../functions/modules/subscription/profile-handler.js';
-import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
-import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
+import { handleProfileMode } from '../../functions/modules/subscription/profile-handler.ts';
+import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.ts';
+import { generateCombinedNodeList } from '../../functions/services/subscription-service.ts';
 
 describe('Profile Nesting - Cycle Detection (wouldCreateCycle)', () => {
     it('detects direct self-reference as a cycle', () => {

@@ -5,7 +5,7 @@ import {
     generateCombinedNodeList,
     isRealProxyNode,
     parseSubscriptionUserInfoHeader,
-} from '../../functions/services/subscription-service.js';
+} from '../../functions/services/subscription-service.ts';
 
 function createMemoryStorage(initial = {}) {
     const store = new Map(Object.entries(initial));

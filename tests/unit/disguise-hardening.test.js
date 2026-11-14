@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     createDisguiseResponse,
     renderDisguisePage,
-} from '../../functions/modules/disguise-page.js';
+} from '../../functions/modules/disguise-page.ts';
 
 /**
  * 伪装页加固测试：

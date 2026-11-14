@@ -60,7 +60,7 @@ describe('LogService storage selection', () => {
 
         createAdapter.mockImplementation((env, type) => (type === 'd1' ? d1Storage : kvStorage));
 
-        const { LogService } = await import('../../functions/services/log-service.js');
+        const { LogService } = await import('../../functions/services/log-service.ts');
 
         const addLogPromise = LogService.addLog(
             { MISUB_DB: {}, MISUB_KV: {} },
@@ -106,7 +106,7 @@ describe('LogService storage selection', () => {
 
         createAdapter.mockImplementation((env, type) => (type === 'd1' ? d1Storage : kvStorage));
 
-        const { LogService } = await import('../../functions/services/log-service.js');
+        const { LogService } = await import('../../functions/services/log-service.ts');
 
         const result = await LogService.clearLogs({ MISUB_DB: {}, MISUB_KV: {} });
 

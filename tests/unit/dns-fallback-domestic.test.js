@@ -6,15 +6,15 @@ import {
     SINGBOX_FOREIGN_RULE_SET,
     buildSingboxDnsConfig,
     resolveSafeDnsConfig,
-} from '../../functions/modules/subscription/safe-dns.js';
-import { getSingboxForeignRuleSet } from '../../functions/modules/subscription/builtin-rules-provider.js';
+} from '../../functions/modules/subscription/safe-dns.ts';
+import { getSingboxForeignRuleSet } from '../../functions/modules/subscription/builtin-rules-provider.ts';
 import {
     renderClashFromIniTemplate,
     renderSingboxFromIniTemplate,
-} from '../../functions/modules/subscription/template-pipeline.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
-import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.js';
+} from '../../functions/modules/subscription/template-pipeline.ts';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.ts';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.ts';
+import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.ts';
 
 const sampleNodeList = [
     'ss://MjAyMi1ibGFrZTMtYWVzLTEyOC1nY206ZXhhbXBsZVBhc3N3b3JkMTIz@hk.example.com:443#%F0%9F%87%AD%F0%9F%87%B0%20%E9%A6%99%E6%B8%AF%2001',

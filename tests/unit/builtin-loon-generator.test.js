@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/builtin-loon-generator.js';
+import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/builtin-loon-generator.ts';
 
 describe('Loon 内置生成器', () => {
     it('应处理 realityOpts 参数', () => {

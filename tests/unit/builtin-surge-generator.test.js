@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/builtin-surge-generator.js';
-import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.js';
+import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/builtin-surge-generator.ts';
+import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.ts';
 
 describe('Surge 内置生成器', () => {
     describe('基础功能', () => {

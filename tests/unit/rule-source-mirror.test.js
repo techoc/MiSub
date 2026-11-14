@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     pinRemoteRuleUrl,
     PINNED_RULE_REVISIONS,
-} from '../../functions/modules/subscription/builtin-rules-provider.js';
+} from '../../functions/modules/subscription/builtin-rules-provider.ts';
 
 /**
  * 规则源 CDN 镜像重写测试。
