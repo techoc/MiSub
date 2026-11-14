@@ -1,5 +1,5 @@
-<script setup>
-    import { useI18n } from '../../i18n/index.js';
+<script setup lang="ts">
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
     import { ref, watch } from 'vue';
@@ -8,18 +8,18 @@
 
     const props = defineProps({
         show: Boolean,
-        exportBackup: Function,
-        importBackup: Function,
+        exportBackup: Function as any,
+        importBackup: Function as any,
     });
 
     const emit = defineEmits(['update:show']);
 
-    const settingsPanelRef = ref(null);
+    const settingsPanelRef = ref<any>(null);
 
     const handleConfirm = async () => {
         if (!settingsPanelRef.value) return;
 
-        const didSave = await settingsPanelRef.value.handleSave();
+        const didSave = await (settingsPanelRef.value as Record<string, any>).handleSave();
         if (didSave) {
             emit('update:show', false);
         }

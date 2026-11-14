@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import {
         ref,
         onMounted,
@@ -8,13 +8,13 @@
         computed,
         watch,
     } from 'vue';
-    import { useToastStore } from '../stores/toast.js';
-    import { hasStoredLocale, useI18n } from '../i18n/index.js';
+    import { useToastStore } from '../stores/toast.ts';
+    import { hasStoredLocale, useI18n } from '../i18n/index.ts';
     import QRCode from 'qrcode';
-    import { api } from '../lib/http.js';
+    import { api } from '../lib/http.ts';
     import ProfileGrid from '../components/public/ProfileGrid.vue';
     import BaseIcon from '../components/ui/BaseIcon.vue';
-    import { parseCustomPageSource } from '../utils/custom-page-source.js';
+    import { parseCustomPageSource } from '../utils/custom-page-source.ts';
 
     const isDev = import.meta.env.DEV;
 
@@ -34,23 +34,23 @@
         () => import('../components/public/CustomPublicRenderer.vue')
     );
 
-    const publicProfiles = ref([]);
+    const publicProfiles = ref<any[]>([]);
     const loading = ref(true);
-    const error = ref(null);
+    const error = ref<any>(null);
     const { showToast } = useToastStore();
     const { t, setLocale } = useI18n();
-    const config = ref({});
-    const announcement = computed(() => config.value.announcement);
+    const config = ref<any>({});
+    const announcement = computed(() => (config.value as Record<string, any>).announcement);
     const heroConfig = computed(
         () =>
-            config.value.hero || {
+            (config.value as Record<string, any>).hero || {
                 title1: t('publicProfiles.heroTitle1'),
                 title2: t('publicProfiles.heroTitle2'),
                 description: t('publicProfiles.heroDescription'),
             }
     );
-    const guestbookConfig = computed(() => config.value.guestbook || {});
-    const customPageConfig = computed(() => config.value.customPage || {});
+    const guestbookConfig = computed(() => (config.value as Record<string, any>).guestbook || {});
+    const customPageConfig = computed(() => (config.value as Record<string, any>).customPage || {});
     const parsedCustomPageSource = computed(() =>
         parseCustomPageSource(
             customPageConfig.value.content || '',
@@ -111,7 +111,7 @@
 
     const showGuestbookModal = ref(false);
     const showQuickImportModal = ref(false);
-    const selectedProfileForImport = ref(null);
+    const selectedProfileForImport = ref<any>(null);
 
     const handleGuestbookTrigger = () => {
         if (guestbookConfig.value && guestbookConfig.value.enabled === false) {
@@ -135,7 +135,7 @@
                 config.value = data.config || {};
 
                 // 应用服务端默认显示语言（仅当访客未显式选择过语言时）
-                const serverLocale = config.value.defaultLocale;
+                const serverLocale = (config.value as Record<string, any>).defaultLocale;
                 if (serverLocale && !hasStoredLocale()) {
                     setLocale(serverLocale);
                 }
@@ -151,7 +151,7 @@
     };
 
     const copyLink = async (profile) => {
-        const token = config.value.profileToken || 'profiles';
+        const token = (config.value as Record<string, any>).profileToken || 'profiles';
         const identifier = profile.customId || profile.id;
         const link = `${window.location.origin}/${token}/${identifier}`;
 
@@ -180,7 +180,7 @@
         }
     };
 
-    const clients = ref([]);
+    const clients = ref<any[]>([]);
 
     const fetchClients = async () => {
         try {
@@ -197,14 +197,16 @@
 
     const fetchClientVersions = async () => {
         clients.value.forEach(async (client) => {
-            if (!client.repo) return;
+            if (!(client as Record<string, any>).repo) return;
             try {
-                const data = await api.get(`/api/github/release?repo=${client.repo}`);
+                const data = await api.get(
+                    `/api/github/release?repo=${(client as Record<string, any>).repo}`
+                );
                 if (data && data.tag_name) {
-                    client.version = data.tag_name;
+                    (client as Record<string, any>).version = data.tag_name;
                 }
             } catch (e) {
-                console.warn(`Failed to fetch version for ${client.name}`, e);
+                console.warn(`Failed to fetch version for ${(client as Error).name}`, e);
             }
         });
     };
@@ -228,7 +230,7 @@
     };
 
     const showPreviewModal = ref(false);
-    const previewProfileId = ref(null);
+    const previewProfileId = ref<any>(null);
     const previewProfileName = ref('');
 
     const handlePreview = (profile) => {
@@ -244,7 +246,7 @@
 
     // QR Code in Card
     const expandedQRCards = ref(new Set());
-    const qrCanvasRefs = ref({});
+    const qrCanvasRefs = ref<any>({});
 
     const registerQrCanvas = (profileId, canvas) => {
         if (!canvas) return;
@@ -260,7 +262,7 @@
             await nextTick();
             const canvas = qrCanvasRefs.value[profileId];
             if (canvas) {
-                const token = config.value.profileToken || 'profiles';
+                const token = (config.value as Record<string, any>).profileToken || 'profiles';
                 const identifier = profile.customId || profile.id;
                 const link = `${window.location.origin}/${token}/${identifier}`;
                 try {
@@ -670,7 +672,7 @@
                                         </div>
                                         <div class="flex flex-wrap gap-1 mb-2">
                                             <span
-                                                v-for="platform in client.platforms"
+                                                v-for="platform in client.platforms as any[]"
                                                 :key="platform"
                                                 class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border"
                                                 :class="{

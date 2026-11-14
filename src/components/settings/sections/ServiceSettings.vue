@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import TransformCard from './ServiceSettings/TransformCard.vue';
     import DnsOverrideCard from './ServiceSettings/DnsOverrideCard.vue';
     import GeneratorOptionsCard from './ServiceSettings/GeneratorOptionsCard.vue';

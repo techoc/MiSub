@@ -8,9 +8,9 @@
  * 而真实原因是发版后旧页面请求了已删除的资源，检查网络永远解决不了。
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ErrorHandler } from '../../src/utils/errorHandler.js';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale } from '../../src/i18n/index.js';
+import { ErrorHandler } from '../../src/utils/errorHandler.ts';
+import { messages } from '../../src/i18n/messages.ts';
+import { setLocale } from '../../src/i18n/index.ts';
 
 const zh = messages['zh-CN'].errors;
 const handler = new ErrorHandler();

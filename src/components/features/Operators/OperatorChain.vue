@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed } from 'vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
     import FilterEditor from './components/FilterEditor.vue';
     import RenameEditor from './components/RenameEditor.vue';
     import SortEditor from './components/SortEditor.vue';
@@ -29,7 +29,7 @@
     const migrateFromLegacy = () => {
         if (!props.legacyData) return;
         const config = props.legacyData;
-        const ops = [];
+        const ops: any[] = [];
 
         // 1. Filter
         const filter = config.filter;
@@ -181,7 +181,7 @@
     };
 
     const removeOperator = (index) => {
-        const newList = [...props.modelValue];
+        const newList: any[] = [...props.modelValue];
         newList.splice(index, 1);
         emit('update:modelValue', newList);
         if (expandedIndex.value === index) expandedIndex.value = null;
@@ -189,7 +189,7 @@
 
     const moveOperator = (event, index, direction) => {
         event.stopPropagation();
-        const newList = [...props.modelValue];
+        const newList: any[] = [...props.modelValue];
         const newIndex = index + direction;
         if (newIndex < 0 || newIndex >= newList.length) return;
         [newList[index], newList[newIndex]] = [newList[newIndex], newList[index]];
@@ -200,8 +200,8 @@
 
     const toggleOperator = (event, index) => {
         event.stopPropagation();
-        const newList = [...props.modelValue];
-        newList[index] = { ...newList[index], enabled: !newList[index].enabled };
+        const newList: any[] = [...props.modelValue];
+        newList[index] = { ...newList[index], enabled: !(((newList[index].enabled as any) as any) as any) };
         emit('update:modelValue', newList);
     };
 
@@ -224,7 +224,7 @@
     };
 
     const updateOperatorParams = (index, params) => {
-        const newList = [...props.modelValue];
+        const newList: any[] = [...props.modelValue];
         newList[index] = { ...newList[index], params };
         emit('update:modelValue', newList);
     };
@@ -319,13 +319,13 @@
         <div v-else class="space-y-2">
             <div
                 v-for="(op, index) in modelValue"
-                :key="op.id || index"
+                :key="(op as Record<string, any>).id || index"
                 :class="[
                     'group overflow-hidden rounded-2xl border bg-white transition-all dark:bg-gray-800',
                     expandedIndex === index
                         ? 'border-indigo-500/50 ring-4 ring-indigo-500/5 shadow-xl'
                         : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
-                    !op.enabled && 'opacity-60 grayscale-[0.5]',
+                    !(op as Record<string, any>).enabled && 'opacity-60 grayscale-[0.5]',
                 ]"
             >
                 <!-- Compact Header -->
@@ -342,15 +342,15 @@
                                         ? 'bg-indigo-600 border-indigo-500 text-white'
                                         : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400',
                                 ]"
-                                v-html="getOperatorIcon(op.type)"
+                                v-html="getOperatorIcon((op as Record<string, any>).type)"
                             ></div>
                             <div>
                                 <div class="flex items-center gap-2">
                                     <h4 class="font-bold text-sm text-gray-900 dark:text-white">
-                                        {{ operatorLabel(op.type) }}
+                                        {{ operatorLabel((op as Record<string, any>).type) }}
                                     </h4>
                                     <span
-                                        v-if="!op.enabled"
+                                        v-if="!(op as Record<string, any>).enabled"
                                         class="rounded-full border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[9px] text-gray-500 dark:text-gray-400 dark:border-gray-700 dark:bg-gray-900"
                                         >{{ t('operators.paused') }}</span
                                     >
@@ -359,7 +359,7 @@
                                     class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 sm:hidden"
                                 >
                                     {{
-                                        op.enabled
+                                        (op as Record<string, any>).enabled
                                             ? t('operators.enabled')
                                             : t('operators.disabled')
                                     }}
@@ -415,7 +415,7 @@
                                     @click="(e) => toggleOperator(e, index)"
                                     class="rounded-md p-1"
                                     :class="
-                                        op.enabled
+                                        (op as Record<string, any>).enabled
                                             ? 'text-indigo-500 hover:bg-orange-50 hover:text-orange-500 dark:hover:bg-orange-500/10'
                                             : 'text-gray-500 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 dark:hover:bg-indigo-500/10'
                                     "
@@ -494,43 +494,43 @@
                     >
                         <div class="p-4 sm:p-5">
                             <FilterEditor
-                                v-if="op.type === 'filter'"
-                                :modelValue="op.params"
+                                v-if="(op as Record<string, any>).type === 'filter'"
+                                :modelValue="(op as Record<string, any>).params"
                                 @update:modelValue="(val) => updateOperatorParams(index, val)"
                             />
                             <RenameEditor
-                                v-else-if="op.type === 'rename'"
-                                :modelValue="op.params"
+                                v-else-if="(op as Record<string, any>).type === 'rename'"
+                                :modelValue="(op as Record<string, any>).params"
                                 @update:modelValue="(val) => updateOperatorParams(index, val)"
                             />
                             <SortEditor
-                                v-else-if="op.type === 'sort'"
-                                :modelValue="op.params"
+                                v-else-if="(op as Record<string, any>).type === 'sort'"
+                                :modelValue="(op as Record<string, any>).params"
                                 @update:modelValue="(val) => updateOperatorParams(index, val)"
                             />
                             <DedupEditor
-                                v-else-if="op.type === 'dedup'"
-                                :modelValue="op.params"
+                                v-else-if="(op as Record<string, any>).type === 'dedup'"
+                                :modelValue="(op as Record<string, any>).params"
                                 @update:modelValue="(val) => updateOperatorParams(index, val)"
                             />
 
-                            <div v-else-if="op.type === 'script'" class="space-y-4">
+                            <div v-else-if="(op as Record<string, any>).type === 'script'" class="space-y-4">
                                 <Input
-                                    :modelValue="op.params.url"
+                                    :modelValue="(op as Record<string, any>).params.url"
                                     @update:modelValue="
                                         (val) =>
-                                            updateOperatorParams(index, { ...op.params, url: val })
+                                            updateOperatorParams(index, { ...(op as Record<string, any>).params, url: val })
                                     "
                                     :label="t('operators.scriptUrlLabel')"
                                     :placeholder="t('operators.scriptUrlPlaceholder')"
                                 />
                                 <textarea
-                                    :value="op.params.code"
+                                    :value="(op as Record<string, any>).params.code"
                                     @input="
                                         (e) =>
                                             updateOperatorParams(index, {
-                                                ...op.params,
-                                                code: e.target.value,
+                                                ...(op as Record<string, any>).params,
+                                                code: (e.target as HTMLInputElement).value,
                                             })
                                     "
                                     class="w-full h-64 p-4 font-mono text-sm bg-slate-900/50 text-slate-200 border border-slate-700/50 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all resize-none"

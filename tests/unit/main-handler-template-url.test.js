@@ -9,12 +9,12 @@ import {
     resolveTemplateSource,
     resolveTemplateUrl,
     shouldRenderClashYamlProfileTemplateLocally,
-} from '../../functions/modules/subscription/main-handler.js';
+} from '../../functions/modules/subscription/main-handler.ts';
 import {
     TEMPLATE_COMPATIBILITY,
     normalizeTemplateTarget,
     shouldApplyExternalTemplateForTarget,
-} from '../../functions/modules/subscription/template-compatibility.js';
+} from '../../functions/modules/subscription/template-compatibility.ts';
 
 describe('Main handler template url', () => {
     it('formats Telegram expiration with profile priority and merged fallback', () => {

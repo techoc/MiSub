@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getAdminPassword, setAdminPassword } from '../../functions/modules/utils.js';
-import { handleLogin } from '../../functions/modules/auth-middleware.js';
+import { getAdminPassword, setAdminPassword } from '../../functions/modules/utils.ts';
+import { handleLogin } from '../../functions/modules/auth-middleware.ts';
 
 function createKv({ get } = {}) {
     const values = new Map();

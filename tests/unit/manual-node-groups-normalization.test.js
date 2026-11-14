@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     collectManualNodeGroups,
     normalizeManualNodeGroupName,
-} from '../../src/composables/manual-nodes/groups.js';
+} from '../../src/composables/manual-nodes/groups.ts';
 
 describe('manual node group normalization', () => {
     it('规范化分组名时去掉首尾空白', () => {

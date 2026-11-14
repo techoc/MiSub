@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted, watch } from 'vue';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { api } from '../../../lib/http.js';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { api } from '../../../lib/http.ts';
     import Switch from '../../ui/Switch.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const props = defineProps({
         settings: {
@@ -15,10 +15,10 @@
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const messages = ref([]);
+    const messages = ref<any[]>([]);
     const loading = ref(false);
     const filterStatus = ref('all'); // all, pending, approved, replied
-    const replyingId = ref(null);
+    const replyingId = ref<any>(null);
     const replyContent = ref('');
 
     const defaultGuestbookConfig = {
@@ -64,9 +64,12 @@
     const filteredMessages = computed(() => {
         if (filterStatus.value === 'all') return messages.value;
         return messages.value.filter((m) => {
-            if (filterStatus.value === 'pending') return m.status === 'pending';
-            if (filterStatus.value === 'approved') return m.status === 'approved';
-            if (filterStatus.value === 'replied') return m.status === 'replied';
+            if (filterStatus.value === 'pending')
+                return (m as { status?: string }).status === 'pending';
+            if (filterStatus.value === 'approved')
+                return (m as { status?: string }).status === 'approved';
+            if (filterStatus.value === 'replied')
+                return (m as { status?: string }).status === 'replied';
             return true;
         });
     });
@@ -79,9 +82,13 @@
                 showToast(t('settings.guestbookActionSuccess'), 'success');
                 // Update local state
                 if (action === 'delete') {
-                    messages.value = messages.value.filter((m) => m.id !== id);
+                    messages.value = messages.value.filter(
+                        (m) => (m as Record<string, any>).id !== id
+                    );
                 } else {
-                    const index = messages.value.findIndex((m) => m.id === id);
+                    const index = messages.value.findIndex(
+                        (m) => (m as Record<string, any>).id === id
+                    );
                     if (index !== -1) {
                         messages.value[index] = data.data;
                     }

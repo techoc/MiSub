@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
-    import { parseCustomPageSource } from '../../../utils/custom-page-source.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { confirmAction } from '../../../composables/useConfirm.js';
+    import { parseCustomPageSource } from '../../../utils/custom-page-source.ts';
+    import { useI18n } from '../../../i18n/index.ts';
+    import { confirmAction } from '../../../composables/useConfirm.ts';
     import Switch from '../../ui/Switch.vue';
 
     const { t } = useI18n();
@@ -332,7 +332,7 @@
                     <div class="flex flex-wrap gap-3">
                         <button
                             v-for="tpl in templates"
-                            :key="tpl.name"
+                            :key="(tpl as any).name"
                             data-testid="custom-page-template"
                             @click="applyTemplate(tpl)"
                             class="px-4 py-2 bg-white dark:bg-gray-800 border border-primary-200 dark:border-primary-800 rounded-xl text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all active:scale-95 shadow-sm"

@@ -77,7 +77,7 @@ describe('严格 CSP 下的首页渲染（runtime template regression）', () =>
         const pinia = createPinia();
         setActivePinia(pinia);
 
-        const { useSessionStore } = await import('../../src/stores/session.js');
+        const { useSessionStore } = await import('../../src/stores/session.ts');
         const session = useSessionStore();
         session.sessionState = 'loggedIn';
 
@@ -127,7 +127,7 @@ describe('严格 CSP 下的首页渲染（runtime template regression）', () =>
     });
 
     it('vuedraggable 不得从 UMD 构建引入（会打包 Vue 运行时编译器）', () => {
-        const config = readFileSync(path.join(ROOT, 'vite.config.js'), 'utf8');
+        const config = readFileSync(path.join(ROOT, 'vite.config.ts'), 'utf8');
         expect(config).toMatch(/vuedraggable/);
         expect(config).toMatch(
             /vuedraggable['"]?\s*:\s*['"][^'"]*src[^'"]*['"]|find:\s*\/\^vuedraggable\$/

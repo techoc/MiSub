@@ -1,8 +1,8 @@
 /** * 共享拖拽列表组件 * @author MiSub Team */
 
-<script setup>
+<script setup lang="ts">
     import { ref, computed } from 'vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const props = defineProps({
         items: {
@@ -73,10 +73,10 @@
 
     const resolvedEmptyText = computed(() => props.emptyText || t('common.noData'));
 
-    const listRef = ref(null);
+    const listRef = ref<any>(null);
     const draggedIndex = ref(-1);
     const draggedOverIndex = ref(-1);
-    const dragState = ref({
+    const dragState = ref<any>({
         isDragging: false,
         startIndex: -1,
         endIndex: -1,
@@ -317,11 +317,11 @@
             <div v-else class="drag-drop-items" :class="{ 'is-dragging': dragState.isDragging }">
                 <div
                     v-for="(item, index) in items"
-                    :key="item[itemKey] || index"
+                    :key="((((item as Record<string, any>)[itemKey] as any) as any) as any) || index"
                     :class="itemClasses(index, item)"
                     :style="itemStyle(index)"
                     class="drag-drop-item-wrapper"
-                    draggable="draggable"
+                    :draggable="true"
                     @click="handleItemClick(item, index)"
                     @dragstart="handleDragStart($event, index, item)"
                     @dragend="handleDragEnd($event)"
@@ -355,16 +355,16 @@
                                             class="text-sm font-medium text-gray-900 dark:text-white"
                                         >
                                             {{
-                                                item.name ||
-                                                item.title ||
+                                                (item as Error).name ||
+                                                (item as Record<string, any>).title ||
                                                 t('common.itemName', { index: index + 1 })
                                             }}
                                         </h4>
                                         <p
-                                            v-if="item.description"
+                                            v-if="(item as Record<string, any>).description"
                                             class="text-xs text-gray-500 dark:text-gray-400"
                                         >
-                                            {{ item.description }}
+                                            {{ (item as Record<string, any>).description }}
                                         </p>
                                     </div>
                                 </div>

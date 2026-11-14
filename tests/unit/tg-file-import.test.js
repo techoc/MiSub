@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractValidNodes } from '../../functions/modules/utils/node-parser.js';
+import { extractValidNodes } from '../../functions/modules/utils/node-parser.ts';
 
 /**
  * TG 文件导入解析测试。

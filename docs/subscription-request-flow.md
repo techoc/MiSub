@@ -2,11 +2,11 @@
 
 本文档记录 MiSub 当前真实订阅请求链路，重点覆盖路由入口、token/profile 解析、浏览器伪装、订阅源读取、节点解析、缓存、转换输出、访问计数和通知/日志。
 
-> 代码基准：`functions/[[path]].js`、`functions/modules/subscription/main-handler.js`、`functions/services/subscription-service.js`、`functions/modules/subscription/cache-manager.js`、`functions/services/node-cache-service.js`。
+> 代码基准：`functions/[[path]].ts`、`functions/modules/subscription/main-handler.ts`、`functions/services/subscription-service.ts`、`functions/modules/subscription/cache-manager.ts`、`functions/services/node-cache-service.ts`。
 
 ## 1. 路由入口
 
-全局入口是 `functions/[[path]].js` 的 `onRequest(context)`。
+全局入口是 `functions/[[path]].ts` 的 `onRequest(context)`。
 
 请求进入后会先通过三层通用中间件：
 

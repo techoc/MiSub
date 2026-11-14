@@ -1,0 +1,552 @@
+import { defineStore } from 'pinia';
+import { computed, ref } from 'vue';
+import { useToastStore } from './toast';
+import { useSettingsStore } from './settings';
+import { useEditorStore } from './editor';
+import { createStorageCache } from '../utils/cache-helper.ts';
+import { DEFAULT_SETTINGS } from '../constants/default-settings.ts';
+import { TIMING } from '../constants/timing.ts';
+import { api } from '../lib/http.ts';
+import { t } from '../i18n/index.ts';
+
+const isDev = import.meta.env.DEV;
+
+// Initialize Cache
+const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS);
+
+export const useDataStore = defineStore('data', () => {
+    const { showToast } = useToastStore();
+    const settingsStore = useSettingsStore();
+    const editorStore = useEditorStore();
+
+    // --- State ---
+    const subscriptions = ref<any[]>([]);
+    const profiles = ref<any[]>([]);
+    const ruleTemplates = ref([]);
+    const settings = computed(() => settingsStore.config);
+
+    // Store Status
+    const isLoading = ref(false);
+    const saveState = ref('idle');
+    const lastUpdated = ref<any>(null);
+    const hasDataLoaded = computed(() => !!lastUpdated.value);
+
+    // Derived Dirty State (from Editor)
+    const isDirty = computed(() => editorStore.isDirty);
+
+    // --- Getters ---
+    const activeSubscriptions = computed(() =>
+        subscriptions.value.filter((sub) => (sub as Record<string, any>).enabled)
+    );
+    const activeProfiles = computed(() =>
+        profiles.value.filter((profile) => (profile as Record<string, any>).enabled)
+    );
+
+    // --- Internal: Snapshot for rollback/diffing ---
+    let lastSavedData = {
+        subscriptions: [],
+        profiles: [],
+        ruleTemplates: [],
+    };
+
+    // --- Actions ---
+
+    // Data Hydration (avoid re-fetching if passed from outside)
+    function hydrateFromData(data) {
+        if (!data) return false;
+
+        try {
+            const cleanSubs = (data.misubs || []).map((sub) => ({ ...sub, isUpdating: false }));
+            subscriptions.value = cleanSubs;
+            profiles.value = data.profiles || [];
+            ruleTemplates.value = data.ruleTemplates || [];
+            settingsStore.setConfig({ ...DEFAULT_SETTINGS, ...data.config });
+
+            updateSnapshot();
+            lastUpdated.value = new Date();
+            dataCache.set(data);
+            return true;
+        } catch (error) {
+            console.error('hydrateFromData failed:', error);
+            return false;
+        }
+    }
+
+    let fetchDataPromise: any = null;
+
+    async function fetchData(forceRefresh = false) {
+        if (fetchDataPromise) return fetchDataPromise;
+
+        // Effective Cache Check
+        if (hasDataLoaded.value && !forceRefresh) return true;
+
+        if (!forceRefresh) {
+            const cachedData = dataCache.get();
+            if (cachedData) {
+                hydrateFromData(cachedData);
+                return true;
+            }
+        }
+
+        fetchDataPromise = (async () => {
+            isLoading.value = true;
+            try {
+                const data = await api.get('/api/data');
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                hydrateFromData(data); // Re-use hydration logic
+                pruneInvalidReferences(); // 数据拉取后执行自愈
+                clearDirty();
+                return true;
+            } catch (error) {
+                console.error('Failed to fetch data:', error);
+                showToast(
+                    t('store.fetchDataFailed', { message: (error as Error).message }),
+                    'error'
+                );
+                // 不向调用方抛出：所有调用点都没有 try/catch，rejection 会冒泡成
+                // 全局 unhandledrejection，被 main.js 处理器再提示一次，
+                // 用户会看到两个「操作失败」弹窗。
+                return false;
+            } finally {
+                isLoading.value = false;
+                fetchDataPromise = null;
+            }
+        })();
+        return fetchDataPromise;
+    }
+
+    async function saveData() {
+        if (isLoading.value) {
+            showToast(t('store.tooFrequent'), 'warning');
+            return false;
+        }
+
+        isLoading.value = true;
+        saveState.value = 'saving';
+
+        // 保存前执行数据自愈，确保发往后端的数据是干净的
+        pruneInvalidReferences();
+
+        try {
+            const sanitizedSubs = subscriptions.value.map((sub) => {
+                const { isUpdating, ...rest } = sub as Record<string, any>;
+                return rest;
+            });
+
+            const payload = {
+                misubs: sanitizedSubs,
+                profiles: profiles.value.map((profile) => {
+                    const normalizedProfile = { ...(profile as Record<string, any>) };
+                    normalizedProfile.ruleLevel =
+                        normalizedProfile.ruleLevel || normalizedProfile.clashRuleLevel || '';
+                    delete normalizedProfile.clashRuleLevel;
+                    return normalizedProfile;
+                }),
+            };
+
+            const result = await api.post('/api/misubs', payload);
+
+            if (!result.success) {
+                throw new Error(result.message || t('store.saveFailed'));
+            }
+
+            // Update local state with backend response (Source of Truth)
+            if (result.data) {
+                if (result.data.misubs) subscriptions.value = result.data.misubs;
+                if (result.data.profiles) profiles.value = result.data.profiles;
+            }
+
+            updateSnapshot();
+
+            showToast(t('store.dataSaved'), 'success');
+            lastUpdated.value = new Date();
+            clearDirty();
+            saveState.value = 'success';
+
+            // Auto reset idle state
+            setTimeout(() => {
+                if (saveState.value === 'success') {
+                    saveState.value = 'idle';
+                }
+            }, 2000);
+
+            // Update cache with the most recent merged data
+            dataCache.set({
+                misubs: subscriptions.value.map((s) => {
+                    const { isUpdating, ...rest } = s as Record<string, any>;
+                    return rest;
+                }),
+                profiles: profiles.value,
+                ruleTemplates: ruleTemplates.value,
+                config: settingsStore.config,
+            });
+
+            return true;
+        } catch (error) {
+            console.error('[Store] Failed to save data:', error);
+            showToast(t('store.saveDataFailed', { message: (error as Error).message }), 'error');
+            saveState.value = 'idle';
+            // 同 fetchData：提示一次即可，不再向上抛出避免二次弹窗
+            return false;
+        } finally {
+            isLoading.value = false;
+        }
+    }
+
+    /**
+     * 保存设置（服务端会做 { ...oldSettings, ...newSettings } 合并，
+     * 所以可以只传变化的那几个字段）。
+     * @param {Object} newSettings
+     * @param {{ silent?: boolean, preferencesOnly?: boolean }} [options]
+     *        - silent=true 时不弹任何提示，由调用方给出更贴切的文案
+     *          （例如「忽略待处理项」不该弹「设置已更新」）。
+     *        - preferencesOnly=true 表示这次只改界面偏好：服务端会跳过
+     *          「清空节点缓存」和「发 TG 设置更新通知」这两个副作用。
+     *          仅当本次载荷确实不影响节点处理时才可传 true。
+     *          （请求头名字与 functions/modules/api-handler.js 里的读取一一对应）
+     * @returns {Promise<boolean>} 成功时为 true；失败时**抛出**（沿用既有约定，
+     *          调用方自行 catch，静默模式下尤其需要）
+     */
+    async function saveSettings(newSettings, options: Record<string, any> = {}) {
+        const { silent = false, preferencesOnly = false } = options;
+        editorStore.setLoading(true);
+        try {
+            const result = await api.post(
+                '/api/settings',
+                newSettings,
+                preferencesOnly ? { headers: { 'X-MiSub-Save-Scope': 'preferences' } } : {}
+            );
+
+            if (!result.success) {
+                throw new Error(result.message || t('store.saveSettingsFailed'));
+            }
+
+            settingsStore.updateConfig(newSettings);
+            syncCachedConfig(settingsStore.config);
+            if (!silent) showToast(t('store.settingsUpdated'), 'success');
+            return true;
+        } catch (error) {
+            console.error('Failed to save settings:', error);
+            if (!silent) {
+                showToast(
+                    t('store.saveSettingsFailedWithMessage', { message: (error as Error).message }),
+                    'error'
+                );
+            }
+            throw error;
+        } finally {
+            editorStore.setLoading(false);
+        }
+    }
+
+    async function fetchRuleTemplates() {
+        const result = await api.get('/api/rule_templates');
+        ruleTemplates.value = Array.isArray(result?.data) ? result.data : [];
+        lastSavedData.ruleTemplates = JSON.parse(JSON.stringify(ruleTemplates.value));
+        return ruleTemplates.value;
+    }
+
+    async function saveRuleTemplates(items: any[] = ruleTemplates.value) {
+        editorStore.setLoading(true);
+        try {
+            const result = await api.post('/api/rule_templates', { templates: items });
+            if (!result.success) {
+                throw new Error(result.message || t('store.saveRuleTemplatesFailed'));
+            }
+            ruleTemplates.value = Array.isArray(result.data) ? result.data : [];
+            lastSavedData.ruleTemplates = JSON.parse(JSON.stringify(ruleTemplates.value));
+            showToast(t('store.ruleTemplatesSaved'), 'success');
+            return ruleTemplates.value;
+        } catch (error) {
+            console.error('Failed to save rule templates:', error);
+            showToast(
+                t('store.saveRuleTemplatesFailedWithMessage', {
+                    message: (error as Error).message,
+                }),
+                'error'
+            );
+            throw error;
+        } finally {
+            editorStore.setLoading(false);
+        }
+    }
+
+    // --- Helpers ---
+
+    function updateSnapshot() {
+        lastSavedData = {
+            subscriptions: JSON.parse(JSON.stringify(subscriptions.value)),
+            profiles: JSON.parse(JSON.stringify(profiles.value)),
+            ruleTemplates: JSON.parse(JSON.stringify(ruleTemplates.value)),
+        };
+    }
+
+    function clearCachedData() {
+        dataCache.clear();
+    }
+
+    function syncCachedConfig(nextConfig) {
+        const cachedData = dataCache.get();
+        if (!cachedData) return;
+
+        dataCache.set({
+            ...cachedData,
+            config: {
+                ...(cachedData.config || {}),
+                ...(nextConfig || {}),
+            },
+        });
+    }
+
+    // --- Proxy Actions (Mutators) ---
+    function addSubscription(subscription) {
+        subscriptions.value.unshift(subscription);
+        markDirty();
+    }
+
+    function overwriteSubscriptions(items) {
+        subscriptions.value = items;
+    }
+
+    function removeSubscription(id) {
+        const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
+        if (index !== -1) {
+            subscriptions.value.splice(index, 1);
+        }
+    }
+
+    function updateSubscription(id, updates) {
+        const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
+        if (index !== -1) {
+            subscriptions.value[index] = { ...subscriptions.value[index], ...updates };
+            markDirty();
+        }
+    }
+
+    function addProfile(profile) {
+        profiles.value.unshift(profile);
+    }
+
+    function overwriteProfiles(items) {
+        profiles.value = items;
+    }
+
+    function removeProfile(id) {
+        const index = profiles.value.findIndex(
+            (p) =>
+                (p as Record<string, any>).id === id || (p as Record<string, any>).customId === id
+        );
+        if (index !== -1) {
+            const removed = profiles.value.splice(index, 1)[0];
+            removeProfileFromProfiles(
+                [
+                    (removed as Record<string, any>).id,
+                    (removed as Record<string, any>).customId,
+                ].filter(Boolean)
+            );
+        }
+    }
+
+    function removeProfileFromProfiles(profileIds) {
+        const idsToRemove = Array.isArray(profileIds) ? new Set(profileIds) : new Set([profileIds]);
+        if (idsToRemove.size === 0) return;
+
+        let modified = false;
+        profiles.value.forEach((profile) => {
+            if (
+                Array.isArray((profile as Record<string, any>).subProfiles) &&
+                (profile as Record<string, any>).subProfiles.length > 0
+            ) {
+                const originalLength = (profile as Record<string, any>).subProfiles.length;
+                (profile as Record<string, any>).subProfiles = (
+                    profile as Record<string, any>
+                ).subProfiles.filter((id) => !idsToRemove.has(id));
+                if ((profile as Record<string, any>).subProfiles.length !== originalLength) {
+                    modified = true;
+                }
+            }
+        });
+
+        if (modified) {
+            profiles.value = [...profiles.value];
+        }
+    }
+
+    function removeManualNodeFromProfiles(nodeIds) {
+        const idsToRemove = Array.isArray(nodeIds) ? new Set(nodeIds) : new Set([nodeIds]);
+        if (idsToRemove.size === 0) return;
+
+        let modified = false;
+        profiles.value.forEach((profile) => {
+            if (
+                Array.isArray((profile as Record<string, any>).manualNodes) &&
+                (profile as Record<string, any>).manualNodes.length > 0
+            ) {
+                const originalLength = (profile as Record<string, any>).manualNodes.length;
+                (profile as Record<string, any>).manualNodes = (
+                    profile as Record<string, any>
+                ).manualNodes.filter((id) => !idsToRemove.has(id));
+                if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
+                    modified = true;
+                }
+            }
+        });
+
+        if (modified) {
+            profiles.value = [...profiles.value]; // 强制触发响应式更新
+            if (isDev) {
+                console.debug('[DataStore] Cleaned up manual node references from profiles');
+            }
+        }
+    }
+
+    function removeSubscriptionFromProfiles(subIds) {
+        const idsToRemove = Array.isArray(subIds) ? new Set(subIds) : new Set([subIds]);
+        if (idsToRemove.size === 0) return;
+
+        let modified = false;
+        profiles.value.forEach((profile) => {
+            if (
+                Array.isArray((profile as Record<string, any>).subscriptions) &&
+                (profile as Record<string, any>).subscriptions.length > 0
+            ) {
+                const originalLength = (profile as Record<string, any>).subscriptions.length;
+                (profile as Record<string, any>).subscriptions = (
+                    profile as Record<string, any>
+                ).subscriptions.filter((id) => !idsToRemove.has(id));
+                if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
+                    modified = true;
+                }
+            }
+        });
+
+        if (modified) {
+            profiles.value = [...profiles.value]; // 强制触发响应式更新
+            if (isDev) {
+                console.debug('[DataStore] Cleaned up subscription references from profiles');
+            }
+        }
+    }
+
+    /**
+     * 数据自愈：清理订阅组中不存在的节点/订阅引用
+     * 同时处理可能存在的重复 ID
+     */
+    function pruneInvalidReferences() {
+        if (!profiles.value || profiles.value.length === 0) return;
+
+        // 收集所有当前存在的订阅和手动节点 ID
+        const validIds = new Set(
+            subscriptions.value.map((item) => (item as Record<string, any>).id)
+        );
+
+        let modified = false;
+        profiles.value.forEach((profile) => {
+            // 1. 处理手动节点引用
+            if (
+                Array.isArray((profile as Record<string, any>).manualNodes) &&
+                (profile as Record<string, any>).manualNodes.length > 0
+            ) {
+                const originalLength = (profile as Record<string, any>).manualNodes.length;
+                const seenIds = new Set();
+                (profile as Record<string, any>).manualNodes = (
+                    profile as Record<string, any>
+                ).manualNodes.filter((id) => {
+                    // ID 必须存在且未被重复记录
+                    if (validIds.has(id) && !seenIds.has(id)) {
+                        seenIds.add(id);
+                        return true;
+                    }
+                    return false;
+                });
+                if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
+                    modified = true;
+                }
+            }
+
+            // 2. 处理机场订阅引用
+            if (
+                Array.isArray((profile as Record<string, any>).subscriptions) &&
+                (profile as Record<string, any>).subscriptions.length > 0
+            ) {
+                const originalLength = (profile as Record<string, any>).subscriptions.length;
+                const seenIds = new Set();
+                (profile as Record<string, any>).subscriptions = (
+                    profile as Record<string, any>
+                ).subscriptions.filter((id) => {
+                    if (validIds.has(id) && !seenIds.has(id)) {
+                        seenIds.add(id);
+                        return true;
+                    }
+                    return false;
+                });
+                if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
+                    modified = true;
+                }
+            }
+        });
+
+        if (modified) {
+            profiles.value = [...profiles.value]; // 强制触发响应式
+            if (isDev) {
+                console.info('[DataStore] Cleaned up stale IDs or duplicates in profiles');
+            }
+        }
+    }
+
+    // --- Dirty State Proxies ---
+    function markDirty() {
+        if (saveState.value === 'success') {
+            saveState.value = 'idle';
+        }
+        editorStore.markDirty();
+    }
+
+    function clearDirty() {
+        editorStore.clearDirty();
+    }
+
+    return {
+        // State
+        subscriptions,
+        profiles,
+        ruleTemplates,
+        settings,
+        isLoading,
+        saveState,
+        lastUpdated,
+        hasDataLoaded,
+        isDirty,
+
+        // Getters
+        activeSubscriptions,
+        activeProfiles,
+
+        // Actions
+        fetchData,
+        saveData,
+        saveSettings,
+        fetchRuleTemplates,
+        saveRuleTemplates,
+        hydrateFromData,
+        clearCachedData,
+
+        // Helpers
+        addSubscription,
+        overwriteSubscriptions,
+        removeSubscription,
+        updateSubscription,
+        addProfile,
+        overwriteProfiles,
+        removeProfile,
+        removeProfileFromProfiles,
+        removeManualNodeFromProfiles,
+        removeSubscriptionFromProfiles,
+        markDirty,
+        clearDirty,
+    };
+});

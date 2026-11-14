@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     buildSubscriptionFilterFingerprint,
     buildSubscriptionNodeCacheKey,
-} from '../../functions/services/subscription-service.js';
+} from '../../functions/services/subscription-service.ts';
 
 vi.mock('../../functions/services/fetch-utils.js', () => ({
     fetchWithRetry: vi.fn(async () => {
@@ -47,7 +47,7 @@ describe('preview node fetch network error fallback', () => {
         });
 
         const { fetchSubscriptionNodes } =
-            await import('../../functions/modules/subscription/node-fetcher.js');
+            await import('../../functions/modules/subscription/node-fetcher.ts');
         const result = await fetchSubscriptionNodes(
             SUB.url,
             SUB.name,

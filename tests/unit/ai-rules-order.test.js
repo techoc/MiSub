@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
-import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';
+import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.ts';
+import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.ts';
 import {
     renderClashFromIniTemplate,
     renderSingboxFromIniTemplate,
-} from '../../functions/modules/subscription/template-pipeline.js';
+} from '../../functions/modules/subscription/template-pipeline.ts';
 
 const proxies = [
     {

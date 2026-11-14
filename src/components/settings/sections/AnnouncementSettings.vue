@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { computed, watch } from 'vue';
     import DOMPurify from 'dompurify';
     import Switch from '../../ui/Switch.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
 

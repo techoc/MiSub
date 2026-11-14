@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveRequestContext } from '../../functions/modules/subscription/request-context.js';
+import { resolveRequestContext } from '../../functions/modules/subscription/request-context.ts';
 
 const config = {
     mytoken: 'stable-token',

@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import draggable from 'vuedraggable';
     import ManualNodeCard from '../ManualNodeCard.vue';
     import ManualNodeList from '../ManualNodeList.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -90,7 +90,7 @@
                     <template #item="{ element: node }">
                         <div class="cursor-move">
                             <ManualNodeCard
-                                :node="node"
+                                :node="node as Record<string, any>"
                                 :is-selection-mode="isSelectionMode"
                                 :is-selected="selectedNodeIds.has(node.id)"
                                 :ping-result="pingResults[node.id]"
@@ -117,7 +117,7 @@
                     <template #item="{ element: node, index }">
                         <div class="cursor-move">
                             <ManualNodeList
-                                :node="node"
+                                :node="node as Record<string, any>"
                                 :index="index + 1"
                                 class="list-item-animation"
                                 :style="{ '--delay-index': Math.min(index, 20) }"
@@ -147,41 +147,41 @@
             >
                 <div
                     v-for="(node, index) in paginatedNodes"
-                    :key="node.id"
+                    :key="(node as Record<string, any>).id"
                     class="list-item-animation"
                     :style="{ '--delay-index': Math.min(index, 20) }"
                 >
                     <ManualNodeCard
-                        :node="node"
+                        :node="node as Record<string, any>"
                         :is-selection-mode="isSelectionMode"
-                        :is-selected="selectedNodeIds.has(node.id)"
-                        :ping-result="pingResults[node.id]"
-                        :is-pinging="pingingNodes.has(node.id)"
-                        @toggle-select="emit('toggle-select', node.id)"
-                        @edit="emit('edit', node.id)"
-                        @delete="emit('delete', node.id)"
+                        :is-selected="selectedNodeIds.has((node as Record<string, any>).id)"
+                        :ping-result="pingResults[(node as Record<string, any>).id]"
+                        :is-pinging="pingingNodes.has((node as Record<string, any>).id)"
+                        @toggle-select="emit('toggle-select', (node as Record<string, any>).id)"
+                        @edit="emit('edit', (node as Record<string, any>).id)"
+                        @delete="emit('delete', (node as Record<string, any>).id)"
                         @filter-group="emit('set-group-filter', $event)"
-                        @ping="emit('ping', node.id)"
+                        @ping="emit('ping', (node as Record<string, any>).id)"
                     />
                 </div>
             </div>
             <div v-else class="space-y-3">
                 <ManualNodeList
                     v-for="(node, index) in paginatedNodes"
-                    :key="node.id"
-                    :node="node"
+                    :key="(node as Record<string, any>).id"
+                    :node="node as Record<string, any>"
                     :index="paginatedNodes.indexOf(node) + 1"
                     class="list-item-animation"
                     :style="{ '--delay-index': Math.min(index, 20) }"
                     :is-selection-mode="isSelectionMode"
-                    :is-selected="selectedNodeIds.has(node.id)"
-                    :ping-result="pingResults[node.id]"
-                    :is-pinging="pingingNodes.has(node.id)"
-                    @toggle-select="emit('toggle-select', node.id)"
-                    @edit="emit('edit', node.id)"
-                    @delete="emit('delete', node.id)"
+                    :is-selected="selectedNodeIds.has((node as Record<string, any>).id)"
+                    :ping-result="pingResults[(node as Record<string, any>).id]"
+                    :is-pinging="pingingNodes.has((node as Record<string, any>).id)"
+                    @toggle-select="emit('toggle-select', (node as Record<string, any>).id)"
+                    @edit="emit('edit', (node as Record<string, any>).id)"
+                    @delete="emit('delete', (node as Record<string, any>).id)"
                     @filter-group="emit('set-group-filter', $event)"
-                    @ping="emit('ping', node.id)"
+                    @ping="emit('ping', (node as Record<string, any>).id)"
                 />
             </div>
         </div>

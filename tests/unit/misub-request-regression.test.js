@@ -79,7 +79,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request('https://misub.example/stable-token?target=nodes&refresh=1', {
                     headers: { 'User-Agent': 'ClashMeta' },
@@ -133,7 +133,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const initialResponse = await handleMisubRequest({
                 request: new Request('https://misub.example/stable-token?target=clash&refresh=1', {
                     headers: { 'User-Agent': 'ClashMeta' },
@@ -205,7 +205,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request('https://misub.example/stable-token?target=clash&refresh=1', {
                     headers: { 'User-Agent': 'ClashMeta' },
@@ -275,7 +275,7 @@ describe('handleMisubRequest regression coverage', () => {
             const logSpy = silenceExpectedRequestLogs();
             try {
                 const { handleMisubRequest } =
-                    await import('../../functions/modules/subscription/main-handler.js');
+                    await import('../../functions/modules/subscription/main-handler.ts');
                 const response = await handleMisubRequest({
                     request: new Request(
                         'https://misub.example/stable-token?target=clash&refresh=1',
@@ -339,7 +339,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request(
                     'https://misub.example/stable-token?target=clash&refresh=1&builtin=true',
@@ -413,7 +413,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request(
                     'https://misub.example/stable-token/profile-a?target=nodes&refresh=1',
@@ -481,7 +481,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request(
                     'https://misub.example/stable-token/profile-a?target=nodes&refresh=1',
@@ -550,7 +550,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request(
                     'https://misub.example/stable-token/profile-a?target=nodes&refresh=1',
@@ -626,7 +626,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request(
                     'https://misub.example/stable-token/profile-a?target=nodes&refresh=1',
@@ -673,7 +673,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request('https://misub.example/stable-token?target=nodes&refresh=1', {
                     headers: { 'User-Agent': 'ClashMeta' },
@@ -726,7 +726,7 @@ describe('handleMisubRequest regression coverage', () => {
         const logSpy = silenceExpectedRequestLogs();
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request('https://misub.example/wrong-token?target=nodes', {
                     headers: {
@@ -787,7 +787,7 @@ describe('handleMisubRequest regression coverage', () => {
             const logSpy = silenceExpectedRequestLogs();
             try {
                 const { handleMisubRequest } =
-                    await import('../../functions/modules/subscription/main-handler.js');
+                    await import('../../functions/modules/subscription/main-handler.ts');
                 const response = await handleMisubRequest({
                     request: new Request(
                         `https://misub.example/stable-token?target=nodes&${paramName}=1`,
@@ -852,7 +852,7 @@ describe('handleMisubRequest regression coverage', () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         try {
             const { handleMisubRequest } =
-                await import('../../functions/modules/subscription/main-handler.js');
+                await import('../../functions/modules/subscription/main-handler.ts');
             const response = await handleMisubRequest({
                 request: new Request('https://misub.example/stable-token?target=nodes&refresh=1', {
                     headers: { 'User-Agent': 'ClashMeta' },

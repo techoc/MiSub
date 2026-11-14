@@ -1,23 +1,23 @@
-<script setup>
+<script setup lang="ts">
     import { ref, defineAsyncComponent, computed, onMounted, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
-    import { extractNodeName } from '../lib/utils.js';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useSubscriptions } from '../composables/useSubscriptions.js';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { useProfiles } from '../composables/useProfiles.js';
-    import { useSubscriptionForms } from '../composables/useSubscriptionForms.js'; // Added
-    import { useBulkImportLogic } from '../composables/useBulkImportLogic.js'; // Added
+    import { extractNodeName } from '../lib/utils.ts';
+    import { useDataStore } from '../stores/useDataStore.ts';
+    import { useSubscriptions } from '../composables/useSubscriptions.ts';
+    import { useManualNodes } from '../composables/useManualNodes.ts';
+    import { useProfiles } from '../composables/useProfiles.ts';
+    import { useSubscriptionForms } from '../composables/useSubscriptionForms.ts'; // Added
+    import { useBulkImportLogic } from '../composables/useBulkImportLogic.ts'; // Added
     import SubscriptionPanel from '../components/subscriptions/SubscriptionPanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import SubscriptionEditModal from '../components/modals/SubscriptionEditModal.vue';
-    import { useToastStore } from '../stores/toast.js';
-    import { useI18n } from '../i18n/index.js';
-    import { createAirportGroupId } from '../utils/airport-identity.js';
+    import { useToastStore } from '../stores/toast.ts';
+    import { useI18n } from '../i18n/index.ts';
+    import { createAirportGroupId } from '../utils/airport-identity.ts';
     import {
         resolveSubscriptionStatusFilter,
         matchesSubscriptionStatus,
-    } from '../utils/dashboard-deeplink.js';
+    } from '../utils/dashboard-deeplink.ts';
 
     const dataStore = useDataStore();
     const { showToast } = useToastStore();
@@ -88,7 +88,7 @@
         () => import('../components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
-    const previewSubscriptionId = ref(null);
+    const previewSubscriptionId = ref<any>(null);
     const previewSubscriptionName = ref('');
     const previewSubscriptionUrl = ref('');
 
@@ -320,7 +320,7 @@
             :subscription-id="previewSubscriptionId"
             :subscription-name="previewSubscriptionName"
             :subscription-url="previewSubscriptionUrl"
-            :profile-id="null"
+            :profile-id="undefined"
             :profile-name="''"
             @update:show="showNodePreviewModal = $event"
         />

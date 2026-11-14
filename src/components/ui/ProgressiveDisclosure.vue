@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed } from 'vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -24,7 +24,7 @@
         level: {
             type: Number,
             default: 1,
-            validator: (value) => value >= 1 && value <= 3,
+            validator: (value) => (value as any) >= 1 && (value as any) <= 3,
         },
     });
 

@@ -1,10 +1,10 @@
-<script setup>
+<script setup lang="ts">
     import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
     import DOMPurify from 'dompurify';
-    import { useThemeStore } from '../../stores/theme.js';
-    import { parseCustomPageSource } from '../../utils/custom-page-source.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useThemeStore } from '../../stores/theme.ts';
+    import { parseCustomPageSource } from '../../utils/custom-page-source.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const route = useRoute();
     const themeStore = useThemeStore();
@@ -113,7 +113,10 @@
 
         // 1. 文本占位符替换
         const nodeCount = props.profiles.reduce(
-            (sum, p) => sum + (p.subscriptionCount || 0) + (p.manualNodeCount || 0),
+            (sum, p) =>
+                sum +
+                ((p as Record<string, any>).subscriptionCount || 0) +
+                (((p as Record<string, any>).manualNodeCount as any as any as any) || 0),
             0
         );
         const textVars = {

@@ -1,11 +1,11 @@
-<script setup>
-    import { useI18n } from '../../i18n/index.js';
+<script setup lang="ts">
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
     import { ref, watch, nextTick } from 'vue';
     import QRCode from 'qrcode';
     import Modal from '../forms/Modal.vue';
-    import { useToastStore } from '../../stores/toast.js';
+    import { useToastStore } from '../../stores/toast.ts';
 
     const { showToast } = useToastStore();
 
@@ -28,7 +28,7 @@
 
     const emit = defineEmits(['update:show']);
 
-    const canvasRef = ref(null);
+    const canvasRef = ref<any>(null);
 
     const generateQRCode = async () => {
         if (!props.url || !canvasRef.value) return;
@@ -63,7 +63,7 @@
         if (!canvasRef.value) return;
         const link = document.createElement('a');
         link.download = `${props.title || 'qrcode'}.png`;
-        link.href = canvasRef.value.toDataURL('image/png');
+        link.href = (canvasRef.value as Record<string, any>).toDataURL('image/png');
         link.click();
     };
 </script>

@@ -1,12 +1,12 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref } from 'vue';
-    import { formatBytes } from '../../lib/utils.js';
-    import { inferAirportRootDomain } from '../../utils/airport-domain.js';
-    import { lookupDomainName } from '../../utils/domain-name-memory.js';
-    import { api } from '../../lib/http.js';
-    import { TIMING } from '../../constants/timing.js';
+    import { formatBytes } from '../../lib/utils.ts';
+    import { inferAirportRootDomain } from '../../utils/airport-domain.ts';
+    import { lookupDomainName } from '../../utils/domain-name-memory.ts';
+    import { api } from '../../lib/http.ts';
+    import { TIMING } from '../../constants/timing.ts';
     import Switch from './Switch.vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const props = defineProps({
         misub: {
@@ -137,7 +137,7 @@
         const now = new Date();
         expiryDate.setHours(0, 0, 0, 0);
         now.setHours(0, 0, 0, 0);
-        const diffDays = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays > REASONABLE_EXPIRY_LIMIT_DAYS) {
             return null;
         }

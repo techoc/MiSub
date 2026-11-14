@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
     import Switch from '@/components/ui/Switch.vue';
     import SectionHeader from '../../SectionHeader.vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -135,7 +135,7 @@
                 </h4>
                 <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
                     <div
-                        v-for="option in group.options"
+                        v-for="option in group.options as any[]"
                         :key="option.path"
                         class="flex items-start justify-between gap-4 rounded-lg border border-gray-100 bg-gray-50/50 p-3 dark:border-white/5 dark:bg-white/5"
                     >

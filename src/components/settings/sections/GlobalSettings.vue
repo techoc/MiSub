@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
     import { watch } from 'vue';
     import OperatorChain from '../../features/Operators/OperatorChain.vue';
     import Input from '../../ui/Input.vue';
     import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -273,7 +273,7 @@
 
             <div v-else class="mt-4 space-y-3">
                 <div
-                    v-for="(rule, index) in settings.regionOverrides"
+                    v-for="(rule, index) in settings.regionOverrides as any[]"
                     :key="index"
                     class="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-gray-800/50 md:grid-cols-[1fr_160px_96px_auto]"
                 >

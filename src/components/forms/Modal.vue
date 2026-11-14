@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch, nextTick, onUnmounted, computed } from 'vue';
-    import { useI18n } from '@/i18n/index.js';
-    import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { useBackdropDismiss } from '@/composables/useBackdropDismiss.ts';
 
     const props = defineProps({
         show: Boolean,
@@ -33,7 +33,7 @@
         confirmVariant: {
             type: String,
             default: 'primary',
-            validator: (value) => ['primary', 'danger'].includes(value),
+            validator: (value) => ['primary', 'danger'].includes(value as any),
         },
     });
 
@@ -44,7 +44,7 @@
     const confirmTitle = computed(() => props.confirmButtonTitle || t('actions.confirm'));
 
     const confirmInput = ref('');
-    const modalPanelRef = ref(null);
+    const modalPanelRef = ref<any>(null);
     const titleId = `modal-title-${Math.random().toString(36).slice(2, 10)}`;
 
     // 记录打开弹窗前的焦点元素，关闭时还原
@@ -61,7 +61,7 @@
 
     function getFocusableElements() {
         return modalPanelRef.value
-            ? Array.from(modalPanelRef.value.querySelectorAll(FOCUSABLE))
+            ? Array.from((modalPanelRef.value as Record<string, any>).querySelectorAll(FOCUSABLE))
             : [];
     }
 
@@ -85,12 +85,12 @@
         if (e.shiftKey) {
             if (document.activeElement === first) {
                 e.preventDefault();
-                last.focus();
+                (last as Record<string, any>).focus();
             }
         } else {
             if (document.activeElement === last) {
                 e.preventDefault();
-                first.focus();
+                (first as Record<string, any>).focus();
             }
         }
     };
@@ -99,21 +99,24 @@
         () => props.show,
         async (val) => {
             if (val) {
-                previouslyFocused = document.activeElement;
+                previouslyFocused = document.activeElement as any;
                 window.addEventListener('keydown', handleKeydown);
                 await nextTick();
                 // 优先聚焦第一个可交互元素，否则聚焦弹窗面板本身
                 const focusable = getFocusableElements();
                 if (focusable.length) {
-                    focusable[0].focus();
+                    (focusable[0] as any).focus();
                 } else {
-                    modalPanelRef.value?.focus();
+                    (modalPanelRef.value as Record<string, any> | undefined)?.focus();
                 }
             } else {
                 window.removeEventListener('keydown', handleKeydown);
                 // 还原焦点到触发元素
-                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
-                    previouslyFocused.focus();
+                if (
+                    previouslyFocused &&
+                    typeof (previouslyFocused as Record<string, any>).focus === 'function'
+                ) {
+                    (previouslyFocused as Record<string, any>).focus();
                     previouslyFocused = null;
                 }
             }
@@ -195,8 +198,10 @@
                                 <button
                                     @click="handleConfirm"
                                     :disabled="
-                                        confirmDisabled ||
-                                        (confirmKeyword && confirmInput !== confirmKeyword)
+                                        Boolean(
+                                            confirmDisabled ||
+                                            (confirmKeyword && confirmInput !== confirmKeyword)
+                                        )
                                     "
                                     :title="confirmDisabled ? confirmTitle : t('actions.confirm')"
                                     class="px-4 py-2 text-white font-semibold text-sm misub-radius-lg transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:opacity-70 disabled:cursor-not-allowed"

@@ -1,24 +1,24 @@
-<script setup>
+<script setup lang="ts">
     import { ref } from 'vue';
-    import { useToastStore } from '../../../stores/toast.js';
+    import { useToastStore } from '../../../stores/toast.ts';
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const props = defineProps({
         settings: {
             type: Object,
             required: true,
         },
-        exportBackup: Function,
-        importBackup: Function,
-        handleReset: Function,
+        exportBackup: Function as any,
+        importBackup: Function as any,
+        handleReset: Function as any,
     });
 
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const passwordForm = ref({
+    const passwordForm = ref<any>({
         newPassword: '',
         confirmPassword: '',
     });
@@ -103,7 +103,10 @@
                 showToast(data.error || t('systemSettings.updateFailed'), 'error');
             }
         } catch (e) {
-            showToast(t('systemSettings.requestFailed', { message: e.message }), 'error');
+            showToast(
+                t('systemSettings.requestFailed', { message: (e as Error).message }),
+                'error'
+            );
         } finally {
             isUpdatingPassword.value = false;
         }

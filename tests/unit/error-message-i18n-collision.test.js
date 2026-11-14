@@ -23,10 +23,10 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale, t } from '../../src/i18n/index.js';
-import { isNetworkErrorMessage } from '../../src/utils/network-error.js';
-import { ErrorHandler } from '../../src/utils/errorHandler.js';
+import { messages } from '../../src/i18n/messages.ts';
+import { setLocale, t } from '../../src/i18n/index.ts';
+import { isNetworkErrorMessage } from '../../src/utils/network-error.ts';
+import { ErrorHandler } from '../../src/utils/errorHandler.ts';
 
 const handler = new ErrorHandler();
 
@@ -37,7 +37,7 @@ function walk(dir, out = []) {
         const full = path.join(dir, entry);
         if (statSync(full).isDirectory()) {
             walk(full, out);
-        } else if (/\.(js|vue)$/.test(entry)) {
+        } else if (/\.(js|ts|vue)$/.test(entry)) {
             out.push(full);
         }
     }

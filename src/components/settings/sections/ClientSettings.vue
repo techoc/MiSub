@@ -1,30 +1,30 @@
-<script setup>
+<script setup lang="ts">
     import { ref, onMounted, computed } from 'vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
     import { useToastStore } from '../../../stores/toast';
     import Modal from '../../forms/Modal.vue';
-    import { api } from '../../../lib/http.js';
+    import { api } from '../../../lib/http.ts';
     import SectionHeader from '../SectionHeader.vue';
 
-    const clients = ref([]);
+    const clients = ref<any[]>([]);
     const loading = ref(false);
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
     const showEditModal = ref(false);
-    const editingClient = ref({});
+    const editingClient = ref<any>({});
     const isNew = ref(false);
     const saving = ref(false);
     const ordering = ref(false);
-    const iconFileInput = ref(null);
+    const iconFileInput = ref<any>(null);
     const uploadingIcon = ref(false);
     const isDataIcon = computed(() => {
-        const icon = editingClient.value?.icon;
+        const icon = (editingClient.value as Record<string, any> | undefined)?.icon;
         return typeof icon === 'string' && icon.startsWith('data:');
     });
     const iconInputValue = computed({
         get() {
-            const icon = editingClient.value?.icon;
+            const icon = (editingClient.value as Record<string, any> | undefined)?.icon;
             if (!icon || (typeof icon === 'string' && icon.startsWith('data:'))) return '';
             return icon;
         },
@@ -113,7 +113,7 @@
     };
 
     const triggerIconFileSelect = () => {
-        iconFileInput.value?.click();
+        (iconFileInput.value as Record<string, any> | undefined)?.click();
     };
 
     const clearIcon = () => {
@@ -177,7 +177,8 @@
     const handleEdit = (client) => {
         isNew.value = false;
         editingClient.value = JSON.parse(JSON.stringify(client));
-        if (!editingClient.value.platforms) editingClient.value.platforms = [];
+        if (!(editingClient.value as Record<string, any>).platforms)
+            (editingClient.value as Record<string, any>).platforms = [];
         showEditModal.value = true;
     };
 
@@ -193,7 +194,7 @@
             }
         } catch (e) {
             showToast(
-                t('settings.clientOrderSaveFailedWithMessage', { message: e.message }),
+                t('settings.clientOrderSaveFailedWithMessage', { message: (e as Error).message }),
                 'error'
             );
         } finally {
@@ -213,7 +214,8 @@
     };
 
     const handleSave = async () => {
-        if (!editingClient.value.name) return showToast(t('settings.clientNameRequired'), 'error');
+        if (!(editingClient.value as Error).name)
+            return showToast(t('settings.clientNameRequired'), 'error');
 
         saving.value = true;
         try {
@@ -228,14 +230,17 @@
                 showToast(data.message || t('settings.clientSaveFailed'), 'error');
             }
         } catch (e) {
-            showToast(t('settings.clientSaveFailedWithMessage', { message: e.message }), 'error');
+            showToast(
+                t('settings.clientSaveFailedWithMessage', { message: (e as Error).message }),
+                'error'
+            );
         } finally {
             saving.value = false;
         }
     };
 
     const showDeleteConfirm = ref(false);
-    const clientToDeleteId = ref(null);
+    const clientToDeleteId = ref<any>(null);
 
     const handleDelete = (id) => {
         clientToDeleteId.value = id;
@@ -341,7 +346,7 @@
                         <p class="text-xs text-gray-500 truncate">{{ client.description }}</p>
                         <div class="flex flex-wrap gap-1 mt-2">
                             <span
-                                v-for="p in client.platforms"
+                                v-for="p in client.platforms as any[]"
                                 :key="p"
                                 class="px-1.5 py-0.5 text-[10px] rounded"
                                 :class="getPlatformClass(p)"

@@ -31,7 +31,7 @@ describe('notification-service IP geolocation fallback', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         const { sendEnhancedTgNotification } =
-            await import('../../functions/services/notification-service.js');
+            await import('../../functions/services/notification-service.ts');
         const sent = await sendEnhancedTgNotification(
             { BotToken: 'bot-token', ChatID: 'chat-id' },
             '<b>订阅被访问</b>',
@@ -83,7 +83,7 @@ describe('notification-service IP geolocation fallback', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         const { sendEnhancedTgNotification } =
-            await import('../../functions/services/notification-service.js');
+            await import('../../functions/services/notification-service.ts');
         expect(
             await sendEnhancedTgNotification(
                 { BotToken: 'bot-token', ChatID: 'chat-id' },
@@ -123,7 +123,7 @@ describe('notification-service IP geolocation fallback', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         const { sendEnhancedTgNotification } =
-            await import('../../functions/services/notification-service.js');
+            await import('../../functions/services/notification-service.ts');
         const sent = await sendEnhancedTgNotification(
             { BotToken: 'bot-token', ChatID: 'chat-id' },
             '<b>订阅被访问</b>',

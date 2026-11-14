@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import router, { configureAuthGuard } from '../../src/router/index.js';
+import router, { configureAuthGuard } from '../../src/router/index.ts';
 
 describe('router authentication guard', () => {
     beforeEach(async () => {

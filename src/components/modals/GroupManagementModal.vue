@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import draggable from 'vuedraggable';
-    import { useI18n } from '../../i18n/index.js';
-    import { confirmAction } from '../../composables/useConfirm.js';
+    import { useI18n } from '../../i18n/index.ts';
+    import { confirmAction } from '../../composables/useConfirm.ts';
 
     const { t } = useI18n();
 
@@ -18,8 +18,8 @@
     const emit = defineEmits(['close', 'rename', 'delete', 'reorder', 'update:show']);
 
     // 本地可编辑的分组列表
-    const localGroups = ref([]);
-    const editingGroupIndex = ref(null);
+    const localGroups = ref<any[]>([]);
+    const editingGroupIndex = ref<any>(null);
     const editingGroupName = ref('');
 
     // 监听 props.groups 变化，同步到本地
@@ -61,10 +61,10 @@
             return;
         }
 
-        const oldName = localGroups.value[editingGroupIndex.value].name;
+        const oldName = localGroups.value[(editingGroupIndex as any).value].name;
         if (newName !== oldName) {
             emit('rename', oldName, newName);
-            localGroups.value[editingGroupIndex.value].name = newName;
+            localGroups.value[(editingGroupIndex as any).value].name = newName;
         }
 
         cancelEdit();
@@ -78,11 +78,11 @@
         if (!confirmed) return;
 
         emit('delete', groupName);
-        localGroups.value = localGroups.value.filter((g) => g.name !== groupName);
+        localGroups.value = localGroups.value.filter((g) => (g as Error).name !== groupName);
     };
 
     const handleDragEnd = () => {
-        const newOrder = localGroups.value.map((g) => g.name);
+        const newOrder = localGroups.value.map((g) => (g as Error).name);
         emit('reorder', newOrder);
     };
 

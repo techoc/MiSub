@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils';
 import FormModal from '../../src/components/shared/FormModal.vue';
 import Modal from '../../src/components/forms/Modal.vue';
 import QRCodeOverlay from '../../src/components/public/QRCodeOverlay.vue';
-import { useBackdropDismiss } from '../../src/composables/useBackdropDismiss.js';
+import { useBackdropDismiss } from '../../src/composables/useBackdropDismiss.ts';
 
 const dispatchBubbled = async (element, type) => {
     element.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));

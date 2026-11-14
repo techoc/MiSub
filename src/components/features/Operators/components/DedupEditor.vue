@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
-    import { useI18n } from '../../../../i18n/index.js';
+    import { useI18n } from '../../../../i18n/index.ts';
 
     const props = defineProps({
         modelValue: {
@@ -63,7 +63,7 @@
                 >
                 <select
                     :value="params.mode"
-                    @change="updateValue({ mode: $event.target.value })"
+                    @change="updateValue({ mode: ($event.target as HTMLInputElement).value })"
                     class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
                     <option value="serverPort">{{ t('operators.dedupServerPort') }}</option>

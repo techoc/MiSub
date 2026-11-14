@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, nextTick, watch } from 'vue';
     import draggable from 'vuedraggable';
     import Card from '../ui/Card.vue';
@@ -7,14 +7,14 @@
     import EmptyState from '@/components/ui/EmptyState.vue';
     import Modal from '@/components/forms/Modal.vue';
     import { useUIStore } from '@/stores/ui';
-    import { useI18n } from '@/i18n/index.js';
-    import { inferAirportRootDomain } from '../../utils/airport-domain.js';
-    import { lookupDomainName } from '../../utils/domain-name-memory.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { inferAirportRootDomain } from '../../utils/airport-domain.ts';
+    import { lookupDomainName } from '../../utils/domain-name-memory.ts';
     import {
         getAirportIdentityKey,
         getAirportIdentityName,
         createAirportGroupId,
-    } from '../../utils/airport-identity.js';
+    } from '../../utils/airport-identity.ts';
 
     const { layoutMode } = useUIStore();
     const { t } = useI18n();
@@ -37,7 +37,7 @@
 
     const groupNameInput = ref('');
     const selectedAirportGroup = ref('');
-    const editingSubscriptionIds = ref([]);
+    const editingSubscriptionIds = ref<any[]>([]);
     const showAirportIdentityEditor = ref(false);
     const emit = defineEmits([
         'add',
@@ -99,7 +99,7 @@
     const availableAirportGroups = computed(() => {
         const groups = new Map();
         props.subscriptions.forEach((item) => {
-            const identity = item.airportIdentity;
+            const identity = (item as Record<string, any>).airportIdentity;
             if (identity?.groupId && identity?.name) groups.set(identity.groupId, identity.name);
         });
         return [...groups].map(([groupId, name]) => ({ groupId, name }));
@@ -109,7 +109,9 @@
             'reset-group',
             group.items.map((it) => it.id)
         );
-    const openAirportIdentityEditor = (ids = props.subscriptions.map((item) => item.id)) => {
+    const openAirportIdentityEditor = (
+        ids = props.subscriptions.map((item) => (item as Record<string, any>).id)
+    ) => {
         groupNameInput.value = '';
         selectedAirportGroup.value = '';
         editingSubscriptionIds.value = [...ids];
@@ -118,7 +120,7 @@
     const saveAirportIdentity = () => {
         const name = groupNameInput.value.trim();
         const existing = props.subscriptions
-            .map((item) => item.airportIdentity)
+            .map((item) => (item as Record<string, any>).airportIdentity)
             .find((identity) => identity?.groupId === selectedAirportGroup.value);
         if (!selectedAirportGroup.value && !name) return;
         const groupId = selectedAirportGroup.value || createAirportGroupId();
@@ -248,7 +250,7 @@
      */
     const groupedSubscriptions = computed(() => {
         const list = props.subscriptions || [];
-        const order = [];
+        const order: string[] = [];
         const map = new Map();
 
         list.forEach((sub) => {
@@ -273,7 +275,10 @@
     );
 
     const pageSubscriptionIds = computed(
-        () => new Set((props.paginatedSubscriptions || []).map((sub) => sub.id))
+        () =>
+            new Set(
+                (props.paginatedSubscriptions || []).map((sub) => (sub as Record<string, any>).id)
+            )
     );
 
     /** 当前分页命中组内任一条时显示组；组本身完整呈现但按首条排序锚定。 */
@@ -490,7 +495,7 @@
                     <template #item="{ element: subscription }">
                         <div class="cursor-move">
                             <Card
-                                :misub="subscription"
+                                :misub="subscription as Record<string, any>"
                                 @delete="handleDelete(subscription.id)"
                                 @change="handleSortEnd"
                                 @update="handleUpdate(subscription.id)"
@@ -506,7 +511,7 @@
                 </draggable>
             </div>
         </div>
-        <div v-else-if="paginatedSubscriptions.length > 0" class="space-y-4">
+        <div v-else-if="(paginatedSubscriptions || []).length > 0" class="space-y-4">
             <!-- 按站点分组：同站点的多个订阅源折叠为一组 -->
             <template v-if="isGrouped">
                 <template v-for="group in visibleCollapsibleGroups" :key="group.key">
@@ -516,7 +521,7 @@
                         <div class="flex w-full items-center justify-between gap-3 px-4 py-3">
                             <button
                                 type="button"
-                                :aria-expanded="String(!isGroupCollapsed(group.key))"
+                                :aria-expanded="!isGroupCollapsed(group.key)"
                                 class="flex min-w-0 flex-1 items-center gap-2 text-left"
                                 @click="toggleGroup(group.key)"
                             >
@@ -598,13 +603,13 @@
                             class="grid grid-cols-1 gap-4 border-t border-gray-100/80 p-4 md:grid-cols-2 dark:border-white/10"
                         >
                             <div
-                                v-for="(subscription, index) in group.items"
+                                v-for="(subscription, index) in group.items as any[]"
                                 :key="subscription.id"
                                 class="list-item-animation"
                                 :style="{ '--delay-index': index }"
                             >
                                 <Card
-                                    :misub="subscription"
+                                    :misub="subscription as Record<string, any>"
                                     @delete="handleDelete(subscription.id)"
                                     @change="handleSortEnd"
                                     @update="handleUpdate(subscription.id)"
@@ -630,7 +635,7 @@
                         :style="{ '--delay-index': index }"
                     >
                         <Card
-                            :misub="subscription"
+                            :misub="subscription as Record<string, any>"
                             @delete="handleDelete(subscription.id)"
                             @change="handleSortEnd"
                             @update="handleUpdate(subscription.id)"
@@ -647,18 +652,18 @@
             <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div
                     v-for="(subscription, index) in paginatedSubscriptions"
-                    :key="subscription.id"
+                    :key="(subscription as Record<string, any>).id"
                     class="list-item-animation"
                     :style="{ '--delay-index': index }"
                 >
                     <Card
-                        :misub="subscription"
-                        @delete="handleDelete(subscription.id)"
+                        :misub="subscription as Record<string, any>"
+                        @delete="handleDelete((subscription as Record<string, any>).id)"
                         @change="handleSortEnd"
-                        @update="handleUpdate(subscription.id)"
-                        @edit="handleEdit(subscription.id)"
-                        @preview="handlePreview(subscription.id)"
-                        @qrcode="handleQRCode(subscription.id)"
+                        @update="handleUpdate((subscription as Record<string, any>).id)"
+                        @edit="handleEdit((subscription as Record<string, any>).id)"
+                        @preview="handlePreview((subscription as Record<string, any>).id)"
+                        @qrcode="handleQRCode((subscription as Record<string, any>).id)"
                         @applyDetectedName="(name) => handleApplyDetectedName(subscription, name)"
                     />
                 </div>
@@ -708,7 +713,7 @@
                 </button>
             </div>
         </div>
-        <div v-if="!isSorting && totalPages > 1" class="mt-4">
+        <div v-if="!isSorting && (totalPages || 0) > 1" class="mt-4">
             <PanelPagination
                 variant="panel"
                 :current-page="currentPage"

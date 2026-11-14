@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // New import
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const props = defineProps({
         show: Boolean,

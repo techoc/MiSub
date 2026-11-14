@@ -35,7 +35,7 @@ vi.mock('../../src/composables/useSettingsLogic.js', () => ({
 }));
 
 import SettingsView from '../../src/views/SettingsView.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 
 const scrollSpy = vi.fn();
 

@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch } from 'vue';
-    import { api } from '../../lib/http.js';
+    import { api } from '../../lib/http.ts';
     import Modal from '../forms/Modal.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -19,14 +19,14 @@
 
     const emit = defineEmits(['close']);
 
-    const form = ref({
+    const form = ref<any>({
         nickname: '',
         content: '',
         type: 'general', // general, feature, bug
         captcha: '',
     });
 
-    const captcha = ref({
+    const captcha = ref<any>({
         num1: 0,
         num2: 0,
         operator: '+',

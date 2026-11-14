@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isCriticalAssetPath, isLocalHost, isSameOriginUrl } from '../../src/utils/url-origin.js';
+import { isCriticalAssetPath, isLocalHost, isSameOriginUrl } from '../../src/utils/url-origin.ts';
 
 describe('URL origin helpers', () => {
     const origin = 'https://example.com';

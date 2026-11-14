@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { installLogGate } from '../../functions/utils/log-gate.js';
+import { installLogGate } from '../../functions/utils/log-gate.ts';
 
 // installLogGate 直接替换/还原 console 方法（还原目标是模块加载时绑定的原实现），
 // 因此用引用恒等断言，而不是 spy（spy 会在替换时被丢弃）。

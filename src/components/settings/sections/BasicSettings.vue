@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import SectionHeader from '../SectionHeader.vue';
     const props = defineProps({
         settings: {
@@ -20,7 +20,7 @@
     import Switch from '../../ui/Switch.vue';
     import { watch, computed } from 'vue';
     import { useToastStore } from '../../../stores/toast';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { showToast } = useToastStore();
     const { t } = useI18n();
@@ -342,7 +342,7 @@
                                 "
                                 @input="
                                     (e) => {
-                                        const v = parseInt(e.target.value);
+                                        const v = parseInt((e.target as HTMLInputElement).value);
                                         if (v >= 5) settings.autoUpdateInterval = v;
                                     }
                                 "

@@ -1,0 +1,253 @@
+import { NODE_PROTOCOL_PREFIXES } from '@/constants/nodeProtocols.ts';
+import { t } from '@/i18n/index.ts';
+
+/**
+ * 验证工具函数
+ * @author MiSub Team
+ */
+
+/**
+ * 验证URL格式
+ * @param {string} url - 要验证的URL
+ * @returns {boolean} 是否为有效的URL
+ */
+export function isValidUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+
+    try {
+        const urlObj = new URL(url);
+        return ['http:', 'https:'].includes(urlObj.protocol);
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * 验证节点URL格式
+ * @param {string} nodeUrl - 节点URL
+ * @returns {boolean} 是否为有效的节点URL
+ */
+export function isValidNodeUrl(nodeUrl) {
+    if (!nodeUrl || typeof nodeUrl !== 'string') return false;
+
+    // 检查是否为支持的协议
+    return NODE_PROTOCOL_PREFIXES.some((protocol) => nodeUrl.startsWith(protocol));
+}
+
+/**
+ * 验证邮箱格式
+ * @param {string} email - 邮箱地址
+ * @returns {boolean} 是否为有效的邮箱格式
+ */
+export function isValidEmail(email) {
+    if (!email || typeof email !== 'string') return false;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+/**
+ * 验证密码强度
+ * @param {string} password - 密码
+ * @returns {Object} 密码强度信息
+ */
+export function validatePasswordStrength(password) {
+    if (!password) {
+        return {
+            score: 0,
+            message: t('validation.passwordRequired'),
+            suggestions: [t('validation.enterPassword')],
+        };
+    }
+
+    let score = 0;
+    const suggestions: any[] = [];
+
+    // 长度检查
+    if (password.length >= 8) {
+        score += 1;
+    } else {
+        suggestions.push(t('validation.passwordMinLength'));
+    }
+
+    // 包含小写字母
+    if (/[a-z]/.test(password)) {
+        score += 1;
+    } else {
+        suggestions.push(t('validation.includeLowercase'));
+    }
+
+    // 包含大写字母
+    if (/[A-Z]/.test(password)) {
+        score += 1;
+    } else {
+        suggestions.push(t('validation.includeUppercase'));
+    }
+
+    // 包含数字
+    if (/\d/.test(password)) {
+        score += 1;
+    } else {
+        suggestions.push(t('validation.includeNumber'));
+    }
+
+    // 包含特殊字符
+    if (/[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]/.test(password)) {
+        score += 1;
+    } else {
+        suggestions.push(t('validation.includeSpecial'));
+    }
+
+    let message;
+    if (score <= 2) {
+        message = t('validation.passwordWeak');
+    } else if (score <= 4) {
+        message = t('validation.passwordMedium');
+    } else {
+        message = t('validation.passwordStrong');
+    }
+
+    return { score, message, suggestions };
+}
+
+/**
+ * 验证表单字段
+ * @param {Object} formData - 表单数据
+ * @param {Object} rules - 验证规则
+ * @returns {Object} 验证结果
+ */
+export function validateForm(formData, rules) {
+    const errors = {};
+    const isValid = true;
+
+    for (const [field, fieldRules] of Object.entries(rules) as [string, Record<string, any>][]) {
+        const value = formData[field];
+        const fieldErrors: any[] = [];
+
+        // 必填验证
+        if (fieldRules.required && (!value || value.toString().trim() === '')) {
+            fieldErrors.push(fieldRules.required || t('validation.fieldRequired', { field }));
+        }
+
+        // 如果值为空且不是必填，跳过其他验证
+        if (!value && !fieldRules.required) {
+            continue;
+        }
+
+        // 类型验证
+        if (fieldRules.type) {
+            switch (fieldRules.type) {
+                case 'url':
+                    if (!isValidUrl(value)) {
+                        fieldErrors.push(t('validation.invalidUrl'));
+                    }
+                    break;
+                case 'email':
+                    if (!isValidEmail(value)) {
+                        fieldErrors.push(t('validation.invalidEmail'));
+                    }
+                    break;
+                case 'nodeUrl':
+                    if (!isValidNodeUrl(value)) {
+                        fieldErrors.push(t('validation.invalidNodeUrl'));
+                    }
+                    break;
+            }
+        }
+
+        // 长度验证
+        if (fieldRules.minLength && value.length < fieldRules.minLength) {
+            fieldErrors.push(t('validation.minLength', { count: fieldRules.minLength }));
+        }
+
+        if (fieldRules.maxLength && value.length > fieldRules.maxLength) {
+            fieldErrors.push(t('validation.maxLength', { count: fieldRules.maxLength }));
+        }
+
+        // 自定义验证
+        if (fieldRules.validator && typeof fieldRules.validator === 'function') {
+            const customError = fieldRules.validator(value);
+            if (customError) {
+                fieldErrors.push(customError);
+            }
+        }
+
+        if (fieldErrors.length > 0) {
+            errors[field] = fieldErrors;
+        }
+    }
+
+    return {
+        isValid: Object.keys(errors).length === 0,
+        errors,
+    };
+}
+
+/**
+ * 验证订阅配置
+ * @param {Object} subscription - 订阅配置
+ * @returns {Object} 验证结果
+ */
+export function validateSubscription(subscription) {
+    const rules = {
+        name: {
+            required: t('validation.subscriptionNameRequired'),
+            minLength: 1,
+            maxLength: 100,
+        },
+        url: {
+            required: t('validation.subscriptionUrlRequired'),
+            type: 'url',
+        },
+    };
+
+    return validateForm(subscription, rules);
+}
+
+/**
+ * 验证配置文件
+ * @param {Object} profile - 配置文件
+ * @returns {Object} 验证结果
+ */
+export function validateProfile(profile) {
+    const rules = {
+        name: {
+            required: t('validation.profileNameRequired'),
+            minLength: 1,
+            maxLength: 100,
+        },
+        customId: {
+            maxLength: 50,
+        },
+        transformConfig: {
+            validator: (value) => {
+                if (!value) return null;
+
+                // 允许 builtin: 和 custom: 前缀（内置/自定义模板）
+                if (value.startsWith('builtin:')) {
+                    const templateName = value.slice(8).trim();
+                    if (!templateName) {
+                        return `builtin: ${t('validation.templateNameEmpty')}`;
+                    }
+                    return null;
+                }
+
+                if (value.startsWith('custom:')) {
+                    const templateName = value.slice(7).trim();
+                    if (!templateName) {
+                        return `custom: ${t('validation.templateNameEmpty')}`;
+                    }
+                    return null;
+                }
+
+                // 其他情况必须是有效的 URL
+                if (!isValidUrl(value)) {
+                    return t('validation.invalidTransformUrl');
+                }
+                return null;
+            },
+        },
+    };
+
+    return validateForm(profile, rules);
+}

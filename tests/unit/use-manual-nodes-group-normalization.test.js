@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { nextTick } from 'vue';
-import { useManualNodes } from '../../src/composables/useManualNodes.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
+import { useManualNodes } from '../../src/composables/useManualNodes.ts';
+import { useDataStore } from '../../src/stores/useDataStore.ts';
 
 vi.mock('../../src/stores/toast.js', () => ({
     useToastStore: () => ({ showToast: vi.fn() }),

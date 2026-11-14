@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed } from 'vue';
     import Modal from '../forms/Modal.vue';
-    import { migrateToD1 } from '../../lib/api.js';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { migrateToD1 } from '../../lib/api.ts';
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const props = defineProps({
         show: Boolean,
@@ -14,7 +14,7 @@
     const { t } = useI18n();
 
     const isMigrating = ref(false);
-    const logs = ref([]);
+    const logs = ref<any[]>([]);
     const step = ref('check'); // check, migrating, done, error
 
     const addLog = (message, type = 'info') => {
@@ -62,11 +62,14 @@
             }
         } catch (err) {
             step.value = 'error';
-            addLog(t('d1Migration.logException', { message: err.message }), 'error');
+            addLog(t('d1Migration.logException', { message: (err as Error).message }), 'error');
             addLog(t('d1Migration.hintCheckSchema'), 'warning');
             addLog(t('d1Migration.hintRunSchema'), 'warning');
             addLog(t('d1Migration.hintCheckBinding'), 'warning');
-            showToast(t('d1Migration.toastMigrateFailed', { message: err.message }), 'error');
+            showToast(
+                t('d1Migration.toastMigrateFailed', { message: (err as Error).message }),
+                'error'
+            );
         } finally {
             isMigrating.value = false;
             addLog(t('d1Migration.logFinished'), 'info');

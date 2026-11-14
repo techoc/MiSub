@@ -3,7 +3,7 @@ import {
     DataMigrator,
     D1_MIGRATION_KEYS,
     D1_MIGRATION_KEY_PREFIXES,
-} from '../../functions/storage-adapter.js';
+} from '../../functions/storage-adapter.ts';
 
 /** 内存版 KV 命名空间，满足 isKVNamespace 的鸭子类型 */
 function makeKV(initial = {}) {

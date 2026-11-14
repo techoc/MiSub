@@ -1,8 +1,8 @@
 /** * 保存指示器组件 * @author MiSub Team */
 
-<script setup>
+<script setup lang="ts">
     import { computed, toRefs } from 'vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
     const props = defineProps({
@@ -13,7 +13,7 @@
         saveState: {
             type: String,
             required: true,
-            validator: (value) => ['idle', 'saving', 'success', 'error'].includes(value),
+            validator: (value) => ['idle', 'saving', 'success', 'error'].includes(value as any),
         },
     });
 

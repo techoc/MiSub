@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import yaml from 'js-yaml';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.ts';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.ts';
 import { validateClashConfig, validateSingboxConfig } from '../../scripts/smoke-subscription.mjs';
 
 const NODE = 'trojan://password@1.2.3.4:443#SmokeNode';

@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import draggable from 'vuedraggable';
-    import { useI18n } from '@/i18n/index.js';
-    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.ts';
 
     const { t } = useI18n();
 
@@ -50,14 +50,14 @@
     // 根据 selectedIds 顺序获取已选节点对象列表
     const orderedSelectedNodes = computed({
         get() {
-            const nodeMap = new Map(props.nodes.map((n) => [n.id, n]));
+            const nodeMap = new Map(props.nodes.map((n) => [(n as Record<string, any>).id, n]));
             return props.selectedIds.map((id) => nodeMap.get(id)).filter(Boolean);
         },
         set(newList) {
             // 拖拽排序后更新 ID 顺序
             emit(
                 'update:selectedIds',
-                newList.map((n) => n.id)
+                newList.map((n) => (n as Record<string, any>).id)
             );
         },
     });
@@ -109,7 +109,7 @@
             </button>
             <button
                 v-for="group in groups"
-                :key="group"
+                :key="group as any"
                 @click="emit('update:groupFilter', activeGroupFilter === group ? null : group)"
                 class="px-2.5 py-1 text-xs font-medium rounded-full transition-all border shrink-0 whitespace-nowrap"
                 :class="
@@ -148,18 +148,18 @@
         <div
             class="overflow-y-auto space-y-2 p-3 bg-gray-50 dark:bg-gray-900/50 misub-radius-md border dark:border-gray-700 h-36 lg:h-64"
         >
-            <div v-for="node in filteredNodes" :key="node.id">
+            <div v-for="node in filteredNodes" :key="(node as Record<string, any>).id">
                 <label class="flex items-center space-x-3 cursor-pointer">
                     <input
                         type="checkbox"
-                        :checked="selectedIds.includes(node.id)"
-                        @change="emit('toggle-selection', node.id)"
+                        :checked="selectedIds.includes((node as Record<string, any>).id)"
+                        @change="emit('toggle-selection', (node as Record<string, any>).id)"
                         class="h-4 w-4 rounded-sm border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
                     />
                     <span
                         class="text-sm text-gray-800 dark:text-gray-200 truncate"
-                        :title="node.name"
-                        >{{ node.name || t('manualNodes.unnamed') }}</span
+                        :title="(node as Error).name"
+                        >{{ (node as Error).name || t('manualNodes.unnamed') }}</span
                     >
                 </label>
             </div>

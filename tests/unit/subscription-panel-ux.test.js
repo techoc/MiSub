@@ -2,7 +2,7 @@ import { DOMWrapper, mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 import SubscriptionPanel from '../../src/components/subscriptions/SubscriptionPanel.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 
 const baseProps = {
     currentPage: 1,

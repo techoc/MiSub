@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
-import { urlToClashProxy, urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
-import { extractValidNodes } from '../../functions/modules/utils/node-parser.js';
+import { urlToClashProxy, urlsToClashProxies } from '../../functions/utils/url-to-clash.ts';
+import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.ts';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.ts';
+import { extractValidNodes } from '../../functions/modules/utils/node-parser.ts';
 
 describe('VLESS / Reality support-x25519mlkem768 特性支持', () => {
     it('标准 VLESS Reality 节点不带开关参数时不自动启用 x25519mlkem768', () => {

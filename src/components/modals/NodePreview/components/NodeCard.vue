@@ -1,5 +1,5 @@
-<script setup>
-    import { useI18n } from '../../../../i18n/index.js';
+<script setup lang="ts">
+    import { useI18n } from '../../../../i18n/index.ts';
 
     const { t } = useI18n();
     const props = defineProps({
@@ -12,11 +12,11 @@
             default: '',
         },
         parseNodeInfo: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         getProtocolStyle: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         // [New] Selection Mode Props
@@ -45,12 +45,12 @@
         <div class="block space-y-3 lg:hidden">
             <div
                 v-for="(node, index) in nodes"
-                :key="`${node.url}_${index}`"
+                :key="`${(node as Record<string, any>).url}_${index}`"
                 @click="handleCardClick(node)"
                 class="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all active:scale-[0.98] dark:border-white/5 dark:bg-white/5"
                 :class="{
                     'bg-indigo-50/50 ring-2 ring-indigo-500/20 dark:bg-indigo-500/10':
-                        selectionMode && selectedUrls.has(node.url),
+                        selectionMode && selectedUrls.has((node as Record<string, any>).url),
                     'cursor-pointer': selectionMode,
                 }"
             >
@@ -61,13 +61,13 @@
                         <div
                             class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300"
                             :class="
-                                selectedUrls.has(node.url)
+                                selectedUrls.has((node as Record<string, any>).url)
                                     ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-500/30'
                                     : 'border-gray-200 dark:border-gray-700'
                             "
                         >
                             <svg
-                                v-if="selectedUrls.has(node.url)"
+                                v-if="selectedUrls.has((node as Record<string, any>).url)"
                                 class="w-3.5 h-3.5 text-white"
                                 fill="none"
                                 stroke="currentColor"
@@ -107,16 +107,16 @@
                 <!-- 右侧：操作按钮 -->
                 <button
                     v-if="!selectionMode"
-                    @click.stop="emit('copy', node, node.url)"
+                    @click.stop="emit('copy', node, (node as Record<string, any>).url)"
                     class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-500 dark:text-gray-400 transition-all active:bg-indigo-600 active:text-white dark:bg-white/5"
                     :class="{
                         'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10':
-                            copiedNodeId === node.url,
+                            copiedNodeId === (node as Record<string, any>).url,
                     }"
                     :aria-label="t('actions.copyNode')"
                 >
                     <svg
-                        v-if="copiedNodeId !== node.url"
+                        v-if="copiedNodeId !== (node as Record<string, any>).url"
                         class="w-4 h-4"
                         fill="none"
                         stroke="currentColor"
@@ -151,12 +151,12 @@
         <div class="hidden gap-4 p-4 lg:grid lg:grid-cols-2 xl:grid-cols-3">
             <div
                 v-for="(node, index) in nodes"
-                :key="`${node.url}_${index}`"
+                :key="`${(node as Record<string, any>).url}_${index}`"
                 @click="handleCardClick(node)"
                 class="relative bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 group transition-all duration-500"
                 :class="[
                     selectionMode ? 'cursor-pointer' : '',
-                    selectionMode && selectedUrls.has(node.url)
+                    selectionMode && selectedUrls.has((node as Record<string, any>).url)
                         ? 'ring-2 ring-indigo-500 border-transparent bg-indigo-50/30 dark:bg-indigo-500/10'
                         : 'hover:shadow-2xl hover:translate-y-[-4px] hover:border-indigo-100 dark:hover:border-indigo-500/30 shadow-sm',
                 ]"
@@ -166,13 +166,13 @@
                     <div
                         class="w-6 h-6 rounded-full flex items-center justify-center transition-all"
                         :class="
-                            selectedUrls.has(node.url)
+                            selectedUrls.has((node as Record<string, any>).url)
                                 ? 'bg-indigo-600'
                                 : 'bg-gray-100 dark:bg-gray-700'
                         "
                     >
                         <svg
-                            v-if="selectedUrls.has(node.url)"
+                            v-if="selectedUrls.has((node as Record<string, any>).url)"
                             class="w-3.5 h-3.5 text-white"
                             fill="none"
                             stroke="currentColor"
@@ -232,16 +232,16 @@
                             <!-- 复制按钮 (Floating when hovered, only in non-selection mode) -->
                             <button
                                 v-if="!selectionMode"
-                                @click.stop="emit('copy', node, node.url)"
+                                @click.stop="emit('copy', node, (node as Record<string, any>).url)"
                                 class="opacity-0 group-hover:opacity-100 p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-indigo-600 hover:text-white transition-all transform scale-90 group-hover:scale-100"
                                 :class="{
                                     'opacity-100 bg-green-500 text-white':
-                                        copiedNodeId === node.url,
+                                        copiedNodeId === (node as Record<string, any>).url,
                                 }"
                                 :aria-label="t('actions.copyNode')"
                             >
                                 <svg
-                                    v-if="copiedNodeId !== node.url"
+                                    v-if="copiedNodeId !== (node as Record<string, any>).url"
                                     class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"

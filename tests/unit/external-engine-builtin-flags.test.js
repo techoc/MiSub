@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveBuiltinEngineFlags } from '../../functions/modules/subscription/main-handler.js';
+import { resolveBuiltinEngineFlags } from '../../functions/modules/subscription/main-handler.ts';
 
 describe('resolveBuiltinEngineFlags', () => {
     it('第三方转换引擎应忽略并关闭内置引擎专属开关', () => {

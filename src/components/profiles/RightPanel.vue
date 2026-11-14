@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onUnmounted } from 'vue';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useUIStore } from '../../stores/ui.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useUIStore } from '../../stores/ui.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const props = defineProps({
         config: Object,
@@ -20,7 +20,7 @@
     const { t } = useI18n();
 
     const copied = ref(false);
-    let copyTimeout = null;
+    let copyTimeout: any = null;
 
     const formats = ['universal', 'Base64', 'Clash', 'Sing-Box', 'Surge', 'Loon'];
     const selectedFormat = ref('universal');
@@ -39,7 +39,7 @@
     const profileTokenReady = computed(() => isStableToken(props.config?.profileToken));
 
     const setupTasks = computed(() => {
-        const tasks = [];
+        const tasks: any[] = [];
         if (!mainTokenReady.value) {
             tasks.push({
                 id: 'main-token',
@@ -171,10 +171,13 @@
                     </option>
                     <option
                         v-for="profile in profiles"
-                        :key="profile.id"
-                        :value="profile.customId || profile.id"
+                        :key="(profile as Record<string, any>).id"
+                        :value="
+                            (profile as Record<string, any>).customId ||
+                            ((profile as Record<string, any>).id as any as any as any)
+                        "
                     >
-                        {{ profile.name }}
+                        {{ (profile as Error).name }}
                     </option>
                 </select>
             </div>

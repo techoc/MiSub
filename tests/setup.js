@@ -1,6 +1,6 @@
 import { Storage } from 'happy-dom';
-import { registerLocaleMessages } from '../src/i18n/index.js';
-import enUS from '../src/i18n/locales/en-US.js';
+import { registerLocaleMessages } from '../src/i18n/index.ts';
+import enUS from '../src/i18n/locales/en-US.ts';
 
 // 生产运行时 en-US 语言包是动态加载的，但大量测试同步断言英文文案，
 // 这里静态预注入，保证 setLocale('en-US') / t(key, params, 'en-US') 立即可用。

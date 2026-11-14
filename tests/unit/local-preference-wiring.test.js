@@ -25,15 +25,15 @@ const BARE_ACCESS =
  * 新增文件时必须显式加进来 —— 这个「麻烦」正是守卫的意义。
  */
 const STORAGE_OWNERS = [
-    'src/utils/local-preference.js', // localStorage：偏好读写 + 回读校验
-    'src/utils/session-preference.js', // sessionStorage：会话偏好读写 + 回读校验
-    'src/utils/chunk-reload.js', // sessionStorage：chunk 重载循环保护（需原子读写）
-    'src/utils/cache-helper.js', // sessionStorage：带 TTL 的会话缓存
+    'src/utils/local-preference.ts', // localStorage：偏好读写 + 回读校验
+    'src/utils/session-preference.ts', // sessionStorage：会话偏好读写 + 回读校验
+    'src/utils/chunk-reload.ts', // sessionStorage：chunk 重载循环保护（需原子读写）
+    'src/utils/cache-helper.ts', // sessionStorage：带 TTL 的会话缓存
 ];
 
 const allowedFiles = new Set(STORAGE_OWNERS.map((file) => path.resolve(process.cwd(), file)));
-const LOCAL_PREFERENCE = path.resolve(process.cwd(), 'src/utils/local-preference.js');
-const CHUNK_RELOAD = path.resolve(process.cwd(), 'src/utils/chunk-reload.js');
+const LOCAL_PREFERENCE = path.resolve(process.cwd(), 'src/utils/local-preference.ts');
+const CHUNK_RELOAD = path.resolve(process.cwd(), 'src/utils/chunk-reload.ts');
 
 function collectSourceFiles(dir) {
     const entries = readdirSync(dir, { withFileTypes: true });
@@ -42,7 +42,7 @@ function collectSourceFiles(dir) {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
             files.push(...collectSourceFiles(fullPath));
-        } else if (/\.(js|vue)$/.test(entry.name)) {
+        } else if (/\.(js|ts|vue)$/.test(entry.name)) {
             files.push(fullPath);
         }
     }

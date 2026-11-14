@@ -10,7 +10,7 @@ import {
     i18n,
     setLocale,
     t,
-} from '../../src/i18n/index.js';
+} from '../../src/i18n/index.ts';
 import LanguageSwitcher from '../../src/components/layout/LanguageSwitcher.vue';
 
 const routerLinkStub = {

@@ -107,7 +107,7 @@ describe('api-handler storage helper usage', () => {
     });
 
     it('handleDataRequest prefers getAll helper APIs', async () => {
-        const { handleDataRequest } = await import('../../functions/modules/api-handler.js');
+        const { handleDataRequest } = await import('../../functions/modules/api-handler.ts');
 
         getAllSubscriptions.mockResolvedValue([{ id: 'sub-1', name: 'Sub One' }]);
         getAllProfiles.mockResolvedValue([{ id: 'profile-1', name: 'Profile One' }]);
@@ -122,7 +122,7 @@ describe('api-handler storage helper usage', () => {
     });
 
     it('handleMisubsSave diff mode reads current data through getAll helper APIs', async () => {
-        const { handleMisubsSave } = await import('../../functions/modules/api-handler.js');
+        const { handleMisubsSave } = await import('../../functions/modules/api-handler.ts');
 
         getAllSubscriptions.mockResolvedValue([
             { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com' },
@@ -156,7 +156,7 @@ describe('api-handler storage helper usage', () => {
     });
 
     it('handleMisubsSave preserves protective caches only for subscriptions with node cache enabled', async () => {
-        const { handleMisubsSave } = await import('../../functions/modules/api-handler.js');
+        const { handleMisubsSave } = await import('../../functions/modules/api-handler.ts');
 
         getAllSubscriptions.mockResolvedValue([]);
         getAllProfiles.mockResolvedValue([]);
@@ -197,7 +197,7 @@ describe('api-handler storage helper usage', () => {
     });
 
     it('handleMisubsSave uses row-level helpers for simple diffs', async () => {
-        const { handleMisubsSave } = await import('../../functions/modules/api-handler.js');
+        const { handleMisubsSave } = await import('../../functions/modules/api-handler.ts');
 
         get.mockResolvedValue({});
         const request = {
@@ -244,7 +244,7 @@ describe('api-handler storage helper usage', () => {
     });
 
     it('handleMisubsSave full save uses row-level sync when helper APIs are available', async () => {
-        const { handleMisubsSave } = await import('../../functions/modules/api-handler.js');
+        const { handleMisubsSave } = await import('../../functions/modules/api-handler.ts');
 
         getAllSubscriptions.mockResolvedValue([
             { id: 'sub-legacy', name: 'Legacy', url: 'https://old.example.com' },

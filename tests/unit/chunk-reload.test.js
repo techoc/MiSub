@@ -5,7 +5,7 @@
  * 站点数据被禁用时 sessionStorage 写不进去，就无法记录「已经重载过」。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { isChunkLoadError, shouldReloadForChunkError } from '../../src/utils/chunk-reload.js';
+import { isChunkLoadError, shouldReloadForChunkError } from '../../src/utils/chunk-reload.ts';
 
 /** 用 Map 做后端的 sessionStorage 假实现 */
 function createSessionStorageStub(initial = {}) {

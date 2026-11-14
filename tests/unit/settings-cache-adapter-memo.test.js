@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SettingsCache, StorageFactory } from '../../functions/storage-adapter.js';
+import { SettingsCache, StorageFactory } from '../../functions/storage-adapter.ts';
 
 function createKVMock(initialData = {}) {
     const store = new Map(Object.entries(initialData));

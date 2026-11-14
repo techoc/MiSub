@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     buildSubscriptionFilterFingerprint,
     buildSubscriptionNodeCacheKey,
-} from '../../functions/services/subscription-service.js';
+} from '../../functions/services/subscription-service.ts';
 
 const createAdapter = vi.fn();
 const getStorageType = vi.fn();
@@ -61,7 +61,7 @@ describe('preview node fetch protective cache fallback', () => {
     let fetchSubscriptionNodes;
 
     beforeEach(async () => {
-        const module = await import('../../functions/modules/subscription/node-fetcher.js');
+        const module = await import('../../functions/modules/subscription/node-fetcher.ts');
         fetchSubscriptionNodes = module.fetchSubscriptionNodes;
     });
 
@@ -229,7 +229,7 @@ describe('handleSingleSubscriptionMode preview fallback', () => {
         );
 
         const { handleSingleSubscriptionMode } =
-            await import('../../functions/modules/subscription/single-subscription.js');
+            await import('../../functions/modules/subscription/single-subscription.ts');
         const result = await handleSingleSubscriptionMode(
             new Request('https://example.com/api/subscription_nodes'),
             {},

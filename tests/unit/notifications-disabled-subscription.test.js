@@ -17,7 +17,7 @@ describe('subscription notifications', () => {
     });
 
     it('does not send expiration reminders for disabled subscriptions', async () => {
-        const { checkAndNotify } = await import('../../functions/modules/notifications.js');
+        const { checkAndNotify } = await import('../../functions/modules/notifications.ts');
         const nowSeconds = Math.floor(Date.now() / 1000);
         const subscription = {
             id: 'disabled-subscription',
@@ -46,7 +46,7 @@ describe('subscription notifications', () => {
     });
 
     it('still sends expiration reminders for enabled subscriptions', async () => {
-        const { checkAndNotify } = await import('../../functions/modules/notifications.js');
+        const { checkAndNotify } = await import('../../functions/modules/notifications.ts');
         const nowSeconds = Math.floor(Date.now() / 1000);
         const subscription = {
             id: 'enabled-subscription',

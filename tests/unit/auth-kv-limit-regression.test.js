@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getCookieSecret, getAuthDebugInfo } from '../../functions/modules/utils.js';
-import { handleLogin } from '../../functions/modules/auth-middleware.js';
+import { getCookieSecret, getAuthDebugInfo } from '../../functions/modules/utils.ts';
+import { handleLogin } from '../../functions/modules/auth-middleware.ts';
 
 function createLimitExceededKv() {
     const values = new Map();

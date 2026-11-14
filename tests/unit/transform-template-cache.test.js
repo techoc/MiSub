@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fetchTransformTemplate } from '../../functions/modules/subscription/transform-template-cache.js';
+import { fetchTransformTemplate } from '../../functions/modules/subscription/transform-template-cache.ts';
 
 function createStorage(cached = null) {
     return {

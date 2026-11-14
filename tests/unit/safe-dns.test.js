@@ -4,7 +4,7 @@ import {
     buildSingboxDnsConfig,
     resolveDnsPolicy,
     resolveSafeDnsConfig,
-} from '../../functions/modules/subscription/safe-dns.js';
+} from '../../functions/modules/subscription/safe-dns.ts';
 
 describe('shared split DNS policy', () => {
     it('resolves against a domestic baseline and keeps foreign DNS as proxied fallback in clean mode', () => {

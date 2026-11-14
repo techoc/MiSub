@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { nextTick } from 'vue';
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useProfiles } from '../../src/composables/useProfiles.js';
-import { useSubscriptions } from '../../src/composables/useSubscriptions.js';
-import { inferAirportRootDomain } from '../../src/utils/airport-domain.js';
+import { useDataStore } from '../../src/stores/useDataStore.ts';
+import { useProfiles } from '../../src/composables/useProfiles.ts';
+import { useSubscriptions } from '../../src/composables/useSubscriptions.ts';
+import { inferAirportRootDomain } from '../../src/utils/airport-domain.ts';
 
 describe('subscription list search', () => {
     beforeEach(() => {

@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted } from 'vue';
     import Modal from '../forms/Modal.vue';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const props = defineProps({
         show: Boolean,
@@ -14,7 +14,7 @@
     const { t } = useI18n();
 
     // 设备检测
-    const detectedPlatform = ref(null);
+    const detectedPlatform = ref<any>(null);
 
     const detectPlatform = () => {
         const ua = navigator.userAgent;
@@ -93,19 +93,23 @@
     // 过滤支持一键导入的客户端
     const supportedClients = computed(() => {
         if (!props.clients) return [];
-        return props.clients.filter((client) => urlSchemeMap[client.id]);
+        return props.clients.filter((client) => urlSchemeMap[(client as Record<string, any>).id]);
     });
 
     // 按平台分组并排序
-    const groupedClients = computed(() => {
+    const groupedClients = computed<any[]>(() => {
         const platform = detectedPlatform.value;
         const clients = supportedClients.value;
 
         if (!platform) return clients;
 
         // 将当前平台的客户端置顶
-        const platformClients = clients.filter((c) => c.platforms?.includes(platform));
-        const otherClients = clients.filter((c) => !c.platforms?.includes(platform));
+        const platformClients = clients.filter((c) =>
+            (c as Record<string, any>).platforms?.includes(platform)
+        );
+        const otherClients = clients.filter(
+            (c) => !(c as Record<string, any>).platforms?.includes(platform)
+        );
 
         return [...platformClients, ...otherClients];
     });

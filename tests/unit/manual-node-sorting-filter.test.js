@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { defineComponent, h } from 'vue';
 import ManualNodePanel from '../../src/components/nodes/ManualNodePanel.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 
 const nodes = [
     { id: 'a1', name: 'A 1', url: 'ss://a1', group: 'A', enabled: true },

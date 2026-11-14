@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import NodePreviewModal from '../../src/components/modals/NodePreview/NodePreviewModal.vue';
-import { createI18n } from '../../src/i18n/index.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
+import { createI18n } from '../../src/i18n/index.ts';
+import { useDataStore } from '../../src/stores/useDataStore.ts';
 
 const toastMock = vi.hoisted(() => vi.fn());
 

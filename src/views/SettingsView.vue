@@ -1,14 +1,15 @@
-<script setup>
+<script setup lang="ts">
+    const reloadPage = () => window.location.reload();
     import { ref, onMounted, onActivated, onUnmounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useI18n } from '../i18n/index.js';
+    import { useI18n } from '../i18n/index.ts';
     import MigrationModal from '../components/modals/MigrationModal.vue';
-    import { useSettingsLogic } from '../composables/useSettingsLogic.js';
+    import { useSettingsLogic } from '../composables/useSettingsLogic.ts';
     import SettingsContent from '../components/settings/SettingsContent.vue';
     import {
         resolveSettingsFocusTab,
         resolveSettingsFocusAnchor,
-    } from '../utils/dashboard-deeplink.js';
+    } from '../utils/dashboard-deeplink.ts';
 
     // 使用 composable 获取所有设置相关的状态和函数
     const { t } = useI18n();
@@ -37,7 +38,7 @@
     // The dashboard's "去设置 Token" buttons land here with `?focus=`. Without
     // this the query was ignored and the user had to hunt for the field.
     const highlightedFocusId = ref('');
-    let highlightTimer = null;
+    let highlightTimer: any = null;
 
     function applyFocusFromQuery() {
         const focus = route.query?.focus;
@@ -125,7 +126,7 @@
             :handle-reset="handleReset"
             layout-class="h-full"
             @save="handleSave"
-            @reload-now="() => window.location.reload()"
+            @reload-now="reloadPage"
             @migrate="handleOpenMigrationModal"
         />
 

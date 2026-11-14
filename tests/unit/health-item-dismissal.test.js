@@ -19,7 +19,7 @@ import {
     isHealthItemDismissed,
     normalizeDismissedHealthItemIds,
     readLegacyDismissedHealthItemIds,
-} from '../../src/utils/health-item-dismissal.js';
+} from '../../src/utils/health-item-dismissal.ts';
 
 describe('health-item-dismissal（纯函数）', () => {
     it('未忽略任何项时为空', () => {

@@ -24,7 +24,7 @@ vi.mock('../../src/composables/useBackupLogic.js', () => ({
     }),
 }));
 
-import { useSettingsLogic } from '../../src/composables/useSettingsLogic.js';
+import { useSettingsLogic } from '../../src/composables/useSettingsLogic.ts';
 
 describe('useSettingsLogic externalApi normalization', () => {
     beforeEach(() => {

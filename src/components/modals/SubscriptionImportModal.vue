@@ -1,26 +1,26 @@
-<script setup>
-    import { useI18n } from '../../i18n/index.js';
+<script setup lang="ts">
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
     import { ref, watch } from 'vue';
-    import { useToastStore } from '../../stores/toast.js';
+    import { useToastStore } from '../../stores/toast.ts';
     import Modal from '../forms/Modal.vue';
-    import { handleError } from '../../utils/errorHandler.js';
-    import { generateNodeId } from '../../utils/id.js';
-    import { api, APIError } from '../../lib/http.js';
+    import { handleError } from '../../utils/errorHandler.ts';
+    import { generateNodeId } from '../../utils/id.ts';
+    import { api, APIError } from '../../lib/http.ts';
     import FormatDetector from './SubscriptionImport/FormatDetector.vue';
     import ImportForm from './SubscriptionImport/ImportForm.vue';
     import FileImport from './SubscriptionImport/FileImport.vue';
     import ParseResult from './SubscriptionImport/ParseResult.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
-    import { readFilesAsText } from '../../utils/importFile.js';
-    import { buildAutoGroupName } from '../../utils/auto-group-name.js';
+    import { readFilesAsText } from '../../utils/importFile.ts';
+    import { buildAutoGroupName } from '../../utils/auto-group-name.ts';
 
     const isDev = import.meta.env.DEV;
 
     const props = defineProps({
         show: Boolean,
-        addNodesFromBulk: Function,
+        addNodesFromBulk: Function as any,
         groups: {
             // Added
             type: Array,
@@ -78,7 +78,7 @@
         );
         const duplicateCount = nodes.length - uniqueNodes.length;
 
-        props.addNodesFromBulk(uniqueNodes, targetGroupName);
+        props.addNodesFromBulk!(uniqueNodes, targetGroupName);
 
         const successMsg =
             t('importNodes.addedNodes', { count: uniqueNodes.length }) +
@@ -141,9 +141,9 @@
             console.error('文件导入失败:', error);
             handleError(error, 'File Import Error', { parseStatus: parseStatus.value });
             parseStatus.value = '';
-            errorMessage.value = error.message || t('importNodes.failed');
+            errorMessage.value = (error as Error).message || t('importNodes.failed');
             toastStore.showToast(
-                t('importNodes.failedWithMessage', { message: error.message }),
+                t('importNodes.failedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {
@@ -249,9 +249,9 @@
                 parseStatus: parseStatus.value,
             });
 
-            errorMessage.value = error.message || t('importNodes.failed');
+            errorMessage.value = (error as Error).message || t('importNodes.failed');
             toastStore.showToast(
-                t('importNodes.failedWithMessage', { message: error.message }),
+                t('importNodes.failedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {

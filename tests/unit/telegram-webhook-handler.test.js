@@ -111,7 +111,7 @@ describe('handleTelegramWebhook', () => {
         createAdapter.mockReturnValue(adapter);
 
         const { handleTelegramWebhook } =
-            await import('../../functions/modules/handlers/telegram-webhook-handler.js');
+            await import('../../functions/modules/handlers/telegram-webhook-handler.ts');
         try {
             const response = await handleTelegramWebhook(
                 createRequest(
@@ -152,7 +152,7 @@ describe('handleTelegramWebhook', () => {
         createAdapter.mockReturnValue(adapter);
 
         const { handleTelegramWebhook } =
-            await import('../../functions/modules/handlers/telegram-webhook-handler.js');
+            await import('../../functions/modules/handlers/telegram-webhook-handler.ts');
         const response = await handleTelegramWebhook(
             createRequest({
                 message: {
@@ -177,7 +177,7 @@ describe('handleTelegramWebhook', () => {
         createAdapter.mockReturnValue(adapter);
 
         const { handleTelegramWebhook } =
-            await import('../../functions/modules/handlers/telegram-webhook-handler.js');
+            await import('../../functions/modules/handlers/telegram-webhook-handler.ts');
 
         try {
             await handleTelegramWebhook(
@@ -238,7 +238,7 @@ describe('handleTelegramWebhook', () => {
         createAdapter.mockReturnValue(adapter);
 
         const { handleTelegramWebhook } =
-            await import('../../functions/modules/handlers/telegram-webhook-handler.js');
+            await import('../../functions/modules/handlers/telegram-webhook-handler.ts');
         await handleTelegramWebhook(
             createRequest({
                 message: {
@@ -277,7 +277,7 @@ describe('handleTelegramWebhook', () => {
         createAdapter.mockReturnValue(adapter);
 
         const { handleTelegramWebhook } =
-            await import('../../functions/modules/handlers/telegram-webhook-handler.js');
+            await import('../../functions/modules/handlers/telegram-webhook-handler.ts');
         await handleTelegramWebhook(
             createRequest({
                 message: {
@@ -334,7 +334,7 @@ describe('handleTelegramWebhook', () => {
         createAdapter.mockReturnValue(adapter);
 
         const { handleTelegramWebhook } =
-            await import('../../functions/modules/handlers/telegram-webhook-handler.js');
+            await import('../../functions/modules/handlers/telegram-webhook-handler.ts');
         await handleTelegramWebhook(
             createRequest({
                 callback_query: {

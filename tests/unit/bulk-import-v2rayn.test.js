@@ -5,8 +5,8 @@ const { post } = vi.hoisted(() => ({ post: vi.fn() }));
 
 vi.mock('../../src/lib/http.js', () => ({ api: { post } }));
 
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useBulkImportLogic } from '../../src/composables/useBulkImportLogic.js';
+import { useDataStore } from '../../src/stores/useDataStore.ts';
+import { useBulkImportLogic } from '../../src/composables/useBulkImportLogic.ts';
 
 const V2RAYN_LINK =
     'v2rayn://hysteria2/eyJDb25maWdUeXBlIjo3LCJSZW1hcmtzIjoiaHkyIiwiQWRkcmVzcyI6IjEuMi4zLjQiLCJQb3J0Ijo4ODgzLCJQYXNzd29yZCI6InB3ZCJ9';

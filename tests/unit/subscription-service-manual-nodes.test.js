@@ -1,8 +1,8 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
-import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
-import { parseNodeList } from '../../functions/modules/utils/node-parser.js';
+import { generateCombinedNodeList } from '../../functions/services/subscription-service.ts';
+import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.ts';
+import { urlsToClashProxies } from '../../functions/utils/url-to-clash.ts';
+import { parseNodeList } from '../../functions/modules/utils/node-parser.ts';
 
 describe('subscription-service 手动节点健壮性', () => {
     afterEach(() => {

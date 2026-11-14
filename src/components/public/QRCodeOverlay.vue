@@ -1,6 +1,6 @@
-<script setup>
-    import { useBackdropDismiss } from '../../composables/useBackdropDismiss.js';
-    import { useI18n } from '../../i18n/index.js';
+<script setup lang="ts">
+    import { useBackdropDismiss } from '../../composables/useBackdropDismiss.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
 

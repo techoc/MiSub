@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
-import { urlToClashProxy, urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
-import { extractValidNodes } from '../../functions/modules/utils/node-parser.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
+import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.ts';
+import { urlToClashProxy, urlsToClashProxies } from '../../functions/utils/url-to-clash.ts';
+import { extractValidNodes } from '../../functions/modules/utils/node-parser.ts';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.ts';
 
 const stripGeneratedFields = (proxy) => {
     const { metadata, ...rest } = proxy;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { StorageFactory, STORAGE_TYPES } from '../../functions/storage-adapter.js';
+import { StorageFactory, STORAGE_TYPES } from '../../functions/storage-adapter.ts';
 
 /**
  * D1 对单条 SQL 语句有 100 个绑定变量的硬上限。

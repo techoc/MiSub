@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
 
     const props = defineProps({
@@ -6,12 +6,12 @@
             type: String,
             default: 'primary',
             validator: (value) =>
-                ['primary', 'secondary', 'danger', 'ghost', 'outline'].includes(value),
+                ['primary', 'secondary', 'danger', 'ghost', 'outline'].includes(value as any),
         },
         size: {
             type: String,
             default: 'md',
-            validator: (value) => ['sm', 'md', 'lg'].includes(value),
+            validator: (value) => ['sm', 'md', 'lg'].includes(value as any),
         },
         loading: {
             type: Boolean,
@@ -83,7 +83,7 @@
 
 <template>
     <button
-        :type="type"
+        :type="type as any"
         :disabled="disabled || loading"
         :aria-label="ariaLabel"
         @click="handleClick"

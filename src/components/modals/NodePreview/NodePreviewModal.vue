@@ -1,17 +1,17 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-    import { api, APIError } from '../../../lib/http.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useDataStore } from '../../../stores/useDataStore.js';
-    import { useManualNodes } from '../../../composables/useManualNodes.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { isNetworkErrorMessage } from '../../../utils/network-error.js';
+    import { api, APIError } from '../../../lib/http.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useDataStore } from '../../../stores/useDataStore.ts';
+    import { useManualNodes } from '../../../composables/useManualNodes.ts';
+    import { useI18n } from '../../../i18n/index.ts';
+    import { isNetworkErrorMessage } from '../../../utils/network-error.ts';
     import Modal from '../../forms/Modal.vue';
     import NodeFilters from './components/NodeFilters.vue';
     import NodeList from './components/NodeList.vue';
     import NodeCard from './components/NodeCard.vue';
     import NodePagination from './components/NodePagination.vue';
-    import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.js';
+    import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.ts';
 
     const isDev = import.meta.env.DEV;
     const { t } = useI18n();
@@ -40,7 +40,7 @@
     // 响应式数据
     const loading = ref(false);
     const error = ref('');
-    const allNodes = ref([]); // 存储所有节点
+    const allNodes = ref<any[]>([]); // 存储所有节点
     const currentPage = ref(1);
     const pageSize = ref(24);
     const viewMode = ref('list'); // 'list' 或 'card'
@@ -61,10 +61,10 @@
     const searchQuery = ref('');
 
     // 统计信息
-    const protocolStats = ref({});
-    const regionStats = ref({});
-    const availableProtocols = ref([]);
-    const availableRegions = ref([]);
+    const protocolStats = ref<any>({});
+    const regionStats = ref<any>({});
+    const availableProtocols = ref<any[]>([]);
+    const availableRegions = ref<any[]>([]);
 
     // 复制状态
     const copiedNodeId = ref('');
@@ -82,7 +82,9 @@
     };
 
     const selectAll = () => {
-        filteredNodes.value.forEach((node) => selectedUrls.value.add(node.url));
+        filteredNodes.value.forEach((node) =>
+            selectedUrls.value.add((node as Record<string, any>).url)
+        );
     };
 
     const clearSelection = () => {
@@ -107,9 +109,13 @@
             // For now, we'll use bulk import logic to create manual nodes
             const nodesToAdd = urls.map((url) => {
                 // Try to find full node object from allNodes
-                const originalNode = allNodes.value.find((n) => n.url === url);
+                const originalNode = allNodes.value.find(
+                    (n) => (n as Record<string, any>).url === url
+                );
                 return {
-                    name: (originalNode?.name || 'Pick').split('#')[0].trim(),
+                    name: ((originalNode as Error | undefined)?.name || 'Pick')
+                        .split('#')[0]
+                        .trim(),
                     url: url,
                     enabled: true,
                 };
@@ -123,7 +129,10 @@
             pickingMode.value = false;
             selectedUrls.value.clear();
         } catch (err) {
-            showToast(t('nodePreview.saveSelectionFailed', { message: err.message }), 'error');
+            showToast(
+                t('nodePreview.saveSelectionFailed', { message: (err as Error).message }),
+                'error'
+            );
         }
     };
 
@@ -147,12 +156,16 @@
 
         // 协议过滤
         if (protocolFilter.value && protocolFilter.value !== 'all') {
-            result = result.filter((node) => node.protocol === protocolFilter.value);
+            result = result.filter(
+                (node) => (node as Record<string, any>).protocol === protocolFilter.value
+            );
         }
 
         // 地区过滤
         if (regionFilter.value && regionFilter.value !== 'all') {
-            result = result.filter((node) => node.region === regionFilter.value);
+            result = result.filter(
+                (node) => (node as Record<string, any>).region === regionFilter.value
+            );
         }
 
         // 搜索过滤
@@ -160,9 +173,9 @@
             const query = searchQuery.value.toLowerCase().trim();
             result = result.filter(
                 (node) =>
-                    node.name.toLowerCase().includes(query) ||
-                    node.protocol.toLowerCase().includes(query) ||
-                    node.region.toLowerCase().includes(query)
+                    (node as Error).name.toLowerCase().includes(query) ||
+                    (node as Record<string, any>).protocol.toLowerCase().includes(query) ||
+                    (node as Record<string, any>).region.toLowerCase().includes(query)
             );
         }
 
@@ -249,7 +262,7 @@
         error.value = '';
 
         try {
-            const requestData = {
+            const requestData: Record<string, any> = {
                 userAgent: 'v2rayN/7.23',
             };
 
@@ -340,10 +353,10 @@
                 } catch (testErr) {
                     error.value = t('nodePreview.authFailed');
                 }
-            } else if (isNetworkErrorMessage(err?.message)) {
+            } else if (isNetworkErrorMessage((err as Error | undefined)?.message)) {
                 error.value = t('nodePreview.networkFailed');
             } else {
-                error.value = err.message || t('nodePreview.loadFailed');
+                error.value = (err as Error).message || t('nodePreview.loadFailed');
             }
 
             allNodes.value = [];

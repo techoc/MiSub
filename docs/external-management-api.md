@@ -2,12 +2,12 @@
 
 本文档记录 MiSub 当前对外管理接口的真实行为，对应代码位于：
 
-- `functions/modules/external-api-router.js`
-- `functions/modules/external-api-auth.js`
-- `functions/modules/external-subscriptions-handler.js`
-- `functions/modules/external-manual-nodes-handler.js`
-- `functions/modules/external-profiles-handler.js`
-- `functions/modules/external-preview-handler.js`
+- `functions/modules/external-api-router.ts`
+- `functions/modules/external-api-auth.ts`
+- `functions/modules/external-subscriptions-handler.ts`
+- `functions/modules/external-manual-nodes-handler.ts`
+- `functions/modules/external-profiles-handler.ts`
+- `functions/modules/external-preview-handler.ts`
 - OpenAPI 文件：`docs/external-management-api.openapi.yaml`
 - 使用说明：`docs/external-management-api-usage.md`
 

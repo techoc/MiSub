@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handleApiRequest } from '../../functions/modules/api-router.js';
+import { handleApiRequest } from '../../functions/modules/api-router.ts';
 
 function createKv() {
     return {

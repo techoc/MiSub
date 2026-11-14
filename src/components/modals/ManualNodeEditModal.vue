@@ -1,16 +1,19 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import Input from '../ui/Input.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { useSubscriptions } from '../../composables/useSubscriptions.js';
-    import { useBulkImportLogic, needsServerParsing } from '../../composables/useBulkImportLogic.js';
-    import { useManualNodes } from '../../composables/useManualNodes.js';
-    import { useI18n } from '../../i18n/index.js';
-    import { parseSurgeConfig } from '../../utils/protocolConverter.js';
-    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../utils/importFile.js';
-    import { buildAutoGroupName } from '../../utils/auto-group-name.js';
+    import { useDataStore } from '../../stores/useDataStore.ts';
+    import { useSubscriptions } from '../../composables/useSubscriptions.ts';
+    import {
+        useBulkImportLogic,
+        needsServerParsing,
+    } from '../../composables/useBulkImportLogic.ts';
+    import { useManualNodes } from '../../composables/useManualNodes.ts';
+    import { useI18n } from '../../i18n/index.ts';
+    import { parseSurgeConfig } from '../../utils/protocolConverter.ts';
+    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../utils/importFile.ts';
+    import { buildAutoGroupName } from '../../utils/auto-group-name.ts';
 
     const props = defineProps({
         show: Boolean,
@@ -32,13 +35,13 @@
     const { handleBulkImport } = useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk });
 
     // [文件导入] 新增节点时支持选择本地文件，内容直接填入编辑框，复用多行预览与批量导入流程
-    const fileInputRef = ref(null);
+    const fileInputRef = ref<any>(null);
     const fileAccept = IMPORT_FILE_ACCEPT;
     const fileNameHint = ref('');
     const isReadingFile = ref(false);
 
     const openFilePicker = () => {
-        fileInputRef.value?.click();
+        (fileInputRef.value as Record<string, any> | undefined)?.click();
     };
 
     const onFilePicked = async (event) => {
@@ -67,7 +70,7 @@
             }
         } catch (error) {
             console.error('读取文件失败:', error);
-            fileNameHint.value = error.message || t('manualNodes.fileImportFailed');
+            fileNameHint.value = (error as Error).message || t('manualNodes.fileImportFailed');
         } finally {
             isReadingFile.value = false;
         }
@@ -169,12 +172,12 @@
 
         if (props.isNew && (isMultiLine.value || requiresServerParsing)) {
             // 多行批量导入 / 需后端转换：未填写分组时自动生成一个（用户无需手填）
-            let groupName = (props.editingNode.group || '').trim();
+            let groupName = (props.editingNode!.group || '').trim();
             if (!groupName) {
                 groupName = buildAutoGroupName();
-                props.editingNode.group = groupName;
+                props.editingNode!.group = groupName;
             }
-            await handleBulkImport(props.editingNode.url, groupName);
+            await handleBulkImport(props.editingNode!.url, groupName);
             emit('update:show', false);
             return;
         }
@@ -509,7 +512,7 @@
                             class="flex items-center gap-3 px-3 py-2 border-b border-gray-100 dark:border-gray-700/50 last:border-b-0"
                         >
                             <span class="text-xs text-gray-500 dark:text-gray-400 w-5 text-right">{{
-                                idx + 1
+                                (idx as number) + 1
                             }}</span>
                             <span
                                 v-if="node.protocol"

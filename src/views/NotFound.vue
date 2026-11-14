@@ -52,10 +52,10 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
-    import { useSessionStore } from '../stores/session.js';
-    import { useI18n } from '../i18n/index.js';
+    import { useSessionStore } from '../stores/session.ts';
+    import { useI18n } from '../i18n/index.ts';
 
     const { t } = useI18n();
     const sessionStore = useSessionStore();

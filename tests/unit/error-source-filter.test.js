@@ -8,7 +8,7 @@
  * 用户看到的是与 MiSub 无关的错误弹窗。
  */
 import { describe, expect, it } from 'vitest';
-import { isAppScriptError, isForeignRejection } from '../../src/utils/error-source.js';
+import { isAppScriptError, isForeignRejection } from '../../src/utils/error-source.ts';
 
 const ORIGIN = 'https://misub.example.com';
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
-import { renderClashFromIniTemplate } from '../../functions/modules/subscription/template-pipeline.js';
+import { renderClashFromIniTemplate } from '../../functions/modules/subscription/template-pipeline.ts';
 
 const PROXIES = [{ name: 'HK-01', type: 'trojan', server: '1.1.1.1', port: 443, password: 'pass' }];
 

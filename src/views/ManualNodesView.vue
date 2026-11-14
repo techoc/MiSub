@@ -1,18 +1,18 @@
-<script setup>
+<script setup lang="ts">
     import { ref, defineAsyncComponent } from 'vue';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { useNodeForms } from '../composables/useNodeForms.js'; // Added
-    import { useToastStore } from '../stores/toast.js';
-    import { extractNodeName } from '../lib/utils.js';
+    import { useDataStore } from '../stores/useDataStore.ts';
+    import { useManualNodes } from '../composables/useManualNodes.ts';
+    import { useNodeForms } from '../composables/useNodeForms.ts'; // Added
+    import { useToastStore } from '../stores/toast.ts';
+    import { extractNodeName } from '../lib/utils.ts';
     import ManualNodePanel from '../components/nodes/ManualNodePanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import ManualNodeEditModal from '../components/modals/ManualNodeEditModal.vue';
     import ManualNodeDedupModal from '../components/modals/ManualNodeDedupModal.vue';
     import SubscriptionImportModal from '../components/modals/SubscriptionImportModal.vue';
     import BatchGroupModal from '../components/modals/BatchGroupModal.vue'; // Added
-    import { useI18n } from '../i18n/index.js';
-    import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
+    import { useI18n } from '../i18n/index.ts';
+    import { readRawPreference, writeRawPreference } from '../utils/local-preference.ts';
 
     const GroupManagementModal = defineAsyncComponent(
         () => import('../components/modals/GroupManagementModal.vue')
@@ -28,12 +28,12 @@
     const manualNodeViewMode = ref(readRawPreference('manualNodeViewMode') || 'card');
     const showDeleteNodesModal = ref(false);
     const showBatchDeleteModal = ref(false);
-    const batchDeleteIds = ref([]);
+    const batchDeleteIds = ref<any[]>([]);
     const showSubscriptionImportModal = ref(false);
     const showDedupModal = ref(false);
-    const dedupPlan = ref(null);
+    const dedupPlan = ref<any>(null);
     const showBatchGroupModal = ref(false); // Added
-    const batchGroupIds = ref([]); // Added
+    const batchGroupIds = ref<any[]>([]); // Added
     const showGroupManagementModal = ref(false); // 分组管理模态框
 
     const {
@@ -188,7 +188,7 @@
             :search-term="searchTerm"
             :view-mode="manualNodeViewMode"
             :groups="manualNodeGroups"
-            :active-group-filter="activeGroupFilter"
+            :active-group-filter="activeGroupFilter as any"
             :items-per-page="manualNodesPerPage"
             @update:items-per-page="(val) => (manualNodesPerPage = val)"
             @add="handleAddNode"

@@ -33,11 +33,11 @@ describe('API request timeout cleanup', () => {
     });
 
     it.each([
-        ['fetchInitialData', 'get', () => import('../../src/lib/api.js')],
-        ['fetchPublicConfig', 'get', () => import('../../src/lib/api.js')],
-        ['fetchNodeCount', 'post', () => import('../../src/lib/api.js')],
-        ['batchUpdateNodes', 'post', () => import('../../src/lib/api.js')],
-        ['testSubconverterBackend', 'post', () => import('../../src/lib/api.js')],
+        ['fetchInitialData', 'get', () => import('../../src/lib/api.ts')],
+        ['fetchPublicConfig', 'get', () => import('../../src/lib/api.ts')],
+        ['fetchNodeCount', 'post', () => import('../../src/lib/api.ts')],
+        ['batchUpdateNodes', 'post', () => import('../../src/lib/api.ts')],
+        ['testSubconverterBackend', 'post', () => import('../../src/lib/api.ts')],
     ])('%s clears its timeout when the request rejects', async (name, method, loadApi) => {
         mocks[method].mockRejectedValue(new Error('network down'));
         const apiModule = await loadApi();

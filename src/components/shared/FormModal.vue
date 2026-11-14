@@ -1,9 +1,9 @@
 /** * 共享表单模态框组件 * @author MiSub Team */
 
-<script setup>
+<script setup lang="ts">
     import { ref, watch, nextTick, computed } from 'vue';
-    import { t } from '../../i18n/index.js';
-    import { useBackdropDismiss } from '../../composables/useBackdropDismiss.js';
+    import { t } from '../../i18n/index.ts';
+    import { useBackdropDismiss } from '../../composables/useBackdropDismiss.ts';
 
     const props = defineProps({
         show: {
@@ -17,7 +17,7 @@
         size: {
             type: String,
             default: 'medium',
-            validator: (value) => ['small', 'medium', 'large', 'xlarge'].includes(value),
+            validator: (value) => ['small', 'medium', 'large', 'xlarge'].includes(value as any),
         },
         closable: {
             type: Boolean,
@@ -75,8 +75,8 @@
 
     const emit = defineEmits(['update:show', 'confirm', 'cancel', 'close', 'opened', 'closed']);
 
-    const modalRef = ref(null);
-    const contentRef = ref(null);
+    const modalRef = ref<any>(null);
+    const contentRef = ref<any>(null);
 
     // 尺寸样式映射
     const sizeClasses = {
@@ -94,7 +94,7 @@
     ]);
 
     const contentStyle = computed(() => {
-        const styles = {};
+        const styles: Record<string, any> = {};
         if (props.maxHeight) {
             styles.maxHeight = props.maxHeight;
         }
@@ -113,7 +113,9 @@
                 emit('opened');
                 // 自动聚焦到第一个输入框
                 if (contentRef.value) {
-                    const firstInput = contentRef.value.querySelector('input, textarea, select');
+                    const firstInput = (contentRef.value as Record<string, any>).querySelector(
+                        'input, textarea, select'
+                    );
                     if (firstInput) {
                         firstInput.focus();
                     }
@@ -178,7 +180,7 @@
     defineExpose({
         focus: () => {
             if (modalRef.value) {
-                modalRef.value.focus();
+                (modalRef.value as Record<string, any>).focus();
             }
         },
         getContentElement: () => contentRef.value,

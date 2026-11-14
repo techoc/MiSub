@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
-    import { extractHostAndPort } from '../../lib/utils.js';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '@/i18n/index.js';
+    import { extractHostAndPort } from '../../lib/utils.ts';
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useI18n } from '@/i18n/index.ts';
 
     const props = defineProps({
         node: {

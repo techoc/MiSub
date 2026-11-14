@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import draggable from 'vuedraggable';
-    import { useI18n } from '@/i18n/index.js';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -40,12 +40,16 @@
     // 根据 selectedIds 顺序获取已选订阅对象列表
     const orderedSelectedSubs = computed({
         get() {
-            const subMap = new Map(props.subscriptions.map((s) => [s.id, s]));
+            const subMap = new Map(
+                props.subscriptions.map((s) => [(s as Record<string, any>).id, s])
+            );
             return props.selectedIds.map((id) => subMap.get(id)).filter(Boolean);
         },
         set(newList) {
-            const availableIds = new Set(props.subscriptions.map((sub) => sub.id));
-            const reorderedIds = newList.map((sub) => sub.id);
+            const availableIds = new Set(
+                props.subscriptions.map((sub) => (sub as Record<string, any>).id)
+            );
+            const reorderedIds = newList.map((sub) => (sub as Record<string, any>).id);
             let reorderedIndex = 0;
 
             // 隐藏的禁用订阅仍保留原有关联，避免仅调整可见订阅顺序时被误删。
@@ -111,18 +115,18 @@
         <div
             class="overflow-y-auto space-y-2 p-3 bg-gray-50 dark:bg-gray-900/50 misub-radius-md border dark:border-gray-700 h-36 lg:h-64"
         >
-            <div v-for="sub in filteredSubscriptions" :key="sub.id">
+            <div v-for="sub in filteredSubscriptions" :key="(sub as Record<string, any>).id">
                 <label class="flex items-center space-x-3 cursor-pointer">
                     <input
                         type="checkbox"
-                        :checked="selectedIds.includes(sub.id)"
-                        @change="emit('toggle-selection', sub.id)"
+                        :checked="selectedIds.includes((sub as Record<string, any>).id)"
+                        @change="emit('toggle-selection', (sub as Record<string, any>).id)"
                         class="h-4 w-4 rounded-sm border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
                     />
                     <span
                         class="text-sm text-gray-800 dark:text-gray-200 truncate"
-                        :title="sub.name"
-                        >{{ sub.name || t('subscriptions.unnamed') }}</span
+                        :title="(sub as Error).name"
+                        >{{ (sub as Error).name || t('subscriptions.unnamed') }}</span
                     >
                 </label>
             </div>

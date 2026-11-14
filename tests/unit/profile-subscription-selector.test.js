@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import ProfileModal from '../../src/components/modals/ProfileModal.vue';
 import SubscriptionSelector from '../../src/components/modals/ProfileModal/SubscriptionSelector.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 
 vi.mock('../../src/composables/useManualNodes.js', () => ({
     useManualNodes: () => ({ manualNodeGroups: computed(() => []) }),

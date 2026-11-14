@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import { useVersionStore } from '../../stores/version';
     import packageJson from '../../../package.json';

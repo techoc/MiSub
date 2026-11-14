@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
-import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';
+import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.ts';
+import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.ts';
 import {
     renderClashFromIniTemplate,
     renderSingboxFromIniTemplate,
-} from '../../functions/modules/subscription/template-pipeline.js';
-import { resolveInjectionToggle } from '../../functions/modules/subscription/main-handler/engine-flags.js';
-import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.js';
+} from '../../functions/modules/subscription/template-pipeline.ts';
+import { resolveInjectionToggle } from '../../functions/modules/subscription/main-handler/engine-flags.ts';
+import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.ts';
 
 const proxies = [
     {

@@ -1,15 +1,15 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch, computed } from 'vue';
     import Modal from '../forms/Modal.vue';
     import ProfileForm from './ProfileModal/ProfileForm.vue';
     import SubscriptionSelector from './ProfileModal/SubscriptionSelector.vue';
     import SubProfileSelector from './ProfileModal/SubProfileSelector.vue';
     import NodeSelector from './ProfileModal/NodeSelector.vue';
-    import { useManualNodes } from '../../composables/useManualNodes.js';
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { useSettingsStore } from '../../stores/settings.js';
-    import { useI18n } from '@/i18n/index.js';
-    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
+    import { useManualNodes } from '../../composables/useManualNodes.ts';
+    import { useDataStore } from '../../stores/useDataStore.ts';
+    import { useSettingsStore } from '../../stores/settings.ts';
+    import { useI18n } from '@/i18n/index.ts';
+    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.ts';
 
     const { t } = useI18n();
     const dataStore = useDataStore();
@@ -26,12 +26,12 @@
 
     const emit = defineEmits(['update:show', 'save']);
 
-    const localProfile = ref({});
+    const localProfile = ref<any>({});
     const subscriptionSearchTerm = ref('');
     const subProfileSearchTerm = ref('');
     const nodeSearchTerm = ref('');
     const activeResourceTab = ref('subscriptions');
-    const activeManualNodeGroupFilter = ref(null);
+    const activeManualNodeGroupFilter = ref<any>(null);
     const showAdvanced = ref(false);
     const uiText = computed(() => ({
         prefixTitle: t('profileModal.nodeNameVisibility'),
@@ -113,7 +113,10 @@
 
     const selectableSubscriptions = computed(() => {
         return (props.allSubscriptions || []).filter(
-            (sub) => sub.enabled && sub.url && /^https?:\/\//.test(sub.url)
+            (sub: any) =>
+                (sub as Record<string, any>).enabled &&
+                (sub.url as any as any as any) &&
+                /^https?:\/\//.test(sub.url as any as any as any)
         );
     });
 
@@ -126,8 +129,10 @@
         const lowerCaseSearchTerm = subscriptionSearchTerm.value.toLowerCase();
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
-        return validSubs.filter((sub) => {
-            const subNameLower = sub.name ? sub.name.toLowerCase() : '';
+        return validSubs.filter((sub: any) => {
+            const subNameLower = (sub as Error).name
+                ? (sub.name.toLowerCase() as any as any as any)
+                : '';
 
             if (subNameLower.includes(lowerCaseSearchTerm)) {
                 return true;
@@ -143,7 +148,8 @@
     });
 
     const selectableSubProfiles = computed(() => {
-        const currentId = localProfile.value?.id || props.profile?.id;
+        const currentId =
+            (localProfile.value as Record<string, any> | undefined)?.id || props.profile?.id;
         return (dataStore.profiles || []).filter((p) => {
             if (!p) return false;
             if (currentId && (p.id === currentId || p.customId === currentId)) {
@@ -188,9 +194,11 @@
 
         if (activeManualNodeGroupFilter.value) {
             if (activeManualNodeGroupFilter.value === DEFAULT_GROUP_KEY) {
-                nodes = nodes.filter((n) => !n.group);
+                nodes = nodes!.filter((n) => !(n as Record<string, any>).group);
             } else {
-                nodes = nodes.filter((n) => n.group === activeManualNodeGroupFilter.value);
+                nodes = nodes!.filter(
+                    (n) => (n as Record<string, any>).group === activeManualNodeGroupFilter.value
+                );
             }
         }
 
@@ -200,8 +208,10 @@
         const lowerCaseSearchTerm = nodeSearchTerm.value.toLowerCase();
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
-        return nodes.filter((node) => {
-            const nodeNameLower = node.name ? node.name.toLowerCase() : '';
+        return nodes!.filter((node: any) => {
+            const nodeNameLower = (node as Error).name
+                ? (node.name.toLowerCase() as any as any as any)
+                : '';
 
             if (nodeNameLower.includes(lowerCaseSearchTerm)) {
                 return true;

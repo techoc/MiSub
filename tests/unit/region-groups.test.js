@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupNodeLinesByRegion } from '../../functions/modules/subscription/region-groups.js';
+import { groupNodeLinesByRegion } from '../../functions/modules/subscription/region-groups.ts';
 
 describe('region group overrides', () => {
     it('should allow user-defined regex rules to override the built-in region guess', () => {

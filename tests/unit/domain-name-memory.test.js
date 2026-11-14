@@ -4,7 +4,7 @@ import {
     lookupDomainName,
     clearDomainNameMemory,
     DOMAIN_NAME_MEMORY_KEY,
-} from '../../src/utils/domain-name-memory.js';
+} from '../../src/utils/domain-name-memory.ts';
 
 /**
  * 机场命名记忆测试。

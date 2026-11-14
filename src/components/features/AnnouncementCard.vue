@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, watch } from 'vue';
     import DOMPurify from 'dompurify';
-    import { useI18n } from '@/i18n/index.js';
-    import { useToastStore } from '@/stores/toast.js';
-    import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { useToastStore } from '@/stores/toast.ts';
+    import { readRawPreference, writeRawPreference } from '@/utils/local-preference.ts';
 
     const { t } = useI18n();
     const { showToast } = useToastStore();

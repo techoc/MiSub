@@ -1,8 +1,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { handleApiRequest } from '../../functions/modules/api-router.js';
-import { corsMiddleware, csrfOriginMiddleware } from '../../functions/middleware/cors.js';
+import { handleApiRequest } from '../../functions/modules/api-router.ts';
+import { corsMiddleware, csrfOriginMiddleware } from '../../functions/middleware/cors.ts';
 
 const SRC_ROOT = path.resolve(process.cwd(), 'src');
 
@@ -13,7 +13,7 @@ function collectSourceFiles(dir) {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
             files.push(...collectSourceFiles(fullPath));
-        } else if (/\.(js|vue)$/.test(entry.name)) {
+        } else if (/\.(js|ts|vue)$/.test(entry.name)) {
             files.push(fullPath);
         }
     }

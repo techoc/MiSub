@@ -1,8 +1,8 @@
 /** * 共享数据表格组件 * @author MiSub Team */
 
-<script setup>
+<script setup lang="ts">
     import { ref, computed, watch } from 'vue';
-    import { t } from '../../i18n/index.js';
+    import { t } from '../../i18n/index.ts';
 
     const props = defineProps({
         data: {
@@ -89,7 +89,7 @@
         'filterChange',
     ]);
 
-    const selectedKeys = ref([]);
+    const selectedKeys = ref<any[]>([]);
     const selectedKeySet = computed(() => new Set(selectedKeys.value));
     const sortField = ref('');
     const sortOrder = ref(''); // 'asc', 'desc', ''
@@ -97,7 +97,7 @@
     const resolvedEmptyText = computed(() => props.emptyText || t('common.noData'));
 
     // 计算分页数据
-    const paginatedData = computed(() => {
+    const paginatedData = computed<any[]>(() => {
         if (!props.pagination) return props.data;
 
         if (typeof props.pagination === 'object' && props.pagination.server) {
@@ -161,8 +161,8 @@
             selectedKeys.value.push(key);
         }
 
-        const selectedRows = props.data.filter((row) =>
-            selectedKeySet.value.has(row[props.rowKey])
+        const selectedRows = props.data.filter((row: any) =>
+            selectedKeySet.value.has((((row[props.rowKey] as any) as any) as any))
         );
 
         emit('update:selectedRows', selectedRows);
@@ -176,8 +176,8 @@
             selectedKeys.value = paginatedData.value.map((row) => row[props.rowKey]);
         }
 
-        const selectedRows = props.data.filter((row) =>
-            selectedKeySet.value.has(row[props.rowKey])
+        const selectedRows = props.data.filter((row: any) =>
+            selectedKeySet.value.has((((row[props.rowKey] as any) as any) as any))
         );
 
         emit('update:selectedRows', selectedRows);
@@ -209,7 +209,7 @@
     watch(
         () => props.selectedRows,
         (newVal) => {
-            selectedKeys.value = newVal.map((row) => row[props.rowKey]);
+            selectedKeys.value = newVal.map((row: any) => (((row[props.rowKey] as any) as any) as any));
         },
         { immediate: true }
     );
@@ -253,26 +253,26 @@
                             <!-- 数据列 -->
                             <th
                                 v-for="column in columns"
-                                :key="column.key"
+                                :key="(column as Record<string, any>).key"
                                 :class="[
                                     'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
-                                    column.width ? `w-${column.width}` : '',
-                                    column.align === 'center' ? 'text-center' : '',
-                                    column.align === 'right' ? 'text-right' : '',
-                                    column.sticky === 'right'
+                                    (column as Record<string, any>).width ? `w-${((((column as Record<string, any>).width as any) as any) as any)}` : '',
+                                    (column as Record<string, any>).align === 'center' ? 'text-center' : '',
+                                    (column as Record<string, any>).align === 'right' ? 'text-right' : '',
+                                    (column as Record<string, any>).sticky === 'right'
                                         ? 'sticky right-0 z-20 border-l border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
                                         : '',
-                                    column.sticky === 'left'
+                                    (column as Record<string, any>).sticky === 'left'
                                         ? 'sticky left-0 z-20 border-r border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
                                         : '',
                                 ]"
                             >
                                 <div class="flex items-center space-x-1">
-                                    <span>{{ column.title }}</span>
+                                    <span>{{ (column as Record<string, any>).title }}</span>
 
                                     <!-- 排序图标 -->
                                     <button
-                                        v-if="column.sortable"
+                                        v-if="(column as Record<string, any>).sortable"
                                         class="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                                         @click="handleSort(column)"
                                         :aria-label="t('common.sortColumn')"
@@ -364,27 +364,27 @@
                             <!-- 数据列 -->
                             <td
                                 v-for="column in columns"
-                                :key="column.key"
+                                :key="(column as Record<string, any>).key"
                                 :class="[
                                     'px-6 py-4 whitespace-nowrap text-sm',
-                                    column.align === 'center' ? 'text-center' : '',
-                                    column.align === 'right' ? 'text-right' : '',
+                                    (column as Record<string, any>).align === 'center' ? 'text-center' : '',
+                                    (column as Record<string, any>).align === 'right' ? 'text-right' : '',
                                     compact ? 'py-2' : '',
-                                    column.sticky === 'right'
+                                    (column as Record<string, any>).sticky === 'right'
                                         ? 'sticky right-0 z-10 border-l border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
                                         : '',
-                                    column.sticky === 'left'
+                                    (column as Record<string, any>).sticky === 'left'
                                         ? 'sticky left-0 z-10 border-r border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
                                         : '',
                                 ]"
                             >
                                 <slot
-                                    :name="`column-${column.key}`"
+                                    :name="`column-${(column as Record<string, any>).key}`"
                                     :row="row"
                                     :column="column"
                                     :value="getColumnValue(row, column)"
                                 >
-                                    <span :class="column.className">
+                                    <span :class="(column as Record<string, any>).className">
                                         {{ getColumnValue(row, column) }}
                                     </span>
                                 </slot>

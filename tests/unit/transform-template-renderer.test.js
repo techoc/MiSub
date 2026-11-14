@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     buildTransformTemplateContext,
     renderTransformTemplate,
-} from '../../functions/modules/subscription/transform-template-renderer.js';
+} from '../../functions/modules/subscription/transform-template-renderer.ts';
 
 describe('Transform template renderer', () => {
     it('should replace placeholders', () => {

@@ -22,16 +22,16 @@ MiSub 的核心持久化数据分为四类：
 
 关键代码入口：
 
-- 前端数据 Store：`src/stores/useDataStore.js`
-- 前端默认设置：`src/constants/default-settings.js`
-- 订阅表单：`src/composables/useSubscriptionForms.js`
-- 订阅组逻辑：`src/composables/useProfiles.js`
-- API 路由：`functions/modules/api-router.js`
-- API 处理器：`functions/modules/api-handler.js`
-- 存储适配器：`functions/storage-adapter.js`
-- Worker 默认设置：`functions/modules/config.js`
-- 订阅组输出链路：`functions/modules/subscription/profile-handler.js`
-- 自定义规则模板：`functions/modules/rule-template-handler.js`
+- 前端数据 Store：`src/stores/useDataStore.ts`
+- 前端默认设置：`src/constants/default-settings.ts`
+- 订阅表单：`src/composables/useSubscriptionForms.ts`
+- 订阅组逻辑：`src/composables/useProfiles.ts`
+- API 路由：`functions/modules/api-router.ts`
+- API 处理器：`functions/modules/api-handler.ts`
+- 存储适配器：`functions/storage-adapter.ts`
+- Worker 默认设置：`functions/modules/config.ts`
+- 订阅组输出链路：`functions/modules/subscription/profile-handler.ts`
+- 自定义规则模板：`functions/modules/rule-template-handler.ts`
 
 ## 2. 存储键与 D1 表
 

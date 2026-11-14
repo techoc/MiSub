@@ -70,7 +70,7 @@ describe('notifications cron storage helper usage', () => {
     });
 
     it('handleCronTrigger prefers row-level subscription helpers for D1 storage', async () => {
-        const { handleCronTrigger } = await import('../../functions/modules/notifications.js');
+        const { handleCronTrigger } = await import('../../functions/modules/notifications.ts');
 
         getAllSubscriptions.mockResolvedValue([
             {

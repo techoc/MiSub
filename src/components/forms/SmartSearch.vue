@@ -1,5 +1,5 @@
-<script setup>
-    import { useI18n } from '../../i18n/index.js';
+<script setup lang="ts">
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
     import { ref, computed, watch } from 'vue';
@@ -27,7 +27,7 @@
 
     const searchQuery = ref('');
     const activeFilters = ref(new Set());
-    const searchHistory = ref([]);
+    const searchHistory = ref<any[]>([]);
 
     // 智能搜索结果
     const searchResults = computed(() => {
@@ -35,20 +35,20 @@
             return props.items;
         }
 
-        return props.items.filter((item) => {
+        return props.items.filter((item: any) => {
             // 文本搜索
             const matchesText =
                 !searchQuery.value ||
-                props.searchFields.some((field) =>
-                    item[field]?.toLowerCase().includes(searchQuery.value.toLowerCase())
+                props.searchFields.some((field: any) =>
+                    (((item[field]?.toLowerCase().includes(searchQuery.value.toLowerCase()) as any) as any) as any)
                 );
 
             // 过滤器匹配
             const matchesFilters =
                 activeFilters.value.size === 0 ||
                 Array.from(activeFilters.value).every((filter) => {
-                    const filterConfig = props.filters.find((f) => f.key === filter);
-                    return filterConfig?.predicate(item) ?? true;
+                    const filterConfig = props.filters.find((f) => (f as Record<string, any>).key === filter);
+                    return (filterConfig as Record<string, any> | undefined)?.predicate(item) ?? true;
                 });
 
             return matchesText && matchesFilters;
@@ -61,9 +61,9 @@
 
         const suggestions = new Set();
 
-        props.items.forEach((item) => {
+        props.items.forEach((item: any) => {
             props.searchFields.forEach((field) => {
-                const value = item[field];
+                const value = ((((item as Record<string, any>)[field as any] as any) as any) as any);
                 if (value && value.toLowerCase().includes(searchQuery.value.toLowerCase())) {
                     // 提取匹配的部分作为建议
                     const words = value.split(/\s+/);
@@ -170,18 +170,18 @@
         <div v-if="filters.length > 0" class="flex flex-wrap gap-2">
             <button
                 v-for="filter in filters"
-                :key="filter.key"
-                @click="toggleFilter(filter.key)"
+                :key="(filter as Record<string, any>).key"
+                @click="toggleFilter((filter as Record<string, any>).key)"
                 class="px-3 py-1.5 text-sm font-medium rounded-full smooth-all"
                 :class="
-                    activeFilters.has(filter.key)
+                    activeFilters.has((filter as Record<string, any>).key)
                         ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                 "
             >
-                {{ filter.label }}
-                <span v-if="filter.count !== undefined" class="ml-1 opacity-60">
-                    ({{ filter.count }})
+                {{ (filter as Record<string, any>).label }}
+                <span v-if="(filter as Record<string, any>).count !== undefined" class="ml-1 opacity-60">
+                    ({{ (filter as Record<string, any>).count }})
                 </span>
             </button>
         </div>
@@ -197,7 +197,7 @@
                 </p>
                 <button
                     v-for="suggestion in suggestions"
-                    :key="suggestion"
+                    :key="(suggestion as any)"
                     @click="selectSuggestion(suggestion)"
                     class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 misub-radius-md smooth-all"
                 >

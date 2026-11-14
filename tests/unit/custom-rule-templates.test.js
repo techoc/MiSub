@@ -4,8 +4,8 @@ import {
     normalizeCustomRuleTemplates,
     resolveRuleTemplateSource,
     handleRuleTemplatesRequest,
-} from '../../functions/modules/rule-template-handler.js';
-import { ProcessorService } from '../../functions/services/processor-service.js';
+} from '../../functions/modules/rule-template-handler.ts';
+import { ProcessorService } from '../../functions/services/processor-service.ts';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';
 

@@ -6,13 +6,13 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted, defineAsyncComponent, watch, markRaw } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import { useSessionStore } from '../stores/session';
     import { storeToRefs } from 'pinia';
-    import { isValidCustomLoginPath } from '../utils/login-path.js';
-    import { readSessionPreference, writeSessionPreference } from '../utils/session-preference.js';
+    import { isValidCustomLoginPath } from '../utils/login-path.ts';
+    import { readSessionPreference, writeSessionPreference } from '../utils/session-preference.ts';
 
     // Lazy load components
     const Login = defineAsyncComponent(() => import('../components/modals/Login.vue'));
@@ -23,8 +23,8 @@
     const sessionStore = useSessionStore();
     const { publicConfig, initialData } = storeToRefs(sessionStore); // Ensure publicConfig contains settings or we need to access settings differently
 
-    const activeComponent = ref(null);
-    const componentProps = ref({});
+    const activeComponent = ref<any>(null);
+    const componentProps = ref<any>({});
 
     onMounted(async () => {
         checkPath();

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, onMounted, onUnmounted } from 'vue';
 
     const props = defineProps({
@@ -20,7 +20,7 @@
         },
     });
 
-    const containerRef = ref(null);
+    const containerRef = ref<any>(null);
     const containerWidth = ref(0);
 
     const gridColumns = computed(() => {
@@ -41,7 +41,7 @@
 
     const updateContainerWidth = () => {
         if (containerRef.value) {
-            containerWidth.value = containerRef.value.offsetWidth;
+            containerWidth.value = (containerRef.value as Record<string, any>).offsetWidth;
         }
     };
 
@@ -60,7 +60,7 @@
         <div :style="gridStyle" class="smooth-all">
             <div
                 v-for="(item, index) in items"
-                :key="item.id || index"
+                :key="(item as Record<string, any>).id || index"
                 class="list-item-animation"
                 :style="{ '--delay-index': index }"
             >

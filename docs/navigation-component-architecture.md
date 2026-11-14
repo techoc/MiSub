@@ -32,7 +32,7 @@
 
 ## 配置来源
 
-- 导航菜单与图标常量：`src/constants/navigation.js`
+- 导航菜单与图标常量：`src/constants/navigation.ts`
     - `MAIN_NAV_ITEMS`
     - `NAV_ICONS`
 

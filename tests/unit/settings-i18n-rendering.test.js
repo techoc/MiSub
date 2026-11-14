@@ -7,7 +7,7 @@ import TransformCard from '../../src/components/settings/sections/ServiceSetting
 import RuleTemplateManager from '../../src/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
 import TelegramCard from '../../src/components/settings/sections/ServiceSettings/TelegramCard.vue';
 import SystemSettings from '../../src/components/settings/sections/SystemSettings.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 
 vi.mock('../../src/lib/http.js', () => ({
     api: {

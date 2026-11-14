@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
-    import { useI18n } from '@/i18n/index.js';
-    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.ts';
 
     const { t } = useI18n();
 
@@ -106,7 +106,7 @@
                     </button>
                     <button
                         v-for="group in manualNodeGroups"
-                        :key="group"
+                        :key="group as any"
                         @click="
                             emit('set-group-filter', activeGroupFilter === group ? null : group)
                         "
@@ -336,7 +336,7 @@
             </button>
             <button
                 v-for="group in manualNodeGroups"
-                :key="group"
+                :key="group as any"
                 @click="emit('set-group-filter', activeGroupFilter === group ? null : group)"
                 class="px-3 py-1 text-xs font-medium misub-radius-md transition-all border shrink-0"
                 :class="

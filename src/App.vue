@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
     import RouteErrorBoundary from './components/ui/RouteErrorBoundary.vue';
     import ConfirmDialog from './components/ui/ConfirmDialog.vue';
@@ -11,10 +11,10 @@
     import { useVersionStore } from './stores/version';
     import { storeToRefs } from 'pinia';
     import NavBar from './components/layout/NavBar.vue';
-    import { detectLegacyD1 } from './lib/api.js';
-    import { useI18n } from './i18n/index.js';
-    import { configureAuthGuard, translateRouteTitle } from './router/index.js';
-    import { readSessionPreference } from './utils/session-preference.js';
+    import { detectLegacyD1 } from './lib/api.ts';
+    import { useI18n } from './i18n/index.ts';
+    import { configureAuthGuard, translateRouteTitle } from './router/index.ts';
+    import { readSessionPreference } from './utils/session-preference.ts';
 
     // Lazy components
     const Login = defineAsyncComponent(() => import('./components/modals/Login.vue'));
@@ -130,7 +130,7 @@
     );
 
     const showLegacyD1MigrationModal = ref(false);
-    const legacyD1Details = ref({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
+    const legacyD1Details = ref<any>({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
     const pendingVersionModal = ref(false);
 
     // Determine which login component to show (Custom Path -> NotFound, else -> Login)
@@ -144,12 +144,16 @@
 
     const isDefaultPassword = computed(() => {
         return (
-            sessionStore.subscriptionConfig?.isDefaultPassword === true ||
-            sessionStore.securityWarning?.type === 'default_admin_password'
+            (sessionStore.subscriptionConfig as Record<string, any> | undefined)
+                ?.isDefaultPassword === true ||
+            (sessionStore.securityWarning as Record<string, any> | undefined)?.type ===
+                'default_admin_password'
         );
     });
     const defaultPasswordWarningMessage = computed(
-        () => sessionStore.securityWarning?.message || t('notices.defaultPasswordWarning')
+        () =>
+            (sessionStore.securityWarning as Error | undefined)?.message ||
+            t('notices.defaultPasswordWarning')
     );
 
     onMounted(async () => {

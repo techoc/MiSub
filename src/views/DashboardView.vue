@@ -1,15 +1,15 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, defineAsyncComponent, onMounted } from 'vue';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useBulkImportLogic } from '../composables/useBulkImportLogic.js';
+    import { useDataStore } from '../stores/useDataStore.ts';
+    import { useBulkImportLogic } from '../composables/useBulkImportLogic.ts';
     import { storeToRefs } from 'pinia';
     import SkeletonLoader from '../components/ui/SkeletonLoader.vue';
     import RightPanel from '../components/profiles/RightPanel.vue';
-    import { useSubscriptions } from '../composables/useSubscriptions.js';
+    import { useSubscriptions } from '../composables/useSubscriptions.ts';
     import { useRouter } from 'vue-router';
-    import { useProfiles } from '../composables/useProfiles.js';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { formatBytes } from '../lib/utils.js';
+    import { useProfiles } from '../composables/useProfiles.ts';
+    import { useManualNodes } from '../composables/useManualNodes.ts';
+    import { formatBytes } from '../lib/utils.ts';
     import StatCards from '../components/features/Dashboard/StatCards.vue';
     import {
         addDismissedHealthItem,
@@ -18,14 +18,14 @@
         isHealthItemDismissed,
         normalizeDismissedHealthItemIds,
         readLegacyDismissedHealthItemIds,
-    } from '../utils/health-item-dismissal.js';
+    } from '../utils/health-item-dismissal.ts';
     import {
         getDashboardHealthItems,
         resolveHealthItemCopy,
         shouldShowFullGuide,
-    } from '../utils/dashboard-health.js';
-    import { useToastStore } from '../stores/toast.js';
-    import { useI18n } from '../i18n/index.js';
+    } from '../utils/dashboard-health.ts';
+    import { useToastStore } from '../stores/toast.ts';
+    import { useI18n } from '../i18n/index.ts';
 
     const { t } = useI18n();
     const { showToast } = useToastStore();

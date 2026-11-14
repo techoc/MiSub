@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
 
     const props = defineProps({
@@ -6,7 +6,7 @@
             type: String,
             required: true,
             validator: (value) =>
-                ['idle', 'loading', 'success', 'error', 'warning'].includes(value),
+                ['idle', 'loading', 'success', 'error', 'warning'].includes(value as any),
         },
         message: {
             type: String,
@@ -15,7 +15,7 @@
         size: {
             type: String,
             default: 'md',
-            validator: (value) => ['sm', 'md', 'lg'].includes(value),
+            validator: (value) => ['sm', 'md', 'lg'].includes(value as any),
         },
     });
 

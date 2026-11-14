@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref } from 'vue';
     import Switch from '../../../ui/Switch.vue';
-    import { useI18n } from '../../../../i18n/index.js';
+    import { useI18n } from '../../../../i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -63,11 +63,11 @@
         return `https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl.value)}&secret_token=${encodeURIComponent(webhookSecret.value)}`;
     });
 
-    const copyStatus = ref(null);
+    const copyStatus = ref<any>(null);
     const showSetupGuide = ref(false);
     const showUsageGuide = ref(false);
     const isTesting = ref(false);
-    const testResult = ref(null);
+    const testResult = ref<any>(null);
 
     async function copyText(value, key) {
         if (!value) return;
@@ -94,7 +94,7 @@
             copyStatus.value = { key, message: t('settings.copyFailedManualSelect') };
         } finally {
             window.setTimeout(() => {
-                if (copyStatus.value?.key === key) {
+                if ((copyStatus.value as Record<string, any> | undefined)?.key === key) {
                     copyStatus.value = null;
                 }
             }, 2500);
@@ -128,7 +128,7 @@
         } catch (error) {
             testResult.value = {
                 success: false,
-                message: error.message || t('settings.telegramRequestFailed'),
+                message: (error as Error).message || t('settings.telegramRequestFailed'),
             };
         } finally {
             isTesting.value = false;

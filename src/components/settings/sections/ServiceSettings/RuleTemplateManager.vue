@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
-    import { useDataStore } from '@/stores/useDataStore.js';
-    import { useI18n } from '@/i18n/index.js';
+    import { useDataStore } from '@/stores/useDataStore.ts';
+    import { useI18n } from '@/i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -39,13 +39,16 @@ overwrite_original_rules=true`;
         enabled: true,
     });
 
-    const localTemplates = ref([]);
+    const localTemplates = ref<any[]>([]);
     const selectedId = ref('');
     const isSaving = ref(false);
     const isLoading = ref(false);
 
     const selectedTemplate = computed(
-        () => localTemplates.value.find((item) => item.id === selectedId.value) || null
+        () =>
+            localTemplates.value.find(
+                (item) => (item as Record<string, any>).id === selectedId.value
+            ) || null
     );
     const hasTemplates = computed(() => localTemplates.value.length > 0);
 
@@ -60,7 +63,9 @@ overwrite_original_rules=true`;
         }
         if (
             selectedId.value &&
-            !localTemplates.value.some((item) => item.id === selectedId.value)
+            !localTemplates.value.some(
+                (item) => (item as Record<string, any>).id === selectedId.value
+            )
         ) {
             selectedId.value = localTemplates.value[0]?.id || '';
         }
@@ -90,7 +95,9 @@ overwrite_original_rules=true`;
 
     function removeTemplate(template) {
         if (!template) return;
-        localTemplates.value = localTemplates.value.filter((item) => item.id !== template.id);
+        localTemplates.value = localTemplates.value.filter(
+            (item) => (item as Record<string, any>).id !== template.id
+        );
         selectedId.value = localTemplates.value[0]?.id || '';
     }
 
@@ -109,7 +116,11 @@ overwrite_original_rules=true`;
         try {
             const saved = await dataStore.saveRuleTemplates(localTemplates.value);
             localTemplates.value = cloneTemplates(saved);
-            if (!localTemplates.value.some((item) => item.id === selectedId.value)) {
+            if (
+                !localTemplates.value.some(
+                    (item) => (item as Record<string, any>).id === selectedId.value
+                )
+            ) {
                 selectedId.value = localTemplates.value[0]?.id || '';
             }
         } finally {

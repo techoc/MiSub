@@ -3,8 +3,8 @@ import {
     getDashboardHealthItems,
     resolveHealthItemCopy,
     shouldShowFullGuide,
-} from '../../src/utils/dashboard-health.js';
-import { t } from '../../src/i18n/index.js';
+} from '../../src/utils/dashboard-health.ts';
+import { t } from '../../src/i18n/index.ts';
 
 describe('dashboard health helpers', () => {
     it('prompts first-time users to add subscriptions and create profiles', () => {

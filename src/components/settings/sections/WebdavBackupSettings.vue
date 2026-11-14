@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
     import { ref } from 'vue';
-    import { api } from '../../../lib/http.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { confirmAction } from '../../../composables/useConfirm.js';
+    import { api } from '../../../lib/http.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useI18n } from '../../../i18n/index.ts';
+    import { confirmAction } from '../../../composables/useConfirm.ts';
     import Input from '../../ui/Input.vue';
 
     const props = defineProps({
@@ -19,7 +19,7 @@
     const isBackingUp = ref(false);
     const isRestoring = ref(false);
     const isLoadingRemoteFiles = ref(false);
-    const remoteFiles = ref([]);
+    const remoteFiles = ref<any[]>([]);
 
     const ensureConfig = () => {
         if (!props.settings.webdavBackup) {
@@ -53,7 +53,7 @@
             showToast(result.message || t('settings.webdavTestSuccess'), 'success');
         } catch (error) {
             showToast(
-                t('settings.webdavTestFailedWithMessage', { message: error.message }),
+                t('settings.webdavTestFailedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {
@@ -79,7 +79,7 @@
             showToast(t('settings.webdavBackupSuccess'), 'success');
         } catch (error) {
             showToast(
-                t('settings.webdavBackupFailedWithMessage', { message: error.message }),
+                t('settings.webdavBackupFailedWithMessage', { message: (error as Error).message }),
                 'error'
             );
         } finally {
@@ -92,13 +92,13 @@
         input.type = 'file';
         input.accept = 'application/json';
         input.onchange = (event) => {
-            const file = event.target.files?.[0];
+            const file = (event.target as Record<string, any>).files?.[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
                 isRestoring.value = true;
                 try {
-                    const payload = JSON.parse(e.target.result);
+                    const payload = JSON.parse(e.target!.result as string);
                     const scope = payload?.scope || 'dataOnly';
                     const label =
                         scope === 'dataAndSettings'
@@ -116,7 +116,9 @@
                     setTimeout(() => window.location.reload(), 800);
                 } catch (error) {
                     showToast(
-                        t('settings.webdavRestoreFailedWithMessage', { message: error.message }),
+                        t('settings.webdavRestoreFailedWithMessage', {
+                            message: (error as Error).message,
+                        }),
                         'error'
                     );
                 } finally {
@@ -141,7 +143,9 @@
             );
         } catch (error) {
             showToast(
-                t('settings.webdavLoadRemoteFailedWithMessage', { message: error.message }),
+                t('settings.webdavLoadRemoteFailedWithMessage', {
+                    message: (error as Error).message,
+                }),
                 'error'
             );
         } finally {
@@ -165,7 +169,9 @@
             setTimeout(() => window.location.reload(), 800);
         } catch (error) {
             showToast(
-                t('settings.webdavRestoreRemoteFailedWithMessage', { message: error.message }),
+                t('settings.webdavRestoreRemoteFailedWithMessage', {
+                    message: (error as Error).message,
+                }),
                 'error'
             );
         } finally {

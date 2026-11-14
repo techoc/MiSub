@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
-import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';
-import { TRANSFORM_ASSETS } from '../../src/constants/transform-assets.js';
+import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.ts';
+import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.ts';
+import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.ts';
+import { TRANSFORM_ASSETS } from '../../src/constants/transform-assets.ts';
 import {
     getBuiltinRules,
     getRemoteProviderDefinitions,
     REMOTE_SOURCES,
-} from '../../functions/modules/subscription/builtin-rules-provider.js';
-import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
-import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.js';
-import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-singbox.js';
+} from '../../functions/modules/subscription/builtin-rules-provider.ts';
+import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.ts';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.ts';
+import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.ts';
+import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-singbox.ts';
 import yaml from 'js-yaml';
 
 const sampleProxies = [

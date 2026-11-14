@@ -4,7 +4,7 @@ import {
     setConfirmHost,
     settleConfirm,
     useConfirmState,
-} from '../../src/composables/useConfirm.js';
+} from '../../src/composables/useConfirm.ts';
 
 // The dialog state is a module-level singleton, so every test must leave it empty
 // and the host flag reset.

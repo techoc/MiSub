@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import draggable from 'vuedraggable';
-    import { useI18n } from '@/i18n/index.js';
-    import { wouldCreateCycle } from '@/utils/profile-graph.js';
+    import { useI18n } from '@/i18n/index.ts';
+    import { wouldCreateCycle } from '@/utils/profile-graph.ts';
 
     const { t } = useI18n();
 
@@ -55,9 +55,9 @@
     const orderedSelectedProfiles = computed({
         get() {
             const profileMap = new Map();
-            props.allProfiles.forEach((p) => {
-                if (p.id) profileMap.set(p.id, p);
-                if (p.customId) profileMap.set(p.customId, p);
+            props.allProfiles.forEach((p: any) => {
+                if ((p as Record<string, any>).id) profileMap.set((((p.id as any) as any) as any), p);
+                if ((p as Record<string, any>).customId) profileMap.set((((p.customId as any) as any) as any), p);
             });
             return props.selectedIds.map((id) => profileMap.get(id)).filter(Boolean);
         },
@@ -68,7 +68,7 @@
     });
 
     const handleSelectAllValid = () => {
-        const validProfiles = props.filteredProfiles.filter((p) => !isCycleCandidate(p.id));
+        const validProfiles = props.filteredProfiles.filter((p) => !isCycleCandidate((p as Record<string, any>).id));
         emit('select-all', validProfiles);
     };
 </script>
@@ -134,34 +134,34 @@
             </div>
             <label
                 v-for="item in filteredProfiles"
-                :key="item.id"
+                :key="(item as Record<string, any>).id"
                 class="flex items-center gap-2 p-1.5 rounded-sm transition-colors text-sm"
                 :class="[
-                    isCycleCandidate(item.id)
+                    isCycleCandidate((item as Record<string, any>).id)
                         ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800/40'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer',
                 ]"
             >
                 <input
                     type="checkbox"
-                    :checked="selectedIds.includes(item.id)"
-                    :disabled="isCycleCandidate(item.id)"
-                    @change="emit('toggle-selection', item.id)"
+                    :checked="selectedIds.includes((item as Record<string, any>).id)"
+                    :disabled="isCycleCandidate((item as Record<string, any>).id)"
+                    @change="emit('toggle-selection', (item as Record<string, any>).id)"
                     class="rounded-sm border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
                 />
                 <span class="truncate flex-1 text-gray-800 dark:text-gray-200 font-medium">
-                    {{ item.name }}
+                    {{ (item as Error).name }}
                 </span>
                 <span
-                    v-if="isCycleCandidate(item.id)"
+                    v-if="isCycleCandidate((item as Record<string, any>).id)"
                     class="text-[10px] px-1.5 py-0.5 rounded-sm bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300 shrink-0"
                     :title="t('profileModal.cycleWarning')"
                 >
                     {{ t('profileModal.cycleWarning') }}
                 </span>
                 <span v-else class="text-xs text-gray-400 dark:text-gray-500 shrink-0">
-                    {{ (item.subscriptions || []).length }} 机场 ·
-                    {{ (item.manualNodes || []).length }} 节点
+                    {{ ((item as Record<string, any>).subscriptions || []).length }} 机场 ·
+                    {{ ((item as Record<string, any>).manualNodes || []).length }} 节点
                 </span>
             </label>
         </div>

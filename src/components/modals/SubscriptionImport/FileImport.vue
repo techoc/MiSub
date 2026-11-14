@@ -1,5 +1,5 @@
-<script setup>
-    import { useI18n } from '../../../i18n/index.js';
+<script setup lang="ts">
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
     /**
@@ -7,7 +7,7 @@
      * 纯 UI 组件，解析与入库由父组件处理。
      */
     import { ref, computed } from 'vue';
-    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../../utils/importFile.js';
+    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../../utils/importFile.ts';
 
     const props = defineProps({
         isProcessing: {
@@ -31,7 +31,7 @@
     const emit = defineEmits(['files']);
 
     const isDragging = ref(false);
-    const fileInput = ref(null);
+    const fileInput = ref<any>(null);
 
     const acceptAttr = IMPORT_FILE_ACCEPT;
 
@@ -39,7 +39,7 @@
 
     function openPicker() {
         if (props.isProcessing) return;
-        fileInput.value?.click();
+        (fileInput.value as Record<string, any> | undefined)?.click();
     }
 
     function onInputChange(event) {

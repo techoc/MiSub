@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-    import { t } from '@/i18n/index.js';
+    import { t } from '@/i18n/index.ts';
 
     const props = defineProps({
         modelValue: {
@@ -20,9 +20,9 @@
     const emit = defineEmits(['update:modelValue']);
 
     const isOpen = ref(false);
-    const inputRef = ref(null);
-    const containerRef = ref(null);
-    const dropdownStyle = ref({ top: '0px', left: '0px', width: '0px' });
+    const inputRef = ref<any>(null);
+    const containerRef = ref<any>(null);
+    const dropdownStyle = ref<any>({ top: '0px', left: '0px', width: '0px' });
     const isTyping = ref(false);
 
     const normalizeGroup = (value) => String(value || '').trim();
@@ -44,9 +44,11 @@
 
     const updatePosition = () => {
         if (inputRef.value) {
-            const rect = inputRef.value.getBoundingClientRect();
+            const rect = (inputRef.value as Record<string, any>).getBoundingClientRect();
             const isInsideModal = Boolean(
-                containerRef.value?.closest('[role="dialog"][aria-modal="true"]')
+                (containerRef.value as Record<string, any> | undefined)?.closest(
+                    '[role="dialog"][aria-modal="true"]'
+                )
             );
             dropdownStyle.value = {
                 top: `${rect.bottom + window.scrollY + 4}px`,
@@ -80,7 +82,7 @@
     };
 
     const handleClickOutside = (e) => {
-        if (containerRef.value && !containerRef.value.contains(e.target)) {
+        if (containerRef.value && !(containerRef.value as Record<string, any>).contains(e.target)) {
             // Check if clicking inside the dropdown (which is teleported)
             const dropdownEl = document.getElementById('group-selector-dropdown');
             if (dropdownEl && dropdownEl.contains(e.target)) {

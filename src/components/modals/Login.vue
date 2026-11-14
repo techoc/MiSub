@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
     import { ref } from 'vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
     import Button from '../ui/Button.vue';
 
     const { t } = useI18n();
@@ -15,7 +15,7 @@
     const logoFailed = ref(false);
 
     const props = defineProps({
-        login: Function,
+        login: Function as any,
     });
 
     const submitLogin = async () => {
@@ -26,9 +26,9 @@
         isLoading.value = true;
         error.value = '';
         try {
-            await props.login(password.value);
+            await props.login!(password.value);
         } catch (err) {
-            error.value = err.message || t('login.unknownError');
+            error.value = (err as Error).message || t('login.unknownError');
         } finally {
             isLoading.value = false;
         }

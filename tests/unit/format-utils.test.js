@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getProcessedUserAgent } from '../../functions/utils/format-utils.js';
+import { getProcessedUserAgent } from '../../functions/utils/format-utils.ts';
 
 describe('format-utils getProcessedUserAgent', () => {
     it('带 clash 参数的订阅源应使用 Clash UA 拉取', () => {

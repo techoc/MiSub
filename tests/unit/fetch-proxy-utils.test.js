@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFetchProxyUrl } from '../../functions/utils/fetch-proxy-utils.js';
+import { buildFetchProxyUrl } from '../../functions/utils/fetch-proxy-utils.ts';
 
 describe('buildFetchProxyUrl', () => {
     it('adds ua before url placeholder for fetch proxies that support upstream UA override', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { inferAirportRootDomain } from '../../functions/services/subscription-service.js';
-import { inferAirportRootDomain as inferFrontend } from '../../src/utils/airport-domain.js';
+import { inferAirportRootDomain } from '../../functions/services/subscription-service.ts';
+import { inferAirportRootDomain as inferFrontend } from '../../src/utils/airport-domain.ts';
 
 describe('inferAirportRootDomain', () => {
     it('去掉常见子域前缀取主域名', () => {

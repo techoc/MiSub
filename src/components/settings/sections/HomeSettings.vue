@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
     import Input from '../../ui/Input.vue';
     import AnnouncementSettings from './AnnouncementSettings.vue';
     import GuestbookManagement from './GuestbookManagement.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
 

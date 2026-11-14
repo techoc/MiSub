@@ -6,7 +6,7 @@ import {
     parseFilterRuleText,
     filterNodeObjects,
     applyManualNodeName,
-} from '../../functions/modules/utils/node-cleaner.js';
+} from '../../functions/modules/utils/node-cleaner.ts';
 
 describe('Node Cleaner Utils', () => {
     describe('fixNodeUrlEncoding', () => {

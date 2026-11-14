@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted, watch } from 'vue'; // Added watch
     import Modal from '../forms/Modal.vue';
     import { useToastStore } from '../../stores/toast';
     import { getClientInfo } from '../../lib/utils';
-    import { api } from '../../lib/http.js';
-    import { useI18n } from '../../i18n/index.js';
-    import { confirmAction } from '../../composables/useConfirm.js';
+    import { api } from '../../lib/http.ts';
+    import { useI18n } from '../../i18n/index.ts';
+    import { confirmAction } from '../../composables/useConfirm.ts';
 
     const props = defineProps({
         show: Boolean,
@@ -19,9 +19,9 @@
 
     const { showToast } = useToastStore();
     const { t, locale } = useI18n();
-    const logs = ref([]);
+    const logs = ref<any[]>([]);
     const isLoading = ref(false);
-    const expandedLogId = ref(null);
+    const expandedLogId = ref<any>(null);
 
     // Pagination State
     const currentPage = ref(1);
@@ -31,7 +31,9 @@
     // Pagination Computed Properties
     const filteredLogs = computed(() => {
         if (!props.filterProfileName) return logs.value;
-        return logs.value.filter((log) => log.profileName === props.filterProfileName);
+        return logs.value.filter(
+            (log) => (log as Record<string, any>).profileName === props.filterProfileName
+        );
     });
 
     const totalPages = computed(() => Math.max(1, Math.ceil(filteredLogs.value.length / pageSize)));

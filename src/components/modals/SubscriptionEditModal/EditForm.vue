@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     const props = defineProps({
         editingSubscription: {
             type: Object,
@@ -8,9 +8,9 @@
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
     import { ref, watch } from 'vue';
-    import { fetchNodeCount } from '../../../lib/api.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useI18n } from '../../../i18n/index.js';
+    import { fetchNodeCount } from '../../../lib/api.ts';
+    import { useToastStore } from '../../../stores/toast.ts';
+    import { useI18n } from '../../../i18n/index.ts';
 
     const { showToast } = useToastStore();
     const { t } = useI18n();
@@ -52,14 +52,24 @@
             );
             if (res.success) {
                 showToast(
-                    t('subscriptions.proxyTestSuccess', { count: res.data.count }),
+                    t('subscriptions.proxyTestSuccess', {
+                        count: (res as Record<string, any>).data.count,
+                    }),
                     'success'
                 );
             } else {
-                showToast(t('subscriptions.proxyTestFailed', { message: res.error }), 'error');
+                showToast(
+                    t('subscriptions.proxyTestFailed', {
+                        message: (res as Record<string, any>).error,
+                    }),
+                    'error'
+                );
             }
         } catch (err) {
-            showToast(t('subscriptions.proxyTestError', { message: err.message }), 'error');
+            showToast(
+                t('subscriptions.proxyTestError', { message: (err as Error).message }),
+                'error'
+            );
         } finally {
             isTestingProxy.value = false;
         }

@@ -1,5 +1,5 @@
-<script setup>
-    import { useI18n } from '../../i18n/index.js';
+<script setup lang="ts">
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -57,7 +57,7 @@
                 {{ t(group.labelKey) }}
             </p>
             <button
-                v-for="tab in group.tabs"
+                v-for="tab in group.tabs as any[]"
                 :key="tab.id"
                 @click="emit('update:activeTab', tab.id)"
                 class="relative flex items-center justify-center md:justify-start px-4 py-3 text-sm font-medium misub-radius-lg transition-all duration-200"

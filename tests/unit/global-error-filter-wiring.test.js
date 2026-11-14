@@ -9,21 +9,21 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const mainSource = readFileSync(path.resolve(process.cwd(), 'src/main.js'), 'utf-8');
+const mainSource = readFileSync(path.resolve(process.cwd(), 'src/main.ts'), 'utf-8');
 
 describe('main.js 全局错误处理器接线', () => {
     it('引入来源判定工具', () => {
         expect(mainSource).toMatch(
-            /import\s*\{[^}]*isForeignRejection[^}]*\}\s*from\s*'\.\/utils\/error-source\.js'/
+            /import\s*\{[^}]*isForeignRejection[^}]*\}\s*from\s*'\.\/utils\/error-source\.(js|ts)'/
         );
         expect(mainSource).toMatch(
-            /import\s*\{[^}]*isAppScriptError[^}]*\}\s*from\s*'\.\/utils\/error-source\.js'/
+            /import\s*\{[^}]*isAppScriptError[^}]*\}\s*from\s*'\.\/utils\/error-source\.(js|ts)'/
         );
     });
 
     it('资源错误处理使用已定义的本地环境与同源判断', () => {
         expect(mainSource).toMatch(
-            /import\s*\{[^}]*isLocalHost[^}]*isSameOriginUrl[^}]*\}\s*from\s*'\.\/utils\/url-origin\.js'/
+            /import\s*\{[^}]*isLocalHost[^}]*isSameOriginUrl[^}]*\}\s*from\s*'\.\/utils\/url-origin\.(js|ts)'/
         );
         expect(mainSource).toContain('const localHost = isLocalHost(window.location.hostname);');
         expect(mainSource).toContain('isSameOriginResource(resourceUrl)');
@@ -60,7 +60,7 @@ describe('main.js 全局错误处理器接线', () => {
         // 而刷新永远解决不了它。
         // 判定逻辑放在 utils（可被单测覆盖），main.js 只负责接线。
         expect(mainSource).toMatch(
-            /import\s*\{[^}]*isCriticalAssetPath[^}]*\}\s*from\s*'\.\/utils\/url-origin\.js'/
+            /import\s*\{[^}]*isCriticalAssetPath[^}]*\}\s*from\s*'\.\/utils\/url-origin\.(js|ts)'/
         );
         // 重载判定与上报判定共用同一个谓词，避免两处正则漂移。
         expect(mainSource).toContain('if (!isCriticalAssetPath(resourcePath)) return false;');

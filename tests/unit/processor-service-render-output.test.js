@@ -4,7 +4,7 @@ import {
     ProcessorService,
     isClashYamlProfileTemplate,
     isIniTemplateSource,
-} from '../../functions/services/processor-service.js';
+} from '../../functions/services/processor-service.ts';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';
 

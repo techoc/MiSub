@@ -1,15 +1,15 @@
-<script setup>
+<script setup lang="ts">
     import { ref, defineAsyncComponent, onMounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useProfiles } from '../composables/useProfiles.js';
+    import { useDataStore } from '../stores/useDataStore.ts';
+    import { useProfiles } from '../composables/useProfiles.ts';
     import ProfilePanel from '../components/profiles/ProfilePanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import { storeToRefs } from 'pinia';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { useToastStore } from '../stores/toast.js';
-    import { useI18n } from '../i18n/index.js';
-    import { resolveProfileFocus } from '../utils/dashboard-deeplink.js';
+    import { useManualNodes } from '../composables/useManualNodes.ts';
+    import { useToastStore } from '../stores/toast.ts';
+    import { useI18n } from '../i18n/index.ts';
+    import { resolveProfileFocus } from '../utils/dashboard-deeplink.ts';
 
     const { t } = useI18n();
     const route = useRoute();
@@ -22,12 +22,15 @@
     // --- Dashboard deep-link (?focus=profiles) ---
     // The health card "创建组合订阅" links here with `?focus=profiles`. We use it
     // to open the "add profile" flow directly instead of dropping the query.
-    const profilesSectionRef = ref(null);
+    const profilesSectionRef = ref<any>(null);
 
     function applyFocusFromQuery() {
         if (!resolveProfileFocus(route.query?.focus)) return;
         nextTick(() => {
-            profilesSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            (profilesSectionRef.value as Record<string, any> | undefined)?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
         });
     }
 
@@ -80,7 +83,7 @@
         () => import('../components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
-    const previewProfileId = ref(null);
+    const previewProfileId = ref<any>(null);
     const previewProfileName = ref('');
 
     const handlePreviewProfile = (profileId) => {
@@ -104,7 +107,7 @@
     const logProfileName = ref('');
 
     const showCopyModal = ref(false);
-    const showCopyModalProfile = ref(null);
+    const showCopyModalProfile = ref<any>(null);
 
     const handleOpenCopy = (profileId) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
@@ -207,7 +210,7 @@
 
         <NodePreviewModal
             :show="showNodePreviewModal"
-            :subscription-id="null"
+            :subscription-id="undefined"
             :subscription-name="''"
             :subscription-url="''"
             :profile-id="previewProfileId"

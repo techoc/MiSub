@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCustomPageSource } from '../../src/utils/custom-page-source.js';
+import { parseCustomPageSource } from '../../src/utils/custom-page-source.ts';
 
 describe('parseCustomPageSource', () => {
     it('extracts body and style from full html document', () => {

@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import yaml from 'js-yaml';
-import { resolveGeneratorOptions } from '../../functions/modules/subscription/generator-options.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
-import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/builtin-loon-generator.js';
-import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/builtin-quanx-generator.js';
-import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/builtin-surge-generator.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
-import { generateBuiltinEgernConfig } from '../../functions/modules/subscription/builtin-egern-generator.js';
-import { renderClashYamlProfileTemplate } from '../../functions/services/processor-service.js';
-import { migrateConfigSettings } from '../../functions/modules/utils.js';
+import { resolveGeneratorOptions } from '../../functions/modules/subscription/generator-options.ts';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.ts';
+import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/builtin-loon-generator.ts';
+import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/builtin-quanx-generator.ts';
+import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/builtin-surge-generator.ts';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.ts';
+import { generateBuiltinEgernConfig } from '../../functions/modules/subscription/builtin-egern-generator.ts';
+import { renderClashYamlProfileTemplate } from '../../functions/services/processor-service.ts';
+import { migrateConfigSettings } from '../../functions/modules/utils.ts';
 import {
     renderClashFromIniTemplate,
     renderEgernFromIniTemplate,
@@ -16,7 +16,7 @@ import {
     renderQuanxFromIniTemplate,
     renderSingboxFromIniTemplate,
     renderSurgeFromIniTemplate,
-} from '../../functions/modules/subscription/template-pipeline.js';
+} from '../../functions/modules/subscription/template-pipeline.ts';
 
 const NODE_LIST = [
     'ss://MjAyMi1ibGFrZTMtYWVzLTEyOC1nY206ZXhhbXBsZVBhc3N3b3JkMTIz@hk.example.com:443#%F0%9F%87%AD%F0%9F%87%B0%20%E9%A6%99%E6%B8%AF%2001',

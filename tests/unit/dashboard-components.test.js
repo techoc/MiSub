@@ -3,7 +3,7 @@ import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 import StatCards from '../../src/components/features/Dashboard/StatCards.vue';
 import RightPanel from '../../src/components/profiles/RightPanel.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { createI18n } from '../../src/i18n/index.ts';
 
 const routerLinkStub = {
     props: ['to'],

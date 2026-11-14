@@ -5,7 +5,7 @@ import {
     setAirportIdentity,
     resetAirportIdentity,
     createAirportGroupId,
-} from '../../src/utils/airport-identity.js';
+} from '../../src/utils/airport-identity.ts';
 
 describe('subscription airport identity', () => {
     it('uses explicit stable group identity before inferred domain identity', () => {

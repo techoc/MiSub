@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
     import { storeToRefs } from 'pinia';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';
-    import { useDataStore } from '@/stores/useDataStore.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useDataStore } from '@/stores/useDataStore.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
 
@@ -99,14 +99,21 @@
         if (props.excludeBuiltinAssets) return [];
 
         return (ruleTemplates.value || [])
-            .filter((item) => item && item.enabled !== false && item.id)
+            .filter(
+                (item) =>
+                    item &&
+                    (item as Record<string, any>).enabled !== false &&
+                    (item as Record<string, any>).id
+            )
             .map((item) => ({
-                id: `custom:${item.id}`,
-                name: item.name || t('transformSelector.unnamedTemplate'),
-                url: `custom:${item.id}`,
+                id: `custom:${(item as Record<string, any>).id}`,
+                name: (item as Error).name || t('transformSelector.unnamedTemplate'),
+                url: `custom:${(item as Record<string, any>).id}`,
                 group: t('transformSelector.customTemplateGroup'),
                 sourceType: 'custom-template',
-                description: item.description || t('transformSelector.customTemplateDescription'),
+                description:
+                    (item as Record<string, any>).description ||
+                    t('transformSelector.customTemplateDescription'),
             }));
     });
 
@@ -392,7 +399,7 @@
                 >
                     <p class="font-medium text-gray-700 dark:text-gray-200">{{ group.title }}</p>
                     <div class="mt-2 space-y-2">
-                        <div v-for="item in group.items" :key="item.key">
+                        <div v-for="item in group.items as any[]" :key="item.key">
                             <code class="text-[11px] text-indigo-600 dark:text-indigo-300">{{
                                 item.key
                             }}</code>

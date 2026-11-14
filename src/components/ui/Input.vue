@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
 
     const props = defineProps({
@@ -49,7 +49,7 @@
         size: {
             type: String,
             default: 'md',
-            validator: (value) => ['sm', 'md', 'lg'].includes(value),
+            validator: (value) => ['sm', 'md', 'lg'].includes(value as any),
         },
     });
 

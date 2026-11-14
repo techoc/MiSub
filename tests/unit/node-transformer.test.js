@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyNodeTransformPipeline } from '../../functions/utils/node-transformer.js';
+import { applyNodeTransformPipeline } from '../../functions/utils/node-transformer.ts';
 
 describe('applyNodeTransformPipeline filters', () => {
     const nodes = [

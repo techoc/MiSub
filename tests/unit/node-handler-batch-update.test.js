@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/node-handler.js';
-import { StorageFactory } from '../../functions/storage-adapter.js';
+import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/node-handler.ts';
+import { StorageFactory } from '../../functions/storage-adapter.ts';
 
 const makeEnv = (subscriptions) => ({
     KV: {

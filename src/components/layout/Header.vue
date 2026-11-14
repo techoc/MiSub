@@ -1,10 +1,10 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
-    import { useUIStore } from '../../stores/ui.js';
-    import { useSessionStore } from '../../stores/session.js';
+    import { useUIStore } from '../../stores/ui.ts';
+    import { useSessionStore } from '../../stores/session.ts';
     import BrandLogo from './BrandLogo.vue';
     import NavActionGroup from './NavActionGroup.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '../../i18n/index.ts';
 
     const uiStore = useUIStore();
     const sessionStore = useSessionStore();

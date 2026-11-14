@@ -1,6 +1,6 @@
-<script setup>
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
+<script setup lang="ts">
+    import { useToastStore } from '../../stores/toast.ts';
+    import { useI18n } from '../../i18n/index.ts';
 
     const toastStore = useToastStore();
     const { t } = useI18n();
@@ -49,7 +49,7 @@
     >
         <TransitionGroup name="toast">
             <div
-                v-for="toast in toastStore.toasts"
+                v-for="toast in toastStore.toasts as any[]"
                 :key="toast.id"
                 :role="getToastRole(toast.type)"
                 :aria-live="getToastAriaLive(toast.type)"
