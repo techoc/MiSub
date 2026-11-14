@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref } from 'vue';
     import { formatBytes } from '../../lib/utils.ts';
     import { inferAirportRootDomain } from '../../utils/airport-domain.ts';

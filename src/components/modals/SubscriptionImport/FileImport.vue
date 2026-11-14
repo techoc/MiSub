@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
@@ -39,7 +39,7 @@
 
     function openPicker() {
         if (props.isProcessing) return;
-        fileInput.value?.click();
+        (fileInput.value as Record<string, any> | undefined)?.click();
     }
 
     function onInputChange(event) {

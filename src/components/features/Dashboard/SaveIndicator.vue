@@ -1,6 +1,6 @@
 /** * 保存指示器组件 * @author MiSub Team */
 
-<script setup>
+<script setup lang="ts">
     import { computed, toRefs } from 'vue';
     import { useI18n } from '@/i18n/index.ts';
 

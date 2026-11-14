@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added

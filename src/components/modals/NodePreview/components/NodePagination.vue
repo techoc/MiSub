@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { useI18n } from '../../../../i18n/index.ts';
 
     const { t } = useI18n();
@@ -26,7 +26,7 @@
     const emit = defineEmits(['go-to-page']);
 
     const pageNumbers = computed(() => {
-        const pages = [];
+        const pages: any[] = [];
         const current = props.currentPage;
         const total = props.totalPages;
 

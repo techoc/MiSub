@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref } from 'vue';
     import Switch from '../../../ui/Switch.vue';
     import { useI18n } from '../../../../i18n/index.ts';
@@ -94,7 +94,7 @@
             copyStatus.value = { key, message: t('settings.copyFailedManualSelect') };
         } finally {
             window.setTimeout(() => {
-                if (copyStatus.value?.key === key) {
+                if ((copyStatus.value as Record<string, any> | undefined)?.key === key) {
                     copyStatus.value = null;
                 }
             }, 2500);

@@ -1,6 +1,6 @@
 /** * 共享数据表格组件 * @author MiSub Team */
 
-<script setup>
+<script setup lang="ts">
     import { ref, computed, watch } from 'vue';
     import { t } from '../../i18n/index.ts';
 

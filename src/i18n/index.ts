@@ -111,7 +111,7 @@ export function createI18n(options: Record<string, any> = {}) {
     // 初始语言若非默认语言（例如浏览器语言/存储偏好是 en-US），立刻开始加载其语言包
     ensureLocaleMessages(locale.value);
 
-    const translate = (key, params = {}, forcedLocale) => {
+    const translate = (key, params = {}, forcedLocale?: string) => {
         const targetLocale = normalizeLocale(forcedLocale || locale.value);
         const resolved = lookupMessage(targetLocale, key) ?? lookupMessage(DEFAULT_LOCALE, key);
         return resolved === undefined ? key : interpolate(resolved, params);

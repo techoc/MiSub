@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, nextTick } from 'vue';
     import BulkOperations from './ManualNodePanel/BulkOperations.vue';
     import NodeActions from './ManualNodePanel/NodeActions.vue';

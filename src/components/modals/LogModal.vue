@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted, watch } from 'vue'; // Added watch
     import Modal from '../forms/Modal.vue';
     import { useToastStore } from '../../stores/toast';
@@ -31,7 +31,7 @@
     // Pagination Computed Properties
     const filteredLogs = computed(() => {
         if (!props.filterProfileName) return logs.value;
-        return logs.value.filter((log) => log.profileName === props.filterProfileName);
+        return logs.value.filter((log) => (log as Record<string, any>).profileName === props.filterProfileName);
     });
 
     const totalPages = computed(() => Math.max(1, Math.ceil(filteredLogs.value.length / pageSize)));

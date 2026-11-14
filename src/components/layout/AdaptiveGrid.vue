@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, onMounted, onUnmounted } from 'vue';
 
     const props = defineProps({
@@ -41,7 +41,7 @@
 
     const updateContainerWidth = () => {
         if (containerRef.value) {
-            containerWidth.value = containerRef.value.offsetWidth;
+            containerWidth.value = (containerRef.value as Record<string, any>).offsetWidth;
         }
     };
 

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
     import { t } from '../../i18n/index.ts';
 
@@ -25,9 +25,9 @@
     const fixedMenuPosition = computed(() => {
         if (!props.teleportToBody || !triggerRef.value) return {};
 
-        const buttonRect = triggerRef.value.getBoundingClientRect();
+        const buttonRect = (triggerRef.value as Record<string, any>).getBoundingClientRect();
         const isInsideModal = Boolean(
-            triggerRef.value.closest('[role="dialog"][aria-modal="true"]')
+            (triggerRef.value as Record<string, any>).closest('[role="dialog"][aria-modal="true"]')
         );
         return {
             top: `${buttonRect.bottom}px`,
@@ -37,14 +37,14 @@
     });
 
     function getFocusableItems() {
-        return menuRef.value ? Array.from(menuRef.value.querySelectorAll(FOCUSABLE)) : [];
+        return menuRef.value ? Array.from((menuRef.value as Record<string, any>).querySelectorAll(FOCUSABLE)) : [];
     }
 
     async function openMenu() {
         isOpen.value = true;
         await nextTick();
         const [firstItem] = getFocusableItems();
-        firstItem?.focus();
+        (firstItem as Record<string, any> | undefined)?.focus();
     }
 
     function toggleMenu() {
@@ -59,13 +59,13 @@
         const { restoreFocus = false } = options;
         isOpen.value = false;
         if (restoreFocus) {
-            triggerRef.value?.querySelector('button')?.focus();
+            (triggerRef.value as Record<string, any> | undefined)?.querySelector('button')?.focus();
         }
     }
 
     function handleClickOutside(event) {
-        const isClickInTrigger = triggerRef.value && triggerRef.value.contains(event.target);
-        const isClickInMenu = menuRef.value && menuRef.value.contains(event.target);
+        const isClickInTrigger = triggerRef.value && (triggerRef.value as Record<string, any>).contains(event.target);
+        const isClickInMenu = menuRef.value && (menuRef.value as Record<string, any>).contains(event.target);
 
         if (!isClickInTrigger && !isClickInMenu) {
             closeMenu();
@@ -87,7 +87,7 @@
             }
 
             const [firstItem] = getFocusableItems();
-            firstItem?.focus();
+            (firstItem as Record<string, any> | undefined)?.focus();
         }
     }
 

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
     import RouteErrorBoundary from './components/ui/RouteErrorBoundary.vue';
     import ConfirmDialog from './components/ui/ConfirmDialog.vue';
@@ -144,12 +144,12 @@
 
     const isDefaultPassword = computed(() => {
         return (
-            sessionStore.subscriptionConfig?.isDefaultPassword === true ||
-            sessionStore.securityWarning?.type === 'default_admin_password'
+            (sessionStore.subscriptionConfig as Record<string, any> | undefined)?.isDefaultPassword === true ||
+            (sessionStore.securityWarning as Record<string, any> | undefined)?.type === 'default_admin_password'
         );
     });
     const defaultPasswordWarningMessage = computed(
-        () => sessionStore.securityWarning?.message || t('notices.defaultPasswordWarning')
+        () => (sessionStore.securityWarning as Error | undefined)?.message || t('notices.defaultPasswordWarning')
     );
 
     onMounted(async () => {

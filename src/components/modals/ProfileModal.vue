@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch, computed } from 'vue';
     import Modal from '../forms/Modal.vue';
     import ProfileForm from './ProfileModal/ProfileForm.vue';
@@ -143,7 +143,7 @@
     });
 
     const selectableSubProfiles = computed(() => {
-        const currentId = localProfile.value?.id || props.profile?.id;
+        const currentId = (localProfile.value as Record<string, any> | undefined)?.id || props.profile?.id;
         return (dataStore.profiles || []).filter((p) => {
             if (!p) return false;
             if (currentId && (p.id === currentId || p.customId === currentId)) {
@@ -188,9 +188,9 @@
 
         if (activeManualNodeGroupFilter.value) {
             if (activeManualNodeGroupFilter.value === DEFAULT_GROUP_KEY) {
-                nodes = nodes.filter((n) => !n.group);
+                nodes = nodes!.filter((n) => !n.group);
             } else {
-                nodes = nodes.filter((n) => n.group === activeManualNodeGroupFilter.value);
+                nodes = nodes!.filter((n) => n.group === activeManualNodeGroupFilter.value);
             }
         }
 
@@ -200,7 +200,7 @@
         const lowerCaseSearchTerm = nodeSearchTerm.value.toLowerCase();
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
-        return nodes.filter((node) => {
+        return nodes!.filter((node) => {
             const nodeNameLower = node.name ? node.name.toLowerCase() : '';
 
             if (nodeNameLower.includes(lowerCaseSearchTerm)) {

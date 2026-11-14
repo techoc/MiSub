@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Switch from '@/components/ui/Switch.vue';
@@ -91,7 +91,7 @@
     const backendTestToneClass = computed(() => {
         if (!backendTestStatus.value)
             return 'border-gray-100 bg-gray-50 text-gray-500 dark:border-white/5 dark:bg-white/5 dark:text-gray-400';
-        return backendTestStatus.value.success
+        return (backendTestStatus.value as Record<string, any>).success
             ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-900/20 dark:text-emerald-300'
             : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-900/20 dark:text-rose-300';
     });
@@ -115,7 +115,7 @@
             if (props.settings.subconverter.defaultBackend === backend) {
                 backendTestStatus.value = {
                     success: false,
-                    message: error?.message || t('settings.transformBackendTestFailed'),
+                    message: (error as Error | undefined)?.message || t('settings.transformBackendTestFailed'),
                     endpoint: '',
                 };
             }

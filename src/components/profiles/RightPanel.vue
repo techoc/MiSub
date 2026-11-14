@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onUnmounted } from 'vue';
     import { useToastStore } from '../../stores/toast.ts';
     import { useUIStore } from '../../stores/ui.ts';
@@ -39,7 +39,7 @@
     const profileTokenReady = computed(() => isStableToken(props.config?.profileToken));
 
     const setupTasks = computed(() => {
-        const tasks = [];
+        const tasks: any[] = [];
         if (!mainTokenReady.value) {
             tasks.push({
                 id: 'main-token',

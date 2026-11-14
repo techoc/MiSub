@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref } from 'vue';
     import { useToastStore } from '../../../stores/toast.ts';
     import Input from '../../ui/Input.vue';

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch, nextTick, onUnmounted, computed } from 'vue';
     import { useI18n } from '@/i18n/index.ts';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.ts';
@@ -61,7 +61,7 @@
 
     function getFocusableElements() {
         return modalPanelRef.value
-            ? Array.from(modalPanelRef.value.querySelectorAll(FOCUSABLE))
+            ? Array.from((modalPanelRef.value as Record<string, any>).querySelectorAll(FOCUSABLE))
             : [];
     }
 
@@ -107,13 +107,13 @@
                 if (focusable.length) {
                     focusable[0].focus();
                 } else {
-                    modalPanelRef.value?.focus();
+                    (modalPanelRef.value as Record<string, any> | undefined)?.focus();
                 }
             } else {
                 window.removeEventListener('keydown', handleKeydown);
                 // 还原焦点到触发元素
-                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
-                    previouslyFocused.focus();
+                if (previouslyFocused && typeof (previouslyFocused as Record<string, any>).focus === 'function') {
+                    (previouslyFocused as Record<string, any>).focus();
                     previouslyFocused = null;
                 }
             }

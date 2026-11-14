@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed } from 'vue';
     import { useI18n } from '../../../i18n/index.ts';
     import FilterEditor from './components/FilterEditor.vue';
@@ -29,7 +29,7 @@
     const migrateFromLegacy = () => {
         if (!props.legacyData) return;
         const config = props.legacyData;
-        const ops = [];
+        const ops: any[] = [];
 
         // 1. Filter
         const filter = config.filter;

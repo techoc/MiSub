@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
     import { api, APIError } from '../../../lib/http.ts';
     import { useToastStore } from '../../../stores/toast.ts';
@@ -82,7 +82,7 @@
     };
 
     const selectAll = () => {
-        filteredNodes.value.forEach((node) => selectedUrls.value.add(node.url));
+        filteredNodes.value.forEach((node) => selectedUrls.value.add((node as Record<string, any>).url));
     };
 
     const clearSelection = () => {
@@ -107,9 +107,9 @@
             // For now, we'll use bulk import logic to create manual nodes
             const nodesToAdd = urls.map((url) => {
                 // Try to find full node object from allNodes
-                const originalNode = allNodes.value.find((n) => n.url === url);
+                const originalNode = allNodes.value.find((n) => (n as Record<string, any>).url === url);
                 return {
-                    name: (originalNode?.name || 'Pick').split('#')[0].trim(),
+                    name: ((originalNode as Error | undefined)?.name || 'Pick').split('#')[0].trim(),
                     url: url,
                     enabled: true,
                 };
@@ -147,12 +147,12 @@
 
         // 协议过滤
         if (protocolFilter.value && protocolFilter.value !== 'all') {
-            result = result.filter((node) => node.protocol === protocolFilter.value);
+            result = result.filter((node) => (node as Record<string, any>).protocol === protocolFilter.value);
         }
 
         // 地区过滤
         if (regionFilter.value && regionFilter.value !== 'all') {
-            result = result.filter((node) => node.region === regionFilter.value);
+            result = result.filter((node) => (node as Record<string, any>).region === regionFilter.value);
         }
 
         // 搜索过滤
@@ -160,9 +160,9 @@
             const query = searchQuery.value.toLowerCase().trim();
             result = result.filter(
                 (node) =>
-                    node.name.toLowerCase().includes(query) ||
-                    node.protocol.toLowerCase().includes(query) ||
-                    node.region.toLowerCase().includes(query)
+                    (node as Error).name.toLowerCase().includes(query) ||
+                    (node as Record<string, any>).protocol.toLowerCase().includes(query) ||
+                    (node as Record<string, any>).region.toLowerCase().includes(query)
             );
         }
 
@@ -249,7 +249,7 @@
         error.value = '';
 
         try {
-            const requestData = {
+            const requestData : Record<string, any> = {
                 userAgent: 'v2rayN/7.23',
             };
 
@@ -340,7 +340,7 @@
                 } catch (testErr) {
                     error.value = t('nodePreview.authFailed');
                 }
-            } else if (isNetworkErrorMessage(err?.message)) {
+            } else if (isNetworkErrorMessage((err as Error | undefined)?.message)) {
                 error.value = t('nodePreview.networkFailed');
             } else {
                 error.value = err.message || t('nodePreview.loadFailed');

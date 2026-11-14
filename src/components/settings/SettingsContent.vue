@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, defineAsyncComponent, reactive, watch } from 'vue';
     import { useI18n } from '../../i18n/index.ts';
     import SettingsLayout from '../layout/SettingsLayout.vue';

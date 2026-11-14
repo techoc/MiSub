@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { useBackdropDismiss } from '../../composables/useBackdropDismiss.ts';
     import { useI18n } from '../../i18n/index.ts';
 

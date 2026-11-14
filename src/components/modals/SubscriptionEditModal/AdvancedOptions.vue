@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import Switch from '../../ui/Switch.vue';
     import { useI18n } from '../../../i18n/index.ts';
 

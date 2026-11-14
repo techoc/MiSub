@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import Input from '../ui/Input.vue';
@@ -41,7 +41,7 @@
     const isReadingFile = ref(false);
 
     const openFilePicker = () => {
-        fileInputRef.value?.click();
+        (fileInputRef.value as Record<string, any> | undefined)?.click();
     };
 
     const onFilePicked = async (event) => {
@@ -172,12 +172,12 @@
 
         if (props.isNew && (isMultiLine.value || requiresServerParsing)) {
             // 多行批量导入 / 需后端转换：未填写分组时自动生成一个（用户无需手填）
-            let groupName = (props.editingNode.group || '').trim();
+            let groupName = (props.editingNode!.group || '').trim();
             if (!groupName) {
                 groupName = buildAutoGroupName();
-                props.editingNode.group = groupName;
+                props.editingNode!.group = groupName;
             }
-            await handleBulkImport(props.editingNode.url, groupName);
+            await handleBulkImport(props.editingNode!.url, groupName);
             emit('update:show', false);
             return;
         }

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch } from 'vue';
     import { useI18n } from '@/i18n/index.ts';
 
@@ -58,7 +58,7 @@
     <slot v-else />
 </template>
 
-<script>
+<script lang="ts">
     export default {
         errorCaptured(err) {
             return this.$.exposed.errorCaptured(err);

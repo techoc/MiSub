@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     const props = defineProps({
         editingSubscription: {
             type: Object,
@@ -52,11 +52,11 @@
             );
             if (res.success) {
                 showToast(
-                    t('subscriptions.proxyTestSuccess', { count: res.data.count }),
+                    t('subscriptions.proxyTestSuccess', { count: (res as Record<string, any>).data.count }),
                     'success'
                 );
             } else {
-                showToast(t('subscriptions.proxyTestFailed', { message: res.error }), 'error');
+                showToast(t('subscriptions.proxyTestFailed', { message: (res as Record<string, any>).error }), 'error');
             }
         } catch (err) {
             showToast(t('subscriptions.proxyTestError', { message: err.message }), 'error');

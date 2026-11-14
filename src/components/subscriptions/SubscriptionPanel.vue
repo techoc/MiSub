@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, nextTick, watch } from 'vue';
     import draggable from 'vuedraggable';
     import Card from '../ui/Card.vue';
@@ -248,7 +248,7 @@
      */
     const groupedSubscriptions = computed(() => {
         const list = props.subscriptions || [];
-        const order = [];
+        const order: string[] = [];
         const map = new Map();
 
         list.forEach((sub) => {

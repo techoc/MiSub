@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, onMounted, onActivated, onUnmounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
     import { useI18n } from '../i18n/index.ts';

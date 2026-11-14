@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import Input from '../../ui/Input.vue';
     import AnnouncementSettings from './AnnouncementSettings.vue';
     import GuestbookManagement from './GuestbookManagement.vue';

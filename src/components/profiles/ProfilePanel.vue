@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import ProfileCard from './ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
@@ -50,7 +50,7 @@
         set: (value) => emit('updateSearch', value),
     });
 
-    const visibleCount = computed(() => props.filteredCount ?? props.profiles.length);
+    const visibleCount = computed(() => props.filteredCount ?? props.profiles!.length);
 
     const displayProfiles = computed(() => {
         if (props.isSorting) {
@@ -81,7 +81,7 @@
 
     // 始终基于真实 profile id 排序，避免分页视图把页内索引用到全量列表上。
     const handleMoveUp = (profileId) => {
-        const index = props.profiles.findIndex(
+        const index = props.profiles!.findIndex(
             (profile) => profile.id === profileId || profile.customId === profileId
         );
         if (index > 0) {
@@ -90,10 +90,10 @@
     };
 
     const handleMoveDown = (profileId) => {
-        const index = props.profiles.findIndex(
+        const index = props.profiles!.findIndex(
             (profile) => profile.id === profileId || profile.customId === profileId
         );
-        if (index !== -1 && index < props.profiles.length - 1) {
+        if (index !== -1 && index < props.profiles!.length - 1) {
             emit('reorder', profileId, 'down');
         }
     };

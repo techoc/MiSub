@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
     import { storeToRefs } from 'pinia';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';
@@ -99,14 +99,14 @@
         if (props.excludeBuiltinAssets) return [];
 
         return (ruleTemplates.value || [])
-            .filter((item) => item && item.enabled !== false && item.id)
+            .filter((item) => item && (item as Record<string, any>).enabled !== false && (item as Record<string, any>).id)
             .map((item) => ({
-                id: `custom:${item.id}`,
-                name: item.name || t('transformSelector.unnamedTemplate'),
-                url: `custom:${item.id}`,
+                id: `custom:${(item as Record<string, any>).id}`,
+                name: (item as Error).name || t('transformSelector.unnamedTemplate'),
+                url: `custom:${(item as Record<string, any>).id}`,
                 group: t('transformSelector.customTemplateGroup'),
                 sourceType: 'custom-template',
-                description: item.description || t('transformSelector.customTemplateDescription'),
+                description: (item as Record<string, any>).description || t('transformSelector.customTemplateDescription'),
             }));
     });
 

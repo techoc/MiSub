@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, defineAsyncComponent, onMounted } from 'vue';
     import { useDataStore } from '../stores/useDataStore.ts';
     import { useBulkImportLogic } from '../composables/useBulkImportLogic.ts';

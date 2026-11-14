@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, defineAsyncComponent } from 'vue';
     import { useDataStore } from '../stores/useDataStore.ts';
     import { useManualNodes } from '../composables/useManualNodes.ts';

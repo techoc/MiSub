@@ -1,6 +1,6 @@
 /** * 共享拖拽列表组件 * @author MiSub Team */
 
-<script setup>
+<script setup lang="ts">
     import { ref, computed } from 'vue';
     import { useI18n } from '../../i18n/index.ts';
 

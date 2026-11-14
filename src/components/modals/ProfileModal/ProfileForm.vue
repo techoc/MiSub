@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
     import TransformSelector from '../../forms/TransformSelector.vue';
     import Input from '../../ui/Input.vue';

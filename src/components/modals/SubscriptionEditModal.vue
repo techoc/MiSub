@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, ref, watch } from 'vue';
     import { useToastStore } from '../../stores/toast.ts';
     import { useI18n } from '../../i18n/index.ts';
@@ -69,13 +69,13 @@
 
     // 检查标签在当前激活模式中是否已选中
     const isSelected = (pattern) => {
-        return currentRulePool.value.some((rule) => rule.pattern === pattern);
+        return currentRulePool.value.some((rule) => (rule as Record<string, any>).pattern === pattern);
     };
 
     // 检查标签在另一个模式中是否已选中
     const isOtherSelected = (pattern) => {
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
-        return otherPool.some((rule) => rule.pattern === pattern);
+        return otherPool.some((rule) => (rule as Record<string, any>).pattern === pattern);
     };
 
     // 辅助函数：根据 pattern 转换为规范规则对象
@@ -96,12 +96,12 @@
         const pool = currentRulePool.value;
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
 
-        const index = pool.findIndex((rule) => rule.pattern === tag.pattern);
+        const index = pool.findIndex((rule) => (rule as Record<string, any>).pattern === tag.pattern);
         if (index !== -1) {
             pool.splice(index, 1);
         } else {
             // 如果已在另一个规则池中，将其从另一个池移除，避免同一标签同时存在
-            const otherIdx = otherPool.findIndex((rule) => rule.pattern === tag.pattern);
+            const otherIdx = otherPool.findIndex((rule) => (rule as Record<string, any>).pattern === tag.pattern);
             if (otherIdx !== -1) {
                 otherPool.splice(otherIdx, 1);
             }
@@ -116,7 +116,7 @@
         if (!keyword) return;
 
         const pool = currentRulePool.value;
-        if (pool.some((rule) => rule.pattern === keyword || rule.label === keyword)) {
+        if (pool.some((rule) => (rule as Record<string, any>).pattern === keyword || (rule as Record<string, any>).label === keyword)) {
             showToast(t('subscriptions.duplicateKeyword'), 'warning');
             return;
         }
@@ -124,7 +124,7 @@
         // 如果在另一个池中存在，先移除
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
         const otherIdx = otherPool.findIndex(
-            (rule) => rule.pattern === keyword || rule.label === keyword
+            (rule) => (rule as Record<string, any>).pattern === keyword || (rule as Record<string, any>).label === keyword
         );
         if (otherIdx !== -1) {
             otherPool.splice(otherIdx, 1);
@@ -165,8 +165,8 @@
     const syncToText = () => {
         if (!props.editingSubscription) return;
 
-        const exPatterns = excludeRules.value.map((r) => r.pattern);
-        const kpPatterns = keepRules.value.map((r) => r.pattern);
+        const exPatterns = excludeRules.value.map((r) => (r as Record<string, any>).pattern);
+        const kpPatterns = keepRules.value.map((r) => (r as Record<string, any>).pattern);
 
         if (exPatterns.length === 0 && kpPatterns.length === 0) {
             props.editingSubscription.exclude = '';
@@ -237,8 +237,8 @@
         const dividerIndex = lines.findIndex((line) => line === '---');
         const hasDivider = dividerIndex !== -1;
 
-        const rawExcludePatterns = [];
-        const rawKeepPatterns = [];
+        const rawExcludePatterns: any[] = [];
+        const rawKeepPatterns: any[] = [];
 
         lines.forEach((line, index) => {
             if (line === '---') return;
@@ -333,7 +333,7 @@
             mixed: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-200',
         };
 
-        const errors = [];
+        const errors: any[] = [];
         rawLines.forEach((rawLine, index) => {
             let line = rawLine.trim();
             if (!line) return;
@@ -385,8 +385,8 @@
 
     const syncExcludeRuleScroll = () => {
         if (!excludeRuleTextarea.value || !excludeRuleHighlight.value) return;
-        excludeRuleHighlight.value.scrollTop = excludeRuleTextarea.value.scrollTop;
-        excludeRuleHighlight.value.scrollLeft = excludeRuleTextarea.value.scrollLeft;
+        (excludeRuleHighlight.value as Record<string, any>).scrollTop = (excludeRuleTextarea.value as Record<string, any>).scrollTop;
+        (excludeRuleHighlight.value as Record<string, any>).scrollLeft = (excludeRuleTextarea.value as Record<string, any>).scrollLeft;
     };
 
     const handleConfirm = () => {

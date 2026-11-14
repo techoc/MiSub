@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     // SettingsLayout.vue
     // 统一的设置界面布局容器，供页面视图和悬浮模态框复用
 </script>

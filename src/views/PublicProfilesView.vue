@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import {
         ref,
         onMounted,
@@ -40,17 +40,17 @@
     const { showToast } = useToastStore();
     const { t, setLocale } = useI18n();
     const config = ref({});
-    const announcement = computed(() => config.value.announcement);
+    const announcement = computed(() => (config.value as Record<string, any>).announcement);
     const heroConfig = computed(
         () =>
-            config.value.hero || {
+            (config.value as Record<string, any>).hero || {
                 title1: t('publicProfiles.heroTitle1'),
                 title2: t('publicProfiles.heroTitle2'),
                 description: t('publicProfiles.heroDescription'),
             }
     );
-    const guestbookConfig = computed(() => config.value.guestbook || {});
-    const customPageConfig = computed(() => config.value.customPage || {});
+    const guestbookConfig = computed(() => (config.value as Record<string, any>).guestbook || {});
+    const customPageConfig = computed(() => (config.value as Record<string, any>).customPage || {});
     const parsedCustomPageSource = computed(() =>
         parseCustomPageSource(
             customPageConfig.value.content || '',
@@ -135,7 +135,7 @@
                 config.value = data.config || {};
 
                 // 应用服务端默认显示语言（仅当访客未显式选择过语言时）
-                const serverLocale = config.value.defaultLocale;
+                const serverLocale = (config.value as Record<string, any>).defaultLocale;
                 if (serverLocale && !hasStoredLocale()) {
                     setLocale(serverLocale);
                 }
@@ -151,7 +151,7 @@
     };
 
     const copyLink = async (profile) => {
-        const token = config.value.profileToken || 'profiles';
+        const token = (config.value as Record<string, any>).profileToken || 'profiles';
         const identifier = profile.customId || profile.id;
         const link = `${window.location.origin}/${token}/${identifier}`;
 
@@ -197,14 +197,14 @@
 
     const fetchClientVersions = async () => {
         clients.value.forEach(async (client) => {
-            if (!client.repo) return;
+            if (!(client as Record<string, any>).repo) return;
             try {
-                const data = await api.get(`/api/github/release?repo=${client.repo}`);
+                const data = await api.get(`/api/github/release?repo=${(client as Record<string, any>).repo}`);
                 if (data && data.tag_name) {
-                    client.version = data.tag_name;
+                    (client as Record<string, any>).version = data.tag_name;
                 }
             } catch (e) {
-                console.warn(`Failed to fetch version for ${client.name}`, e);
+                console.warn(`Failed to fetch version for ${(client as Error).name}`, e);
             }
         });
     };
@@ -260,7 +260,7 @@
             await nextTick();
             const canvas = qrCanvasRefs.value[profileId];
             if (canvas) {
-                const token = config.value.profileToken || 'profiles';
+                const token = (config.value as Record<string, any>).profileToken || 'profiles';
                 const identifier = profile.customId || profile.id;
                 const link = `${window.location.origin}/${token}/${identifier}`;
                 try {

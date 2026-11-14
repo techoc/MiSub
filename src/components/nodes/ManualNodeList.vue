@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import { extractHostAndPort } from '../../lib/utils.ts';
     import { useToastStore } from '../../stores/toast.ts';

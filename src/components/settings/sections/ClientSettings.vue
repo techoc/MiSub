@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, onMounted, computed } from 'vue';
     import { useI18n } from '../../../i18n/index.ts';
     import { useToastStore } from '../../../stores/toast';
@@ -19,12 +19,12 @@
     const iconFileInput = ref(null);
     const uploadingIcon = ref(false);
     const isDataIcon = computed(() => {
-        const icon = editingClient.value?.icon;
+        const icon = (editingClient.value as Record<string, any> | undefined)?.icon;
         return typeof icon === 'string' && icon.startsWith('data:');
     });
     const iconInputValue = computed({
         get() {
-            const icon = editingClient.value?.icon;
+            const icon = (editingClient.value as Record<string, any> | undefined)?.icon;
             if (!icon || (typeof icon === 'string' && icon.startsWith('data:'))) return '';
             return icon;
         },
@@ -113,7 +113,7 @@
     };
 
     const triggerIconFileSelect = () => {
-        iconFileInput.value?.click();
+        (iconFileInput.value as Record<string, any> | undefined)?.click();
     };
 
     const clearIcon = () => {
@@ -177,7 +177,7 @@
     const handleEdit = (client) => {
         isNew.value = false;
         editingClient.value = JSON.parse(JSON.stringify(client));
-        if (!editingClient.value.platforms) editingClient.value.platforms = [];
+        if (!(editingClient.value as Record<string, any>).platforms) (editingClient.value as Record<string, any>).platforms = [];
         showEditModal.value = true;
     };
 
@@ -213,7 +213,7 @@
     };
 
     const handleSave = async () => {
-        if (!editingClient.value.name) return showToast(t('settings.clientNameRequired'), 'error');
+        if (!(editingClient.value as Error).name) return showToast(t('settings.clientNameRequired'), 'error');
 
         saving.value = true;
         try {

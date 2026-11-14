@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
@@ -19,7 +19,7 @@
     const handleConfirm = async () => {
         if (!settingsPanelRef.value) return;
 
-        const didSave = await settingsPanelRef.value.handleSave();
+        const didSave = await (settingsPanelRef.value as Record<string, any>).handleSave();
         if (didSave) {
             emit('update:show', false);
         }

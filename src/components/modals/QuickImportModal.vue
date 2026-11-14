@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted } from 'vue';
     import Modal from '../forms/Modal.vue';
     import { useI18n } from '@/i18n/index.ts';

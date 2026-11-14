@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, defineAsyncComponent, onMounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
     import { useDataStore } from '../stores/useDataStore.ts';
@@ -27,7 +27,7 @@
     function applyFocusFromQuery() {
         if (!resolveProfileFocus(route.query?.focus)) return;
         nextTick(() => {
-            profilesSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            (profilesSectionRef.value as Record<string, any> | undefined)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     }
 

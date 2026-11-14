@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import draggable from 'vuedraggable';
@@ -61,10 +61,10 @@
             return;
         }
 
-        const oldName = localGroups.value[editingGroupIndex.value].name;
+        const oldName = localGroups.value[(editingGroupIndex as string).value].name;
         if (newName !== oldName) {
             emit('rename', oldName, newName);
-            localGroups.value[editingGroupIndex.value].name = newName;
+            localGroups.value[(editingGroupIndex as string).value].name = newName;
         }
 
         cancelEdit();
@@ -78,11 +78,11 @@
         if (!confirmed) return;
 
         emit('delete', groupName);
-        localGroups.value = localGroups.value.filter((g) => g.name !== groupName);
+        localGroups.value = localGroups.value.filter((g) => (g as Error).name !== groupName);
     };
 
     const handleDragEnd = () => {
-        const newOrder = localGroups.value.map((g) => g.name);
+        const newOrder = localGroups.value.map((g) => (g as Error).name);
         emit('reorder', newOrder);
     };
 

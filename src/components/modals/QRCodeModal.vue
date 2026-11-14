@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
@@ -63,7 +63,7 @@
         if (!canvasRef.value) return;
         const link = document.createElement('a');
         link.download = `${props.title || 'qrcode'}.png`;
-        link.href = canvasRef.value.toDataURL('image/png');
+        link.href = (canvasRef.value as Record<string, any>).toDataURL('image/png');
         link.click();
     };
 </script>

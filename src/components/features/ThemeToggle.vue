@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { storeToRefs } from 'pinia';
     import { useThemeStore } from '../../stores/theme.ts';
     import { useI18n } from '@/i18n/index.ts';

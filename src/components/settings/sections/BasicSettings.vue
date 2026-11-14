@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import SectionHeader from '../SectionHeader.vue';
     const props = defineProps({
         settings: {

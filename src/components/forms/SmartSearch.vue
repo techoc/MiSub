@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { useI18n } from '../../i18n/index.ts';
 
     const { t } = useI18n();
@@ -48,7 +48,7 @@
                 activeFilters.value.size === 0 ||
                 Array.from(activeFilters.value).every((filter) => {
                     const filterConfig = props.filters.find((f) => f.key === filter);
-                    return filterConfig?.predicate(item) ?? true;
+                    return (filterConfig as Record<string, any> | undefined)?.predicate(item) ?? true;
                 });
 
             return matchesText && matchesFilters;

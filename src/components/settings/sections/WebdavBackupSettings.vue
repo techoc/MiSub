@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref } from 'vue';
     import { api } from '../../../lib/http.ts';
     import { useToastStore } from '../../../stores/toast.ts';
@@ -92,13 +92,13 @@
         input.type = 'file';
         input.accept = 'application/json';
         input.onchange = (event) => {
-            const file = event.target.files?.[0];
+            const file = (event.target as Record<string, any>).files?.[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
                 isRestoring.value = true;
                 try {
-                    const payload = JSON.parse(e.target.result);
+                    const payload = JSON.parse(e.target!.result);
                     const scope = payload?.scope || 'dataOnly';
                     const label =
                         scope === 'dataAndSettings'

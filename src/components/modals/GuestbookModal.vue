@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, watch } from 'vue';
     import { api } from '../../lib/http.ts';
     import Modal from '../forms/Modal.vue';

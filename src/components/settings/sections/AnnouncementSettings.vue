@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed, watch } from 'vue';
     import DOMPurify from 'dompurify';
     import Switch from '../../ui/Switch.vue';

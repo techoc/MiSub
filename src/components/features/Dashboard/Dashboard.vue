@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, watch } from 'vue';
     import { formatBytes } from '../../../lib/utils.ts';
     import { useToastStore } from '../../../stores/toast.ts';

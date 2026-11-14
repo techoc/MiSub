@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     import { computed } from 'vue';
     import ProfileCard from './ProfileCard.vue';
     import HeroProfileCard from './HeroProfileCard.vue';
