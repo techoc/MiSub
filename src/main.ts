@@ -104,7 +104,10 @@ if (typeof window !== 'undefined') {
         'error',
         (event) => {
             if (event.target !== window) {
-                const resourceUrl = (event.target as Record<string, any>).src || (event.target as Record<string, any>).href || '';
+                const resourceUrl =
+                    (event.target as Record<string, any>).src ||
+                    (event.target as Record<string, any>).href ||
+                    '';
 
                 // 忽略第三方资源加载错误（如 Cloudflare Analytics、广告等）
                 const isThirdParty = resourceUrl && !isSameOriginResource(resourceUrl);

@@ -120,7 +120,7 @@ export function validateForm(formData, rules) {
     const errors = {};
     const isValid = true;
 
-    for (const [field, fieldRules] of Object.entries(rules)) {
+    for (const [field, fieldRules] of Object.entries(rules) as [string, Record<string, any>][]) {
         const value = formData[field];
         const fieldErrors: any[] = [];
 

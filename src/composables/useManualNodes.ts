@@ -32,7 +32,7 @@ export function useManualNodes(markDirty) {
 
     const manualNodesCurrentPage = ref(1);
     // 走共享助手：站点存储被禁用时裸读会抛 SecurityError，导致整个组合式函数起不来
-    const manualNodesPerPage = ref(parseInt(readRawPreference('manualNodesPPS'), 10) || 24);
+    const manualNodesPerPage = ref(parseInt(readRawPreference('manualNodesPPS') ?? '', 10) || 24);
     const searchTerm = ref('');
 
     watch(manualNodesPerPage, (newVal) => {
@@ -58,7 +58,9 @@ export function useManualNodes(markDirty) {
         return filteredManualNodes.value.slice(start, end);
     });
 
-    const enabledManualNodes = computed(() => manualNodes.value.filter((n) => (n as Record<string, any>).enabled));
+    const enabledManualNodes = computed(() =>
+        manualNodes.value.filter((n) => (n as Record<string, any>).enabled)
+    );
 
     function changeManualNodesPage(page) {
         let p = parseInt(page);
@@ -77,12 +79,19 @@ export function useManualNodes(markDirty) {
         if (!nodeIds || nodeIds.length === 0) return;
         const normalizedGroupName = normalizeManualNodeGroupName(groupName);
         const idsSet = new Set(nodeIds);
-        const updates = manualNodes.value
+        const updates: any[] = manualNodes.value
             .filter((n) => idsSet.has((n as Record<string, any>).id))
             .map((n) => {
                 // Only update if changed after normalization
-                if (normalizeManualNodeGroupName((n as Record<string, any>).group) === normalizedGroupName) return null;
-                return { id: (n as Record<string, any>).id, updates: { ...n, group: normalizedGroupName } };
+                if (
+                    normalizeManualNodeGroupName((n as Record<string, any>).group) ===
+                    normalizedGroupName
+                )
+                    return null;
+                return {
+                    id: (n as Record<string, any>).id,
+                    updates: { ...(n as Record<string, any>), group: normalizedGroupName },
+                };
             })
             .filter((u) => u);
 
@@ -239,7 +248,10 @@ export function useManualNodes(markDirty) {
     function sortNodesByLatency() {
         const results = pingResults.value || {};
         const hasAnyLatency = Object.values(results).some(
-            (item) => item && (item as { status?: number }).status === 'ok' && Number.isFinite((item as Record<string, any>).latency)
+            (item) =>
+                item &&
+                (item as { status?: string }).status === 'ok' &&
+                Number.isFinite((item as Record<string, any>).latency)
         );
         if (!hasAnyLatency) return false;
 
@@ -258,7 +270,10 @@ export function useManualNodes(markDirty) {
         });
 
         const otherItems = (allSubscriptions.value || []).filter(
-            (item) => !nodes.some((n) => (n as Record<string, any>).id === (item as Record<string, any>).id)
+            (item) =>
+                !nodes.some(
+                    (n) => (n as Record<string, any>).id === (item as Record<string, any>).id
+                )
         );
         dataStore.overwriteSubscriptions([...nodes, ...otherItems]);
 
@@ -287,7 +302,9 @@ export function useManualNodes(markDirty) {
 
         // 1. Get all Subscriptions (to preserve them)
         const currentSubscriptions = (allSubscriptions.value || []).filter(
-            (item) => (item as Record<string, any>).url && /^https?:\/\//.test((item as Record<string, any>).url)
+            (item) =>
+                (item as Record<string, any>).url &&
+                /^https?:\/\//.test((item as Record<string, any>).url)
         );
 
         // 2. Combine Existing Subscriptions + New Ordered Manual Nodes
@@ -302,7 +319,7 @@ export function useManualNodes(markDirty) {
     }
 
     const manualNodeGroups = computed(() => {
-        const customOrder = settingsStore.config.manualNodeGroupOrder || [];
+        const customOrder = (settingsStore.config.manualNodeGroupOrder || []) as string[];
         return collectManualNodeGroups(manualNodes.value, customOrder);
     });
 
@@ -317,14 +334,18 @@ export function useManualNodes(markDirty) {
             return;
 
         const nodesInGroup = manualNodes.value.filter(
-            (n) => normalizeManualNodeGroupName((n as Record<string, any>).group) === normalizedOldName
+            (n) =>
+                normalizeManualNodeGroupName((n as Record<string, any>).group) === normalizedOldName
         );
         nodesInGroup.forEach((node) => {
-            dataStore.updateSubscription((node as Record<string, any>).id, { ...node, group: normalizedNewName });
+            dataStore.updateSubscription((node as Record<string, any>).id, {
+                ...node,
+                group: normalizedNewName,
+            });
         });
 
         // 同步更新自定义分组顺序
-        const customOrder = settingsStore.config.manualNodeGroupOrder || [];
+        const customOrder = (settingsStore.config.manualNodeGroupOrder || []) as string[];
         const index = customOrder.indexOf(normalizedOldName);
         if (index !== -1) {
             const newOrder = [...customOrder];
@@ -340,16 +361,18 @@ export function useManualNodes(markDirty) {
         if (!normalizedGroupName) return;
         // Ungroup nodes (move to default)
         const nodesInGroup = manualNodes.value.filter(
-            (n) => normalizeManualNodeGroupName((n as Record<string, any>).group) === normalizedGroupName
+            (n) =>
+                normalizeManualNodeGroupName((n as Record<string, any>).group) ===
+                normalizedGroupName
         );
         nodesInGroup.forEach((node) => {
             // Creating a copy logic is safe here as updateSubscription handles it
-            const { group, ...rest } = node;
+            const { group, ...rest } = node as Record<string, any>;
             dataStore.updateSubscription((node as Record<string, any>).id, { ...rest, group: '' }); // Set to empty string or remove property
         });
 
         // 从自定义分组顺序中移除
-        const customOrder = settingsStore.config.manualNodeGroupOrder || [];
+        const customOrder = (settingsStore.config.manualNodeGroupOrder || []) as string[];
         const newOrder = customOrder.filter((g) => g !== normalizedGroupName);
         if (newOrder.length !== customOrder.length) {
             settingsStore.updateConfig({ manualNodeGroupOrder: newOrder });

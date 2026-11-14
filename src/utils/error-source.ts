@@ -41,7 +41,7 @@ function safeOrigin(url, fallbackOrigin) {
  * @param {string} [origin] 本站 origin（默认取 window.location.origin）
  * @returns {boolean} true 表示应当作为应用错误处理
  */
-export function isAppScriptError(info: Record<string, any> = {}, origin) {
+export function isAppScriptError(info: Record<string, any> = {}, origin?: string) {
     const base = resolveOrigin(origin);
     const filename = String(info.filename || '').trim();
 
@@ -67,7 +67,7 @@ export function isAppScriptError(info: Record<string, any> = {}, origin) {
  * @param {string} [origin] 本站 origin（默认取 window.location.origin）
  * @returns {boolean} true 表示属于第三方/扩展噪音，应当忽略
  */
-export function isForeignRejection(reason, origin) {
+export function isForeignRejection(reason, origin?: string) {
     if (!reason) return false;
 
     const base = resolveOrigin(origin);

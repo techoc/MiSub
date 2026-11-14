@@ -9,7 +9,7 @@ import packageJson from '../../package.json';
 export const useVersionStore = defineStore('version', () => {
     // --- State ---
     const currentVersion = ref(packageJson.version);
-    const latestRelease = ref(null);
+    const latestRelease = ref<any>(null);
     const showModal = ref(false);
     const showUpdateNotice = ref(false);
     const upstreamRepo = 'imzyb/MiSub';
@@ -25,12 +25,22 @@ export const useVersionStore = defineStore('version', () => {
     // --- Getters ---
     const hasUpdate = computed(() => {
         if (!(latestRelease.value as Record<string, any> | undefined)?.tag_name) return false;
-        return compareVersions((latestRelease.value as Record<string, any>).tag_name, currentVersion.value) > 0;
+        return (
+            compareVersions(
+                (latestRelease.value as Record<string, any>).tag_name,
+                currentVersion.value
+            ) > 0
+        );
     });
 
     const isUpToDate = computed(() => {
         if (!(latestRelease.value as Record<string, any> | undefined)?.tag_name) return true;
-        return compareVersions((latestRelease.value as Record<string, any>).tag_name, currentVersion.value) === 0;
+        return (
+            compareVersions(
+                (latestRelease.value as Record<string, any>).tag_name,
+                currentVersion.value
+            ) === 0
+        );
     });
 
     // --- Helpers ---

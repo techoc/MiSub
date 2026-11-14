@@ -12,7 +12,7 @@ export function useProfiles(markDirty) {
 
     /* Pagination setup */
     const isNewProfile = ref(false);
-    const editingProfile = ref(null);
+    const editingProfile = ref<any>(null);
     const showProfileModal = ref(false);
     const showDeleteProfilesModal = ref(false);
 
@@ -58,7 +58,9 @@ export function useProfiles(markDirty) {
     }
 
     const handleProfileToggle = (updatedProfile) => {
-        const index = profiles.value.findIndex((p) => (p as Record<string, any>).id === updatedProfile.id);
+        const index = profiles.value.findIndex(
+            (p) => (p as Record<string, any>).id === updatedProfile.id
+        );
         if (index !== -1) {
             profiles.value[index].enabled = updatedProfile.enabled;
             if (updatedProfile.isPublic !== undefined) {
@@ -86,7 +88,11 @@ export function useProfiles(markDirty) {
     };
 
     const handleEditProfile = (profileId) => {
-        const profile = profiles.value.find((p) => (p as Record<string, any>).id === profileId || (p as Record<string, any>).customId === profileId);
+        const profile = profiles.value.find(
+            (p) =>
+                (p as Record<string, any>).id === profileId ||
+                (p as Record<string, any>).customId === profileId
+        );
         if (profile) {
             isNewProfile.value = false;
             editingProfile.value = JSON.parse(JSON.stringify(profile));
@@ -116,7 +122,9 @@ export function useProfiles(markDirty) {
             if (
                 profileData.customId &&
                 profiles.value.some(
-                    (p) => (p as Record<string, any>).id !== profileData.id && (p as Record<string, any>).customId === profileData.customId
+                    (p) =>
+                        (p as Record<string, any>).id !== profileData.id &&
+                        (p as Record<string, any>).customId === profileData.customId
                 )
             ) {
                 showToast(t('profiles.customIdExists', { id: profileData.customId }), 'error');
@@ -126,7 +134,9 @@ export function useProfiles(markDirty) {
         if (isNewProfile.value) {
             dataStore.addProfile({ ...profileData, id: generateProfileId() });
         } else {
-            const index = profiles.value.findIndex((p) => (p as Record<string, any>).id === profileData.id);
+            const index = profiles.value.findIndex(
+                (p) => (p as Record<string, any>).id === profileData.id
+            );
             if (index !== -1) {
                 profiles.value[index] = profileData;
             }
@@ -152,9 +162,14 @@ export function useProfiles(markDirty) {
             showToast(t('profiles.fixedTokenRequired'), 'error');
             return;
         }
-        const profile = profiles.value.find((p) => (p as Record<string, any>).id === profileId || (p as Record<string, any>).customId === profileId);
+        const profile = profiles.value.find(
+            (p) =>
+                (p as Record<string, any>).id === profileId ||
+                (p as Record<string, any>).customId === profileId
+        );
         if (!profile) return;
-        const identifier = (profile as Record<string, any>).customId || (profile as Record<string, any>).id;
+        const identifier =
+            (profile as Record<string, any>).customId || (profile as Record<string, any>).id;
         const link = `${window.location.origin}/${token}/${identifier}`;
 
         // Clipboard API Fallback for non-secure contexts (http)
@@ -199,9 +214,14 @@ export function useProfiles(markDirty) {
             showToast(t('profiles.fixedTokenRequired'), 'error');
             return;
         }
-        const profile = profiles.value.find((p) => (p as Record<string, any>).id === profileId || (p as Record<string, any>).customId === profileId);
+        const profile = profiles.value.find(
+            (p) =>
+                (p as Record<string, any>).id === profileId ||
+                (p as Record<string, any>).customId === profileId
+        );
         if (!profile) return;
-        const identifier = (profile as Record<string, any>).customId || (profile as Record<string, any>).id;
+        const identifier =
+            (profile as Record<string, any>).customId || (profile as Record<string, any>).id;
         // 添加 Clash 专用参数
         const link = `${window.location.origin}/${token}/${identifier}?target=clash&builtin=1`;
 
@@ -241,13 +261,17 @@ export function useProfiles(markDirty) {
 
     const cleanupSubscriptions = (subId) => {
         profiles.value.forEach((p) => {
-            (p as Record<string, any>).subscriptions = (p as Record<string, any>).subscriptions.filter((id) => id !== subId);
+            (p as Record<string, any>).subscriptions = (
+                p as Record<string, any>
+            ).subscriptions.filter((id) => id !== subId);
         });
     };
 
     const cleanupNodes = (nodeId) => {
         profiles.value.forEach((p) => {
-            (p as Record<string, any>).manualNodes = (p as Record<string, any>).manualNodes.filter((id) => id !== nodeId);
+            (p as Record<string, any>).manualNodes = (p as Record<string, any>).manualNodes.filter(
+                (id) => id !== nodeId
+            );
         });
     };
 

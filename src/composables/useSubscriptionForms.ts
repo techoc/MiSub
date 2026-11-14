@@ -9,7 +9,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
     const { showToast } = useToastStore();
     const showModal = ref(false);
     const isNew = ref(false);
-    const editingSubscription = ref(null);
+    const editingSubscription = ref<any>(null);
 
     const openAdd = () => {
         isNew.value = true;

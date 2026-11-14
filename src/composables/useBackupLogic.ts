@@ -48,7 +48,10 @@ export function useBackupLogic() {
             showToast(t('backup.exportSuccess'), 'success');
         } catch (error) {
             console.error('Backup export failed:', error);
-            showToast(t('backup.exportFailedWithMessage', { message: error.message }), 'error');
+            showToast(
+                t('backup.exportFailedWithMessage', { message: (error as Error).message }),
+                'error'
+            );
         }
     };
 
@@ -67,7 +70,7 @@ export function useBackupLogic() {
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const data = JSON.parse(e.target!.result);
+                    const data = JSON.parse(e.target!.result as string);
                     const scope = data?.scope || 'dataOnly';
                     const scopeLabel =
                         scope === 'dataAndSettings'
@@ -85,7 +88,7 @@ export function useBackupLogic() {
                     setTimeout(() => window.location.reload(), 800);
                 } catch (err) {
                     showToast(
-                        t('backup.importFailedWithMessage', { message: err.message }),
+                        t('backup.importFailedWithMessage', { message: (err as Error).message }),
                         'error'
                     );
                 }

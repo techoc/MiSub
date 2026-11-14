@@ -54,7 +54,7 @@ export function convertHttpToUrl(proxy) {
         // 自定义 Headers
         if (proxy.headers) {
             for (const [key, value] of Object.entries(proxy.headers)) {
-                params.set(`header-${key}`, value);
+                params.set(`header-${key}`, String(value));
             }
         }
 

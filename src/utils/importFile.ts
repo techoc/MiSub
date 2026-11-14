@@ -34,7 +34,7 @@ export const IMPORT_FILE_ACCEPT = [
  * @param {File} file
  * @returns {Promise<string>}
  */
-export function readFileAsText(file) {
+export function readFileAsText(file): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result || ''));
@@ -69,10 +69,10 @@ export async function readFilesAsText(files) {
     const chunks: any[] = [];
     let byteSize = 0;
 
-    for (const file of list) {
+    for (const file of list as any[]) {
         assertFileSize(file);
         const text = await readFileAsText(file);
-        byteSize += file.size || text.length;
+        byteSize += file.size || (text as string).length;
         chunks.push(text.trim());
     }
 

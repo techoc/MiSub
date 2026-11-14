@@ -32,7 +32,9 @@ const safeBase64Decode = (input) => {
 };
 
 const buildSortedQuery = (params) => {
-    const items = Array.from(params.entries()).sort(([a], [b]) => a.localeCompare(b));
+    const items = (Array.from(params.entries()) as [string, string][]).sort(([a], [b]) =>
+        a.localeCompare(b)
+    );
     return items.length ? `?${items.map(([k, v]) => `${k}=${v}`).join('&')}` : '';
 };
 

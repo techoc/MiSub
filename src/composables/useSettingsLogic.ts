@@ -78,8 +78,8 @@ export function useSettingsLogic() {
     const isLoading = ref(false);
     const isSaving = ref(false);
     const showMigrationModal = ref(false);
-    const restartCountdown = ref(null);
-    let reloadTimer = null;
+    const restartCountdown = ref<any>(null);
+    let reloadTimer: any = null;
 
     const clearReloadTimer = () => {
         if (reloadTimer !== null) {
@@ -127,14 +127,20 @@ export function useSettingsLogic() {
         try {
             const result = await fetchSettings();
             if (result.success) {
-                const incoming = (result as Record<string, any>).data && typeof (result as Record<string, any>).data === 'object' ? (result as Record<string, any>).data : {};
+                const incoming =
+                    (result as Record<string, any>).data &&
+                    typeof (result as Record<string, any>).data === 'object'
+                        ? (result as Record<string, any>).data
+                        : {};
                 settings.value = normalizeSettingsObject(incoming);
 
                 if ((settings.value as Record<string, any>).disguise) {
                     disguiseConfig.value = {
                         enabled: (settings.value as Record<string, any>).disguise.enabled ?? false,
-                        pageType: (settings.value as Record<string, any>).disguise.pageType ?? 'default',
-                        redirectUrl: (settings.value as Record<string, any>).disguise.redirectUrl ?? '',
+                        pageType:
+                            (settings.value as Record<string, any>).disguise.pageType ?? 'default',
+                        redirectUrl:
+                            (settings.value as Record<string, any>).disguise.redirectUrl ?? '',
                     };
                 }
 
@@ -147,7 +153,12 @@ export function useSettingsLogic() {
                     setLocale(settings.value.defaultLocale);
                 }
             } else {
-                showToast(t('settings.loadFailedWithMessage', { message: (result as Record<string, any>).error }), 'error');
+                showToast(
+                    t('settings.loadFailedWithMessage', {
+                        message: (result as Record<string, any>).error,
+                    }),
+                    'error'
+                );
                 settings.value = normalizeSettingsObject(DEFAULT_SETTINGS);
             }
         } catch (error) {
@@ -176,7 +187,7 @@ export function useSettingsLogic() {
             if (!settings.value.storageType) settings.value.storageType = 'kv';
             settings.value.externalApi = normalizeExternalApiConfig(settings.value.externalApi);
 
-            const settingsToSave : Record<string, any> = {
+            const settingsToSave: Record<string, any> = {
                 ...settings.value,
                 externalApi: normalizeExternalApiConfig(settings.value.externalApi),
                 disguise: disguiseConfig.value,
@@ -207,7 +218,7 @@ export function useSettingsLogic() {
                 throw new Error(result.error || t('settings.saveFailed'));
             }
         } catch (error) {
-            showToast(error.message, 'error');
+            showToast((error as Error).message, 'error');
             return false;
         } finally {
             isSaving.value = false;

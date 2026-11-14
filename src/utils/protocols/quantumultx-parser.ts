@@ -81,7 +81,7 @@ function parseQuantumultXVmess(line) {
         let method = 'auto';
         let id = '';
         let aid = '0';
-        let extra = [];
+        let extra: any[] = [];
 
         if (params[0]?.includes(':')) {
             const serverPort = parseServerPortToken(params[0]);
@@ -286,7 +286,7 @@ function parseQuantumultXVless(line) {
         let server = '';
         let port = '';
         let uuid = '';
-        let extra = [];
+        let extra: any[] = [];
 
         if (params[0]?.includes(':')) {
             const serverPort = parseServerPortToken(params[0]);
@@ -368,7 +368,7 @@ function parseQuantumultXHysteria2(line) {
         let server = '';
         let port = '';
         let password = '';
-        let extra = [];
+        let extra: any[] = [];
 
         if (params[0]?.includes(':')) {
             const serverPort = parseServerPortToken(params[0]);
@@ -429,7 +429,7 @@ function parseQuantumultXTuic(line) {
         let port = '';
         let uuid = '';
         let password = '';
-        let extra = [];
+        let extra: any[] = [];
 
         if (params[0]?.includes(':')) {
             const serverPort = parseServerPortToken(params[0]);
@@ -504,7 +504,7 @@ function parseQuantumultXAnyTLS(line) {
         let name = '';
         let server = '';
         let port = '';
-        let extra = [];
+        let extra: any[] = [];
 
         if (params[0]?.includes(':')) {
             const serverPort = parseServerPortToken(params[0]);

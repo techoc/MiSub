@@ -20,23 +20,27 @@ export const useDataStore = defineStore('data', () => {
     const editorStore = useEditorStore();
 
     // --- State ---
-    const subscriptions = ref([]);
-    const profiles = ref([]);
+    const subscriptions = ref<any[]>([]);
+    const profiles = ref<any[]>([]);
     const ruleTemplates = ref([]);
     const settings = computed(() => settingsStore.config);
 
     // Store Status
     const isLoading = ref(false);
     const saveState = ref('idle');
-    const lastUpdated = ref(null);
+    const lastUpdated = ref<any>(null);
     const hasDataLoaded = computed(() => !!lastUpdated.value);
 
     // Derived Dirty State (from Editor)
     const isDirty = computed(() => editorStore.isDirty);
 
     // --- Getters ---
-    const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => (sub as Record<string, any>).enabled));
-    const activeProfiles = computed(() => profiles.value.filter((profile) => (profile as Record<string, any>).enabled));
+    const activeSubscriptions = computed(() =>
+        subscriptions.value.filter((sub) => (sub as Record<string, any>).enabled)
+    );
+    const activeProfiles = computed(() =>
+        profiles.value.filter((profile) => (profile as Record<string, any>).enabled)
+    );
 
     // --- Internal: Snapshot for rollback/diffing ---
     let lastSavedData = {
@@ -68,7 +72,7 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    let fetchDataPromise = null;
+    let fetchDataPromise: any = null;
 
     async function fetchData(forceRefresh = false) {
         if (fetchDataPromise) return fetchDataPromise;
@@ -99,7 +103,10 @@ export const useDataStore = defineStore('data', () => {
                 return true;
             } catch (error) {
                 console.error('Failed to fetch data:', error);
-                showToast(t('store.fetchDataFailed', { message: error.message }), 'error');
+                showToast(
+                    t('store.fetchDataFailed', { message: (error as Error).message }),
+                    'error'
+                );
                 // 不向调用方抛出：所有调用点都没有 try/catch，rejection 会冒泡成
                 // 全局 unhandledrejection，被 main.js 处理器再提示一次，
                 // 用户会看到两个「操作失败」弹窗。
@@ -126,14 +133,14 @@ export const useDataStore = defineStore('data', () => {
 
         try {
             const sanitizedSubs = subscriptions.value.map((sub) => {
-                const { isUpdating, ...rest } = sub;
+                const { isUpdating, ...rest } = sub as Record<string, any>;
                 return rest;
             });
 
             const payload = {
                 misubs: sanitizedSubs,
                 profiles: profiles.value.map((profile) => {
-                    const normalizedProfile = { ...profile };
+                    const normalizedProfile = { ...(profile as Record<string, any>) };
                     normalizedProfile.ruleLevel =
                         normalizedProfile.ruleLevel || normalizedProfile.clashRuleLevel || '';
                     delete normalizedProfile.clashRuleLevel;
@@ -170,7 +177,7 @@ export const useDataStore = defineStore('data', () => {
             // Update cache with the most recent merged data
             dataCache.set({
                 misubs: subscriptions.value.map((s) => {
-                    const { isUpdating, ...rest } = s;
+                    const { isUpdating, ...rest } = s as Record<string, any>;
                     return rest;
                 }),
                 profiles: profiles.value,
@@ -181,7 +188,7 @@ export const useDataStore = defineStore('data', () => {
             return true;
         } catch (error) {
             console.error('[Store] Failed to save data:', error);
-            showToast(t('store.saveDataFailed', { message: error.message }), 'error');
+            showToast(t('store.saveDataFailed', { message: (error as Error).message }), 'error');
             saveState.value = 'idle';
             // 同 fetchData：提示一次即可，不再向上抛出避免二次弹窗
             return false;
@@ -226,7 +233,7 @@ export const useDataStore = defineStore('data', () => {
             console.error('Failed to save settings:', error);
             if (!silent) {
                 showToast(
-                    t('store.saveSettingsFailedWithMessage', { message: error.message }),
+                    t('store.saveSettingsFailedWithMessage', { message: (error as Error).message }),
                     'error'
                 );
             }
@@ -257,7 +264,9 @@ export const useDataStore = defineStore('data', () => {
         } catch (error) {
             console.error('Failed to save rule templates:', error);
             showToast(
-                t('store.saveRuleTemplatesFailedWithMessage', { message: error.message }),
+                t('store.saveRuleTemplatesFailedWithMessage', {
+                    message: (error as Error).message,
+                }),
                 'error'
             );
             throw error;
@@ -327,10 +336,18 @@ export const useDataStore = defineStore('data', () => {
     }
 
     function removeProfile(id) {
-        const index = profiles.value.findIndex((p) => (p as Record<string, any>).id === id || (p as Record<string, any>).customId === id);
+        const index = profiles.value.findIndex(
+            (p) =>
+                (p as Record<string, any>).id === id || (p as Record<string, any>).customId === id
+        );
         if (index !== -1) {
             const removed = profiles.value.splice(index, 1)[0];
-            removeProfileFromProfiles([(removed as Record<string, any>).id, (removed as Record<string, any>).customId].filter(Boolean));
+            removeProfileFromProfiles(
+                [
+                    (removed as Record<string, any>).id,
+                    (removed as Record<string, any>).customId,
+                ].filter(Boolean)
+            );
         }
     }
 
@@ -340,9 +357,14 @@ export const useDataStore = defineStore('data', () => {
 
         let modified = false;
         profiles.value.forEach((profile) => {
-            if (Array.isArray((profile as Record<string, any>).subProfiles) && (profile as Record<string, any>).subProfiles.length > 0) {
+            if (
+                Array.isArray((profile as Record<string, any>).subProfiles) &&
+                (profile as Record<string, any>).subProfiles.length > 0
+            ) {
                 const originalLength = (profile as Record<string, any>).subProfiles.length;
-                (profile as Record<string, any>).subProfiles = (profile as Record<string, any>).subProfiles.filter((id) => !idsToRemove.has(id));
+                (profile as Record<string, any>).subProfiles = (
+                    profile as Record<string, any>
+                ).subProfiles.filter((id) => !idsToRemove.has(id));
                 if ((profile as Record<string, any>).subProfiles.length !== originalLength) {
                     modified = true;
                 }
@@ -360,9 +382,14 @@ export const useDataStore = defineStore('data', () => {
 
         let modified = false;
         profiles.value.forEach((profile) => {
-            if (Array.isArray((profile as Record<string, any>).manualNodes) && (profile as Record<string, any>).manualNodes.length > 0) {
+            if (
+                Array.isArray((profile as Record<string, any>).manualNodes) &&
+                (profile as Record<string, any>).manualNodes.length > 0
+            ) {
                 const originalLength = (profile as Record<string, any>).manualNodes.length;
-                (profile as Record<string, any>).manualNodes = (profile as Record<string, any>).manualNodes.filter((id) => !idsToRemove.has(id));
+                (profile as Record<string, any>).manualNodes = (
+                    profile as Record<string, any>
+                ).manualNodes.filter((id) => !idsToRemove.has(id));
                 if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
                     modified = true;
                 }
@@ -383,9 +410,14 @@ export const useDataStore = defineStore('data', () => {
 
         let modified = false;
         profiles.value.forEach((profile) => {
-            if (Array.isArray((profile as Record<string, any>).subscriptions) && (profile as Record<string, any>).subscriptions.length > 0) {
+            if (
+                Array.isArray((profile as Record<string, any>).subscriptions) &&
+                (profile as Record<string, any>).subscriptions.length > 0
+            ) {
                 const originalLength = (profile as Record<string, any>).subscriptions.length;
-                (profile as Record<string, any>).subscriptions = (profile as Record<string, any>).subscriptions.filter((id) => !idsToRemove.has(id));
+                (profile as Record<string, any>).subscriptions = (
+                    profile as Record<string, any>
+                ).subscriptions.filter((id) => !idsToRemove.has(id));
                 if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
                     modified = true;
                 }
@@ -408,15 +440,22 @@ export const useDataStore = defineStore('data', () => {
         if (!profiles.value || profiles.value.length === 0) return;
 
         // 收集所有当前存在的订阅和手动节点 ID
-        const validIds = new Set(subscriptions.value.map((item) => (item as Record<string, any>).id));
+        const validIds = new Set(
+            subscriptions.value.map((item) => (item as Record<string, any>).id)
+        );
 
         let modified = false;
         profiles.value.forEach((profile) => {
             // 1. 处理手动节点引用
-            if (Array.isArray((profile as Record<string, any>).manualNodes) && (profile as Record<string, any>).manualNodes.length > 0) {
+            if (
+                Array.isArray((profile as Record<string, any>).manualNodes) &&
+                (profile as Record<string, any>).manualNodes.length > 0
+            ) {
                 const originalLength = (profile as Record<string, any>).manualNodes.length;
                 const seenIds = new Set();
-                (profile as Record<string, any>).manualNodes = (profile as Record<string, any>).manualNodes.filter((id) => {
+                (profile as Record<string, any>).manualNodes = (
+                    profile as Record<string, any>
+                ).manualNodes.filter((id) => {
                     // ID 必须存在且未被重复记录
                     if (validIds.has(id) && !seenIds.has(id)) {
                         seenIds.add(id);
@@ -430,10 +469,15 @@ export const useDataStore = defineStore('data', () => {
             }
 
             // 2. 处理机场订阅引用
-            if (Array.isArray((profile as Record<string, any>).subscriptions) && (profile as Record<string, any>).subscriptions.length > 0) {
+            if (
+                Array.isArray((profile as Record<string, any>).subscriptions) &&
+                (profile as Record<string, any>).subscriptions.length > 0
+            ) {
                 const originalLength = (profile as Record<string, any>).subscriptions.length;
                 const seenIds = new Set();
-                (profile as Record<string, any>).subscriptions = (profile as Record<string, any>).subscriptions.filter((id) => {
+                (profile as Record<string, any>).subscriptions = (
+                    profile as Record<string, any>
+                ).subscriptions.filter((id) => {
                     if (validIds.has(id) && !seenIds.has(id)) {
                         seenIds.add(id);
                         return true;

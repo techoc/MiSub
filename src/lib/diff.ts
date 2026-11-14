@@ -14,8 +14,8 @@ function isEqual(a, b) {
  * @returns {Object} { added: [], updated: [], removed: [] } or null if no difference
  */
 export function calculateDiff(original: any[] = [], current: any[] = []) {
-    const added = [];
-    const updated = [];
+    const added: any[] = [];
+    const updated: any[] = [];
     const removedIdSet = new Set(original.map((item) => item.id));
     const originalMap = new Map(original.map((item) => [item.id, item]));
 

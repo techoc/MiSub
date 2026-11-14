@@ -7,7 +7,7 @@ import { ref, watch } from 'vue';
  */
 export function useAnimatedCounter(targetValue) {
     const displayValue = ref(targetValue.value || 0);
-    let animationFrameId = null;
+    let animationFrameId: any = null;
 
     const animate = (from, to) => {
         const duration = 700; // 动画持续时间 (毫秒)

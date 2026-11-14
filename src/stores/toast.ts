@@ -9,8 +9,8 @@ const DURATION_BY_TYPE = {
 };
 
 export const useToastStore = defineStore('toast', () => {
-    const toasts = ref([]);
-    const queue = ref([]);
+    const toasts = ref<any[]>([]);
+    const queue = ref<any[]>([]);
 
     function _resolveDuration(type, duration) {
         if (duration !== undefined) return duration;
@@ -28,7 +28,7 @@ export const useToastStore = defineStore('toast', () => {
         }
     }
 
-    function showToast(message, type = 'info', duration) {
+    function showToast(message, type = 'info', duration?: number) {
         const id = Date.now() + Math.random().toString(36).substring(2, 7);
         const toastItem = { id, message, type, duration: _resolveDuration(type, duration) };
 

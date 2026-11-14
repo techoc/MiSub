@@ -32,7 +32,7 @@ export const useSessionStore = defineStore('session', () => {
         enablePublicPage: false,
     });
 
-    const publicConfig = ref({
+    const publicConfig = ref<any>({
         ...defaultPublicConfig,
         customPage: { ...defaultPublicConfig.customPage },
     }); // Default true until fetched

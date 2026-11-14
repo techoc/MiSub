@@ -24,7 +24,7 @@ export function formatDate(date, format = 'datetime') {
     if (isNaN(d.getTime())) return '无效日期';
 
     const now = new Date();
-    const diff = now - d;
+    const diff = now.getTime() - d.getTime();
 
     switch (format) {
         case 'date':

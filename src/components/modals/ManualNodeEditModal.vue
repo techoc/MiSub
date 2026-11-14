@@ -5,7 +5,10 @@
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
     import { useDataStore } from '../../stores/useDataStore.ts';
     import { useSubscriptions } from '../../composables/useSubscriptions.ts';
-    import { useBulkImportLogic, needsServerParsing } from '../../composables/useBulkImportLogic.ts';
+    import {
+        useBulkImportLogic,
+        needsServerParsing,
+    } from '../../composables/useBulkImportLogic.ts';
     import { useManualNodes } from '../../composables/useManualNodes.ts';
     import { useI18n } from '../../i18n/index.ts';
     import { parseSurgeConfig } from '../../utils/protocolConverter.ts';

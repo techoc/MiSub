@@ -92,7 +92,7 @@ function wrapBodyContent(body) {
     const attrs: string[] = [];
     const classes = ['custom-page-document', 'custom-page-html', 'custom-page-body'];
 
-    Array.from(body.attributes).forEach((attr) => {
+    Array.from(body.attributes).forEach((attr: any) => {
         if (attr.name === 'class') {
             classes.push(...String(attr.value).split(/\s+/).filter(Boolean));
             return;

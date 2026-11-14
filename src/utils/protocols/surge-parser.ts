@@ -4,6 +4,37 @@ import { base64Encode } from './common/base64.ts';
 /**
  * 解析Surge配置
  */
+
+const PROXY_TYPE_KEYS = new Set([
+    'ss',
+    'shadowsocks',
+    'trojan',
+    'http',
+    'https',
+    'http-proxy',
+    'https-proxy',
+    'vmess',
+    'vless',
+    'hysteria2',
+    'wireguard',
+    'snell',
+    'anytls',
+]);
+
+/**
+ * Surge/Loon 两种写法并存：
+ *   `ProxyName = ss, server, port, ...`（标准 Surge）
+ *   `ss = ProxyName, server, port, ...`（Loon 风格，键是协议类型）
+ * 键是协议类型时节点名取第一个参数，否则取键。
+ */
+function resolveProxyName(key, params) {
+    const trimmedKey = String(key || '').trim();
+    if (PROXY_TYPE_KEYS.has(trimmedKey.toLowerCase())) {
+        return String(params[0] || '').trim();
+    }
+    return trimmedKey;
+}
+
 export function parseSurgeConfig(content) {
     const nodes: any[] = [];
     const lines = content.split('\n');
@@ -222,11 +253,12 @@ function parseSurgeSS(line) {
 
         if (!server || !port || !method || !password) return null;
 
+        const name = resolveProxyName(parts[1], params);
         const userinfo = base64Encode(`${method}:${password}`);
         return {
             id: generateNodeId(),
-            name: (name as Record<string, any>).trim().replace(/"/g, ''),
-            url: `ss://${userinfo}@${server}:${port}#${encodeURIComponent((name as Record<string, any>).trim().replace(/"/g, ''))}`,
+            name: name.trim().replace(/"/g, ''),
+            url: `ss://${userinfo}@${server}:${port}#${encodeURIComponent(name.trim().replace(/"/g, ''))}`,
             enabled: true,
             protocol: 'ss',
             source: 'surge',
@@ -248,6 +280,7 @@ function parseSurgeTrojan(line) {
         const [protocol, server, port, ...options] = params;
 
         if (!server || !port) return null;
+        const name = resolveProxyName(parts[1], params);
         let password = '';
 
         options.forEach((opt) => {
@@ -267,8 +300,8 @@ function parseSurgeTrojan(line) {
 
         return {
             id: generateNodeId(),
-            name: (name as Record<string, any>).trim().replace(/"/g, ''),
-            url: `trojan://${encodeURIComponent(password)}@${server}:${port}#${encodeURIComponent((name as Record<string, any>).trim().replace(/"/g, ''))}`,
+            name: name.trim().replace(/"/g, ''),
+            url: `trojan://${encodeURIComponent(password)}@${server}:${port}#${encodeURIComponent(name.trim().replace(/"/g, ''))}`,
             enabled: true,
             protocol: 'trojan',
             source: 'surge',
@@ -291,14 +324,15 @@ function parseSurgeHTTP(line) {
 
         if (!server || !port) return null;
 
+        const name = resolveProxyName(parts[1], params);
         const isHTTPS =
             line.toLowerCase().startsWith('https-proxy') || protocol.toLowerCase() === 'https';
         const urlProtocol = isHTTPS ? 'https' : 'http';
 
         return {
             id: generateNodeId(),
-            name: (name as Record<string, any>).trim().replace(/"/g, ''),
-            url: `${urlProtocol}://${server}:${port}#${encodeURIComponent((name as Record<string, any>).trim().replace(/"/g, ''))}`,
+            name: name.trim().replace(/"/g, ''),
+            url: `${urlProtocol}://${server}:${port}#${encodeURIComponent(name.trim().replace(/"/g, ''))}`,
             enabled: true,
             protocol: protocol,
             source: 'surge',

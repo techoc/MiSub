@@ -10,7 +10,7 @@ export function useNodeForms({ addNode, updateNode }) {
     const { showToast } = useToastStore();
     const showModal = ref(false);
     const isNew = ref(false);
-    const editingNode = ref(null);
+    const editingNode = ref<any>(null);
 
     const openAdd = () => {
         isNew.value = true;

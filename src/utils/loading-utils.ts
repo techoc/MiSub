@@ -13,8 +13,8 @@ import { TIMING } from '../constants/timing.ts';
 export function createLoadingState() {
     const isLoading = ref(false);
     const loadingMessage = ref('');
-    const error = ref(null);
-    const lastUpdated = ref(null);
+    const error = ref<any>(null);
+    const lastUpdated = ref<any>(null);
 
     /**
      * 开始加载
@@ -87,7 +87,7 @@ export function createLoadingState() {
  */
 export function createTimeoutLoadingState(timeout = TIMING.REQUEST_TIMEOUT_MS) {
     const loadingState = createLoadingState();
-    let timeoutId = null;
+    let timeoutId: any = null;
 
     const startLoading = (message = '加载中...') => {
         loadingState.startLoading(message);

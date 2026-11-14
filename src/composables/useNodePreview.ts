@@ -39,8 +39,8 @@ export function useNodePreview(props) {
     // 统计信息
     const protocolStats = ref({});
     const regionStats = ref({});
-    const availableProtocols = ref([]);
-    const availableRegions = ref([]);
+    const availableProtocols = ref<string[]>([]);
+    const availableRegions = ref<string[]>([]);
 
     // 复制状态
     const copiedNodeId = ref('');
@@ -61,12 +61,16 @@ export function useNodePreview(props) {
 
         // 协议过滤
         if (protocolFilter.value && protocolFilter.value !== 'all') {
-            result = result.filter((node) => (node as Record<string, any>).protocol === protocolFilter.value);
+            result = result.filter(
+                (node) => (node as Record<string, any>).protocol === protocolFilter.value
+            );
         }
 
         // 地区过滤
         if (regionFilter.value && regionFilter.value !== 'all') {
-            result = result.filter((node) => (node as Record<string, any>).region === regionFilter.value);
+            result = result.filter(
+                (node) => (node as Record<string, any>).region === regionFilter.value
+            );
         }
 
         // 搜索过滤
@@ -109,7 +113,7 @@ export function useNodePreview(props) {
         error.value = '';
 
         try {
-            const requestData : Record<string, any> = {
+            const requestData: Record<string, any> = {
                 userAgent: 'MiSub-Node-Preview/1.0',
             };
 
@@ -155,7 +159,7 @@ export function useNodePreview(props) {
             } else if (isNetworkErrorMessage((err as Error | undefined)?.message)) {
                 error.value = t('nodePreview.networkFailed');
             } else {
-                error.value = err.message || t('nodePreview.loadFailed');
+                error.value = (err as Error).message || t('nodePreview.loadFailed');
             }
 
             allNodes.value = [];

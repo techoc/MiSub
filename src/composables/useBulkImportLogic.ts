@@ -37,9 +37,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
     const convertViaServer = async (importText) => {
         try {
             const parsed = await api.post('/api/parse_subscription', { content: importText });
-            const converted = (parsed?.data?.nodes || [])
-                .map((node) => node?.url)
-                .filter(Boolean);
+            const converted = (parsed?.data?.nodes || []).map((node) => node?.url).filter(Boolean);
             if (!parsed?.success || converted.length === 0) return importText;
 
             // 订阅链接（http/https）后端不处理，原样保留
@@ -68,7 +66,9 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
 
         // 获取已存在的所有 URL，用于去重
         const existingUrls = new Set(
-            (dataStore.subscriptions || []).map((s) => (s as Record<string, any>).url).filter(Boolean)
+            (dataStore.subscriptions || [])
+                .map((s) => (s as Record<string, any>).url)
+                .filter(Boolean)
         );
 
         // 先尝试解析 Surge 格式（name = protocol, server, port, ...）

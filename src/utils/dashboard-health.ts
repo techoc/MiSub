@@ -208,7 +208,7 @@ export function getDashboardHealthItems({
 export function resolveHealthItemCopy(item, t) {
     if (!item || typeof t !== 'function') return item;
 
-    const translate = (key, params) => {
+    const translate = (key, params?: Record<string, any>) => {
         if (!key) return '';
         const value = t(key, params);
         return value === undefined || value === null ? '' : value;

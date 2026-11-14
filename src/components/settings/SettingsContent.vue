@@ -12,9 +12,11 @@
     const GlobalSettings = defineAsyncComponent(() => import('./sections/GlobalSettings.vue'));
     const ServiceSettings = defineAsyncComponent(() => import('./sections/ServiceSettings.vue'));
     const ClientSettings = defineAsyncComponent(() => import('./sections/ClientSettings.vue'));
-    const CustomPageSettings = defineAsyncComponent(() => import('./sections/CustomPageSettings.vue'));
-    const WebdavBackupSettings = defineAsyncComponent(() =>
-        import('./sections/WebdavBackupSettings.vue')
+    const CustomPageSettings = defineAsyncComponent(
+        () => import('./sections/CustomPageSettings.vue')
+    );
+    const WebdavBackupSettings = defineAsyncComponent(
+        () => import('./sections/WebdavBackupSettings.vue')
     );
     const SystemSettings = defineAsyncComponent(() => import('./sections/SystemSettings.vue'));
 
@@ -205,9 +207,21 @@
                 :disguiseConfig="disguiseConfig"
                 :highlighted-focus-id="highlightedFocusId"
             />
-            <HomeSettings v-if="visitedTabs.has('home')" v-show="activeTab === 'home'" :settings="settings" />
-            <GlobalSettings v-if="visitedTabs.has('global')" v-show="activeTab === 'global'" :settings="settings" />
-            <ServiceSettings v-if="visitedTabs.has('service')" v-show="activeTab === 'service'" :settings="settings" />
+            <HomeSettings
+                v-if="visitedTabs.has('home')"
+                v-show="activeTab === 'home'"
+                :settings="settings"
+            />
+            <GlobalSettings
+                v-if="visitedTabs.has('global')"
+                v-show="activeTab === 'global'"
+                :settings="settings"
+            />
+            <ServiceSettings
+                v-if="visitedTabs.has('service')"
+                v-show="activeTab === 'service'"
+                :settings="settings"
+            />
             <ClientSettings v-if="visitedTabs.has('client')" v-show="activeTab === 'client'" />
             <CustomPageSettings
                 v-if="visitedTabs.has('custom-page')"

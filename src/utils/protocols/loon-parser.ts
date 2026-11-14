@@ -71,7 +71,7 @@ function parseLoonVmess(line) {
     if (protocol.toLowerCase() !== 'vmess' || !server || !port || !uuid) return null;
     const options = parseExtraParams(extra);
 
-    const config : Record<string, any> = {
+    const config: Record<string, any> = {
         v: '2',
         ps: parsed.name,
         add: server,

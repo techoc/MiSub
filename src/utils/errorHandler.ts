@@ -12,7 +12,10 @@ let monitoringEndpoint = null;
 let monitoringHeaders = null;
 
 function resolveMonitoringEndpoint() {
-    if (typeof window !== 'undefined' && (window as Record<string, any>).__MISUB_ERROR_REPORT_URL__) {
+    if (
+        typeof window !== 'undefined' &&
+        (window as Record<string, any>).__MISUB_ERROR_REPORT_URL__
+    ) {
         return (window as Record<string, any>).__MISUB_ERROR_REPORT_URL__;
     }
     if (typeof import.meta !== 'undefined' && import.meta.env) {
@@ -27,7 +30,7 @@ export function setToastHandler(handler) {
     toastHandler = typeof handler === 'function' ? handler : null;
 }
 
-export function configureErrorMonitoring({ endpoint, headers } = {}) {
+export function configureErrorMonitoring({ endpoint, headers }: Record<string, any> = {}) {
     if (endpoint !== undefined) {
         monitoringEndpoint = endpoint || null;
     }
@@ -159,7 +162,9 @@ class ErrorHandler {
      * @param {Object} errorInfo - 错误信息
      */
     showUserNotification(errorInfo) {
-        const handler = toastHandler || (typeof window !== 'undefined' ? (window as Record<string, any>).showToast : null);
+        const handler =
+            toastHandler ||
+            (typeof window !== 'undefined' ? (window as Record<string, any>).showToast : null);
         if (!handler) return;
 
         let message = this.getUserFriendlyMessage(errorInfo);
@@ -282,7 +287,7 @@ class ErrorHandler {
     getErrorStats() {
         return {
             totalErrors: Array.from((this as Record<string, any>).errorCounts.values()).reduce(
-                (sum, count) => sum + count,
+                (sum: number, count: any) => sum + count,
                 0
             ),
             uniqueErrors: (this as Record<string, any>).errorCounts.size,

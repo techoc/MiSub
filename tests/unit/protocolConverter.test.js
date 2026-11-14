@@ -319,6 +319,21 @@ ss=Test SS,1.2.3.4,8388,aes-256-gcm,password123
             expect(result.length).toBeGreaterThan(0);
         });
 
+        it('Surge SS/Trojan/HTTP 的节点名应取自「=」前的名称，而不是全局 name', () => {
+            // 回归：parseSurgeSS / parseSurgeTrojan / parseSurgeHTTP 曾引用未声明的
+            // `name`，浏览器里会静默取到 window.name（通常为 ''），节点名丢失。
+            const config = `
+[Proxy]
+ss=Test SS,1.2.3.4,8388,aes-256-gcm,password123
+trojan=Test Trojan,trojan.example.com,443,secret
+http-proxy=Test HTTP,http.example.com,8080
+`;
+            const names = parseSurgeConfig(config).map((item) => item.name);
+            expect(names).toContain('Test SS');
+            expect(names).toContain('Test Trojan');
+            expect(names).toContain('Test HTTP');
+        });
+
         it('应正确解析 Surge WireGuard 配置', () => {
             const config = `
 [Proxy]

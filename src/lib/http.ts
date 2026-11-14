@@ -4,6 +4,9 @@
  */
 
 export class APIError extends Error {
+    status: number;
+    data: any;
+
     constructor(message, status = 500, data = null) {
         super(message);
         this.name = 'APIError';
@@ -12,7 +15,7 @@ export class APIError extends Error {
     }
 }
 
-let unauthorizedHandler = null;
+let unauthorizedHandler: any = null;
 
 export function configureUnauthorizedHandler(handler) {
     unauthorizedHandler = typeof handler === 'function' ? handler : null;
@@ -68,11 +71,11 @@ const stringifyBody = (data) => (data === undefined ? undefined : JSON.stringify
 
 export const api = {
     get: (url, options = {}) => request(url, { ...options, method: 'GET' }),
-    post: (url, data, options = {}) =>
+    post: (url, data?: any, options = {}) =>
         request(url, { ...options, method: 'POST', body: stringifyBody(data) }),
-    put: (url, data, options = {}) =>
+    put: (url, data?: any, options = {}) =>
         request(url, { ...options, method: 'PUT', body: stringifyBody(data) }),
-    patch: (url, data, options = {}) =>
+    patch: (url, data?: any, options = {}) =>
         request(url, { ...options, method: 'PATCH', body: stringifyBody(data) }),
     del: (url, options = {}) => request(url, { ...options, method: 'DELETE' }),
 };

@@ -147,7 +147,7 @@ export function createI18n(options: Record<string, any> = {}) {
 
 export const i18n = createI18n();
 
-export function t(key, params: Record<string, any> = {}, forcedLocale) {
+export function t(key, params: Record<string, any> = {}, forcedLocale?: string) {
     return i18n.t(key, params, forcedLocale);
 }
 

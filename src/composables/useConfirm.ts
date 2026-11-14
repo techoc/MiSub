@@ -8,7 +8,7 @@ import { ref } from 'vue';
 //
 // Only one dialog can be pending at a time. If a second call arrives while a
 // dialog is open, the first one resolves to false instead of leaking a promise.
-const pending = ref(null);
+const pending = ref<any>(null);
 
 // Whether a <ConfirmDialog /> host is currently mounted. When no host exists
 // (unit tests, or a component mounted outside App.vue) confirmAction falls back
