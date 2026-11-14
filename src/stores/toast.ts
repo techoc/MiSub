@@ -2,33 +2,42 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { TIMING } from '../constants/timing.ts';
 
-const DURATION_BY_TYPE = {
+const DURATION_BY_TYPE: Record<string, number> = {
     success: TIMING.TOAST_DURATION_SUCCESS,
     error: TIMING.TOAST_DURATION_ERROR,
     warning: TIMING.TOAST_DURATION_WARNING,
 };
 
-export const useToastStore = defineStore('toast', () => {
-    const toasts = ref<any[]>([]);
-    const queue = ref<any[]>([]);
+/** 单条 toast */
+interface ToastItem {
+    id: string;
+    message: unknown;
+    type: string;
+    duration: number;
+}
 
-    function _resolveDuration(type: any, duration: any) {
+export const useToastStore = defineStore('toast', () => {
+    const toasts = ref<ToastItem[]>([]);
+    const queue = ref<ToastItem[]>([]);
+
+    function _resolveDuration(type: string, duration: number | undefined): number {
         if (duration !== undefined) return duration;
-        return (DURATION_BY_TYPE as Record<string, any>)[type] ?? TIMING.TOAST_DURATION_MS;
+        return DURATION_BY_TYPE[type] ?? TIMING.TOAST_DURATION_MS;
     }
 
-    function _display(toastItem: any) {
+    function _display(toastItem: ToastItem): void {
         toasts.value.push(toastItem);
         setTimeout(() => removeToast(toastItem.id), toastItem.duration);
     }
 
     function _flush() {
         while (toasts.value.length < TIMING.TOAST_MAX_VISIBLE && queue.value.length > 0) {
-            _display(queue.value.shift());
+            const next = queue.value.shift();
+            if (next) _display(next);
         }
     }
 
-    function showToast(message: any, type = 'info', duration?: number) {
+    function showToast(message: unknown, type = 'info', duration?: number): void {
         const id = Date.now() + Math.random().toString(36).substring(2, 7);
         const toastItem = { id, message, type, duration: _resolveDuration(type, duration) };
 
@@ -39,8 +48,8 @@ export const useToastStore = defineStore('toast', () => {
         }
     }
 
-    function removeToast(id: any) {
-        const index = toasts.value.findIndex((t) => (t as Record<string, any>).id === id);
+    function removeToast(id: string): void {
+        const index = toasts.value.findIndex((t) => t.id === id);
         if (index > -1) {
             toasts.value.splice(index, 1);
             _flush();
