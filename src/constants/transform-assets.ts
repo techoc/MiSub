@@ -270,11 +270,18 @@ export const TRANSFORM_ASSETS = {
     ],
 };
 
-export function getTransformAssetByUrl(url: any) {
+/** 资产条目中本模块用到的字段 */
+interface TransformAssetRecord {
+    nameKey?: string;
+    descriptionKey?: string;
+    [key: string]: unknown;
+}
+
+export function getTransformAssetByUrl(url: unknown) {
     return TRANSFORM_ASSETS.configs.find((item) => item.url === url) || null;
 }
 
-export function isBuiltinTransformAssetUrl(url: any) {
+export function isBuiltinTransformAssetUrl(url: unknown): boolean {
     return typeof url === 'string' && url.startsWith('builtin:');
 }
 
@@ -285,21 +292,24 @@ export function isBuiltinTransformAssetUrl(url: any) {
  * @param {(key: string) => string} t i18n 翻译函数
  * @returns {object|null} 附带 name / description 的新对象，入参不会被修改
  */
-export function localizeTransformAsset(asset: any, t: any) {
+export function localizeTransformAsset(asset: unknown, t: (key: string) => string) {
     if (!asset) return null;
+    const record = asset as TransformAssetRecord;
     return {
-        ...asset,
-        name: asset.nameKey ? t(asset.nameKey) : '',
-        description: asset.descriptionKey ? t(asset.descriptionKey) : '',
+        ...record,
+        name: record.nameKey ? t(record.nameKey) : '',
+        description: record.descriptionKey ? t(record.descriptionKey) : '',
     };
 }
 
 /** 解析全部资产。请在 computed 里调用，否则切换语言不会更新。 */
-export function getLocalizedTransformAssets(t: any) {
-    return TRANSFORM_ASSETS.configs.map((asset) => localizeTransformAsset(asset, t));
+export function getLocalizedTransformAssets(t: (key: string) => string) {
+    return TRANSFORM_ASSETS.configs
+        .map((asset) => localizeTransformAsset(asset, t))
+        .filter((asset): asset is NonNullable<typeof asset> => asset !== null);
 }
 
 /** 按 url 查找并解析。请在 computed 里调用。 */
-export function getLocalizedTransformAssetByUrl(url: any, t: any) {
+export function getLocalizedTransformAssetByUrl(url: unknown, t: (key: string) => string) {
     return localizeTransformAsset(getTransformAssetByUrl(url), t);
 }

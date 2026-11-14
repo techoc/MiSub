@@ -5,13 +5,13 @@
         variant: {
             type: String,
             default: 'primary',
-            validator: (value) =>
-                ['primary', 'secondary', 'danger', 'ghost', 'outline'].includes(value as any),
+            validator: (value: unknown) =>
+                ['primary', 'secondary', 'danger', 'ghost', 'outline'].includes(String(value)),
         },
         size: {
             type: String,
             default: 'md',
-            validator: (value) => ['sm', 'md', 'lg'].includes(value as any),
+            validator: (value: unknown) => ['sm', 'md', 'lg'].includes(String(value)),
         },
         loading: {
             type: Boolean,
@@ -44,7 +44,7 @@
     const emit = defineEmits(['click']);
 
     const variantClasses = computed(() => {
-        const variants = {
+        const variants: Record<string, string> = {
             primary:
                 'bg-primary-600 hover:bg-primary-500 text-white border border-primary-500/70 active:scale-[0.98]',
             secondary:
@@ -54,27 +54,30 @@
             outline:
                 'bg-transparent hover:bg-primary-50 dark:hover:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40 dark:border-primary-400/40',
         };
-        return (variants as Record<string, any>)[props.variant];
+        return variants[props.variant];
     });
 
     const sizeClasses = computed(() => {
         if (props.iconOnly) {
-            const sizes = {
+            const sizes: Record<string, string> = {
                 sm: 'p-1.5',
                 md: 'p-2',
                 lg: 'p-3',
             };
-            return (sizes as Record<string, any>)[props.size];
+            return sizes[props.size];
         }
-        const sizes = {
+        const sizes: Record<string, string> = {
             sm: 'px-3 py-1.5 text-xs gap-1.5',
             md: 'px-4 py-2 text-sm gap-2',
             lg: 'px-6 py-2.5 text-base gap-2',
         };
-        return (sizes as Record<string, any>)[props.size];
+        return sizes[props.size];
     });
 
-    const handleClick = (event: any) => {
+    /** button 元素的 type 只接受这三种字面量 */
+    const buttonType = computed(() => props.type as 'button' | 'submit' | 'reset');
+
+    const handleClick = (event: MouseEvent) => {
         if (!props.disabled && !props.loading) {
             emit('click', event);
         }
@@ -83,7 +86,7 @@
 
 <template>
     <button
-        :type="type as any"
+        :type="buttonType"
         :disabled="disabled || loading"
         :aria-label="ariaLabel"
         @click="handleClick"

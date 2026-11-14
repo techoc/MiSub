@@ -125,10 +125,12 @@
         if (props.customTemplatesOnly) return customTemplateAssets.value;
 
         // 在 computed 里解析模板名称，切换语言时下拉框即时更新。
-        const builtinAndRemote = getLocalizedTransformAssets(t).filter((item: TransformAsset) => {
-            if (!props.excludeBuiltinAssets) return true;
-            return !String(item.url || '').startsWith('builtin:');
-        });
+        const builtinAndRemote = (getLocalizedTransformAssets(t) as TransformAsset[]).filter(
+            (item) => {
+                if (!props.excludeBuiltinAssets) return true;
+                return !String(item.url || '').startsWith('builtin:');
+            }
+        );
         return [...customTemplateAssets.value, ...builtinAndRemote];
     });
 
