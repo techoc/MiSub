@@ -17,11 +17,12 @@ export const NODE_PROTOCOL_REGEX =
  * 判断代理是否指向本机/未指定地址。
  * 这类地址不能作为订阅中的真实出口节点。
  */
-export function isLocalProxyEndpoint(proxy: any) {
+export function isLocalProxyEndpoint(proxy: unknown): boolean {
     let host = '';
 
     if (proxy && typeof proxy === 'object') {
-        host = proxy.server || proxy.host || '';
+        const record = proxy as { server?: string; host?: string };
+        host = record.server || record.host || '';
     } else if (typeof proxy === 'string') {
         try {
             host = new URL(proxy).hostname;
@@ -46,7 +47,7 @@ export function isLocalProxyEndpoint(proxy: any) {
     );
 }
 
-function normalizeBase64(input: any) {
+function normalizeBase64(input: unknown): string {
     let normalized = String(input || '')
         .replace(/\s+/g, '')
         .replace(/-/g, '+')
@@ -56,18 +57,18 @@ function normalizeBase64(input: any) {
     return normalized;
 }
 
-function base64UrlSafeEncodeUtf8(str: any) {
+function base64UrlSafeEncodeUtf8(str: string): string {
     return btoa(unescape(encodeURIComponent(str)))
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/g, '');
 }
 
-function base64UrlSafeDecodeUtf8(str: any) {
+function base64UrlSafeDecodeUtf8(str: string): string {
     return decodeURIComponent(escape(atob(normalizeBase64(str))));
 }
 
-function updateSsrRemarks(link: any, updater: any) {
+function updateSsrRemarks(link: string, updater: (name: string) => string): string {
     if (!link || !link.toLowerCase().startsWith('ssr://')) return link;
     try {
         const rawPayload = link.substring('ssr://'.length).split('#')[0];
@@ -79,7 +80,7 @@ function updateSsrRemarks(link: any, updater: any) {
         const mainPart = decoded.substring(0, queryIndex + queryMarker.length);
         const params = new URLSearchParams(decoded.substring(queryIndex + queryMarker.length));
         const oldRemarks = params.get('remarks')
-            ? base64UrlSafeDecodeUtf8(params.get('remarks'))
+            ? base64UrlSafeDecodeUtf8(params.get('remarks') ?? '')
             : '';
         const newRemarks = updater(oldRemarks);
         if (!newRemarks || newRemarks === oldRemarks)
@@ -94,17 +95,17 @@ function updateSsrRemarks(link: any, updater: any) {
 /**
  * 为节点名称添加前缀
  */
-export function prependNodeName(link: any, prefix: any) {
+export function prependNodeName(link: string, prefix: string): string {
     if (!prefix) return link;
 
     if (link?.toLowerCase?.().startsWith('ssr://')) {
-        return updateSsrRemarks(link, (originalName: any) => {
+        return updateSsrRemarks(link, (originalName) => {
             if (originalName.startsWith(prefix)) return originalName;
             return originalName ? `${prefix} - ${originalName}` : prefix;
         });
     }
 
-    const appendToFragment = (baseLink: any, namePrefix: any) => {
+    const appendToFragment = (baseLink: string, namePrefix: string): string => {
         const hashIndex = baseLink.lastIndexOf('#');
         let originalName = '';
         if (hashIndex !== -1) {
@@ -152,16 +153,16 @@ export function prependNodeName(link: any, prefix: any) {
 /**
  * [兼容导出] 从节点URL提取地区信息
  */
-export function extractRegionFromNodeName(nodeName: any) {
+export function extractRegionFromNodeName(nodeName: unknown): string {
     return extractNodeRegion(nodeName);
 }
 
 /**
  * 为节点链接添加国旗 Emoji
  */
-export function addFlagEmoji(link: any) {
+export function addFlagEmoji(link: string): string {
     if (!link) return link;
-    const appendEmoji = (name: any) => {
+    const appendEmoji = (name: string): string => {
         if (!name) return name;
 
         // 更全面的 Emoji 检测正则 (涵盖国旗、地区符号等)
@@ -238,10 +239,10 @@ export function addFlagEmoji(link: any) {
     }
 }
 
-export function removeFlagEmoji(link: any) {
+export function removeFlagEmoji(link: string): string {
     if (!link) return link;
 
-    const stripFlagEmoji = (name: any) => {
+    const stripFlagEmoji = (name: string): string => {
         if (!name) return name;
         let cleaned = name;
         const patterns = [
@@ -256,7 +257,7 @@ export function removeFlagEmoji(link: any) {
         }
         return cleaned.replace(/\s{2,}/g, ' ').trim();
     };
-    const decodeVmessPayload = (raw: any) => {
+    const decodeVmessPayload = (raw: string): Record<string, unknown> | null => {
         try {
             let base64Part = raw;
             if (base64Part.includes('%')) {
@@ -282,7 +283,7 @@ export function removeFlagEmoji(link: any) {
             const payload = link.substring('vmess://'.length);
             const nodeConfig = decodeVmessPayload(payload);
             if (!nodeConfig || typeof nodeConfig !== 'object') return link;
-            if (nodeConfig.ps) {
+            if (typeof nodeConfig.ps === 'string') {
                 nodeConfig.ps = stripFlagEmoji(nodeConfig.ps);
                 const newJsonString = JSON.stringify(nodeConfig);
                 const newBase64Part = btoa(unescape(encodeURIComponent(newJsonString)));
@@ -308,14 +309,14 @@ export function removeFlagEmoji(link: any) {
 /**
  * [核心修复] 修复节点URL中的编码问题（包含 Hysteria2 密码解码）
  */
-export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = {}) {
+export function fixNodeUrlEncoding(nodeUrl: string, options: Record<string, unknown> = {}): string {
     if (typeof nodeUrl !== 'string' || nodeUrl.length === 0) {
         return nodeUrl;
     }
 
-    const { plusAsSpace = false } = options;
+    const plusAsSpace = options.plusAsSpace === true;
 
-    const normalizeFragment = (url: any) => {
+    const normalizeFragment = (url: string): string => {
         const hashIndex = url.lastIndexOf('#');
         if (hashIndex === -1) return url;
 
@@ -334,14 +335,14 @@ export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = 
 
     // 1. 针对 Hysteria2/Hy2 的用户名与参数进行解码
     if (nodeUrl.startsWith('hysteria2://') || nodeUrl.startsWith('hy2://')) {
-        const safeDecode = (value: any) => {
+        const safeDecode = (value: string): string => {
             try {
                 return decodeURIComponent(value);
             } catch (e) {
                 return value;
             }
         };
-        const shouldKeepRaw = (decoded: any) => /[&=]/.test(decoded);
+        const shouldKeepRaw = (decoded: string) => /[&=]/.test(decoded);
 
         // 解码 userinfo（密码）
         nodeUrl = nodeUrl.replace(/^(hysteria2|hy2):\/\/([^@]+)@/i, (match, scheme, auth) => {
@@ -355,7 +356,7 @@ export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = 
         // 解码 query 中的常用字段
         nodeUrl = nodeUrl.replace(
             /([?&](?:obfs-password|auth|password)=)([^&]+)/gi,
-            (match: any, prefix: any, value: any) => {
+            (match, prefix, value) => {
                 const decoded = safeDecode(value);
                 return shouldKeepRaw(decoded) ? match : `${prefix}${decoded}`;
             }
@@ -415,11 +416,11 @@ export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = 
  * @param {string} nodeUrl
  * @returns {string} processedNodeUrl
  */
-export function sanitizeNodeForYaml(nodeUrl: any) {
+export function sanitizeNodeForYaml(nodeUrl: string): string {
     if (!nodeUrl) return nodeUrl;
 
     // 针对不同协议提取和替换名称
-    const sanitizeName = (name: any) => {
+    const sanitizeName = (name: string): string => {
         if (!name) return name;
         // YAML Flow Style Unquoted Scalars cannot start with:
         // [, ], {, }, ,, :, -, ?, !, #, &, *, %, >, |, @

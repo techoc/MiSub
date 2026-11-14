@@ -417,7 +417,7 @@ export function parseNodeList(
                     // 尝试自动修复
                     const fixResult = fixSS2022Node(fixedUrl);
                     if (fixResult.fixed) {
-                        fixedUrl = fixResult.fixedUrl;
+                        fixedUrl = fixResult.fixedUrl ?? fixedUrl;
                         ss2022Warning = {
                             type: 'ss2022_auto_fixed',
                             message: `已自动修复: ${fixResult.changes!.from} → ${fixResult.changes!.to}`,
@@ -533,7 +533,11 @@ export function parseNodeList(
             // 6. 添加元数据提取 (Intelligence)
             const metadata = extractNodeMetadata(nodeInfo.name);
 
-            const result = { ...nodeInfo, url: fixedUrl, metadata: metadata } as unknown as ProxyNode;
+            const result = {
+                ...nodeInfo,
+                url: fixedUrl,
+                metadata: metadata,
+            } as unknown as ProxyNode;
 
             if (ss2022Warning) {
                 result.warning = ss2022Warning;
