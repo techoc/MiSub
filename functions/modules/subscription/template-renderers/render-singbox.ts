@@ -14,17 +14,42 @@ import {
     pinRemoteRuleUrl,
 } from '../builtin-rules-provider.ts';
 import { stripPolicyMembersForAutoGroup, withPolicyFallbacks } from '../policy-fallbacks.ts';
+import type { KvRecord, ProxyNode } from '../../../../types/models.ts';
 
-function sanitizeTag(value: any) {
+/** sing-box TLS 配置 */
+interface SingboxTls {
+    enabled?: boolean;
+    server_name?: string;
+    insecure?: boolean;
+    alpn?: unknown;
+    utls?: Record<string, unknown>;
+    reality?: Record<string, unknown>;
+    [key: string]: unknown;
+}
+
+/** sing-box 出站对象 */
+interface SingboxOutbound {
+    tag: string;
+    type: string;
+    server?: string;
+    server_port?: number;
+    tls?: SingboxTls;
+    transport?: Record<string, unknown>;
+    outbounds?: string[];
+    [key: string]: unknown;
+}
+
+function sanitizeTag(value: unknown): string {
     return String(value || '').trim() || 'Untitled';
 }
 
-function parsePort(port: any) {
+function parsePort(port: unknown): number | undefined {
     const num = Number.parseInt(String(port), 10);
     return Number.isFinite(num) ? num : undefined;
 }
 
-function buildOutbound(proxy: any) {
+function buildOutbound(proxyInput: unknown): SingboxOutbound | null {
+    const proxy = proxyInput as ProxyNode | null;
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const type = String(proxy.type || '').toLowerCase();
@@ -34,7 +59,7 @@ function buildOutbound(proxy: any) {
     if (!serverPort) return null;
 
     if (type === 'http' || type === 'https') {
-        const outbound: Record<string, any> = {
+        const outbound: SingboxOutbound = {
             tag,
             type: 'http',
             server,
@@ -68,7 +93,7 @@ function buildOutbound(proxy: any) {
     }
 
     if (type === 'ss' || type === 'shadowsocks') {
-        const outbound: Record<string, any> = {
+        const outbound: SingboxOutbound = {
             tag,
             type: 'shadowsocks',
             server,
@@ -92,7 +117,7 @@ function buildOutbound(proxy: any) {
     }
 
     if (type === 'vmess') {
-        const outbound: Record<string, any> = {
+        const outbound: SingboxOutbound = {
             tag,
             type: 'vmess',
             server,
@@ -133,15 +158,13 @@ function buildOutbound(proxy: any) {
                 insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
             };
             if (proxy.alpn)
-                (outbound.tls as Record<string, any>).alpn = Array.isArray(proxy.alpn)
-                    ? proxy.alpn
-                    : [proxy.alpn];
+                outbound.tls!.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
         }
         return outbound;
     }
 
     if (type === 'vless') {
-        const outbound: Record<string, any> = {
+        const outbound: SingboxOutbound = {
             tag,
             type: 'vless',
             server,
@@ -182,7 +205,7 @@ function buildOutbound(proxy: any) {
 
             const fingerprint = proxy['client-fingerprint'] || proxy.clientFingerprint || proxy.fp;
             if (fingerprint) {
-                (outbound.tls as Record<string, any>).utls = {
+                outbound.tls!.utls = {
                     enabled: true,
                     fingerprint: fingerprint,
                 };
@@ -190,13 +213,13 @@ function buildOutbound(proxy: any) {
 
             const realityOpts = proxy['reality-opts'] || proxy.realityOpts;
             if (realityOpts) {
-                (outbound.tls as Record<string, any>).reality = {
+                outbound.tls!.reality = {
                     enabled: true,
                     public_key: realityOpts['public-key'] || realityOpts.publicKey || '',
                     short_id: realityOpts['short-id'] || realityOpts.shortId || '',
                 };
                 if (realityOpts['spider-x'] || realityOpts.spiderX) {
-                    (outbound.tls as Record<string, any>).reality.spider_x =
+                    outbound.tls!.reality!.spider_x =
                         realityOpts['spider-x'] || realityOpts.spiderX;
                 }
             }
@@ -220,7 +243,7 @@ function buildOutbound(proxy: any) {
     }
 
     if (type === 'tuic') {
-        const outbound: Record<string, any> = {
+        const outbound: SingboxOutbound = {
             tag,
             type: 'tuic',
             server,
@@ -233,7 +256,7 @@ function buildOutbound(proxy: any) {
                 insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
             },
         };
-        if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+        if (proxy.alpn) outbound.tls!.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
         const congestionControl =
             proxy['congestion-control'] || proxy['congestion-controller'] || proxy.congestion;
         if (congestionControl) outbound.congestion_control = congestionControl;
@@ -266,7 +289,7 @@ function buildOutbound(proxy: any) {
     return null;
 }
 
-function mapGroupType(type: any) {
+function mapGroupType(type: unknown): string {
     const normalized = String(type || '').toLowerCase();
     if (normalized === 'select') return 'selector';
     if (normalized === 'url-test') return 'urltest';
@@ -274,28 +297,31 @@ function mapGroupType(type: any) {
     return 'selector';
 }
 
-function buildGroupOutbounds(groups: any) {
-    return groups.map((group: any) => {
+function buildGroupOutbounds(groups: Array<Record<string, unknown>>): SingboxOutbound[] {
+    return groups.map((group) => {
         const mappedType = mapGroupType(group.type);
-        const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
+        const rawMembers: string[] = Array.isArray(group.members)
+            ? (group.members as string[]).filter(Boolean)
+            : [];
         // urltest 剥离内置策略成员；纯 REJECT/DIRECT 存根组（剥后为空）原样保留，
         // 随后所有组统一补 REJECT/DIRECT 兜底
         const members = ['urltest'].includes(mappedType)
             ? stripPolicyMembersForAutoGroup(rawMembers)
             : rawMembers;
-        const outbound: Record<string, any> = {
+        const outbound: SingboxOutbound = {
             tag: sanitizeTag(group.name),
             type: mappedType,
-            outbounds: withPolicyFallbacks(members, mappedType),
+            outbounds: withPolicyFallbacks(members, mappedType) as string[],
         };
 
         if (mappedType === 'urltest') {
-            outbound.url = group.options?.url || 'http://www.gstatic.com/generate_204';
-            outbound.interval = `${group.options?.interval || 300}s`;
+            const groupOptions = (group.options || {}) as { url?: string; interval?: number };
+            outbound.url = groupOptions.url || 'http://www.gstatic.com/generate_204';
+            outbound.interval = `${groupOptions.interval || 300}s`;
         }
 
-        if (outbound.outbounds.length > 0) {
-            outbound.default = outbound.outbounds[0];
+        if ((outbound.outbounds || []).length > 0) {
+            outbound.default = outbound.outbounds![0];
         }
 
         return outbound;
@@ -308,13 +334,17 @@ const SINGBOX_BUILTIN_OUTBOUNDS = new Set(['DIRECT', 'REJECT', 'REJECT-DROP', 'P
  * 规则出口必须指向真实渲染出的组/节点或内置策略；
  * 渲染时被丢弃的组（空成员 fail-closed 等）不能留下悬空规则或 route.final。
  */
-function isRenderableRuleOutbound(policy: any, groupTags: any, proxyTags: any) {
+function isRenderableRuleOutbound(
+    policy: unknown,
+    groupTags: Set<string>,
+    proxyTags: Set<string>
+): boolean {
     const value = String(policy || '').trim();
     if (!value) return false;
     return SINGBOX_BUILTIN_OUTBOUNDS.has(value) || groupTags.has(value) || proxyTags.has(value);
 }
 
-function mapRuleToSingbox(rule: any) {
+function mapRuleToSingbox(rule: KvRecord): Record<string, unknown> | null {
     const type = String(rule.type || '').toLowerCase();
     if (type === 'rule-set') {
         return {
@@ -356,7 +386,7 @@ function mapRuleToSingbox(rule: any) {
     return null;
 }
 
-function detectRuleSetFormat(url: any) {
+function detectRuleSetFormat(url: unknown): string {
     const raw = String(url || '')
         .trim()
         .toLowerCase();
@@ -364,13 +394,16 @@ function detectRuleSetFormat(url: any) {
     return raw.endsWith('.srs') ? 'binary' : 'source';
 }
 
-function buildRuleSets(rules: any, dnsDetour = DNS_PROXY_GROUP) {
+function buildRuleSets(
+    rules: KvRecord[],
+    dnsDetour = DNS_PROXY_GROUP
+): Array<Record<string, unknown>> {
     const remoteRuleSets = rules
         .filter(
-            (rule: any) =>
+            (rule) =>
                 String(rule.type || '').toLowerCase() === 'rule-set' && rule.source === 'remote'
         )
-        .map((rule: any) => ({
+        .map((rule) => ({
             tag: sanitizeTag(`${rule.policy}_${rule.value}`),
             type: 'remote',
             format: detectRuleSetFormat(rule.value),
@@ -379,10 +412,10 @@ function buildRuleSets(rules: any, dnsDetour = DNS_PROXY_GROUP) {
             download_detour: dnsDetour,
         }));
 
-    const implicitRuleSets: any[] = [];
-    const seen = new Set();
+    const implicitRuleSets: Array<Record<string, unknown>> = [];
+    const seen = new Set<string>();
 
-    rules.forEach((rule: any) => {
+    rules.forEach((rule) => {
         const type = String(rule.type || '').toLowerCase();
         if (type === 'geoip' || type === 'geosite') {
             const value = String(rule.value || 'cn').toLowerCase();
@@ -411,10 +444,17 @@ function buildRuleSets(rules: any, dnsDetour = DNS_PROXY_GROUP) {
     return [...remoteRuleSets, ...implicitRuleSets];
 }
 
-export function renderSingboxFromTemplateModel(model: any, options: Record<string, any> = {}) {
-    const normalizedModel = normalizeUnifiedTemplateModel(model);
+export function renderSingboxFromTemplateModel(
+    model: unknown,
+    options: Record<string, unknown> = {}
+) {
+    const normalizedModel = normalizeUnifiedTemplateModel(model as Record<string, unknown>);
+    const rawGeneratorOptions =
+        options.generatorOptions || normalizedModel.settings?.generatorOptions;
     const generatorOptions = normalizeGeneratorOptions(
-        options.generatorOptions || normalizedModel.settings?.generatorOptions
+        rawGeneratorOptions && typeof rawGeneratorOptions === 'object'
+            ? (rawGeneratorOptions as Record<string, unknown>)
+            : {}
     );
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
@@ -425,15 +465,17 @@ export function renderSingboxFromTemplateModel(model: any, options: Record<strin
         Array.isArray(normalizedModel.proxies) && normalizedModel.proxies.length > 0
             ? normalizedModel.proxies
             : urlsToClashProxies(proxyUrls);
-    const proxyOutbounds = proxies.map(buildOutbound).filter(Boolean);
+    const proxyOutbounds = proxies
+        .map(buildOutbound)
+        .filter((outbound): outbound is SingboxOutbound => Boolean(outbound));
     // 渲染组集合：每个组统一补 REJECT/DIRECT 兜底（纯 REJECT/DIRECT 存根组原样保留，
     // 不再剥离），因此任何组都不会为空——sing-box 对空 outbounds 的 urltest/selector
     // 直接解析失败
     const groupOutbounds = buildGroupOutbounds(normalizedModel.groups).filter(
-        (outbound: any) => (outbound.outbounds || []).length > 0
+        (outbound) => (outbound.outbounds || []).length > 0
     );
-    const renderedGroupTags = new Set(groupOutbounds.map((outbound: any) => outbound.tag));
-    const renderedProxyTags = new Set(proxyOutbounds.map((outbound) => outbound!.tag));
+    const renderedGroupTags = new Set(groupOutbounds.map((outbound) => outbound.tag));
+    const renderedProxyTags = new Set(proxyOutbounds.map((outbound) => outbound.tag));
     // DNS 出口 detour 只能引用真实渲染出来的组；组已不再因空成员被丢弃，
     // 降级只剩两种来源：injectDnsExitGroup=false 显式关闭，或 explicit DNS
     // 覆盖跳过注入导致模型中没有该组
@@ -469,7 +511,7 @@ export function renderSingboxFromTemplateModel(model: any, options: Record<strin
             .filter(Boolean),
     ];
     const defaultOutbound =
-        groupOutbounds.find((outbound: any) => outbound.tag !== DNS_PROXY_GROUP)?.tag || 'DIRECT';
+        groupOutbounds.find((outbound) => outbound.tag !== DNS_PROXY_GROUP)?.tag || 'DIRECT';
     const dnsConfig = buildSingboxDnsConfig(normalizedModel.settings?.customDnsOverride, {
         mode: normalizedModel.settings?.dnsMode,
         proxyGroup: dnsDetour,
