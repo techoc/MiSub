@@ -14,7 +14,12 @@ import type { KvRecord, ProfileItem, SubscriptionItem } from '../../../../types/
 /**
  * 处理 /delete 命令
  */
-export async function handleDeleteCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleDeleteCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         const target = parseTargetArgs(args);
 
@@ -51,9 +56,7 @@ export async function handleDeleteCommand(chatId: string | number, userId: strin
             }
         } else if (target.type === 'id') {
             for (const id of target.values!) {
-                const foundIdx = allSubscriptions.findIndex(
-                    (s: SubscriptionItem) => s.id === id
-                );
+                const foundIdx = allSubscriptions.findIndex((s: SubscriptionItem) => s.id === id);
                 if (foundIdx !== -1 && indexMapping.includes(foundIdx)) {
                     indicesToDelete.push(foundIdx);
                 }
@@ -138,14 +141,24 @@ export async function handleDeleteCommand(chatId: string | number, userId: strin
 /**
  * 处理 /enable 命令
  */
-export async function handleEnableCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleEnableCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     await handleToggleCommand(chatId, userId, args, env, true);
 }
 
 /**
  * 处理 /disable 命令
  */
-export async function handleDisableCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleDisableCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     await handleToggleCommand(chatId, userId, args, env, false);
 }
 
@@ -231,7 +244,12 @@ export async function handleToggleCommand(
 /**
  * 处理 /search 命令
  */
-export async function handleSearchCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleSearchCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         const keyword = args.join(' ').trim();
 
@@ -252,8 +270,10 @@ export async function handleSearchCommand(chatId: string | number, userId: strin
         const userNodes = await getUserNodes(userId, env);
         const lowerKeyword = keyword.toLowerCase();
 
-        const results = userNodes.filter((node, idx) => {
-            const protocol = node.url.split('://')[0].toLowerCase();
+        const results = userNodes.filter((node) => {
+            const protocol = String(node.url || '')
+                .split('://')[0]
+                .toLowerCase();
             return (
                 node.name.toLowerCase().includes(lowerKeyword) || protocol.includes(lowerKeyword)
             );
@@ -267,7 +287,9 @@ export async function handleSearchCommand(chatId: string | number, userId: strin
         let message = `🔍 <b>搜索结果</b>：${results.length} 个\n\n`;
 
         results.slice(0, 10).forEach((node, i) => {
-            const protocol = node.url.split('://')[0].toUpperCase();
+            const protocol = String(node.url || '')
+                .split('://')[0]
+                .toUpperCase();
             const status = node.enabled ? '✅' : '⛔';
             const originalIdx = userNodes.indexOf(node) + 1;
             message += `<b>${originalIdx}.</b> ${status} ${node.name} (${protocol})\n`;
@@ -437,7 +459,12 @@ export async function handleSubCommandSimple(
 /**
  * 处理 /rename 命令
  */
-export async function handleRenameCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleRenameCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         if (args.length < 2) {
             await sendTelegramMessage(
@@ -499,7 +526,12 @@ export async function handleRenameCommand(chatId: string | number, userId: strin
 /**
  * 处理 /info 命令 - 节点详情
  */
-export async function handleInfoCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleInfoCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         if (args.length === 0) {
             await sendTelegramMessage(
@@ -528,7 +560,8 @@ export async function handleInfoCommand(chatId: string | number, userId: string 
         }
 
         const node = userNodes[idx];
-        const protocol = node.url.split('://')[0].toUpperCase();
+        const nodeUrl = String(node.url || '');
+        const protocol = nodeUrl.split('://')[0].toUpperCase();
         const status = node.enabled ? '✅ 启用' : '⛔ 禁用';
         const createdAt = node.created_at
             ? new Date(node.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
@@ -537,7 +570,7 @@ export async function handleInfoCommand(chatId: string | number, userId: string 
         // 脱敏显示服务器地址
         let serverInfo = '未解析';
         try {
-            const urlPart = node.url.split('://')[1]?.split('#')[0];
+            const urlPart = nodeUrl.split('://')[1]?.split('#')[0];
             if (urlPart) {
                 // 简单脱敏
                 serverInfo =
@@ -585,7 +618,12 @@ export async function handleInfoCommand(chatId: string | number, userId: string 
 /**
  * 处理 /copy 命令 - 复制节点链接
  */
-export async function handleCopyCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleCopyCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         const target = parseTargetArgs(args);
 
@@ -613,9 +651,7 @@ export async function handleCopyCommand(chatId: string | number, userId: string 
         if (target.type === 'all') {
             indicesToCopy = userNodes.map((_, i) => i);
         } else if (target.type === 'index') {
-            indicesToCopy = target.values.filter(
-                (idx) => idx >= 0 && idx < userNodes.length
-            );
+            indicesToCopy = target.values.filter((idx) => idx >= 0 && idx < userNodes.length);
         }
 
         if (indicesToCopy.length === 0) {
@@ -653,7 +689,12 @@ export async function handleCopyCommand(chatId: string | number, userId: string 
 /**
  * 处理 /export 命令 - 导出节点
  */
-export async function handleExportCommand(chatId: string | number, userId: string | number, args: string[], env: Env) {
+export async function handleExportCommand(
+    chatId: string | number,
+    userId: string | number,
+    args: string[],
+    env: Env
+) {
     try {
         const userNodes = await getUserNodes(userId, env);
 

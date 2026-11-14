@@ -320,13 +320,14 @@ export async function handleStatsCommand(
         const protocolCounts = {};
 
         userNodes.forEach((node) => {
-            const isSub = /^https?:\/\//i.test(node.url);
+            const nodeUrl = String(node.url || '');
+            const isSub = /^https?:\/\//i.test(nodeUrl);
 
             if (isSub) {
                 subCount++;
             } else {
                 nodeCount++;
-                const protocol = node.url.split('://')[0].toUpperCase();
+                const protocol = nodeUrl.split('://')[0].toUpperCase();
                 (protocolCounts as Record<string, any>)[protocol] =
                     ((protocolCounts as Record<string, any>)[protocol] || 0) + 1;
             }

@@ -4,22 +4,58 @@
  */
 
 import { getStorageAdapter, getTelegramPushConfig } from './cache.ts';
+import type { ProfileItem, SubscriptionItem } from '../../../../types/models.ts';
+
+/** Telegram 推送配置（getTelegramPushConfig 的产物形状） */
+interface TelegramPushConfig {
+    enabled?: boolean;
+    bot_token?: string;
+    webhook_secret?: string;
+    allowed_user_ids?: unknown[];
+    allow_all_users?: boolean;
+    rate_limit?: { max_per_minute?: number; max_per_day?: number };
+    default_profile_id?: string;
+    auto_bind?: boolean;
+    user_bindings?: Record<string, string>;
+}
+
+/** 权限检查结果 */
+interface PermissionResult {
+    allowed: boolean;
+    reason?: string;
+}
+
+/** 用户节点读取用到的存储适配器最小面 */
+interface TelegramStorageAdapter {
+    getAllSubscriptions(): Promise<SubscriptionItem[]>;
+    putAllSubscriptions(items: SubscriptionItem[]): Promise<unknown>;
+    getAllProfiles(): Promise<ProfileItem[]>;
+    putAllProfiles(profiles: ProfileItem[]): Promise<unknown>;
+}
+
+/** getNodesWithMapping 的返回结构 */
+export interface TelegramNodesContext {
+    allSubscriptions: SubscriptionItem[];
+    userNodes: SubscriptionItem[];
+    indexMapping: number[];
+    storageAdapter: TelegramStorageAdapter;
+}
 
 // ==================== 验证函数 ====================
 
 /**
  * 验证 Telegram Webhook 请求
  */
-export function verifyTelegramRequest(request: any, config: any) {
+export function verifyTelegramRequest(request: Request, config: TelegramPushConfig): boolean {
     const secretToken = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
     return secretToken === config.webhook_secret;
 }
 
-function getUserBindingKey(userId: any) {
-    return userId?.toString().trim();
+function getUserBindingKey(userId: unknown): string {
+    return String(userId ?? '').trim();
 }
 
-export function getUserBoundProfileId(config: any, userId: any) {
+export function getUserBoundProfileId(config: TelegramPushConfig, userId: unknown): string {
     const bindingKey = getUserBindingKey(userId);
     const bindings = config?.user_bindings || {};
 
@@ -34,7 +70,11 @@ export function getUserBoundProfileId(config: any, userId: any) {
     return '';
 }
 
-export function setUserBoundProfileId(config: any, userId: any, profileId: any) {
+export function setUserBoundProfileId(
+    config: TelegramPushConfig,
+    userId: unknown,
+    profileId: string
+) {
     const bindingKey = getUserBindingKey(userId);
     const bindings =
         config.user_bindings && typeof config.user_bindings === 'object'
@@ -51,7 +91,7 @@ export function setUserBoundProfileId(config: any, userId: any, profileId: any) 
 /**
  * 检查用户权限
  */
-export function checkUserPermission(userId: any, config: any) {
+export function checkUserPermission(userId: unknown, config: TelegramPushConfig): PermissionResult {
     if (!config.enabled) {
         return { allowed: false, reason: 'Bot 已被管理员禁用' };
     }
@@ -67,8 +107,8 @@ export function checkUserPermission(userId: any, config: any) {
         };
     }
 
-    const userIdStr = userId.toString();
-    if (!config.allowed_user_ids.some((id: any) => id.toString().trim() === userIdStr)) {
+    const userIdStr = String(userId);
+    if (!config.allowed_user_ids.some((id) => String(id).trim() === userIdStr)) {
         return { allowed: false, reason: '无权限使用此 Bot，请联系管理员添加白名单' };
     }
 
@@ -78,7 +118,11 @@ export function checkUserPermission(userId: any, config: any) {
 /**
  * 检查频率限制
  */
-export async function checkRateLimit(userId: any, env: any, config: any) {
+export async function checkRateLimit(
+    userId: unknown,
+    env: Env,
+    config: TelegramPushConfig
+): Promise<PermissionResult> {
     const minuteKey = `tg_push_rate:${userId}:min`;
     const dayKey = `tg_push_rate:${userId}:day`;
 
@@ -88,15 +132,17 @@ export async function checkRateLimit(userId: any, env: any, config: any) {
     const minuteCount = parseInt((await kv.get(minuteKey)) || '0');
     const dayCount = parseInt((await kv.get(dayKey)) || '0');
 
-    if (minuteCount >= config.rate_limit.max_per_minute) {
+    const maxPerMinute = config.rate_limit?.max_per_minute ?? Infinity;
+    const maxPerDay = config.rate_limit?.max_per_day ?? Infinity;
+    if (minuteCount >= maxPerMinute) {
         return {
             allowed: false,
-            reason: `操作过快，请1分钟后再试（${config.rate_limit.max_per_minute}/分钟）`,
+            reason: `操作过快，请1分钟后再试（${maxPerMinute}/分钟）`,
         };
     }
 
-    if (dayCount >= config.rate_limit.max_per_day) {
-        return { allowed: false, reason: `今日配额已用完（${config.rate_limit.max_per_day}/天）` };
+    if (dayCount >= maxPerDay) {
+        return { allowed: false, reason: `今日配额已用完（${maxPerDay}/天）` };
     }
 
     await kv.put(minuteKey, (minuteCount + 1).toString(), { expirationTtl: 60 });
@@ -110,8 +156,8 @@ export async function checkRateLimit(userId: any, env: any, config: any) {
 /**
  * 获取用户通过 Telegram 添加的节点
  */
-export async function getUserNodes(userId: any, env: any): Promise<any[]> {
-    const storageAdapter = await getStorageAdapter(env);
+export async function getUserNodes(userId: string | number, env: Env): Promise<SubscriptionItem[]> {
+    const storageAdapter = (await getStorageAdapter(env)) as TelegramStorageAdapter;
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
 
     // 检查用户是否在白名单中
@@ -125,24 +171,27 @@ export async function getUserNodes(userId: any, env: any): Promise<any[]> {
 
     // 否则仅返回该用户通过 Telegram 添加的节点（兜底逻辑）
     return allSubscriptions.filter(
-        (sub: any) => sub.source === 'telegram' && sub.telegram_user_id === userId
+        (sub) => sub.source === 'telegram' && sub.telegram_user_id === userId
     );
 }
 
 /**
  * 获取所有节点和用户节点的索引映射
  */
-export async function getNodesWithMapping(userId: any, env: any): Promise<Record<string, any>> {
-    const storageAdapter = await getStorageAdapter(env);
+export async function getNodesWithMapping(
+    userId: string | number,
+    env: Env
+): Promise<TelegramNodesContext> {
+    const storageAdapter = (await getStorageAdapter(env)) as TelegramStorageAdapter;
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
 
     const config = await getTelegramPushConfig(env);
     const permission = checkUserPermission(userId, config);
 
-    const userNodes: any[] = [];
-    const indexMapping: any[] = []; // userIndex -> allIndex
+    const userNodes: SubscriptionItem[] = [];
+    const indexMapping: number[] = []; // userIndex -> allIndex
 
-    allSubscriptions.forEach((sub: any, allIndex: any) => {
+    allSubscriptions.forEach((sub, allIndex) => {
         if (permission.allowed || (sub.source === 'telegram' && sub.telegram_user_id === userId)) {
             indexMapping.push(allIndex);
             userNodes.push(sub);
