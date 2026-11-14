@@ -8,12 +8,23 @@ import {
 const KV_KEY_CLIENTS = 'misub_clients_v1';
 const MAX_ICON_DATA_URL_BYTES = 200 * 1024;
 
-function getKV(env: any) {
-    return env?.MISUB_KV || null;
+/** 客户端配置用到的 KV 命名空间最小面（测试可注入 mock） */
+interface ClientKVNamespace {
+    get(key: string): Promise<string | null>;
+    put(key: string, value: string): Promise<unknown>;
 }
 
-function isStorageUnavailableError(error: any) {
-    const message = String(error?.message || error || '').toLowerCase();
+/** KV 读出的客户端记录（字段随版本扩展） */
+type ClientEntry = Record<string, unknown>;
+
+function getKV(env: Env): ClientKVNamespace | null {
+    return (env?.MISUB_KV as unknown as ClientKVNamespace | undefined) || null;
+}
+
+function isStorageUnavailableError(error: unknown): boolean {
+    const message = String(
+        (error as { message?: unknown } | null)?.message || error || ''
+    ).toLowerCase();
     return (
         message.includes('kv storage is paused') ||
         message.includes('storage is paused') ||
@@ -21,7 +32,7 @@ function isStorageUnavailableError(error: any) {
     );
 }
 
-const LEGACY_CLIENT_ICONS = {
+const LEGACY_CLIENT_ICONS: Record<string, string> = {
     'clash-verge-rev': '⚡️',
     'clash-party': '🎉',
     v2rayn: '💻',
@@ -41,7 +52,7 @@ const LEGACY_CLIENT_ICONS = {
     clashbox: '📦',
 };
 
-const LEGACY_ICON_ALIASES = {
+const LEGACY_ICON_ALIASES: Record<string, string> = {
     '/icons/clients/clash-verge-rev.png': '/icons/clients/clash-verge-rev.svg',
     '/icons/clients/clash-party.png': '/icons/clients/clash-party.svg',
     '/icons/clients/v2rayn.ico': '/icons/clients/v2rayn.svg',
@@ -234,18 +245,24 @@ const DEFAULT_CLIENTS = [
     },
 ];
 
-const DEFAULT_ICON_BY_ID = DEFAULT_CLIENTS.reduce((map, client) => {
-    (map as Record<string, any>)[client.id] = client.icon;
-    return map;
-}, {});
+const DEFAULT_ICON_BY_ID: Record<string, string> = DEFAULT_CLIENTS.reduce(
+    (map: Record<string, string>, client) => {
+        map[client.id] = client.icon;
+        return map;
+    },
+    {}
+);
 
-function migrateClientIcons(clients: any) {
+function migrateClientIcons(clients: ClientEntry[]): {
+    updated: boolean;
+    clients: ClientEntry[];
+} {
     let updated = false;
-    const nextClients = clients.map((client: any) => {
-        const legacyIcon = (LEGACY_CLIENT_ICONS as Record<string, any>)[client.id];
-        const defaultIcon = (DEFAULT_ICON_BY_ID as Record<string, any>)[client.id];
+    const nextClients = clients.map((client) => {
+        const legacyIcon = LEGACY_CLIENT_ICONS[String(client.id)];
+        const defaultIcon = DEFAULT_ICON_BY_ID[String(client.id)];
         if (!defaultIcon) return client;
-        const aliasIcon = (LEGACY_ICON_ALIASES as Record<string, any>)[client.icon];
+        const aliasIcon = LEGACY_ICON_ALIASES[String(client.icon)];
         if (client.icon === legacyIcon) {
             updated = true;
             return { ...client, icon: defaultIcon };
@@ -273,7 +290,7 @@ function generateUUID() {
  * @param {Request} request
  * @param {Object} env
  */
-export async function handleClientRequest(request: any, env: any) {
+export async function handleClientRequest(request: Request, env: Env) {
     const url = new URL(request.url);
     const path = url.pathname;
     const kv = getKV(env);
@@ -289,9 +306,9 @@ export async function handleClientRequest(request: any, env: any) {
             }
             try {
                 const raw = await kv.get(KV_KEY_CLIENTS);
-                const data = raw ? JSON.parse(raw) : null;
+                const data: unknown = raw ? JSON.parse(raw) : null;
                 if (Array.isArray(data) && data.length > 0) {
-                    const migration = migrateClientIcons(data);
+                    const migration = migrateClientIcons(data as ClientEntry[]);
                     if (migration.updated) {
                         try {
                             await kv.put(KV_KEY_CLIENTS, JSON.stringify(migration.clients));
@@ -339,38 +356,39 @@ export async function handleClientRequest(request: any, env: any) {
                 });
             }
 
-            let body;
+            let body: unknown;
             try {
                 body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
             } catch (e) {
+                const status = (e as { status?: number } | undefined)?.status;
                 return createErrorResponse(
-                    (e as { status?: number } | undefined)?.status === 413
-                        ? (e as Error).message
-                        : 'Invalid JSON body',
-                    (e as { status?: number } | undefined)?.status || 400
+                    status === 413 ? (e as Error).message : 'Invalid JSON body',
+                    status || 400
                 );
             }
 
-            let clients =
-                (await kv.get(KV_KEY_CLIENTS).then((r: any) => (r ? JSON.parse(r) : null))) || [];
+            const stored = await kv.get(KV_KEY_CLIENTS);
+            let clients: ClientEntry[] = stored ? JSON.parse(stored) : [];
 
             if (Array.isArray(body)) {
-                clients = body;
+                clients = body as ClientEntry[];
             } else {
-                if (!body.name) {
+                const bodyRecord = (body || {}) as ClientEntry;
+                if (!bodyRecord.name) {
                     return createErrorResponse('Client name is required', 400);
                 }
-                if (typeof body.icon === 'string' && body.icon.startsWith('data:')) {
-                    if (body.icon.length > MAX_ICON_DATA_URL_BYTES) {
+                const icon = bodyRecord.icon;
+                if (typeof icon === 'string' && icon.startsWith('data:')) {
+                    if (icon.length > MAX_ICON_DATA_URL_BYTES) {
                         return createErrorResponse('Icon data URL is too large (max 200KB)', 400);
                     }
                 }
-                const index = clients.findIndex((c: any) => c.id === body.id);
+                const index = clients.findIndex((c) => c.id === bodyRecord.id);
                 if (index !== -1) {
-                    clients[index] = { ...clients[index], ...body };
+                    clients[index] = { ...clients[index], ...bodyRecord };
                 } else {
-                    if (!body.id) body.id = generateUUID();
-                    clients.push(body);
+                    if (!bodyRecord.id) bodyRecord.id = generateUUID();
+                    clients.push(bodyRecord);
                 }
             }
 
@@ -384,10 +402,10 @@ export async function handleClientRequest(request: any, env: any) {
                 return createErrorResponse('Client ID is required', 400);
             }
 
-            let clients =
-                (await kv.get(KV_KEY_CLIENTS).then((r: any) => (r ? JSON.parse(r) : null))) || [];
+            const storedForDelete = await kv.get(KV_KEY_CLIENTS);
+            let clients: ClientEntry[] = storedForDelete ? JSON.parse(storedForDelete) : [];
             const originalLength = clients.length;
-            clients = clients.filter((c: any) => c.id !== id);
+            clients = clients.filter((c) => c.id !== id);
 
             if (clients.length === originalLength) {
                 return createErrorResponse('Client not found', 404);
