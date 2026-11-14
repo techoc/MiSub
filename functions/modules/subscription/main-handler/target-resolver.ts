@@ -10,6 +10,52 @@ import { handleProfileMode } from '../profile-handler.ts';
 import { getProfileDownloadCountKey } from './request-helpers.ts';
 import { setOutputCacheHints } from './output-cache.ts';
 
+import type { MisubSettings, ProfileItem, SubscriptionItem } from '../../../../types/models.ts';
+
+/** 目标解析用到的存储适配器最小面 */
+interface TargetResolverStorage {
+    get(key: string): Promise<unknown>;
+    put(key: string, value: unknown): Promise<unknown>;
+    getSubscriptionsByIds?(ids: string[]): Promise<SubscriptionItem[]>;
+}
+
+/** resolveSubscriptionTargets 入参 */
+interface ResolveSubscriptionTargetsInput {
+    context: { waitUntil(promise: Promise<unknown>): void };
+    request: Request;
+    url: URL;
+    env: Env;
+    config: MisubSettings;
+    settings: { disguise?: unknown } | null | undefined;
+    allProfiles: ProfileItem[];
+    allMisubs: SubscriptionItem[];
+    token: string | number | null | undefined;
+    profileIdentifier: string | number | null | undefined;
+    userAgentHeader: string;
+    shouldSkipLogging: boolean;
+    storageAdapter: TargetResolverStorage;
+}
+
+/** 转换引擎开关 */
+interface TargetEngineFlags {
+    isExternalMode: boolean;
+    useBuiltin: boolean;
+    shouldSkipCertificateVerify: boolean;
+    shouldEnableUdp: boolean;
+}
+
+/** 目标解析结果：短路的响应 或 完整目标 */
+type ResolveSubscriptionTargetsResult =
+    | { response: Response }
+    | {
+          response?: undefined;
+          targetMisubs: SubscriptionItem[];
+          subName: string;
+          isProfileExpired: boolean;
+          currentProfile: ProfileItem | null;
+          engineFlags: TargetEngineFlags;
+      };
+
 // Use a valid, non-routable Shadowsocks URL so clients can display the
 // expiration notice as a node instead of dropping a comment line.
 export const DEFAULT_EXPIRED_NODE = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent('您的订阅已到期')}`;
@@ -34,18 +80,18 @@ export async function resolveSubscriptionTargets({
     userAgentHeader,
     shouldSkipLogging,
     storageAdapter,
-}: any) {
-    let targetMisubs;
-    let subName = config.FileName;
+}: ResolveSubscriptionTargetsInput): Promise<ResolveSubscriptionTargetsResult> {
+    let targetMisubs: SubscriptionItem[] = [];
+    let subName = config.FileName || '';
     let isProfileExpired = false; // Moved declaration here
 
-    let currentProfile: any = null;
+    let currentProfile: ProfileItem | null = null;
     let isExternalMode = false;
     let useBuiltin = true;
     let shouldSkipCertificateVerify = false;
     let shouldEnableUdp = true;
 
-    const initEngineFlags = (targetProf: any) => {
+    const initEngineFlags = (targetProf: ProfileItem | null) => {
         const profileSub = targetProf?.subconverter || {};
         const globalSub = config.subconverter || {};
         const effectiveEngine = resolveEffectiveEngine({
@@ -73,10 +119,11 @@ export async function resolveSubscriptionTargets({
                     new Response('Not Found', { status: 404 }),
             };
         }
-        currentProfile = allProfiles.find(
-            (p: any) =>
-                (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
-        );
+        currentProfile =
+            allProfiles.find(
+                (p) =>
+                    (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
+            ) || null;
         initEngineFlags(currentProfile);
         const profile = currentProfile;
         if (profile && profile.enabled) {
@@ -104,7 +151,7 @@ export async function resolveSubscriptionTargets({
                 targetMisubs = [];
                 const relatedIds = [
                     ...(Array.isArray(profile.subscriptions)
-                        ? (profile.subscriptions as Record<string, any>).map((item: any) =>
+                        ? profile.subscriptions.map((item) =>
                               typeof item === 'object' ? item.id : item
                           )
                         : []),
@@ -113,30 +160,32 @@ export async function resolveSubscriptionTargets({
                 const relatedSubs =
                     typeof storageAdapter.getSubscriptionsByIds === 'function'
                         ? await storageAdapter.getSubscriptionsByIds(
-                              Array.from(new Set(relatedIds))
+                              Array.from(new Set(relatedIds)) as string[]
                           )
                         : allMisubs;
-                const misubMap = new Map(relatedSubs.map((item: any) => [item.id, item]));
+                const misubMap = new Map<string, SubscriptionItem>(
+                    relatedSubs.map((item) => [item.id, item])
+                );
 
                 // 1. Add subscriptions in order defined by profile
                 const profileSubIds = profile.subscriptions || [];
                 if (Array.isArray(profileSubIds)) {
                     profileSubIds.forEach((item) => {
                         // 支持两种格式：纯字符串 ID 或 带有覆盖配置的对象 { id, exclude, operators, ... }
-                        const isObject = item && typeof item === 'object';
-                        const id = isObject ? item.id : item;
+                        const isObject = Boolean(item && typeof item === 'object');
+                        const id = isObject ? (item as SubscriptionItem).id : String(item);
 
                         const baseSub = misubMap.get(id);
                         if (
                             baseSub &&
-                            (baseSub as Record<string, any>).enabled &&
-                            typeof (baseSub as Record<string, any>).url === 'string' &&
-                            (
-                                (baseSub as Record<string, any>).url as Record<string, any>
-                            ).startsWith('http')
+                            baseSub.enabled &&
+                            typeof baseSub.url === 'string' &&
+                            baseSub.url.startsWith('http')
                         ) {
                             // 如果是对象，则合并覆盖配置（Profile 级别的设置优先级更高）
-                            const sub = isObject ? { ...baseSub, ...item } : baseSub;
+                            const sub: SubscriptionItem = isObject
+                                ? { ...baseSub, ...(item as SubscriptionItem) }
+                                : baseSub;
                             targetMisubs.push(sub);
                         }
                     });
@@ -145,15 +194,14 @@ export async function resolveSubscriptionTargets({
                 // 2. Add manual nodes in order defined by profile
                 const profileNodeIds = profile.manualNodes || [];
                 if (Array.isArray(profileNodeIds)) {
-                    profileNodeIds.forEach((id) => {
+                    profileNodeIds.forEach((item) => {
+                        const id = typeof item === 'object' ? item.id : String(item);
                         const node = misubMap.get(id);
                         if (
                             node &&
-                            (node as Record<string, any>).enabled &&
-                            typeof (node as Record<string, any>).url === 'string' &&
-                            !((node as Record<string, any>).url as Record<string, any>).startsWith(
-                                'http'
-                            )
+                            node.enabled &&
+                            typeof node.url === 'string' &&
+                            !node.url.startsWith('http')
                         ) {
                             targetMisubs.push(node);
                         }
@@ -180,14 +228,18 @@ export async function resolveSubscriptionTargets({
                                 true,
                                 shouldSkipCertificateVerify,
                                 1,
-                                new Set([profile.id, profile.customId].filter(Boolean))
+                                new Set(
+                                    [profile.id, profile.customId].filter(
+                                        (value): value is string => Boolean(value)
+                                    )
+                                )
                             );
                             if (
                                 !(subResult instanceof Response) &&
                                 subResult.success &&
                                 Array.isArray(subResult.nodes)
                             ) {
-                                (subResult.nodes as Record<string, any>).forEach((node: any) => {
+                                subResult.nodes.forEach((node) => {
                                     targetMisubs.push({
                                         id: `nested-${subProfileId}-${node.url}`,
                                         name: node.name,
@@ -252,7 +304,7 @@ export async function resolveSubscriptionTargets({
                     new Response('Not Found', { status: 404 }),
             };
         }
-        targetMisubs = allMisubs.filter((s: any) => s.enabled);
+        targetMisubs = allMisubs.filter((s) => s.enabled);
         initEngineFlags(null);
     }
 

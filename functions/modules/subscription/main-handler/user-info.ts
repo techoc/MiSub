@@ -54,7 +54,7 @@ export function mergeSubscriptionUserInfo(context: any, subscriptions: any) {
 export function buildUserInfoHeaderFromSubscriptions(
     context: any,
     subscriptions: any,
-    profileExpiresAt = ''
+    profileExpiresAt: string | number | null = ''
 ) {
     const totalUserInfo = mergeSubscriptionUserInfo(context, subscriptions);
 
