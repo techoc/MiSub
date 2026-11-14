@@ -20,13 +20,18 @@
     const emit = defineEmits(['update:modelValue']);
 
     const isOpen = ref(false);
-    const inputRef = ref<any>(null);
-    const containerRef = ref<any>(null);
-    const dropdownStyle = ref<any>({ top: '0px', left: '0px', width: '0px' });
+    const inputRef = ref<HTMLInputElement | null>(null);
+    const containerRef = ref<HTMLElement | null>(null);
+    const dropdownStyle = ref<Record<string, string>>({
+        top: '0px',
+        left: '0px',
+        width: '0px',
+    });
     const isTyping = ref(false);
 
-    const normalizeGroup = (value: any) => String(value || '').trim();
-    const normalizeGroupForCompare = (value: any) => normalizeGroup(value).toLowerCase();
+    const normalizeGroup = (value: unknown): string => String(value || '').trim();
+    const normalizeGroupForCompare = (value: unknown): string =>
+        normalizeGroup(value).toLowerCase();
     const hasExistingGroup = computed(() => {
         const current = normalizeGroupForCompare(props.modelValue);
         if (!current) return false;
@@ -44,11 +49,9 @@
 
     const updatePosition = () => {
         if (inputRef.value) {
-            const rect = (inputRef.value as Record<string, any>).getBoundingClientRect();
+            const rect = inputRef.value.getBoundingClientRect();
             const isInsideModal = Boolean(
-                (containerRef.value as Record<string, any> | undefined)?.closest(
-                    '[role="dialog"][aria-modal="true"]'
-                )
+                containerRef.value?.closest('[role="dialog"][aria-modal="true"]')
             );
             dropdownStyle.value = {
                 top: `${rect.bottom + window.scrollY + 4}px`,
@@ -59,9 +62,9 @@
         }
     };
 
-    const handleInput = (e: any) => {
+    const handleInput = (e: Event) => {
         isTyping.value = true;
-        emit('update:modelValue', e.target.value);
+        emit('update:modelValue', (e.target as HTMLInputElement | null)?.value ?? '');
         isOpen.value = true;
     };
 
@@ -70,7 +73,7 @@
         isOpen.value = true;
     };
 
-    const selectGroup = (group: any) => {
+    const selectGroup = (group: unknown) => {
         emit('update:modelValue', normalizeGroup(group));
         isTyping.value = false;
         isOpen.value = false;
@@ -81,11 +84,12 @@
         isOpen.value = !isOpen.value;
     };
 
-    const handleClickOutside = (e: any) => {
-        if (containerRef.value && !(containerRef.value as Record<string, any>).contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+        const target = e.target as Node | null;
+        if (containerRef.value && !containerRef.value.contains(target)) {
             // Check if clicking inside the dropdown (which is teleported)
             const dropdownEl = document.getElementById('group-selector-dropdown');
-            if (dropdownEl && dropdownEl.contains(e.target)) {
+            if (dropdownEl && dropdownEl.contains(target)) {
                 return;
             }
             isOpen.value = false;
