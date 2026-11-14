@@ -3,16 +3,32 @@
  * 负责节点URL的解码、修复、重命名和过滤
  */
 
+import type { SubscriptionItem } from '../../../types/models.ts';
+
+/** 解析后的过滤规则集 */
+interface ParsedRuleSet {
+    protocols: Set<string>;
+    nameRegex: RegExp | null;
+    hasRules: boolean;
+}
+
+/** 过滤规则集（filterNodeObjects 需要的最小面） */
+interface NodeFilterRules {
+    hasRules?: boolean;
+    protocols: Set<string>;
+    nameRegex: RegExp | null;
+}
+
 /**
  * 修复节点URL编码问题（支持多种协议）
  * @param {string} nodeUrl
  * @returns {string}
  */
-export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = {}) {
+export function fixNodeUrlEncoding(nodeUrl: string, options: Record<string, unknown> = {}): string {
     if (!nodeUrl) return '';
 
     // 辅助函数：安全解码
-    const safeDecode = (value: any) => {
+    const safeDecode = (value: string): string => {
         try {
             return decodeURIComponent(value);
         } catch (e) {
@@ -20,8 +36,8 @@ export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = 
         }
     };
 
-    const { plusAsSpace = false } = options;
-    const normalizeFragment = (url: any) => {
+    const plusAsSpace = options.plusAsSpace === true;
+    const normalizeFragment = (url: string): string => {
         const hashIndex = url.lastIndexOf('#');
         if (hashIndex === -1) return url;
 
@@ -39,7 +55,7 @@ export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = 
     };
 
     // 辅助函数：最多解码两次，处理双重编码
-    const decodeRepeatedly = (value: any, maxRounds = 2) => {
+    const decodeRepeatedly = (value: string, maxRounds = 2): string => {
         let current = value;
         for (let i = 0; i < maxRounds; i += 1) {
             const next = safeDecode(current);
@@ -92,12 +108,12 @@ export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = 
 /**
  * 修复SS节点编码
  */
-export function fixSSEncoding(nodeUrl: any, options: Record<string, any> = {}) {
+export function fixSSEncoding(nodeUrl: string, options: Record<string, unknown> = {}): string {
     if (!nodeUrl.startsWith('ss://')) return nodeUrl;
 
-    const { plusAsSpace = false } = options;
+    const plusAsSpace = options.plusAsSpace === true;
 
-    const safeDecode = (value: any) => {
+    const safeDecode = (value: string): string => {
         try {
             return decodeURIComponent(value);
         } catch (e) {
@@ -105,7 +121,7 @@ export function fixSSEncoding(nodeUrl: any, options: Record<string, any> = {}) {
         }
     };
 
-    const decodeRepeatedly = (value: any, maxRounds = 2) => {
+    const decodeRepeatedly = (value: string, maxRounds = 2): string => {
         let current = value;
         for (let i = 0; i < maxRounds; i += 1) {
             const next = safeDecode(current);
@@ -145,7 +161,7 @@ export function fixSSEncoding(nodeUrl: any, options: Record<string, any> = {}) {
 /**
  * ArrayBuffer -> Base64
  */
-export function encodeArrayBufferToBase64(buffer: any) {
+export function encodeArrayBufferToBase64(buffer: ArrayBufferLike): string {
     const bytes = new Uint8Array(buffer);
     const chunkSize = 0x8000;
     let binary = '';
@@ -165,12 +181,12 @@ export function encodeArrayBufferToBase64(buffer: any) {
  * @param {string|string[]} lines
  * @param {boolean} stripKeepPrefix
  */
-export function buildRuleSet(lines: any, stripKeepPrefix = false) {
-    const protocols = new Set();
-    const patterns: any[] = [];
+export function buildRuleSet(lines: unknown, stripKeepPrefix = false): ParsedRuleSet {
+    const protocols = new Set<string>();
+    const patterns: string[] = [];
 
-    const lineArray = Array.isArray(lines)
-        ? lines
+    const lineArray: string[] = Array.isArray(lines)
+        ? lines.map((line) => String(line))
         : typeof lines === 'string'
           ? lines.split('\n')
           : [];
@@ -188,9 +204,9 @@ export function buildRuleSet(lines: any, stripKeepPrefix = false) {
             const parts = line
                 .substring('proto:'.length)
                 .split(',')
-                .map((p: any) => p.trim().toLowerCase())
+                .map((p) => p.trim().toLowerCase())
                 .filter(Boolean);
-            parts.forEach((p: any) => protocols.add(p));
+            parts.forEach((p) => protocols.add(p));
             continue;
         }
 
@@ -205,7 +221,7 @@ export function buildRuleSet(lines: any, stripKeepPrefix = false) {
     };
 }
 
-export function buildSafeRegex(patterns: any) {
+export function buildSafeRegex(patterns: string[]): RegExp | null {
     if (!patterns || patterns.length === 0) return null;
     try {
         return new RegExp(patterns.join('|'), 'i');
@@ -215,7 +231,12 @@ export function buildSafeRegex(patterns: any) {
     }
 }
 
-export function parseFilterRuleText(ruleText: any) {
+export function parseFilterRuleText(ruleText: unknown): {
+    includeLines: string[];
+    excludeLines: string[];
+    includeRules: ParsedRuleSet;
+    excludeRules: ParsedRuleSet;
+} {
     const lines = Array.isArray(ruleText)
         ? ruleText.map((line) => String(line || '').trim()).filter(Boolean)
         : String(ruleText || '')
@@ -259,28 +280,37 @@ export function parseFilterRuleText(ruleText: any) {
  * @param {Object} rules
  * @param {string} mode 'include' | 'exclude'
  */
-export function filterNodeObjects(nodes: any, rules: any, mode = 'exclude') {
+export function filterNodeObjects<T extends { protocol?: string; name?: string }>(
+    nodes: T[],
+    rules: NodeFilterRules | null | undefined,
+    mode = 'exclude'
+): T[] {
     if (!rules || !rules.hasRules) return nodes;
     const isInclude = mode === 'include';
 
-    return nodes.filter((node: any) => {
-        const protocol = (node.protocol || '').toLowerCase();
+    return nodes.filter((node) => {
+        const protocol = String(node.protocol || '').toLowerCase();
         const name = node.name || '';
 
         const protocolHit = protocol && rules.protocols.has(protocol);
         const nameHit = rules.nameRegex ? rules.nameRegex.test(name) : false;
 
         if (isInclude) {
-            return protocolHit || nameHit;
+            return Boolean(protocolHit || nameHit);
         }
         return !(protocolHit || nameHit);
     });
 }
 
-export function filterNodeUrls(nodeUrls: any, rules: any, mode = 'exclude') {
-    if (!rules || !rules.hasRules || !Array.isArray(nodeUrls)) return nodeUrls;
+export function filterNodeUrls(
+    nodeUrls: unknown,
+    rules: NodeFilterRules | null | undefined,
+    mode = 'exclude'
+): string[] {
+    if (!rules || !rules.hasRules || !Array.isArray(nodeUrls)) return nodeUrls as string[];
 
-    const nodes = nodeUrls.map((url) => ({
+    const urls = nodeUrls as string[];
+    const nodes = urls.map((url) => ({
         url,
         protocol:
             String(url || '')
@@ -288,11 +318,11 @@ export function filterNodeUrls(nodeUrls: any, rules: any, mode = 'exclude') {
                 ?.toLowerCase() || '',
         name: parseNodeUrlName(url),
     }));
-    const keptUrls = new Set(filterNodeObjects(nodes, rules, mode).map((node: any) => node.url));
-    return nodeUrls.filter((url) => keptUrls.has(url));
+    const keptUrls = new Set(filterNodeObjects(nodes, rules, mode).map((node) => node.url));
+    return urls.filter((url) => keptUrls.has(url));
 }
 
-function parseNodeUrlName(nodeUrl: any) {
+function parseNodeUrlName(nodeUrl: unknown): string {
     if (!nodeUrl || typeof nodeUrl !== 'string') return '';
     const hashIndex = nodeUrl.lastIndexOf('#');
     if (hashIndex === -1) return nodeUrl;
@@ -306,7 +336,7 @@ function parseNodeUrlName(nodeUrl: any) {
 /**
  * 将手动节点的自定义名称应用到节点链接中
  */
-export function applyManualNodeName(nodeUrl: any, customName: any) {
+export function applyManualNodeName(nodeUrl: string, customName: string): string {
     if (!customName || !nodeUrl) return nodeUrl;
 
     const encodedName = encodeURIComponent(customName);
@@ -359,13 +389,16 @@ export function applyManualNodeName(nodeUrl: any, customName: any) {
  * @param {Object} sub
  * @returns {Array} filtered nodes
  */
-export function applyFilterRules(validNodes: any, sub: any) {
-    if (!sub || !Array.isArray(validNodes)) return validNodes;
+export function applyFilterRules(
+    validNodes: unknown,
+    sub: SubscriptionItem | null | undefined
+): string[] {
+    if (!sub || !Array.isArray(validNodes)) return (validNodes as string[]) ?? [];
 
-    let filteredNodes = [...validNodes];
+    let filteredNodes: string[] = [...(validNodes as string[])];
 
     // 1. 包含关键词 (Include)
-    if (sub.filterInclude && sub.filterInclude.trim() !== '') {
+    if (sub.filterInclude && String(sub.filterInclude).trim() !== '') {
         const { includeRules, excludeRules } = parseFilterRuleText(sub.filterInclude);
         if (includeRules.hasRules) {
             filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
@@ -376,7 +409,7 @@ export function applyFilterRules(validNodes: any, sub: any) {
     }
 
     // 2. 排除关键词 (Exclude)
-    if (sub.filterExclude && sub.filterExclude.trim() !== '') {
+    if (sub.filterExclude && String(sub.filterExclude).trim() !== '') {
         const { includeRules, excludeRules } = parseFilterRuleText(sub.filterExclude);
         if (includeRules.hasRules) {
             filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
