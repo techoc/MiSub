@@ -79,6 +79,21 @@
         },
     });
 
+    /** 表格行（列 key 为任意字符串） */
+    type GridRow = Record<string, unknown>;
+
+    /** 表格列定义 */
+    interface DataGridColumn {
+        key: string;
+        title?: string;
+        width?: number | string;
+        align?: string;
+        sticky?: string;
+        sortable?: boolean;
+        className?: string;
+        render?: (row: GridRow) => unknown;
+    }
+
     const emit = defineEmits([
         'update:selectedRows',
         'rowClick',
@@ -89,25 +104,28 @@
         'filterChange',
     ]);
 
-    const selectedKeys = ref<any[]>([]);
+    const selectedKeys = ref<unknown[]>([]);
     const selectedKeySet = computed(() => new Set(selectedKeys.value));
     const sortField = ref('');
     const sortOrder = ref(''); // 'asc', 'desc', ''
 
+    const gridColumns = computed<DataGridColumn[]>(() => (props.columns || []) as DataGridColumn[]);
+
     const resolvedEmptyText = computed(() => props.emptyText || t('common.noData'));
 
     // 计算分页数据
-    const paginatedData = computed<any[]>(() => {
-        if (!props.pagination) return props.data;
+    const paginatedData = computed<GridRow[]>(() => {
+        const data = (props.data || []) as GridRow[];
+        if (!props.pagination) return data;
 
         if (typeof props.pagination === 'object' && props.pagination.server) {
-            return props.data; // 服务端分页，直接使用传入的数据
+            return data; // 服务端分页，直接使用传入的数据
         }
 
         // 客户端分页
         const start = (props.currentPage - 1) * props.pageSize;
         const end = start + props.pageSize;
-        return props.data.slice(start, end);
+        return data.slice(start, end);
     });
 
     // 计算总页数
@@ -134,7 +152,7 @@
         },
     ]);
 
-    const rowClasses = computed(() => (index: any) => [
+    const rowClasses = computed(() => (index: number) => [
         {
             'bg-white dark:bg-gray-900': !props.striped || index % 2 === 0,
             'bg-gray-50 dark:bg-gray-800': props.striped && index % 2 === 1,
@@ -144,12 +162,15 @@
     ]);
 
     // 选择相关方法
-    const isRowSelected = (row: any) => {
+    /** 行 key（模板 :key 需要 PropertyKey） */
+    const rowKeyValue = (row: GridRow): string => String(row[props.rowKey] ?? '');
+
+    const isRowSelected = (row: GridRow): boolean => {
         const key = row[props.rowKey];
         return selectedKeySet.value.has(key);
     };
 
-    const toggleRowSelection = (row: any) => {
+    const toggleRowSelection = (row: GridRow) => {
         if (!props.selectable) return;
 
         const key = row[props.rowKey];
@@ -161,8 +182,8 @@
             selectedKeys.value.push(key);
         }
 
-        const selectedRows = props.data.filter((row: any) =>
-            selectedKeySet.value.has((((row[props.rowKey] as any) as any) as any))
+        const selectedRows = (props.data as GridRow[]).filter((entry) =>
+            selectedKeySet.value.has(entry[props.rowKey])
         );
 
         emit('update:selectedRows', selectedRows);
@@ -176,8 +197,8 @@
             selectedKeys.value = paginatedData.value.map((row) => row[props.rowKey]);
         }
 
-        const selectedRows = props.data.filter((row: any) =>
-            selectedKeySet.value.has((((row[props.rowKey] as any) as any) as any))
+        const selectedRows = (props.data as GridRow[]).filter((entry) =>
+            selectedKeySet.value.has(entry[props.rowKey])
         );
 
         emit('update:selectedRows', selectedRows);
@@ -185,7 +206,7 @@
     };
 
     // 排序相关方法
-    const handleSort = (column: any) => {
+    const handleSort = (column: DataGridColumn) => {
         if (!column.sortable) return;
 
         if (sortField.value === column.key) {
@@ -200,7 +221,7 @@
     };
 
     // 获取列值
-    const getColumnValue = (row: any, column: any) => {
+    const getColumnValue = (row: GridRow, column: DataGridColumn): unknown => {
         const value = column.render ? column.render(row) : row[column.key];
         return value !== undefined && value !== null ? value : '';
     };
@@ -209,13 +230,13 @@
     watch(
         () => props.selectedRows,
         (newVal) => {
-            selectedKeys.value = newVal.map((row: any) => (((row[props.rowKey] as any) as any) as any));
+            selectedKeys.value = (newVal || []).map((row) => (row as GridRow)[props.rowKey]);
         },
         { immediate: true }
     );
 
     // 分页事件
-    const handlePageChange = (page: any) => {
+    const handlePageChange = (page: number) => {
         emit('pageChange', page);
     };
 </script>
@@ -252,27 +273,27 @@
 
                             <!-- 数据列 -->
                             <th
-                                v-for="column in columns"
-                                :key="(column as Record<string, any>).key"
+                                v-for="column in gridColumns"
+                                :key="column.key"
                                 :class="[
                                     'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
-                                    (column as Record<string, any>).width ? `w-${((((column as Record<string, any>).width as any) as any) as any)}` : '',
-                                    (column as Record<string, any>).align === 'center' ? 'text-center' : '',
-                                    (column as Record<string, any>).align === 'right' ? 'text-right' : '',
-                                    (column as Record<string, any>).sticky === 'right'
+                                    column.width ? `w-${column.width as any as any as any}` : '',
+                                    column.align === 'center' ? 'text-center' : '',
+                                    column.align === 'right' ? 'text-right' : '',
+                                    column.sticky === 'right'
                                         ? 'sticky right-0 z-20 border-l border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
                                         : '',
-                                    (column as Record<string, any>).sticky === 'left'
+                                    column.sticky === 'left'
                                         ? 'sticky left-0 z-20 border-r border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
                                         : '',
                                 ]"
                             >
                                 <div class="flex items-center space-x-1">
-                                    <span>{{ (column as Record<string, any>).title }}</span>
+                                    <span>{{ column.title }}</span>
 
                                     <!-- 排序图标 -->
                                     <button
-                                        v-if="(column as Record<string, any>).sortable"
+                                        v-if="column.sortable"
                                         class="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                                         @click="handleSort(column)"
                                         :aria-label="t('common.sortColumn')"
@@ -344,7 +365,7 @@
                         <tr
                             v-else
                             v-for="(row, index) in paginatedData"
-                            :key="row[rowKey]"
+                            :key="rowKeyValue(row)"
                             :class="rowClasses(index)"
                             @click="toggleRowSelection(row)"
                             @dblclick="$emit('rowDblClick', row)"
@@ -363,28 +384,28 @@
 
                             <!-- 数据列 -->
                             <td
-                                v-for="column in columns"
-                                :key="(column as Record<string, any>).key"
+                                v-for="column in gridColumns"
+                                :key="column.key"
                                 :class="[
                                     'px-6 py-4 whitespace-nowrap text-sm',
-                                    (column as Record<string, any>).align === 'center' ? 'text-center' : '',
-                                    (column as Record<string, any>).align === 'right' ? 'text-right' : '',
+                                    column.align === 'center' ? 'text-center' : '',
+                                    column.align === 'right' ? 'text-right' : '',
                                     compact ? 'py-2' : '',
-                                    (column as Record<string, any>).sticky === 'right'
+                                    column.sticky === 'right'
                                         ? 'sticky right-0 z-10 border-l border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
                                         : '',
-                                    (column as Record<string, any>).sticky === 'left'
+                                    column.sticky === 'left'
                                         ? 'sticky left-0 z-10 border-r border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
                                         : '',
                                 ]"
                             >
                                 <slot
-                                    :name="`column-${(column as Record<string, any>).key}`"
+                                    :name="`column-${column.key}`"
                                     :row="row"
                                     :column="column"
                                     :value="getColumnValue(row, column)"
                                 >
-                                    <span :class="(column as Record<string, any>).className">
+                                    <span :class="column.className">
                                         {{ getColumnValue(row, column) }}
                                     </span>
                                 </slot>
