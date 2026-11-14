@@ -3,22 +3,47 @@
  * 从 main-handler.js 拆分而来；编排器见 ../main-handler.js。
  */
 
-export function getCurrentRequestUserInfo(context: any, sub: any) {
-    const currentInfo = context?.currentSubscriptionRuntimeInfo || {};
-    const runtimeKey = [sub?.id, sub?.url].find(
-        (key) => key && Object.prototype.hasOwnProperty.call(currentInfo, key)
-    );
-    if (runtimeKey) {
-        return currentInfo[runtimeKey]?.userInfo || null;
-    }
-    return sub?.userInfo || null;
+import type { KvRecord, SubscriptionItem } from '../../../../types/models.ts';
+
+/** 合并后的流量/到期信息 */
+interface MergedUserInfo {
+    upload: number;
+    download: number;
+    total: number;
+    expire: number;
 }
 
-export function mergeSubscriptionUserInfo(context: any, subscriptions: any) {
-    const strategy = context?.config?.mergeExpireStrategy || 'max';
-    return subscriptions.reduce(
-        (acc: any, sub: any) => {
-            const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;
+/** 把外部传入的上下文归一为可索引记录 */
+function asContext(context: unknown): KvRecord {
+    return (context as KvRecord | null | undefined) || {};
+}
+
+export function getCurrentRequestUserInfo(
+    context: unknown,
+    sub: SubscriptionItem | null | undefined
+): KvRecord | null {
+    const currentInfo = asContext(context).currentSubscriptionRuntimeInfo || {};
+    const runtimeKey = [sub?.id, sub?.url].find(
+        (key) => key != null && Object.prototype.hasOwnProperty.call(currentInfo, String(key))
+    );
+    if (runtimeKey) {
+        return (currentInfo[String(runtimeKey)] as KvRecord | null | undefined)?.userInfo || null;
+    }
+    return (sub?.userInfo as KvRecord | null | undefined) || null;
+}
+
+export function mergeSubscriptionUserInfo(
+    context: unknown,
+    subscriptions: unknown
+): MergedUserInfo {
+    const ctx = asContext(context);
+    const strategy = ctx.config?.mergeExpireStrategy || 'max';
+    const list: KvRecord[] = Array.isArray(subscriptions) ? subscriptions : [];
+    return list.reduce<MergedUserInfo>(
+        (acc, sub: KvRecord) => {
+            const userInfo = sub?.enabled
+                ? getCurrentRequestUserInfo(ctx, sub as SubscriptionItem)
+                : null;
             if (!userInfo) return acc;
 
             let nextExpire = acc.expire;
@@ -52,10 +77,10 @@ export function mergeSubscriptionUserInfo(context: any, subscriptions: any) {
 }
 
 export function buildUserInfoHeaderFromSubscriptions(
-    context: any,
-    subscriptions: any,
+    context: unknown,
+    subscriptions: unknown,
     profileExpiresAt: string | number | null = ''
-) {
+): string | null {
     const totalUserInfo = mergeSubscriptionUserInfo(context, subscriptions);
 
     const profileExpireTimestamp = profileExpiresAt
@@ -78,7 +103,10 @@ export function buildUserInfoHeaderFromSubscriptions(
         : null;
 }
 
-export function resolveNotificationExpireDate(profileExpiresAt: any, mergedExpireTimestamp = 0) {
+export function resolveNotificationExpireDate(
+    profileExpiresAt: string | number | null | undefined,
+    mergedExpireTimestamp: number | string = 0
+): Date | null {
     let date = profileExpiresAt ? new Date(profileExpiresAt) : null;
     if (!date || Number.isNaN(date.getTime())) {
         const timestamp = Number(mergedExpireTimestamp);
@@ -91,7 +119,10 @@ export function resolveNotificationExpireDate(profileExpiresAt: any, mergedExpir
     return !date || Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function formatNotificationExpireTime(profileExpiresAt: any, mergedExpireTimestamp = 0) {
+export function formatNotificationExpireTime(
+    profileExpiresAt: string | number | null | undefined,
+    mergedExpireTimestamp: number | string = 0
+): string {
     const date = resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp);
 
     if (!date) return '未设置';
@@ -103,11 +134,11 @@ export function formatNotificationExpireTime(profileExpiresAt: any, mergedExpire
 }
 
 export function formatNotificationExpireStatus(
-    profileExpiresAt: any,
-    mergedExpireTimestamp = 0,
-    now = Date.now(),
-    thresholdDays = 3
-) {
+    profileExpiresAt: string | number | null | undefined,
+    mergedExpireTimestamp: number | string = 0,
+    now: number = Date.now(),
+    thresholdDays: number = 3
+): string {
     const date = resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp);
     if (!date) return '正常';
     if (date.getTime() <= now) return '已到期';
@@ -120,7 +151,7 @@ export function formatNotificationExpireStatus(
     return '正常';
 }
 
-export function formatSubscriptionExpireTime(expireTimestamp: any) {
+export function formatSubscriptionExpireTime(expireTimestamp: unknown): string {
     const timestamp = Number(expireTimestamp);
     if (!Number.isFinite(timestamp) || timestamp <= 0) return '';
 
@@ -135,7 +166,7 @@ export function formatSubscriptionExpireTime(expireTimestamp: any) {
     return `${values.year}-${values.month}-${values.day}`;
 }
 
-export function countSubscriptionNodes(nodeList: any, prependedContent = '') {
+export function countSubscriptionNodes(nodeList: unknown, prependedContent: unknown = ''): number {
     const lines = String(nodeList || '')
         .split(/\r?\n/)
         .map((line) => line.trim())
