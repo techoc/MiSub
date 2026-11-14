@@ -12,12 +12,12 @@ const LOCK_KEY = 'misub_webdav_backup_lock';
 const CHECK_THROTTLE_MS = 5 * 60 * 1000;
 const LOCK_TTL_MS = 10 * 60 * 1000;
 
-function parseTime(value: any) {
-    const ts = Date.parse(value || '');
+function parseTime(value: unknown): number {
+    const ts = Date.parse(String(value || ''));
     return Number.isFinite(ts) ? ts : 0;
 }
 
-function intervalMs(interval: any) {
+function intervalMs(interval: unknown): number {
     switch (interval) {
         case 'hourly':
             return 60 * 60 * 1000;
@@ -31,16 +31,16 @@ function intervalMs(interval: any) {
     }
 }
 
-async function getStorage(env: any) {
+async function getStorage(env: Env) {
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }
 
 export async function maybeRunScheduledTasks(
-    context: Record<string, any> = {},
-    options: Record<string, any> = {}
+    context: Record<string, unknown> = {},
+    options: Record<string, unknown> = {}
 ) {
-    const env = context.env || context;
+    const env = (context.env || context) as Env;
     if (!env) return { skipped: true, reason: 'missing-env' };
 
     const storageAdapter = await getStorage(env);
@@ -86,7 +86,7 @@ export async function maybeRunScheduledTasks(
 
     const run = async () => {
         try {
-            await performWebdavBackup(env, { trigger: options.source || 'lazy-cron' });
+            await performWebdavBackup(env, { trigger: String(options.source || 'lazy-cron') });
         } finally {
             await storageAdapter.delete?.(LOCK_KEY).catch(() => {});
         }

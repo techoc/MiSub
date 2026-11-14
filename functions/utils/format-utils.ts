@@ -8,7 +8,7 @@
  * @param {string} content - Clash配置内容
  * @returns {string} - 修复后的配置内容
  */
-export function clashFix(content: any) {
+export function clashFix(content: string): string {
     if (!content || !content.includes('wireguard')) return content;
 
     // let lines = content.split(/\r?\n/);
@@ -51,7 +51,7 @@ export function clashFix(content: any) {
  * @param {string} str - 要检测的字符串
  * @returns {boolean} - 是否为有效Base64
  */
-export function isValidBase64(str: any) {
+export function isValidBase64(str: unknown): boolean {
     if (!str || typeof str !== 'string') return false;
 
     // 去除空白字符，保证纯粹的Base64内容
@@ -76,8 +76,8 @@ export function isValidBase64(str: any) {
  * @param {string} url - 请求URL（可选）
  * @returns {string} - 处理后的用户代理字符串
  */
-export function getProcessedUserAgent(originalUserAgent: any, url = '') {
-    if (!originalUserAgent) return originalUserAgent;
+export function getProcessedUserAgent(originalUserAgent: unknown, url = ''): string {
+    if (!originalUserAgent) return '';
 
     const rawUrl = typeof url === 'string' ? url : '';
     try {
@@ -103,8 +103,8 @@ export function getProcessedUserAgent(originalUserAgent: any, url = '') {
  * @param {string} userAgentHeader - User-Agent头部
  * @returns {string} - 对应的格式
  */
-export function determineFormatByUserAgent(userAgentHeader: any) {
-    const ua = userAgentHeader.toLowerCase();
+export function determineFormatByUserAgent(userAgentHeader: unknown): string {
+    const ua = String(userAgentHeader || '').toLowerCase();
     // 使用陣列來保證比對的優先順序
     const uaMapping = [
         // Mihomo/Meta 核心的客戶端 - 需要clash格式
@@ -146,8 +146,9 @@ export function determineFormatByUserAgent(userAgentHeader: any) {
  * @param {URL} url - URL对象
  * @returns {string|null} - 目标格式
  */
-export function determineFormatByUrl(url: any) {
-    let targetFormat = url.searchParams.get('target');
+export function determineFormatByUrl(url: unknown): string | null {
+    const parsedUrl = url as URL;
+    let targetFormat = parsedUrl.searchParams.get('target');
     if (!targetFormat) {
         const supportedFormats = [
             'clash',
@@ -161,7 +162,7 @@ export function determineFormatByUrl(url: any) {
             'egern',
         ];
         for (const format of supportedFormats) {
-            if (url.searchParams.has(format)) {
+            if (parsedUrl.searchParams.has(format)) {
                 if (format === 'v2ray' || format === 'trojan') {
                     targetFormat = 'base64';
                 } else {

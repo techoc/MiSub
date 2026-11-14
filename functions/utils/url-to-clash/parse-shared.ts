@@ -7,20 +7,21 @@
 
 export const VIRTUAL_INFO_NODE_PASSWORD = '00000000-0000-0000-0000-000000000000';
 
-export function isVirtualInfoProxy(proxy: any) {
+export function isVirtualInfoProxy(proxy: unknown): boolean {
     if (!proxy || typeof proxy !== 'object') return false;
+    const record = proxy as Record<string, unknown>;
 
-    const type = String(proxy.type || '').toLowerCase();
-    const server = String(proxy.server || '')
+    const type = String(record.type || '').toLowerCase();
+    const server = String(record.server || '')
         .trim()
         .toLowerCase();
-    const password = String(proxy.password || '').trim();
-    const name = String(proxy.name || '').trim();
+    const password = String(record.password || '').trim();
+    const name = String(record.name || '').trim();
 
     return (
         type === 'trojan' &&
         server === '127.0.0.1' &&
-        Number(proxy.port) === 443 &&
+        Number(record.port) === 443 &&
         password === VIRTUAL_INFO_NODE_PASSWORD &&
         /(?:流量剩余|到期时间|您的订阅已到期)/.test(name)
     );
@@ -31,15 +32,16 @@ export function isVirtualInfoProxy(proxy: any) {
  * @param {string} url - 节点 URL
  * @returns {URLSearchParams} 查询参数对象
  */
-export function parseQueryParams(url: any) {
-    const queryIndex = url.indexOf('?');
+export function parseQueryParams(url: unknown): URLSearchParams {
+    const text = String(url || '');
+    const queryIndex = text.indexOf('?');
     if (queryIndex === -1) return new URLSearchParams();
 
-    const hashIndex = url.indexOf('#');
+    const hashIndex = text.indexOf('#');
     const queryString =
         hashIndex > queryIndex
-            ? url.substring(queryIndex + 1, hashIndex)
-            : url.substring(queryIndex + 1);
+            ? text.substring(queryIndex + 1, hashIndex)
+            : text.substring(queryIndex + 1);
 
     return new URLSearchParams(queryString);
 }
@@ -49,30 +51,32 @@ export function parseQueryParams(url: any) {
  * @param {string} url - 节点 URL
  * @returns {string} 节点名称
  */
-export function extractName(url: any) {
-    const hashIndex = url.lastIndexOf('#');
+export function extractName(url: unknown): string {
+    const text = String(url || '');
+    const hashIndex = text.lastIndexOf('#');
     if (hashIndex === -1) return '';
     try {
-        return decodeURIComponent(url.substring(hashIndex + 1));
+        return decodeURIComponent(text.substring(hashIndex + 1));
     } catch {
-        return url.substring(hashIndex + 1);
+        return text.substring(hashIndex + 1);
     }
 }
 
 /**
  * Base64 解码支持 (处理 URL Safe)
  */
-export function base64Decode(str: any) {
+export function base64Decode(str: unknown): string {
+    const text = String(str || '');
     try {
-        let normalized = str.replace(/-/g, '+').replace(/_/g, '/');
+        let normalized = text.replace(/-/g, '+').replace(/_/g, '/');
         while (normalized.length % 4) normalized += '=';
         return decodeURIComponent(escape(atob(normalized)));
     } catch {
         // 回退到纯 atob
         try {
-            return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+            return atob(text.replace(/-/g, '+').replace(/_/g, '/'));
         } catch {
-            return str;
+            return text;
         }
     }
 }
@@ -82,19 +86,20 @@ export function base64Decode(str: any) {
  * @param {string} hostPort - host:port 字符串
  * @returns {{server: string, port: number}}
  */
-export function parseHostPort(hostPort: any) {
+export function parseHostPort(hostPort: unknown): { server: string; port: number } {
+    const text = String(hostPort || '');
     // 处理 IPv6: [::1]:port
-    if (hostPort.startsWith('[')) {
-        const closeBracket = hostPort.indexOf(']');
+    if (text.startsWith('[')) {
+        const closeBracket = text.indexOf(']');
         if (closeBracket !== -1) {
-            const server = hostPort.substring(1, closeBracket);
-            const after = hostPort.substring(closeBracket + 1);
+            const server = text.substring(1, closeBracket);
+            const after = text.substring(closeBracket + 1);
             const port = after.startsWith(':') ? parseInt(after.substring(1)) : 443;
             return { server, port };
         }
     }
 
-    const parts = hostPort.split(':');
+    const parts = text.split(':');
     if (parts.length > 2 && parts[0] === '') {
         const port = parseInt(parts[parts.length - 1]) || 443;
         return { server: parts.slice(0, -1).join(':'), port };
