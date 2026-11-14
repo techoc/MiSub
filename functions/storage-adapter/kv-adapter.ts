@@ -3,6 +3,7 @@
  */
 
 import { DATA_KEYS, STORAGE_TYPES } from './shared.ts';
+import type { ProfileItem, SubscriptionItem } from '../../types/models.ts';
 
 /**
  * KV 存储适配器
@@ -16,9 +17,9 @@ export class KVStorageAdapter {
         this.type = STORAGE_TYPES.KV;
     }
 
-    async get(key: any) {
+    async get(key: string): Promise<unknown> {
         try {
-            const raw = await (this.kv as Record<string, any>).get(key);
+            const raw = await this.kv.get(key);
             if (raw === null || raw === undefined) return null;
             try {
                 return JSON.parse(raw);
@@ -31,10 +32,10 @@ export class KVStorageAdapter {
         }
     }
 
-    async put(key: any, value: any) {
+    async put(key: string, value: unknown): Promise<boolean> {
         try {
             const data = typeof value === 'string' ? value : JSON.stringify(value);
-            await (this.kv as Record<string, any>).put(key, data);
+            await this.kv.put(key, data);
             return true;
         } catch (error) {
             console.error(`[KV] Failed to put key ${key}:`, error);
@@ -42,9 +43,9 @@ export class KVStorageAdapter {
         }
     }
 
-    async delete(key: any) {
+    async delete(key: string): Promise<boolean> {
         try {
-            await (this.kv as Record<string, any>).delete(key);
+            await this.kv.delete(key);
             return true;
         } catch (error) {
             console.error(`[KV] Failed to delete key ${key}:`, error);
@@ -52,9 +53,9 @@ export class KVStorageAdapter {
         }
     }
 
-    async list(prefix: any) {
+    async list(prefix: string): Promise<Array<{ name: string }>> {
         try {
-            const result = await (this.kv as Record<string, any>).list({ prefix });
+            const result = await this.kv.list({ prefix });
             return result.keys || [];
         } catch (error) {
             console.error(`[KV] Failed to list keys with prefix ${prefix}:`, error);
@@ -62,31 +63,32 @@ export class KVStorageAdapter {
         }
     }
 
-    async getSubscriptionById(id: any) {
+    async getSubscriptionById(id: string): Promise<SubscriptionItem | null> {
+        const all = await this.getAllSubscriptions();
+        return all.find((item) => item.id === id) || null;
+    }
+
+    async getAllSubscriptions(): Promise<SubscriptionItem[]> {
         const all = await this.get(DATA_KEYS.SUBSCRIPTIONS);
-        return Array.isArray(all) ? all.find((item) => item.id === id) || null : null;
+        return Array.isArray(all) ? (all as SubscriptionItem[]) : [];
     }
 
-    async getAllSubscriptions() {
-        const all = await this.get(DATA_KEYS.SUBSCRIPTIONS);
-        return Array.isArray(all) ? all : [];
+    async getProfileById(id: string): Promise<ProfileItem | null> {
+        const all = await this.getAllProfiles();
+        return all.find((item) => item.id === id || item.customId === id) || null;
     }
 
-    async getProfileById(id: any) {
+    async getAllProfiles(): Promise<ProfileItem[]> {
         const all = await this.get(DATA_KEYS.PROFILES);
-        return Array.isArray(all)
-            ? all.find((item) => item.id === id || item.customId === id) || null
-            : null;
+        return Array.isArray(all) ? (all as ProfileItem[]) : [];
     }
 
-    async getAllProfiles() {
-        const all = await this.get(DATA_KEYS.PROFILES);
-        return Array.isArray(all) ? all : [];
-    }
-
-    async updateSubscriptionById(id: any, updater: any) {
-        const all = (await this.get(DATA_KEYS.SUBSCRIPTIONS)) || [];
-        const index = all.findIndex((item: any) => item.id === id);
+    async updateSubscriptionById(
+        id: string,
+        updater: (current: SubscriptionItem) => SubscriptionItem
+    ): Promise<SubscriptionItem | null> {
+        const all = await this.getAllSubscriptions();
+        const index = all.findIndex((item) => item.id === id);
         if (index === -1) return null;
         const updated = updater({ ...all[index] });
         all[index] = updated;
@@ -94,7 +96,7 @@ export class KVStorageAdapter {
         return updated;
     }
 
-    async putSubscription(item: any) {
+    async putSubscription(item: SubscriptionItem): Promise<SubscriptionItem> {
         const all = await this.getAllSubscriptions();
         const index = all.findIndex((entry) => entry.id === item.id);
         if (index === -1) {
@@ -106,14 +108,14 @@ export class KVStorageAdapter {
         return item;
     }
 
-    async deleteSubscriptionById(id: any) {
+    async deleteSubscriptionById(id: string): Promise<boolean> {
         const all = await this.getAllSubscriptions();
         const filtered = all.filter((item) => item.id !== id);
         await this.put(DATA_KEYS.SUBSCRIPTIONS, filtered);
         return filtered.length !== all.length;
     }
 
-    async putProfile(item: any) {
+    async putProfile(item: ProfileItem): Promise<ProfileItem> {
         const all = await this.getAllProfiles();
         const index = all.findIndex((entry) => entry.id === item.id);
         if (index === -1) {
@@ -125,24 +127,24 @@ export class KVStorageAdapter {
         return item;
     }
 
-    async deleteProfileById(id: any) {
+    async deleteProfileById(id: string): Promise<boolean> {
         const all = await this.getAllProfiles();
         const filtered = all.filter((item) => item.id !== id);
         await this.put(DATA_KEYS.PROFILES, filtered);
         return filtered.length !== all.length;
     }
 
-    async getSubscriptionsByIds(ids: any[] = []) {
-        const all = (await this.get(DATA_KEYS.SUBSCRIPTIONS)) || [];
+    async getSubscriptionsByIds(ids: string[] = []): Promise<SubscriptionItem[]> {
+        const all = await this.getAllSubscriptions();
         const idSet = new Set(ids);
-        return all.filter((item: any) => idSet.has(item.id));
+        return all.filter((item) => idSet.has(item.id));
     }
 
-    async putAllSubscriptions(items: any) {
+    async putAllSubscriptions(items: SubscriptionItem[]): Promise<boolean> {
         return this.put(DATA_KEYS.SUBSCRIPTIONS, items);
     }
 
-    async putAllProfiles(items: any) {
+    async putAllProfiles(items: ProfileItem[]): Promise<boolean> {
         return this.put(DATA_KEYS.PROFILES, items);
     }
 }

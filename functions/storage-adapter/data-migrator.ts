@@ -104,7 +104,10 @@ export class DataMigrator {
             // settings 放在最后：storageType 要在其余数据都就位之后才翻成 d1，
             // 否则中途失败会留下「已切 d1、数据还在 kv」的半迁移状态。
             try {
-                const settings = await kvAdapter.get(DATA_KEYS.SETTINGS);
+                const settings = (await kvAdapter.get(DATA_KEYS.SETTINGS)) as Record<
+                    string,
+                    unknown
+                > | null;
                 if (settings) {
                     settings.storageType = STORAGE_TYPES.D1;
                     await d1Adapter.put(DATA_KEYS.SETTINGS, settings);
