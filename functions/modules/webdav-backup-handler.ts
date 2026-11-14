@@ -17,6 +17,8 @@ import {
     readJsonWithLimit,
 } from './utils.ts';
 
+import type { KvRecord, MisubSettings } from '../../types/models.ts';
+
 export const BACKUP_TYPE = 'misub-backup';
 export const BACKUP_VERSION = 1;
 export const BACKUP_SCOPES = {
@@ -27,7 +29,69 @@ export const BACKUP_SCOPES = {
 const RESTORE_SNAPSHOT_KEY = 'misub_restore_snapshot_latest';
 const BACKUP_FILENAME_PREFIX = 'misub-backup-';
 const BACKUP_TIMEZONE_OFFSET_MS = 8 * 60 * 60 * 1000;
-const DEFAULT_WEBDAV_CONFIG = {
+/** WebDAV 备份配置（worker_settings_v1 的 webdavBackup 字段） */
+interface WebdavConfig {
+    enabled: boolean;
+    endpoint: string;
+    username: string;
+    password: string;
+    remotePath: string;
+    filenameTemplate: string;
+    backupScope: string;
+    autoBackup: boolean;
+    interval: string;
+    retentionCount: number;
+    lastCheckedAt: string | null;
+    lastBackupAt: string | null;
+    lastBackupStatus: string | null;
+    lastBackupMessage: string;
+    lastBackupFile: string;
+}
+
+/** 备份/恢复调用选项 */
+interface BackupOptions {
+    scope?: string;
+    trigger?: string;
+}
+
+interface RestoreOptions {
+    scope?: string;
+    createSnapshot?: boolean;
+}
+
+/** normalizeBackupPayload 的规范化产物 */
+interface NormalizedBackup {
+    version: number;
+    app: string;
+    type: string;
+    scope: string;
+    exportedAt: string;
+    source: { storageType: string; trigger: string };
+    data: {
+        subscriptions: unknown[];
+        profiles: unknown[];
+        ruleTemplates: unknown[];
+        settings: unknown;
+    };
+}
+
+/**
+ * webdav-backup 用到的存储适配器最小面（KV/D1/Noop 三实现的结构化视图）。
+ * per-item 接口在 Noop 适配器上缺失，故声明为可选。
+ */
+interface BusinessStorageAdapter {
+    type?: string;
+    get(key: string): Promise<unknown>;
+    put(key: string, value: unknown): Promise<unknown>;
+    getAllSubscriptions?(): Promise<KvRecord[]>;
+    getAllProfiles?(): Promise<KvRecord[]>;
+    putProfile?(item: KvRecord): Promise<unknown>;
+    putSubscription?(item: KvRecord): Promise<unknown>;
+    deleteProfileById?(id: string): Promise<unknown>;
+    deleteSubscriptionById?(id: string): Promise<unknown>;
+}
+
+const DEFAULT_WEBDAV_CONFIG: WebdavConfig = {
     enabled: false,
     endpoint: '',
     username: '',
@@ -45,22 +109,22 @@ const DEFAULT_WEBDAV_CONFIG = {
     lastBackupFile: '',
 };
 
-function cloneJson(value: any) {
+function cloneJson<T>(value: T): T {
     // structuredClone：Workers 原生支持，比 JSON 往返更快且保序保类型
     return value == null ? value : structuredClone(value);
 }
 
-function normalizeScope(scope: any) {
+function normalizeScope(scope: unknown): string {
     return scope === BACKUP_SCOPES.DATA_AND_SETTINGS
         ? BACKUP_SCOPES.DATA_AND_SETTINGS
         : BACKUP_SCOPES.DATA_ONLY;
 }
 
-function normalizeWebdavConfig(settings: Record<string, any> = {}) {
+function normalizeWebdavConfig(settings: MisubSettings = {}): WebdavConfig {
     return { ...DEFAULT_WEBDAV_CONFIG, ...(settings.webdavBackup || {}) };
 }
 
-function sanitizeRuntimeSecrets(settings: Record<string, any> = {}) {
+function sanitizeRuntimeSecrets(settings: MisubSettings = {}): MisubSettings {
     const sanitized = cloneJson(settings) || {};
     delete sanitized.webdavBackup;
     delete sanitized.adminPassword;
@@ -76,15 +140,17 @@ function sanitizeRuntimeSecrets(settings: Record<string, any> = {}) {
     return sanitized;
 }
 
-export function sanitizeSettingsForBackup(settings: Record<string, any> = {}) {
+export function sanitizeSettingsForBackup(settings: MisubSettings = {}): MisubSettings {
     return sanitizeRuntimeSecrets(settings);
 }
 
-export function sanitizeSettingsForRestore(settings: Record<string, any> = {}) {
+export function sanitizeSettingsForRestore(settings: MisubSettings = {}): MisubSettings {
     return sanitizeRuntimeSecrets(settings);
 }
 
-async function getStorage(env: any) {
+async function getStorage(
+    env: Env
+): Promise<{ storageType: string; storageAdapter: BusinessStorageAdapter }> {
     const storageType = await StorageFactory.getStorageType(env);
     return {
         storageType,
@@ -92,14 +158,18 @@ async function getStorage(env: any) {
     };
 }
 
-async function readBusinessData(storageAdapter: any) {
+async function readBusinessData(storageAdapter: BusinessStorageAdapter): Promise<{
+    subscriptions: unknown[];
+    profiles: unknown[];
+    ruleTemplates: unknown[];
+}> {
     const [subscriptions, profiles, ruleTemplates] = await Promise.all([
         typeof storageAdapter.getAllSubscriptions === 'function'
             ? storageAdapter.getAllSubscriptions()
-            : storageAdapter.get(KV_KEY_SUBS).then((value: any) => value || []),
+            : storageAdapter.get(KV_KEY_SUBS).then((value) => value || []),
         typeof storageAdapter.getAllProfiles === 'function'
             ? storageAdapter.getAllProfiles()
-            : storageAdapter.get(KV_KEY_PROFILES).then((value: any) => value || []),
+            : storageAdapter.get(KV_KEY_PROFILES).then((value) => value || []),
         listRuleTemplates(storageAdapter).catch(() => []),
     ]);
 
@@ -110,7 +180,10 @@ async function readBusinessData(storageAdapter: any) {
     };
 }
 
-export async function buildBackupPayload(env: any, options: Record<string, any> = {}) {
+export async function buildBackupPayload(
+    env: Env,
+    options: BackupOptions = {}
+): Promise<NormalizedBackup> {
     const { storageAdapter, storageType } = await getStorage(env);
     const settings =
         (await storageAdapter.get(KV_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
@@ -118,7 +191,7 @@ export async function buildBackupPayload(env: any, options: Record<string, any> 
     const scope = normalizeScope(options.scope || backupConfig.backupScope);
     const businessData = await readBusinessData(storageAdapter);
 
-    const payload = {
+    const payload: NormalizedBackup = {
         version: BACKUP_VERSION,
         app: 'MiSub',
         type: BACKUP_TYPE,
@@ -143,44 +216,53 @@ export async function buildBackupPayload(env: any, options: Record<string, any> 
     return payload;
 }
 
-export function normalizeBackupPayload(raw: any) {
+export function normalizeBackupPayload(raw: unknown): NormalizedBackup {
     if (!raw || typeof raw !== 'object') {
         throw new Error('无效的备份文件格式');
     }
+    const value = raw as Record<string, unknown>;
 
     // New unified format.
-    if (raw.type === BACKUP_TYPE && raw.data && typeof raw.data === 'object') {
+    if (value.type === BACKUP_TYPE && value.data && typeof value.data === 'object') {
+        const data = value.data as Record<string, unknown>;
         return {
-            ...raw,
-            scope: normalizeScope(raw.scope),
+            version: typeof value.version === 'number' ? value.version : BACKUP_VERSION,
+            app: typeof value.app === 'string' ? value.app : 'MiSub',
+            type: BACKUP_TYPE,
+            scope: normalizeScope(value.scope),
+            exportedAt:
+                typeof value.exportedAt === 'string' ? value.exportedAt : new Date().toISOString(),
+            source:
+                value.source && typeof value.source === 'object'
+                    ? (value.source as NormalizedBackup['source'])
+                    : { storageType: 'unknown', trigger: 'restore' },
             data: {
-                subscriptions: Array.isArray(raw.data.subscriptions) ? raw.data.subscriptions : [],
-                profiles: Array.isArray(raw.data.profiles) ? raw.data.profiles : [],
-                ruleTemplates: Array.isArray(raw.data.ruleTemplates) ? raw.data.ruleTemplates : [],
+                subscriptions: Array.isArray(data.subscriptions) ? data.subscriptions : [],
+                profiles: Array.isArray(data.profiles) ? data.profiles : [],
+                ruleTemplates: Array.isArray(data.ruleTemplates) ? data.ruleTemplates : [],
                 settings:
-                    raw.data.settings && typeof raw.data.settings === 'object'
-                        ? raw.data.settings
-                        : null,
+                    data.settings && typeof data.settings === 'object' ? data.settings : null,
             },
         };
     }
 
     // Legacy local export format: { subscriptions, manualNodes, profiles }.
-    if (Array.isArray(raw.subscriptions)) {
+    if (Array.isArray(value.subscriptions)) {
         return {
             version: BACKUP_VERSION,
             app: 'MiSub',
             type: BACKUP_TYPE,
             scope: BACKUP_SCOPES.DATA_ONLY,
-            exportedAt: raw.exportedAt || new Date().toISOString(),
+            exportedAt:
+                typeof value.exportedAt === 'string' ? value.exportedAt : new Date().toISOString(),
             source: { storageType: 'legacy-local', trigger: 'import' },
             data: {
                 subscriptions: [
-                    ...raw.subscriptions,
-                    ...(Array.isArray(raw.manualNodes) ? raw.manualNodes : []),
+                    ...value.subscriptions,
+                    ...(Array.isArray(value.manualNodes) ? value.manualNodes : []),
                 ],
-                profiles: Array.isArray(raw.profiles) ? raw.profiles : [],
-                ruleTemplates: Array.isArray(raw.ruleTemplates) ? raw.ruleTemplates : [],
+                profiles: Array.isArray(value.profiles) ? value.profiles : [],
+                ruleTemplates: Array.isArray(value.ruleTemplates) ? value.ruleTemplates : [],
                 settings: null,
             },
         };
@@ -189,7 +271,11 @@ export function normalizeBackupPayload(raw: any) {
     throw new Error('无效的备份文件格式');
 }
 
-async function syncCollection(storageAdapter: any, type: any, items: any) {
+async function syncCollection(
+    storageAdapter: BusinessStorageAdapter,
+    type: string,
+    items: unknown
+) {
     const finalItems = Array.isArray(items) ? items : [];
     const isProfiles = type === 'profiles';
     const key = isProfiles ? KV_KEY_PROFILES : KV_KEY_SUBS;
@@ -234,7 +320,11 @@ async function syncCollection(storageAdapter: any, type: any, items: any) {
     await storageAdapter.put(key, finalItems);
 }
 
-async function createPreRestoreSnapshot(env: any, storageAdapter: any, scope: any) {
+async function createPreRestoreSnapshot(
+    env: Env,
+    storageAdapter: BusinessStorageAdapter,
+    scope: unknown
+) {
     const snapshot = await buildBackupPayload(env, {
         scope:
             scope === BACKUP_SCOPES.DATA_AND_SETTINGS
@@ -247,9 +337,9 @@ async function createPreRestoreSnapshot(env: any, storageAdapter: any, scope: an
 }
 
 export async function restoreBackupPayload(
-    env: any,
-    rawPayload: any,
-    options: Record<string, any> = {}
+    env: Env,
+    rawPayload: unknown,
+    options: RestoreOptions = {}
 ) {
     const payload = normalizeBackupPayload(rawPayload);
     const scope = normalizeScope(options.scope || payload.scope);
@@ -267,7 +357,8 @@ export async function restoreBackupPayload(
     );
 
     if (scope === BACKUP_SCOPES.DATA_AND_SETTINGS && payload.data.settings) {
-        const currentSettings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+        const currentSettings =
+            ((await storageAdapter.get(KV_KEY_SETTINGS)) as MisubSettings) || {};
         const restoredSettings = sanitizeSettingsForRestore(payload.data.settings);
         const finalSettings = {
             ...restoredSettings,
@@ -290,7 +381,7 @@ export async function restoreBackupPayload(
     };
 }
 
-function joinWebdavPath(base: any, path: any) {
+function joinWebdavPath(base: string, path: string) {
     const trimmedBase = String(base || '').replace(/\/+$/, '');
     const parts = String(path || '')
         .split('/')
@@ -299,7 +390,7 @@ function joinWebdavPath(base: any, path: any) {
     return [trimmedBase, ...parts].join('/');
 }
 
-function decodeWebdavPathSegment(segment: any) {
+function decodeWebdavPathSegment(segment: string): string {
     try {
         return decodeURIComponent(segment);
     } catch {
@@ -307,7 +398,7 @@ function decodeWebdavPathSegment(segment: any) {
     }
 }
 
-function normalizeWebdavHref(endpoint: any, href: any) {
+function normalizeWebdavHref(endpoint: string, href: string): string | null {
     const endpointUrl = new URL(endpoint);
     const hrefUrl = new URL(String(href || '').replace(/&amp;/gi, '&'), `${endpointUrl.origin}/`);
 
@@ -324,7 +415,7 @@ function normalizeWebdavHref(endpoint: any, href: any) {
     return decodedParts.length ? `/${decodedParts.join('/')}` : '/';
 }
 
-function toBasicAuth(username: any, password: any) {
+function toBasicAuth(username: string, password: string) {
     const raw = `${username || ''}:${password || ''}`;
     if (typeof btoa === 'function') {
         return btoa(unescape(encodeURIComponent(raw)));
@@ -332,7 +423,7 @@ function toBasicAuth(username: any, password: any) {
     return Buffer.from(raw, 'utf8').toString('base64');
 }
 
-function assertSafeWebdavConfig(config: any) {
+function assertSafeWebdavConfig(config: WebdavConfig) {
     if (!config.endpoint || !/^https:\/\//i.test(config.endpoint)) {
         throw new Error('WebDAV 地址必须使用 https://');
     }
@@ -341,7 +432,7 @@ function assertSafeWebdavConfig(config: any) {
     }
 }
 
-async function webdavFetch(config: any, path: any, init: Record<string, any> = {}) {
+async function webdavFetch(config: WebdavConfig, path: string, init: RequestInit = {}) {
     assertSafeWebdavConfig(config);
     const headers = new Headers(init.headers || {});
     headers.set('Authorization', `Basic ${toBasicAuth(config.username, config.password)}`);
@@ -349,7 +440,7 @@ async function webdavFetch(config: any, path: any, init: Record<string, any> = {
     return fetch(url, { ...init, headers });
 }
 
-async function ensureRemoteDirectory(config: any) {
+async function ensureRemoteDirectory(config: WebdavConfig) {
     const parts = String(config.remotePath || '/MiSub')
         .split('/')
         .filter(Boolean);
@@ -376,7 +467,7 @@ export function formatBackupFilename(
     return safeTemplate.replace(/\{datetime\}/g, datetime).replace(/\{date\}/g, date);
 }
 
-async function updateBackupStatus(env: any, patch: any) {
+async function updateBackupStatus(env: Env, patch: Partial<WebdavConfig>) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const webdavBackup = { ...normalizeWebdavConfig(settings), ...patch };
@@ -385,7 +476,7 @@ async function updateBackupStatus(env: any, patch: any) {
     return webdavBackup;
 }
 
-export async function performWebdavBackup(env: any, options: Record<string, any> = {}) {
+export async function performWebdavBackup(env: Env, options: BackupOptions = {}) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -435,7 +526,7 @@ export async function performWebdavBackup(env: any, options: Record<string, any>
     }
 }
 
-export async function handleWebdavBackupStatus(env: any) {
+export async function handleWebdavBackupStatus(env: Env) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -443,7 +534,12 @@ export async function handleWebdavBackupStatus(env: any) {
     return createJsonResponse({ success: true, data: safeConfig });
 }
 
-export async function handleWebdavBackupTest(request: any, env: any) {
+function getErrorStatus(error: unknown, fallback: number): number {
+    const status = (error as { status?: number } | undefined)?.status;
+    return typeof status === 'number' ? status : fallback;
+}
+
+export async function handleWebdavBackupTest(request: Request, env: Env) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const { storageAdapter } = await getStorage(env);
@@ -462,12 +558,12 @@ export async function handleWebdavBackupTest(request: any, env: any) {
     } catch (error) {
         return createJsonResponse(
             { success: false, message: (error as Error).message || 'WebDAV 连接测试失败' },
-            (error as Record<string, any>).status || 400
+            getErrorStatus(error, 400)
         );
     }
 }
 
-export async function handleManualWebdavBackup(request: any, env: any) {
+export async function handleManualWebdavBackup(request: Request, env: Env) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large).catch((e) => {
@@ -479,12 +575,12 @@ export async function handleManualWebdavBackup(request: any, env: any) {
     } catch (error) {
         return createJsonResponse(
             { success: false, message: (error as Error).message || '备份失败' },
-            (error as Record<string, any>).status || 500
+            getErrorStatus(error, 500)
         );
     }
 }
 
-export async function handleBackupExport(request: any, env: any) {
+export async function handleBackupExport(request: Request, env: Env) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large).catch((e) => {
@@ -499,12 +595,12 @@ export async function handleBackupExport(request: any, env: any) {
     } catch (error) {
         return createJsonResponse(
             { success: false, message: (error as Error).message || '导出失败' },
-            (error as Record<string, any>).status || 500
+            getErrorStatus(error, 500)
         );
     }
 }
 
-export async function handleBackupRestore(request: any, env: any) {
+export async function handleBackupRestore(request: Request, env: Env) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
@@ -514,12 +610,12 @@ export async function handleBackupRestore(request: any, env: any) {
     } catch (error) {
         return createJsonResponse(
             { success: false, message: (error as Error).message || '恢复失败' },
-            (error as Record<string, any>).status || 400
+            getErrorStatus(error, 400)
         );
     }
 }
 
-export async function listWebdavBackupFiles(env: any) {
+export async function listWebdavBackupFiles(env: Env) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -545,7 +641,7 @@ export async function listWebdavBackupFiles(env: any) {
     return files;
 }
 
-export async function handleWebdavBackupList(request: any, env: any) {
+export async function handleWebdavBackupList(request: Request, env: Env) {
     if (request.method !== 'GET') return createErrorResponse('Method Not Allowed', 405);
     try {
         const files = await listWebdavBackupFiles(env);
@@ -558,7 +654,7 @@ export async function handleWebdavBackupList(request: any, env: any) {
     }
 }
 
-export async function fetchWebdavBackupFile(env: any, filePath: any) {
+export async function fetchWebdavBackupFile(env: Env, filePath: string) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -567,7 +663,7 @@ export async function fetchWebdavBackupFile(env: any, filePath: any) {
     return response.json();
 }
 
-export async function handleWebdavRestore(request: any, env: any) {
+export async function handleWebdavRestore(request: Request, env: Env) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
@@ -578,7 +674,7 @@ export async function handleWebdavRestore(request: any, env: any) {
     } catch (error) {
         return createJsonResponse(
             { success: false, message: (error as Error).message || '恢复失败' },
-            (error as Record<string, any>).status || 400
+            getErrorStatus(error, 400)
         );
     }
 }
