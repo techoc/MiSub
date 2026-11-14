@@ -2,7 +2,16 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.ts';
 import { normalizeUnifiedTemplateModel } from '../template-model.ts';
 import { normalizeGeneratorOptions } from '../generator-options.ts';
 
-function buildProxyLine(proxy: any) {
+import type { KvRecord, ProxyNode } from '../../../../types/models.ts';
+
+/** QuanX 模板渲染选项（仅声明本模块用到的字段） */
+interface QuanxRenderOptions {
+    generatorOptions?: Record<string, unknown>;
+    nodeList?: string;
+    [key: string]: unknown;
+}
+
+function buildProxyLine(proxy: ProxyNode): string | null {
     const type = String(proxy.type || '').toLowerCase();
     const name = proxy.name || 'Untitled';
     const server = proxy.server;
@@ -10,7 +19,7 @@ function buildProxyLine(proxy: any) {
     if (!server || !port) return null;
 
     if (type === 'trojan') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         if (proxy.network === 'ws') {
             extras.push('obfs=ws');
             const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
@@ -26,7 +35,7 @@ function buildProxyLine(proxy: any) {
         return `trojan=${server}:${port}, password=${proxy.password || ''}${extras.length ? `, ${extras.join(', ')}` : ''}, tag=${name}`;
     }
     if (type === 'ss' || type === 'shadowsocks') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         const plugin = proxy.plugin || '';
         const opts = proxy['plugin-opts'] || proxy.pluginOpts || {};
         if (plugin === 'obfs-local' || proxy.obfs) {
@@ -42,7 +51,7 @@ function buildProxyLine(proxy: any) {
         return `shadowsocks=${server}:${port}, method=${proxy.cipher || 'aes-128-gcm'}, password=${proxy.password || ''}${extras.length ? `, ${extras.join(', ')}` : ''}, tag=${name}`;
     }
     if (type === 'vmess') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         const sni = proxy.servername ?? proxy.sni;
         const hasTlsLayer = proxy.tls || sni !== undefined;
         if (proxy.network === 'ws') {
@@ -102,7 +111,7 @@ function buildProxyLine(proxy: any) {
         return `vless=${server}:${port}, password=${proxy.uuid || ''}${extras.length ? `, ${extras.join(', ')}` : ''}, tag=${name}`;
     }
     if (type === 'http' || type === 'https') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         const sni = proxy.servername ?? proxy.sni;
         if (type === 'https') extras.push('over-tls=true');
         if (sni !== undefined) extras.push(`tls-host=${sni}`);
@@ -114,7 +123,7 @@ function buildProxyLine(proxy: any) {
         return null;
     }
     if (type === 'tuic') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         if (proxy.uuid) extras.push(proxy.uuid || '');
         if (proxy.password) extras.push(proxy.password || '');
         const sni = proxy.servername ?? proxy.sni;
@@ -161,13 +170,13 @@ function buildProxyLine(proxy: any) {
     return null;
 }
 
-function buildPolicyLine(group: any) {
+function buildPolicyLine(group: KvRecord): string {
     const type = String(group.type || 'select').toLowerCase();
     const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     const members = (
         ['url-test', 'fallback', 'load-balance'].includes(type)
             ? rawMembers.filter(
-                  (member: any) =>
+                  (member: unknown) =>
                       !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(
                           String(member).toUpperCase()
                       )
@@ -191,7 +200,7 @@ function buildPolicyLine(group: any) {
     return `static=${group.name}, ${members}`;
 }
 
-function buildRuleLine(rule: any) {
+function buildRuleLine(rule: KvRecord): string | null {
     const type = String(rule.type || '').toUpperCase();
     if (!type) return null;
     if (type === 'RULE-SET') return null; // Remote rules moved to filter_remote
@@ -200,7 +209,7 @@ function buildRuleLine(rule: any) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-function normalizeQxVmessMethod(method: any) {
+function normalizeQxVmessMethod(method: unknown): string {
     const normalized = String(method || '')
         .trim()
         .toLowerCase();
@@ -208,7 +217,10 @@ function normalizeQxVmessMethod(method: any) {
     return normalized;
 }
 
-export function renderQuanxFromTemplateModel(model: any, options: Record<string, any> = {}) {
+export function renderQuanxFromTemplateModel(
+    model: Record<string, unknown>,
+    options: QuanxRenderOptions = {}
+): string {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
