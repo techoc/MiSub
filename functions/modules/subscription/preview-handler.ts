@@ -9,12 +9,14 @@ import { KV_KEY_PROFILES } from '../config.ts';
 import { handleProfileMode } from './profile-handler.ts';
 import { handleSingleSubscriptionMode, handleDirectUrlMode } from './single-subscription.ts';
 
+import type { KvRecord } from '../../../types/models.ts';
+
 /**
  * 确定请求模式
  * @param {Object} requestData - 请求数据
  * @returns {string} 请求模式
  */
-export function determineRequestMode(requestData: any) {
+export function determineRequestMode(requestData: KvRecord): string {
     if (requestData.profileId) {
         return 'profile';
     } else if (requestData.subscriptionId) {
@@ -31,7 +33,7 @@ export function determineRequestMode(requestData: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicPreviewRequest(request: any, env: any) {
+export async function handlePublicPreviewRequest(request: Request, env: Env): Promise<Response> {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -49,12 +51,14 @@ export async function handlePublicPreviewRequest(request: any, env: any) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const profile =
-            typeof (storageAdapter as Record<string, any>).getProfileById === 'function'
-                ? await (storageAdapter as Record<string, any>).getProfileById(profileId)
-                : ((await storageAdapter.get(KV_KEY_PROFILES)) || []).find(
-                      (p: any) => (p.customId && p.customId === profileId) || p.id === profileId
-                  );
+        const adapter = storageAdapter as unknown as KvRecord;
+        const profile: KvRecord | null =
+            typeof adapter.getProfileById === 'function'
+                ? await adapter.getProfileById(profileId)
+                : (((await adapter.get(KV_KEY_PROFILES)) as KvRecord[] | null) || []).find(
+                      (p: KvRecord) =>
+                          (p.customId && p.customId === profileId) || p.id === profileId
+                  ) || null;
 
         if (!profile || !profile.enabled || !profile.isPublic) {
             return createJsonResponse({ error: 'Profile not found or not public' }, 404);
@@ -80,10 +84,9 @@ export async function handlePublicPreviewRequest(request: any, env: any) {
 
         return createJsonResponse(result);
     } catch (e) {
-        return createErrorResponse(
-            `Preview failed: ${(e as Error).message}`,
-            (e as Record<string, any>).status || 500
-        );
+        const err = e as { status?: unknown } | null;
+        const status = typeof err?.status === 'number' ? err.status : 500;
+        return createErrorResponse(`Preview failed: ${(e as Error).message}`, status);
     }
 }
 
@@ -94,9 +97,9 @@ export async function handlePublicPreviewRequest(request: any, env: any) {
  * @returns {Promise<Response>} HTTP响应
  */
 export async function handleSubscriptionNodesRequest(
-    request: any,
-    env: any
-): Promise<Record<string, any>> {
+    request: Request,
+    env: Env
+): Promise<KvRecord> {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -168,11 +171,13 @@ export async function handleSubscriptionNodesRequest(
 
         return createJsonResponse(result);
     } catch (e) {
+        const err = e as { status?: unknown } | null;
+        const status = typeof err?.status === 'number' ? err.status : 500;
         return createJsonResponse(
             {
                 error: `获取节点列表失败: ${(e as Error).message}`,
             },
-            (e as Record<string, any>).status || 500
+            status
         );
     }
 }
