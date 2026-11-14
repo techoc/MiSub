@@ -6,10 +6,12 @@ import { useToastStore } from './toast.ts';
 import { readRawPreference, writeRawPreference } from '../utils/local-preference.ts';
 import packageJson from '../../package.json';
 
+import type { GithubReleaseResult } from '../lib/api.ts';
+
 export const useVersionStore = defineStore('version', () => {
     // --- State ---
     const currentVersion = ref(packageJson.version);
-    const latestRelease = ref<any>(null);
+    const latestRelease = ref<GithubReleaseResult | null>(null);
     const showModal = ref(false);
     const showUpdateNotice = ref(false);
     const upstreamRepo = 'imzyb/MiSub';
@@ -24,33 +26,23 @@ export const useVersionStore = defineStore('version', () => {
 
     // --- Getters ---
     const hasUpdate = computed(() => {
-        if (!(latestRelease.value as Record<string, any> | undefined)?.tag_name) return false;
-        return (
-            compareVersions(
-                (latestRelease.value as Record<string, any>).tag_name,
-                currentVersion.value
-            ) > 0
-        );
+        if (!latestRelease.value?.tag_name) return false;
+        return compareVersions(latestRelease.value.tag_name, currentVersion.value) > 0;
     });
 
     const isUpToDate = computed(() => {
-        if (!(latestRelease.value as Record<string, any> | undefined)?.tag_name) return true;
-        return (
-            compareVersions(
-                (latestRelease.value as Record<string, any>).tag_name,
-                currentVersion.value
-            ) === 0
-        );
+        if (!latestRelease.value?.tag_name) return true;
+        return compareVersions(latestRelease.value.tag_name, currentVersion.value) === 0;
     });
 
     // --- Helpers ---
-    function normalizeVersion(version: any) {
+    function normalizeVersion(version: unknown): string {
         return String(version || '')
             .trim()
             .replace(/^v/i, '');
     }
 
-    function compareVersions(left: any, right: any) {
+    function compareVersions(left: unknown, right: unknown): number {
         const a = normalizeVersion(left)
             .split('.')
             .map((n) => parseInt(n, 10) || 0);
@@ -67,7 +59,7 @@ export const useVersionStore = defineStore('version', () => {
         return 0;
     }
 
-    function getDismissKey(releaseTag: any) {
+    function getDismissKey(releaseTag: unknown): string {
         return `misub_release_notes_hidden:${normalizeVersion(currentVersion.value)}:${normalizeVersion(releaseTag)}`;
     }
 
@@ -103,10 +95,10 @@ export const useVersionStore = defineStore('version', () => {
     }
 
     function suppressUpdateModal() {
-        if ((latestRelease.value as Record<string, any> | undefined)?.tag_name) {
+        if (latestRelease.value?.tag_name) {
             // 写失败时必须告知用户：否则下次启动更新提示又会冒出来。
             const persisted = writeRawPreference(
-                getDismissKey((latestRelease.value as Record<string, any>).tag_name),
+                getDismissKey(latestRelease.value.tag_name),
                 'true'
             );
             if (!persisted) useToastStore().showToast(t('errors.preferenceNotSaved'), 'error');
