@@ -5,16 +5,24 @@
 
 import { getTelegramPushConfig } from './cache.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
+
+/** Telegram API 调用选项 */
+interface TelegramApiOptions {
+    requestCache?: KvRecord | null;
+    [key: string]: unknown;
+}
+
 // ==================== Telegram API ====================
 
 /**
  * 发送 Telegram 消息
  */
 export async function sendTelegramMessage(
-    chatId: any,
-    text: any,
-    env: any,
-    options: Record<string, any> = {}
+    chatId: string | number,
+    text: string,
+    env: Env,
+    options: TelegramApiOptions = {}
 ) {
     try {
         const config = await getTelegramPushConfig(env, options.requestCache || null);
@@ -53,11 +61,11 @@ export async function sendTelegramMessage(
  * 编辑 Telegram 消息
  */
 export async function editTelegramMessage(
-    chatId: any,
-    messageId: any,
-    text: any,
-    env: any,
-    options: Record<string, any> = {}
+    chatId: string | number,
+    messageId: string | number,
+    text: string,
+    env: Env,
+    options: TelegramApiOptions = {}
 ) {
     try {
         const config = await getTelegramPushConfig(env, options.requestCache || null);
@@ -85,9 +93,9 @@ export async function editTelegramMessage(
  * 回答 Callback Query
  */
 export async function answerCallbackQuery(
-    callbackQueryId: any,
-    text: any,
-    env: any,
+    callbackQueryId: string,
+    text: string | undefined,
+    env: Env,
     showAlert = false
 ) {
     try {
