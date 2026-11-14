@@ -8,13 +8,19 @@ import { createRequestCache, getCachedProfiles, getCachedSettings } from './cach
 import { editTelegramMessage, sendTelegramMessage } from './telegram-api.ts';
 import { getUserBoundProfileId, getUserNodes } from './user-access.ts';
 
-import type { KvRecord } from '../../../../types/models.ts';
+import type { KvRecord, ProfileItem } from '../../../../types/models.ts';
+
+/** 内联键盘按钮 */
+interface InlineKeyboardButton {
+    text: string;
+    callback_data: string;
+}
 // ==================== 命令处理器 ====================
 
 /**
  * 处理 /start 命令
  */
-export async function handleStartCommand(chatId: any, env: any) {
+export async function handleStartCommand(chatId: string | number, env: Env) {
     const message =
         '👋 <b>欢迎使用 MiSub Telegram Bot！</b>\n\n' +
         '通过这个 Bot，你可以：\n' +
@@ -31,7 +37,7 @@ export async function handleStartCommand(chatId: any, env: any) {
 /**
  * 处理 /help 命令
  */
-export async function handleHelpCommand(chatId: any, env: any) {
+export async function handleHelpCommand(chatId: string | number, env: Env) {
     const message =
         '📖 <b>MiSub Bot 命令帮助</b>\n\n' +
         '<b>📤 添加节点</b>\n' +
@@ -63,8 +69,8 @@ export async function handleHelpCommand(chatId: any, env: any) {
  * 处理 /menu 命令 - 快捷菜单
  */
 export async function handleMenuCommand(
-    chatId: any,
-    env: any,
+    chatId: string | number,
+    env: Env,
     messageId: string | number | null = null,
     requestCache: KvRecord | null = null
 ) {
@@ -108,14 +114,14 @@ export async function handleMenuCommand(
  * 处理 /list 命令 - 节点列表（带分页和操作按钮）
  */
 export async function handleListCommand(
-    chatId: any,
-    userId: any,
-    env: any,
+    chatId: string | number,
+    userId: string | number,
+    env: Env,
     page = 0,
     type = 'all',
     messageId: string | number | null = null,
     requestCache: KvRecord | null = null,
-    groupFilter: any = null
+    groupFilter: string | null = null
 ) {
     try {
         const cache = requestCache || createRequestCache();
@@ -147,7 +153,7 @@ export async function handleListCommand(
         // 获取当前绑定的订阅组
         const boundProfileId = getUserBoundProfileId(config, userId);
         const boundProfile = boundProfileId
-            ? profiles.find((p: any) => p.id === boundProfileId)
+            ? (profiles as ProfileItem[]).find((p) => p.id === boundProfileId)
             : null;
         const boundNodeIds = new Set(boundProfile?.manualNodes || []);
 
@@ -209,7 +215,7 @@ export async function handleListCommand(
         message += '\n点击序号查看详情和操作';
 
         // 构建按钮：当前页节点的快捷按钮
-        const nodeButtons: any[] = [];
+        const nodeButtons: InlineKeyboardButton[] = [];
         for (let i = startIdx; i < endIdx; i++) {
             const isSubList = type === 'sub';
             // 如果是混合列表('all'), 检测URL; 如果明确是 'sub', 则就是sub.
@@ -227,7 +233,7 @@ export async function handleListCommand(
         }
 
         // 分页按钮
-        const navButtons: any[] = [];
+        const navButtons: InlineKeyboardButton[] = [];
         const typePrefix = type !== 'all' ? `${type}_` : '';
 
         if (currentPage > 0) {
@@ -272,8 +278,8 @@ export async function handleListCommand(
 }
 
 export async function handleListTypeSelector(
-    chatId: any,
-    env: any,
+    chatId: string | number,
+    env: Env,
     messageId: string | number | null = null,
     requestCache: KvRecord | null = null
 ) {
@@ -306,9 +312,9 @@ export async function handleListTypeSelector(
  * 处理 /stats 命令
  */
 export async function handleStatsCommand(
-    chatId: any,
-    userId: any,
-    env: any,
+    chatId: string | number,
+    userId: string | number,
+    env: Env,
     requestCache: KvRecord | null = null
 ) {
     try {
@@ -317,7 +323,7 @@ export async function handleStatsCommand(
         let subCount = 0;
         let nodeCount = 0;
         let enabledCount = 0;
-        const protocolCounts = {};
+        const protocolCounts: Record<string, number> = {};
 
         userNodes.forEach((node) => {
             const nodeUrl = String(node.url || '');
@@ -328,8 +334,7 @@ export async function handleStatsCommand(
             } else {
                 nodeCount++;
                 const protocol = nodeUrl.split('://')[0].toUpperCase();
-                (protocolCounts as Record<string, any>)[protocol] =
-                    ((protocolCounts as Record<string, any>)[protocol] || 0) + 1;
+                protocolCounts[protocol] = (protocolCounts[protocol] || 0) + 1;
             }
 
             if (node.enabled) enabledCount++;
@@ -349,7 +354,7 @@ export async function handleStatsCommand(
         if (Object.keys(protocolCounts).length > 0) {
             message += `<b>节点协议分布：</b>\n`;
             Object.entries(protocolCounts)
-                .sort((a, b) => (b[1] as number) - (a[1] as number))
+                .sort((a, b) => b[1] - a[1])
                 .forEach(([protocol, count]) => {
                     message += `• ${protocol}: ${count}\n`;
                 });
