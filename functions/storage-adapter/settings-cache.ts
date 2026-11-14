@@ -29,7 +29,7 @@ export class SettingsCache {
      * @param {Object} [adapter] - 可选：当前请求的存储适配器。传入时按其底层
      *   绑定做 memo，且只信任 adapter 读取结果（保证与 storageType 一致的数据源）。
      */
-    static async get(env: any, adapter = null) {
+    static async get(env: any, adapter: unknown = null) {
         const now = Date.now();
         if (adapter) {
             const scope =

@@ -59,6 +59,25 @@ import {
     storeOutput,
 } from './main-handler/output-cache.ts';
 
+import type { OutputCacheEntry } from './main-handler/output-cache.ts';
+import type { MisubSettings, SubscriptionItem } from '../../../types/models.ts';
+
+/** 存储适配器（工厂返回的具体实现） */
+type StorageAdapter = ReturnType<typeof StorageFactory.createAdapter>;
+
+/** 编排器在 PagesEventContext 上附加的瞬时态字段 */
+interface PipelineContext {
+    request: Request;
+    env: Env;
+    waitUntil: (promise: Promise<unknown>) => void;
+    storage?: StorageAdapter;
+    config?: MisubSettings;
+    url?: URL;
+    isAuthenticated?: boolean;
+    accessLogPersistenceMode?: string;
+    [key: string]: unknown;
+}
+
 // —— 兼容导出：测试与外部模块历史上直接从本路径引用这些 helper ——
 export {
     buildManagedConfigUrl,
@@ -88,7 +107,7 @@ export {
  * 订阅管线主体：settings/订阅/分组读取 → 目标解析 → 节点聚合 → 渲染输出。
  * 由 handleMisubRequest 包装：外层负责渲染输出缓存（./main-handler/output-cache.js）。
  */
-async function runSubscriptionPipeline(context: any) {
+async function runSubscriptionPipeline(context: PipelineContext): Promise<Response> {
     const { request, env } = context;
     const url = new URL(request.url);
     const userAgentHeader = request.headers.get('User-Agent') || 'Unknown';
@@ -115,7 +134,7 @@ async function runSubscriptionPipeline(context: any) {
     if (migrateProfileIds(allProfiles)) {
         storageAdapter
             .put(KV_KEY_PROFILES, allProfiles)
-            .catch((err: any) =>
+            .catch((err: unknown) =>
                 console.error('[Migration] Failed to persist migrated profile IDs:', err)
             );
     }
@@ -282,7 +301,7 @@ async function runSubscriptionPipeline(context: any) {
         });
 
     const expectedRemoteNodeCount =
-        targetMisubs.reduce((total: any, sub: any) => {
+        targetMisubs.reduce((total: number, sub: SubscriptionItem) => {
             if (!sub?.enabled || typeof sub?.url !== 'string' || !sub.url.startsWith('http'))
                 return total;
             const knownCount = Math.max(
@@ -292,7 +311,7 @@ async function runSubscriptionPipeline(context: any) {
             return total + (Number.isFinite(knownCount) && knownCount > 0 ? knownCount : 0);
         }, 0) +
         targetMisubs.filter(
-            (sub: any) =>
+            (sub: SubscriptionItem) =>
                 sub?.enabled && typeof sub?.url === 'string' && !sub.url.startsWith('http')
         ).length;
 
@@ -335,16 +354,14 @@ async function runSubscriptionPipeline(context: any) {
             targetMisubs,
             currentProfile?.expiresAt
         );
-        const nodeHeaders = {
+        const nodeHeaders: Record<string, string> = {
             'Content-Type': 'text/plain; charset=utf-8',
             'Cache-Control': 'no-store, no-cache',
             'X-MiSub-Mode': 'node-export-plain',
         };
         if (userInfoHeader) {
-            (nodeHeaders as Record<string, any>)['Subscription-Userinfo'] = userInfoHeader;
-            (nodeHeaders as Record<string, any>)['Profile-Update-Interval'] = String(
-                config.UpdateInterval || 24
-            );
+            nodeHeaders['Subscription-Userinfo'] = userInfoHeader;
+            nodeHeaders['Profile-Update-Interval'] = String(config.UpdateInterval || 24);
         }
         // [兼容性优化] 第三方转换后端对明文列表的支持通常比 Base64 更好。
         // 同时对于 Cloudflare 而言，明文输出更有利于其边缘节点的流式处理。
@@ -419,11 +436,8 @@ async function runSubscriptionPipeline(context: any) {
                     userInfoHeader,
                 });
 
-                if (
-                    (rendered.headers as Record<string, any> | undefined)?.[
-                        'X-MiSub-Template-Mode'
-                    ] === 'clash-yaml-profile'
-                ) {
+                const renderedHeaders = (rendered.headers || {}) as Record<string, unknown>;
+                if (renderedHeaders['X-MiSub-Template-Mode'] === 'clash-yaml-profile') {
                     const responseHeaders = new Headers({
                         'Content-Type': rendered.contentType || 'application/x-yaml; charset=utf-8',
                         'Cache-Control': 'no-store, no-cache',
@@ -507,12 +521,12 @@ async function runSubscriptionPipeline(context: any) {
         } else {
             contentToEncode = combinedNodeList;
         }
-        const headers = {
+        const headers: Record<string, string> = {
             'Content-Type': 'text/plain; charset=utf-8',
             'Cache-Control': 'no-store, no-cache',
         };
         Object.entries(cacheHeaders).forEach(([key, value]) => {
-            (headers as Record<string, any>)[key] = value;
+            headers[key] = value;
         });
 
         // [Deferred Logging] Log Success for Base64 (Direct Return)
@@ -702,7 +716,7 @@ async function runSubscriptionPipeline(context: any) {
         }
     }
 
-    const base64Headers = {
+    const base64Headers: Record<string, string> = {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-store, no-cache',
     };
@@ -712,13 +726,11 @@ async function runSubscriptionPipeline(context: any) {
         currentProfile?.expiresAt
     );
     if (userInfoHeader) {
-        (base64Headers as Record<string, any>)['Subscription-Userinfo'] = userInfoHeader;
-        (base64Headers as Record<string, any>)['Profile-Update-Interval'] = String(
-            config.UpdateInterval || 24
-        );
+        base64Headers['Subscription-Userinfo'] = userInfoHeader;
+        base64Headers['Profile-Update-Interval'] = String(config.UpdateInterval || 24);
     }
     Object.entries(cacheHeaders).forEach(([key, value]) => {
-        (base64Headers as Record<string, any>)[key] = value;
+        base64Headers[key] = value;
     });
 
     return new Response(base64EncodeUtf8(combinedNodeList), { headers: base64Headers });
@@ -729,7 +741,7 @@ async function runSubscriptionPipeline(context: any) {
  * 刻意不复发 Telegram 访问通知 —— 高频轮询下命中缓存时重发就是通知风暴，
  * 且通知内容（节点数/到期时间）与首次下发一致，重复价值低。
  */
-async function runHitBookkeeping(context: any, entry: any) {
+async function runHitBookkeeping(context: PipelineContext, entry: OutputCacheEntry): Promise<void> {
     const { request, env } = context;
     let url;
     try {
@@ -779,11 +791,11 @@ async function runHitBookkeeping(context: any, entry: any) {
  * @param {Object} context - Cloudflare上下文
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleMisubRequest(context: PagesEventContext) {
+export async function handleMisubRequest(context: PagesEventContext): Promise<Response> {
     if (isCacheableRequest(context.request)) {
         const cached = matchCachedOutput(context.request, {
-            onHit: (entry: any) => {
-                const task = runHitBookkeeping(context, entry).catch((err) =>
+            onHit: (entry: OutputCacheEntry) => {
+                const task = runHitBookkeeping(context as PipelineContext, entry).catch((err) =>
                     console.error('[Output Cache] Hit bookkeeping failed:', err)
                 );
                 if (typeof context.waitUntil === 'function') context.waitUntil(task);
@@ -792,7 +804,7 @@ export async function handleMisubRequest(context: PagesEventContext) {
         if (cached) return cached;
     }
 
-    const response = await runSubscriptionPipeline(context);
+    const response = await runSubscriptionPipeline(context as PipelineContext);
     try {
         return await storeOutput(context, response);
     } catch (err) {
