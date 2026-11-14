@@ -14,7 +14,64 @@ import { isRemoteSubscription, toExternalSubscription } from './external-api-map
 import { handleNodeCountRequest } from './handlers/node-handler.ts';
 import { getProcessedUserAgent } from '../utils/format-utils.ts';
 
-import type { KvRecord } from '../../types/models.ts';
+import type { KvRecord, ProfileItem, SubscriptionUserInfo } from '../../types/models.ts';
+
+/** 外部 API 用到的订阅记录形状 */
+interface SubscriptionRecord {
+    id: string;
+    name?: string;
+    url?: string;
+    enabled?: boolean;
+    group?: string;
+    tags?: string[];
+    userAgent?: string;
+    customUserAgent?: string;
+    proxy?: string;
+    fetchProxy?: string;
+    sortIndex?: number;
+    nodeCount?: number;
+    userInfo?: SubscriptionUserInfo | null;
+    lastError?: string;
+    lastUpdate?: string;
+    updatedAt?: string;
+    createdAt?: string;
+    [key: string]: unknown;
+}
+
+/** 外部 API 用到的存储适配器最小面 */
+interface ExternalSubscriptionStorage {
+    getAllSubscriptions(): Promise<KvRecord[]>;
+    getSubscriptionById(id: string): Promise<KvRecord | null>;
+    getAllProfiles(): Promise<ProfileItem[]>;
+    putProfile(profile: ProfileItem): Promise<unknown>;
+    putSubscription(item: KvRecord): Promise<unknown>;
+    deleteSubscriptionById(id: string): Promise<unknown>;
+}
+
+/** 订阅探测结果 */
+interface RemoteInspection {
+    ok: boolean;
+    requestedUrl?: string;
+    effectiveUserAgent?: string;
+    fetchProxyUsed?: string;
+    plusAsSpace?: boolean;
+    nodeCount?: number;
+    userInfo?: SubscriptionUserInfo | null;
+    errorCode?: string;
+    message?: string;
+    status?: number;
+}
+
+/** 批量刷新结果项 */
+interface BatchRefreshResult {
+    id: string;
+    name: string;
+    success: boolean;
+    nodeCount: number;
+    userInfo: SubscriptionUserInfo | null;
+    lastError: string;
+    lastUpdated: string | null;
+}
 function nowIso() {
     return new Date().toISOString();
 }
@@ -27,32 +84,38 @@ function generateId(prefix = 'sub') {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function nextSortIndex(items: any) {
-    return (
-        items.reduce((max: any, item: any) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1
-    );
+function nextSortIndex(items: Array<Record<string, unknown>>): number {
+    return items.reduce((max, item) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1;
 }
 
-async function loadRemoteSubscriptions(storageAdapter: any) {
+async function loadRemoteSubscriptions(
+    storageAdapter: ExternalSubscriptionStorage
+): Promise<SubscriptionRecord[]> {
     const all = await storageAdapter.getAllSubscriptions();
-    return sortBySortIndex(all.filter(isRemoteSubscription));
+    return sortBySortIndex(all.filter(isRemoteSubscription)) as SubscriptionRecord[];
 }
 
-async function getSubscriptionById(storageAdapter: any, id: any) {
+async function getSubscriptionById(
+    storageAdapter: ExternalSubscriptionStorage,
+    id: string
+): Promise<SubscriptionRecord | null> {
     const item = await storageAdapter.getSubscriptionById(id);
     if (!item || !isRemoteSubscription(item)) return null;
-    return item;
+    return item as SubscriptionRecord;
 }
 
-async function removeSubscriptionIdFromProfiles(storageAdapter: any, id: any) {
+async function removeSubscriptionIdFromProfiles(
+    storageAdapter: ExternalSubscriptionStorage,
+    id: string
+): Promise<string[]> {
     const profiles = await storageAdapter.getAllProfiles();
-    const affected: any[] = [];
+    const affected: string[] = [];
     for (const profile of profiles) {
         const subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
         if (!subscriptions.includes(id)) continue;
         const updated = {
             ...profile,
-            subscriptions: subscriptions.filter((item: any) => item !== id),
+            subscriptions: subscriptions.filter((item) => item !== id),
             updatedAt: nowIso(),
         };
         await storageAdapter.putProfile(updated);
@@ -61,7 +124,7 @@ async function removeSubscriptionIdFromProfiles(storageAdapter: any, id: any) {
     return affected;
 }
 
-function createNodeCountRequest(body: any) {
+function createNodeCountRequest(body: Record<string, unknown>): Request {
     return new Request('https://misub.internal/api/node_count', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -69,7 +132,7 @@ function createNodeCountRequest(body: any) {
     });
 }
 
-function normalizeSubscriptionRuntimeFields(item: Record<string, any> = {}) {
+function normalizeSubscriptionRuntimeFields(item: Record<string, unknown> = {}) {
     return {
         userAgent: String(item.customUserAgent || item.userAgent || '').trim(),
         fetchProxy: String(item.fetchProxy || item.proxy || '').trim(),
@@ -77,7 +140,10 @@ function normalizeSubscriptionRuntimeFields(item: Record<string, any> = {}) {
     };
 }
 
-export async function inspectRemoteSubscription(env: any, payload: Record<string, any> = {}) {
+export async function inspectRemoteSubscription(
+    env: Env,
+    payload: Record<string, unknown> = {}
+): Promise<RemoteInspection> {
     const requestedUrl = String(payload.url || '').trim();
     if (!requestedUrl)
         return {
@@ -106,21 +172,24 @@ export async function inspectRemoteSubscription(env: any, payload: Record<string
         }),
         env
     );
-    const body = await response.json();
+    const body = (await response.json()) as {
+        success?: boolean;
+        data?: { count?: number; userInfo?: SubscriptionUserInfo | null };
+        count?: number;
+        userInfo?: SubscriptionUserInfo | null;
+        error?: string;
+        status?: number;
+    };
 
-    if (
-        (body as Record<string, any> | undefined)?.success &&
-        (body as Record<string, any> | undefined)?.data
-    ) {
+    if (body.success && body.data) {
         return {
             ok: true,
             requestedUrl,
             effectiveUserAgent,
             fetchProxyUsed: runtime.fetchProxy || '',
             plusAsSpace: runtime.plusAsSpace,
-            nodeCount:
-                Number(((body as Record<string, any>).data as Record<string, any>).count) || 0,
-            userInfo: ((body as Record<string, any>).data as Record<string, any>).userInfo || null,
+            nodeCount: Number(body.data.count) || 0,
+            userInfo: body.data.userInfo || null,
         };
     }
 
@@ -130,15 +199,19 @@ export async function inspectRemoteSubscription(env: any, payload: Record<string
         effectiveUserAgent,
         fetchProxyUsed: runtime.fetchProxy || '',
         plusAsSpace: runtime.plusAsSpace,
-        nodeCount: Number((body as Record<string, any> | undefined)?.count) || 0,
-        userInfo: (body as Record<string, any> | undefined)?.userInfo || null,
+        nodeCount: Number(body.count) || 0,
+        userInfo: body.userInfo || null,
         errorCode: 'subscription_refresh_failed',
-        message: (body as Record<string, any> | undefined)?.error || 'Subscription refresh failed',
-        status: Number((body as { status?: number } | undefined)?.status) || 502,
+        message: body.error || 'Subscription refresh failed',
+        status: Number(body.status) || 502,
     };
 }
 
-async function persistSubscriptionRefresh(storageAdapter: any, current: any, inspection: any) {
+async function persistSubscriptionRefresh(
+    storageAdapter: ExternalSubscriptionStorage,
+    current: SubscriptionRecord,
+    inspection: RemoteInspection
+): Promise<SubscriptionRecord> {
     const timestamp = nowIso();
     const updated = {
         ...current,
@@ -153,8 +226,8 @@ async function persistSubscriptionRefresh(storageAdapter: any, current: any, ins
 }
 
 export async function handleExternalSubscriptionsRequest(
-    request: any,
-    env: any,
+    request: Request,
+    env: Env,
     selector: string | KvRecord | null = null
 ) {
     const storageAdapter = await getExternalStorageAdapter(env);
@@ -209,7 +282,7 @@ export async function handleExternalSubscriptionsRequest(
         if (!targets.length)
             return createExternalError('subscription_not_found', 'Subscription not found', 404);
 
-        const results: any[] = [];
+        const results: BatchRefreshResult[] = [];
         for (const current of targets) {
             const inspection = await inspectRemoteSubscription(env, current);
             const updated = await persistSubscriptionRefresh(storageAdapter, current, inspection);
