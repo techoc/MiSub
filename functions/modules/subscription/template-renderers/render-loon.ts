@@ -2,7 +2,16 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.ts';
 import { normalizeUnifiedTemplateModel } from '../template-model.ts';
 import { normalizeGeneratorOptions } from '../generator-options.ts';
 
-function buildProxyLine(proxy: any) {
+import type { KvRecord, ProxyNode } from '../../../../types/models.ts';
+
+/** Loon 模板渲染选项（仅声明本模块用到的字段） */
+interface LoonRenderOptions {
+    generatorOptions?: Record<string, unknown>;
+    nodeList?: string;
+    [key: string]: unknown;
+}
+
+function buildProxyLine(proxy: ProxyNode): string | null {
     const type = String(proxy.type || '').toLowerCase();
     const name = proxy.name || 'Untitled';
     const server = proxy.server;
@@ -25,7 +34,7 @@ function buildProxyLine(proxy: any) {
         return `${name} = trojan, ${server}, ${port}, ${extras.join(', ')}`;
     }
     if (type === 'ss' || type === 'shadowsocks') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         const plugin = proxy.plugin || '';
         const opts = proxy['plugin-opts'] || proxy.pluginOpts || {};
         if (plugin === 'obfs-local' || proxy.obfs) {
@@ -47,7 +56,7 @@ function buildProxyLine(proxy: any) {
         const cipher = proxy.cipher || 'auto';
         const uuid = `"${proxy.uuid || ''}"`;
         const alterId = proxy.alterId || 0;
-        const extras: any[] = [];
+        const extras: string[] = [];
 
         if (proxy.tls || sni !== undefined) extras.push('over-tls=true');
         if (proxy.network === 'ws') {
@@ -144,11 +153,11 @@ function buildProxyLine(proxy: any) {
         if (!proxy['private-key'] || !proxy['public-key']) {
             return null;
         }
-        const extras: any[] = [];
+        const extras: string[] = [];
         // IPv4
         if (proxy.ip) {
             const ipv4 = Array.isArray(proxy.ip)
-                ? proxy.ip.find((ip: any) => !String(ip).includes(':'))
+                ? proxy.ip.find((ip: unknown) => !String(ip).includes(':'))
                 : proxy.ip;
 
             if (ipv4) {
@@ -177,8 +186,8 @@ function buildProxyLine(proxy: any) {
         if (proxy.dns) {
             const dnsList = Array.isArray(proxy.dns) ? proxy.dns.filter(Boolean) : [proxy.dns];
 
-            const dns4 = dnsList.find((dns: any) => !String(dns).includes(':'));
-            const dns6 = dnsList.find((dns: any) => String(dns).includes(':'));
+            const dns4 = dnsList.find((dns: unknown) => !String(dns).includes(':'));
+            const dns6 = dnsList.find((dns: unknown) => String(dns).includes(':'));
 
             if (dns4) {
                 extras.push(`dns=${dns4}`);
@@ -190,7 +199,7 @@ function buildProxyLine(proxy: any) {
         }
 
         // Peer
-        const peer: any[] = [];
+        const peer: string[] = [];
 
         peer.push(`public-key="${proxy['public-key']}"`);
 
@@ -247,13 +256,13 @@ function buildProxyLine(proxy: any) {
     return null;
 }
 
-function buildGroupLine(group: any) {
+function buildGroupLine(group: KvRecord): string {
     const type = String(group.type || 'select').toLowerCase();
     const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     const members = (
         ['url-test', 'fallback', 'load-balance'].includes(type)
             ? rawMembers.filter(
-                  (member: any) =>
+                  (member: unknown) =>
                       !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(
                           String(member).toUpperCase()
                       )
@@ -291,7 +300,7 @@ function buildGroupLine(group: any) {
 //     if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
 //     return `${type},${rule.value},${rule.policy}`;
 // }
-function buildRuleLine(rule: any) {
+function buildRuleLine(rule: KvRecord): string | null {
     const type = String(rule.type || '').toUpperCase();
     if (!type || type === 'RULE-SET') return null;
     if (type === 'MATCH' || type === 'FINAL') {
@@ -303,14 +312,17 @@ function buildRuleLine(rule: any) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-function buildRemoteRuleLine(rule: any) {
+function buildRemoteRuleLine(rule: KvRecord): string | null {
     const type = String(rule.type || '').toUpperCase();
     if (type !== 'RULE-SET') return null;
     if (!rule.value || !rule.policy) return null;
     return `${rule.value}, policy=${rule.policy}, enabled=true`;
 }
 
-export function renderLoonFromTemplateModel(model: any, options: Record<string, any> = {}) {
+export function renderLoonFromTemplateModel(
+    model: Record<string, unknown>,
+    options: LoonRenderOptions = {}
+): string {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
