@@ -4,12 +4,28 @@
 
 import { stripLeadingEmoji } from './shared.ts';
 
-export function makeComparator(sortCfg: any) {
-    const keys = sortCfg.keys || [];
-    const nameIgnoreEmoji = sortCfg.nameIgnoreEmoji !== false;
+import type { KvRecord } from '../../../types/models.ts';
+
+/** 排序键配置 */
+interface SortKey {
+    key?: unknown;
+    order?: unknown;
+    customOrder?: unknown;
+}
+
+/** 排序配置 */
+interface SortConfig {
+    keys?: unknown;
+    nameIgnoreEmoji?: boolean;
+}
+
+export function makeComparator(sortCfg: unknown): (ra: KvRecord, rb: KvRecord) => number {
+    const cfg = (sortCfg || {}) as SortConfig;
+    const keys: SortKey[] = Array.isArray(cfg.keys) ? cfg.keys : [];
+    const nameIgnoreEmoji = cfg.nameIgnoreEmoji !== false;
 
     // 预先构建 customOrder 索引 Map，将 O(n) 查找优化为 O(1)
-    const customOrderMaps = keys.map((k: any) => {
+    const customOrderMaps = keys.map((k: SortKey): Map<string, number> | null => {
         let orderList = k?.customOrder;
         if (!Array.isArray(orderList) || orderList.length === 0) {
             if (k?.key === 'region') {
@@ -30,17 +46,17 @@ export function makeComparator(sortCfg: any) {
             }
         }
         if (!Array.isArray(orderList)) return null;
-        const map = new Map();
+        const map = new Map<string, number>();
         orderList.forEach((v, i) => map.set(String(v), i));
         return map;
     });
 
-    const cmpStr = (a: any, b: any) =>
+    const cmpStr = (a: unknown, b: unknown): number =>
         String(a || '').localeCompare(String(b || ''), undefined, {
             numeric: true,
             sensitivity: 'base',
         });
-    const cmpNum = (a: any, b: any) => {
+    const cmpNum = (a: unknown, b: unknown): number => {
         const an = Number(a),
             bn = Number(b);
         if (Number.isNaN(an) && Number.isNaN(bn)) return 0;
@@ -53,7 +69,7 @@ export function makeComparator(sortCfg: any) {
      * IP 地址比较器
      * 支持 IPv4 用于数字排序，其他作为字符串排序
      */
-    const cmpIp = (a: any, b: any) => {
+    const cmpIp = (a: unknown, b: unknown): number => {
         const ip4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
         const ma = String(a).match(ip4Regex);
         const mb = String(b).match(ip4Regex);
@@ -73,7 +89,7 @@ export function makeComparator(sortCfg: any) {
         return cmpStr(a, b);
     };
 
-    return (ra: any, rb: any) => {
+    return (ra: KvRecord, rb: KvRecord): number => {
         for (let i = 0; i < keys.length; i++) {
             const k = keys[i];
             if (!k?.key) continue;
