@@ -14,11 +14,15 @@ import {
 } from './shared.ts';
 
 import type { KvRecord } from '../../../types/models.ts';
+
+/** 重命名/过滤规则（字符串或对象形态） */
+type RenameRule = string | { pattern?: string; flags?: string; replacement?: string };
+
 // ============ 转换函数 ============
 
-export function matchesRegexRules(name: any, rules: any) {
+export function matchesRegexRules(name: unknown, rules: RenameRule[] | null | undefined): boolean {
     const value = String(name || '');
-    for (const rule of rules) {
+    for (const rule of rules || []) {
         if (!rule) continue;
 
         // 兼容规则既可以是对象 {pattern: "...", flags: "..."} 也可以是纯字符串
@@ -37,7 +41,7 @@ export function matchesRegexRules(name: any, rules: any) {
     return false;
 }
 
-export function ensureRegionInfo(record: any, enableEmoji = false) {
+export function ensureRegionInfo(record: KvRecord, enableEmoji = false) {
     if (record.regionZh) return record;
 
     // 优先使用预解析的元数据
@@ -56,7 +60,7 @@ export function ensureRegionInfo(record: any, enableEmoji = false) {
     return { ...record, region: regionCode, regionZh, emoji };
 }
 
-export function isUselessNode(record: any) {
+export function isUselessNode(record: KvRecord | null | undefined): boolean {
     const name = String(record?.name || '').trim();
     const protocol = normalizeProtocol(record?.protocol);
     const server = String(record?.server || '')
@@ -93,7 +97,7 @@ export function isUselessNode(record: any) {
  * [核心引擎] 将新名称写回不同协议的节点 URL
  * 支持 VMess (JSON-Base64)、VLESS/Trojan/SS (Fragment)
  */
-export function setNodeName(url: any, protocol: any, newName: any) {
+export function setNodeName(url: string, protocol: unknown, newName: string): string {
     if (!url || !newName) return url;
     const proto = String(protocol || '').toLowerCase();
 
@@ -127,13 +131,17 @@ export function setNodeName(url: any, protocol: any, newName: any) {
     }
 }
 
-export function applyRegexRename(name: any, rules: any, record: KvRecord | null = null) {
+export function applyRegexRename(
+    name: unknown,
+    rules: RenameRule[] | null | undefined,
+    record: KvRecord | null = null
+): string {
     let result = String(name || '');
     if (!Array.isArray(rules)) return result;
 
     const regexGroups = record?.regexGroups || {};
 
-    for (const rule of rules) {
+    for (const rule of rules || []) {
         if (!rule) continue;
 
         // 兼容规则既可以是对象 {pattern: "...", flags: "...", replacement: "..."} 也可以是纯字符串
@@ -174,18 +182,18 @@ export function applyRegexRename(name: any, rules: any, record: KvRecord | null 
     return result.trim();
 }
 
-function safeTitle(value: any) {
+function safeTitle(value: unknown): string {
     const text = String(value || '');
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 }
 
-function safeContains(value: any, keyword: any) {
+function safeContains(value: unknown, keyword: unknown): boolean {
     return String(value || '')
         .toLowerCase()
         .includes(String(keyword || '').toLowerCase());
 }
 
-function safeMatch(value: any, pattern: any, flags = 'i') {
+function safeMatch(value: unknown, pattern: string, flags = 'i'): boolean {
     try {
         return new RegExp(pattern, flags).test(String(value || ''));
     } catch {
@@ -193,20 +201,20 @@ function safeMatch(value: any, pattern: any, flags = 'i') {
     }
 }
 
-function safeFallback(...values: any[]) {
+function safeFallback(...values: unknown[]): unknown {
     for (const value of values) {
         if (value !== null && value !== undefined && String(value).trim() !== '') return value;
     }
     return '';
 }
 
-function safePick(condition: any, truthyValue: any, falsyValue = '') {
+function safePick(condition: unknown, truthyValue: unknown, falsyValue: unknown = ''): unknown {
     return condition ? truthyValue : falsyValue;
 }
 
-function safeRegionAlias(regionValue: any) {
+function safeRegionAlias(regionValue: unknown): string {
     const region = toRegionZh(regionValue);
-    const aliases = {
+    const aliases: Record<string, string> = {
         香港: 'HK',
         台湾: 'TW',
         日本: 'JP',
@@ -215,19 +223,19 @@ function safeRegionAlias(regionValue: any) {
         韩国: 'KR',
         英国: 'UK',
     };
-    return (aliases as Record<string, any>)[region] || toRegionCode(region);
+    return aliases[region] || toRegionCode(region);
 }
 
-function safeProtocolAlias(protocolValue: any) {
+function safeProtocolAlias(protocolValue: unknown): string {
     const protocol = normalizeProtocol(protocolValue);
-    const aliases = {
+    const aliases: Record<string, string> = {
         hysteria2: 'hy2',
         shadowsocks: 'ss',
     };
-    return (aliases as Record<string, any>)[protocol] || protocol;
+    return aliases[protocol] || protocol;
 }
 
-function buildDslContext(record: any) {
+function buildDslContext(record: KvRecord) {
     return {
         name: record.name,
         originalName: record.originalName,
@@ -243,7 +251,7 @@ function buildDslContext(record: any) {
     };
 }
 
-export function applyScriptRename(record: any, expression: any) {
+export function applyScriptRename(record: KvRecord, expression: unknown): string {
     if (!expression) return record.name;
     try {
         const result = renderDslTemplate(
@@ -260,7 +268,7 @@ export function applyScriptRename(record: any, expression: any) {
     }
 }
 
-export function evaluateScriptExpression(record: any, expression: any) {
+export function evaluateScriptExpression(record: KvRecord, expression: unknown): boolean {
     if (!expression) return true;
     try {
         return evaluateDslExpression(expression, buildDslContext(record));
