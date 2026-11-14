@@ -2,7 +2,16 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.ts';
 import { normalizeUnifiedTemplateModel } from '../template-model.ts';
 import { normalizeGeneratorOptions } from '../generator-options.ts';
 
-function buildProxyLine(proxy: any) {
+import type { KvRecord, ProxyNode } from '../../../../types/models.ts';
+
+/** Surge 模板渲染选项（仅声明本模块用到的字段） */
+interface SurgeRenderOptions {
+    generatorOptions?: Record<string, unknown>;
+    nodeList?: string;
+    [key: string]: unknown;
+}
+
+function buildProxyLine(proxy: ProxyNode): string | null {
     const type = String(proxy.type || '').toLowerCase();
     const name = proxy.name || 'Untitled';
     const server = proxy.server;
@@ -90,7 +99,7 @@ function buildProxyLine(proxy: any) {
         return `${name} = hysteria2, ${server}, ${port}, ${extras.join(', ')}`;
     }
     if (type === 'tuic') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         const sni = proxy.servername ?? proxy.sni;
         if (sni !== undefined) extras.push(`sni=${sni}`);
         if (proxy['congestion-control'])
@@ -131,7 +140,7 @@ function buildProxyLine(proxy: any) {
         return `${name} = wireguard, section-name=${sectionName}`;
     }
     if (type === 'http' || type === 'https' || type === 'socks5') {
-        const extras: any[] = [];
+        const extras: string[] = [];
         if (proxy.username) extras.push(`username=${proxy.username}`);
         if (proxy.password) extras.push(`password=${proxy.password}`);
         if (type === 'https') extras.push('tls=true');
@@ -153,12 +162,12 @@ function buildProxyLine(proxy: any) {
 }
 
 // builtin-surge-generator.js implement
-function getWireGuardSectionName(name: any) {
+function getWireGuardSectionName(name: unknown): string {
     const safeName = String(name || 'WireGuard').replace(/[^a-zA-Z0-9_\u4e00-\u9fa5-]/g, '_');
 
     return `WG_${safeName}`;
 }
-function buildWireGuardSection(proxy: any) {
+function buildWireGuardSection(proxy: ProxyNode): string | null {
     if (!proxy || String(proxy.type || '').toLowerCase() !== 'wireguard') {
         return null;
     }
@@ -181,7 +190,7 @@ function buildWireGuardSection(proxy: any) {
     // IPv4
     if (proxy.ip) {
         const ipv4 = Array.isArray(proxy.ip)
-            ? proxy.ip.find((ip: any) => !String(ip).includes(':'))
+            ? proxy.ip.find((ip: unknown) => !String(ip).includes(':'))
             : proxy.ip;
 
         if (ipv4) {
@@ -217,7 +226,7 @@ function buildWireGuardSection(proxy: any) {
 
     peerParts.push(`public-key = ${proxy['public-key']}`);
 
-    let allowedIps;
+    let allowedIps: string;
 
     if (proxy['allowed-ips']) {
         allowedIps = Array.isArray(proxy['allowed-ips'])
@@ -262,13 +271,13 @@ function buildWireGuardSection(proxy: any) {
     return lines.join('\n');
 }
 
-function buildProxyGroupLine(group: any) {
+function buildProxyGroupLine(group: KvRecord): string {
     const type = String(group.type || 'select').toLowerCase();
     const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     const members = (
         ['url-test', 'fallback', 'load-balance'].includes(type)
             ? rawMembers.filter(
-                  (member: any) =>
+                  (member: unknown) =>
                       !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(
                           String(member).toUpperCase()
                       )
@@ -298,7 +307,7 @@ function buildProxyGroupLine(group: any) {
     return `${group.name} = select, ${members}`;
 }
 
-function buildRuleLine(rule: any) {
+function buildRuleLine(rule: KvRecord): string | null {
     const type = String(rule.type || '').toUpperCase();
     if (!type) return null;
     if (type === 'RULE-SET') return `RULE-SET,${rule.value},${rule.policy}`;
@@ -307,7 +316,10 @@ function buildRuleLine(rule: any) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-export function renderSurgeFromTemplateModel(model: any, options: Record<string, any> = {}) {
+export function renderSurgeFromTemplateModel(
+    model: Record<string, unknown>,
+    options: SurgeRenderOptions = {}
+): string {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
