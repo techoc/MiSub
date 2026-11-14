@@ -7,11 +7,30 @@ import { handleError } from '../utils/errorHandler.ts';
 import { useDataStore } from './useDataStore';
 import { t } from '../i18n/index.ts';
 
+import type { KvRecord } from '../../types/models.ts';
+
+/** 公开页配置 */
+interface PublicConfig {
+    enablePublicPage: boolean;
+    isLoginPath: boolean;
+    customLoginPath: string;
+    customPage: {
+        enabled: boolean;
+        useDefaultLayout: boolean;
+        allowExternalStylesheets: boolean;
+        allowScripts: boolean;
+        hideBranding: boolean;
+        hideHeader: boolean;
+        hideFooter: boolean;
+    };
+    [key: string]: unknown;
+}
+
 export const useSessionStore = defineStore('session', () => {
     const sessionState = ref('loading'); // loading, loggedIn, loggedOut
-    const initialData = ref(null);
-    const subscriptionConfig = ref({}); // [NEW] Added subscriptionConfig
-    const securityWarning = ref<any>(null);
+    const initialData = ref<unknown>(null);
+    const subscriptionConfig = ref<Record<string, unknown>>({}); // [NEW] Added subscriptionConfig
+    const securityWarning = ref<unknown>(null);
     const defaultPublicConfig = Object.freeze({
         enablePublicPage: true,
         isLoginPath: false,
@@ -32,7 +51,7 @@ export const useSessionStore = defineStore('session', () => {
         enablePublicPage: false,
     });
 
-    const publicConfig = ref<any>({
+    const publicConfig = ref<PublicConfig>({
         ...defaultPublicConfig,
         customPage: { ...defaultPublicConfig.customPage },
     }); // Default true until fetched
@@ -47,7 +66,7 @@ export const useSessionStore = defineStore('session', () => {
 
         // Update public config
         if (pConfigResult.success) {
-            publicConfig.value = (pConfigResult as Record<string, any>).data;
+            publicConfig.value = pConfigResult.data as PublicConfig;
             hasLoadedPublicConfig.value = true;
         } else if (!hasLoadedPublicConfig.value) {
             // Fail closed on the first load; preserve a known-good config on later retries.
@@ -58,14 +77,15 @@ export const useSessionStore = defineStore('session', () => {
         }
 
         if (dataResult.success) {
-            initialData.value = (dataResult as Record<string, any>).data;
-            if ((dataResult as Record<string, any>).data.config) {
-                subscriptionConfig.value = (dataResult as Record<string, any>).data.config;
+            const dataRecord = (dataResult.data || {}) as KvRecord;
+            initialData.value = dataRecord;
+            if (dataRecord.config) {
+                subscriptionConfig.value = dataRecord.config as Record<string, unknown>;
             }
 
             // 直接注入数据到 dataStore，避免 Dashboard 重复请求
             const dataStore = useDataStore();
-            dataStore.hydrateFromData((dataResult as Record<string, any>).data);
+            dataStore.hydrateFromData(dataRecord);
 
             sessionState.value = 'loggedIn';
         } else {
@@ -87,10 +107,11 @@ export const useSessionStore = defineStore('session', () => {
         }
     }
 
-    async function login(password: any) {
+    async function login(password: string) {
         const result = await apiLogin(password);
         if (result.success) {
-            securityWarning.value = (result as Record<string, any>).data?.securityWarning || null;
+            const resultData = result.data as KvRecord | undefined;
+            securityWarning.value = resultData?.securityWarning || null;
             const authenticated = await handleLoginSuccess();
             if (!authenticated) {
                 throw new Error(t('settings.sessionCheckFailed'));

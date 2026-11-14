@@ -230,7 +230,7 @@ export async function fetchSettings(): Promise<ApiResult> {
     }
 }
 
-export async function fetchPublicConfig() {
+export async function fetchPublicConfig(): Promise<ApiResult> {
     let timeoutId;
     try {
         const controller = new AbortController();
