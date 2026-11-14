@@ -18,13 +18,35 @@ import {
     pruneProxyGroups,
 } from './builtin-rules-provider.ts';
 import { normalizeGeneratorOptions } from './generator-options.ts';
+import type { ProxyNode } from '../../../types/models.ts';
+
+/** Surge 代理行生成结果 */
+interface SurgeProxyResult {
+    proxyLine: string;
+    wireguardSection?: string;
+    /** 原始 Clash 代理对象（保留元数据） */
+    clashProxy?: unknown;
+}
+
+/** Surge 生成器选项 */
+interface SurgeGeneratorOptions {
+    fileName?: string;
+    managedConfigUrl?: string;
+    interval?: number;
+    skipCertVerify?: boolean;
+    enableUdp?: boolean;
+    enableTfo?: boolean;
+    ruleLevel?: string;
+    generatorOptions?: Record<string, unknown>;
+    [key: string]: unknown;
+}
 
 /**
  * 清理字符串中的控制字符（保留换行和制表符）
  * @param {string} str - 输入字符串
  * @returns {string} 清理后的字符串
  */
-function cleanControlChars(str: any) {
+function cleanControlChars(str: string): string {
     if (typeof str !== 'string') return str;
     // 移除控制字符，但保留换行(\n)、回车(\r)、制表符(\t)
     // eslint-disable-next-line no-control-regex
@@ -37,10 +59,10 @@ function cleanControlChars(str: any) {
  * @param {string} name - 原始节点名称
  * @returns {string} 安全化后的名称
  */
-function sanitizeNodeName(name: any) {
+function sanitizeNodeName(name: unknown): string {
     if (!name) return 'Untitled';
     // 清理控制字符
-    let safe = cleanControlChars(name);
+    let safe = cleanControlChars(name as string);
     // 移除会破坏 INI 解析的字符：逗号 → 空格，等号 → 横杠
     safe = safe.replace(/,/g, ' ').replace(/=/g, '-');
     // 合并多余空格
@@ -54,7 +76,7 @@ function sanitizeNodeName(name: any) {
  * @param {string} value
  * @returns {string}
  */
-function surgeQuote(value: any) {
+function surgeQuote(value: string): string {
     if (!value) return '';
     // 含逗号、空格或双引号时需要包裹
     if (/[,\s"=]/.test(value)) {
@@ -70,7 +92,8 @@ function surgeQuote(value: any) {
  *   - proxyLine: Surge [Proxy] 行
  *   - wireguardSection: WireGuard 独立 section（仅 WireGuard 协议有）
  */
-function clashProxyToSurgeResult(proxy: any) {
+function clashProxyToSurgeResult(proxyInput: unknown): SurgeProxyResult | null {
+    const proxy = proxyInput as ProxyNode | null;
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const name = sanitizeNodeName(proxy.name);
@@ -81,7 +104,7 @@ function clashProxyToSurgeResult(proxy: any) {
     const port = proxy.port;
 
     // 构造参数列表（第一个元素是 "name = type"，后跟位置参数，再跟具名参数）
-    const parts: any[] = [];
+    const parts: string[] = [];
 
     if (type === 'ss' || type === 'shadowsocks') {
         // 格式: name = ss, server, port, encrypt-method=xxx, password=xxx
@@ -297,7 +320,7 @@ function clashProxyToSurgeResult(proxy: any) {
  * @param {Object} proxy - Clash 格式代理对象
  * @returns {{proxyLine: string, wireguardSection: string}|null}
  */
-function buildWireGuardResult(name: any, proxy: any) {
+function buildWireGuardResult(name: string, proxy: ProxyNode): SurgeProxyResult {
     const sectionName = `WG_${name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_')}`;
 
     // [Proxy] 行
@@ -319,9 +342,7 @@ function buildWireGuardResult(name: any, proxy: any) {
     //     if (ipv6) wgLines.push(`self-ip-v6 = ${ipv6}`);
     // }
     if (proxy.ip) {
-        const ipv4 = Array.isArray(proxy.ip)
-            ? proxy.ip.find((ip: any) => !ip.includes(':'))
-            : proxy.ip;
+        const ipv4 = Array.isArray(proxy.ip) ? proxy.ip.find((ip) => !ip.includes(':')) : proxy.ip;
 
         if (ipv4) {
             wgLines.push(`self-ip = ${ipv4}`);
@@ -392,7 +413,7 @@ function buildWireGuardResult(name: any, proxy: any) {
  * @param {string[]} parts - 参数列表
  * @param {Object} proxy - 代理对象
  */
-function appendTlsParams(parts: any, proxy: any) {
+function appendTlsParams(parts: string[], proxy: ProxyNode) {
     if (proxy.sni || proxy.servername) {
         parts.push(`sni=${proxy.sni || proxy.servername}`);
     }
@@ -411,7 +432,7 @@ function appendTlsParams(parts: any, proxy: any) {
  * @returns {string} Surge INI 配置
  */
 
-export function generateBuiltinSurgeConfig(nodeList: any, options: Record<string, any> = {}) {
+export function generateBuiltinSurgeConfig(nodeList: string, options: SurgeGeneratorOptions = {}) {
     const {
         fileName = 'MiSub',
         managedConfigUrl = '',
@@ -426,11 +447,11 @@ export function generateBuiltinSurgeConfig(nodeList: any, options: Record<string
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line: any) => line.trim())
-        .filter((line: any) => line && !line.startsWith('#'));
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('#'));
 
-    const results: any[] = [];
-    const proxyNames: any[] = [];
+    const results: SurgeProxyResult[] = [];
+    const proxyNames: string[] = [];
 
     // 转换为 Clash 代理对象
     const proxies = urlsToClashProxies(nodeUrls, options);
@@ -441,29 +462,27 @@ export function generateBuiltinSurgeConfig(nodeList: any, options: Record<string
     for (const clashProxy of proxies) {
         const result = clashProxyToSurgeResult(clashProxy);
         if (result) {
-            (result as Record<string, any>).clashProxy = clashProxy; // 存储以保留元数据
+            result.clashProxy = clashProxy; // 存储以保留元数据
             results.push(result);
             proxyNames.push(sanitizeNodeName(clashProxy!.name));
         }
     }
 
-    const usedNames = new Map();
-    const finalResults: any[] = [];
-    const finalProxyNames: any[] = [];
+    const usedNames = new Map<string, number>();
+    const finalResults: SurgeProxyResult[] = [];
+    const finalProxyNames: string[] = [];
 
     for (let i = 0; i < results.length; i++) {
         const baseName = proxyNames[i];
         const uniqueName = getUniqueName(baseName, usedNames);
         if (uniqueName !== baseName) {
             const updatedResult = { ...results[i] };
-            updatedResult.proxyLine = (results[i].proxyLine as Record<string, any>).replace(
+            updatedResult.proxyLine = results[i].proxyLine.replace(
                 `${baseName} = `,
                 `${uniqueName} = `
             );
             if (updatedResult.wireguardSection) {
-                updatedResult.wireguardSection = (
-                    results[i].wireguardSection as Record<string, any>
-                ).replace(
+                updatedResult.wireguardSection = results[i].wireguardSection!.replace(
                     new RegExp(
                         `WG_${escapeRegExp(baseName.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_'))}`,
                         'g'
@@ -485,8 +504,8 @@ export function generateBuiltinSurgeConfig(nodeList: any, options: Record<string
 
     const finalProxyLines = finalResults.map((r) => r.proxyLine);
     const wireguardSections = finalResults
-        .filter((r) => r.wireguardSection)
-        .map((r) => r.wireguardSection);
+        .map((r) => r.wireguardSection)
+        .filter((section): section is string => Boolean(section));
 
     const sections: string[] = [];
     const managedLine = managedConfigUrl
@@ -502,28 +521,29 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
     sections.push(`[Proxy]\nDIRECT = direct\n${finalProxyLines.join('\n')}`);
 
     const levelKey = (ruleLevel || 'std').toUpperCase();
-    const policyFactory = (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
+    const policyFactory =
+        POLICY_GROUPS[levelKey as keyof typeof POLICY_GROUPS] || POLICY_GROUPS.STD;
 
     // 构造带元数据的代理对象用于策略分组
     const proxiesForGrouping = finalProxyNames.map((name, index) => ({
         tag: name,
         name: name,
         metadata:
-            (finalResults[index].clashProxy as Record<string, any> | undefined)?.metadata || {},
+            (finalResults[index].clashProxy as { metadata?: unknown } | undefined)?.metadata || {},
     }));
 
     // 生成策略组
     let abstractGroups = policyFactory(proxiesForGrouping, options);
     if (levelKey === 'RELAY') {
-        abstractGroups = abstractGroups.map((group: any) =>
+        abstractGroups = abstractGroups.map((group) =>
             group.name === '🔗 链式代理'
                 ? { ...group, type: 'relay', proxies: ['入口节点', '落地节点'] }
                 : group
         );
-        if (!abstractGroups.some((group: any) => group.name === '落地节点')) {
+        if (!abstractGroups.some((group) => group.name === '落地节点')) {
             const proxyNames = proxiesForGrouping.map((proxy) => proxy.name);
             abstractGroups.splice(
-                abstractGroups.findIndex((group: any) => group.name === '入口节点') + 1,
+                abstractGroups.findIndex((group) => group.name === '入口节点') + 1,
                 0,
                 {
                     name: '落地节点',
@@ -533,12 +553,12 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
             );
         }
     }
-    const proxyGroupLines = abstractGroups.map((group: any) => {
+    const proxyGroupLines = abstractGroups.map((group) => {
         let type = group.type === 'url-test' ? 'url-test' : 'select';
         if (group.type === 'fallback') type = 'fallback';
         if (group.type === 'relay') type = 'relay';
 
-        const proxies = group.proxies.join(', ');
+        const proxies = (group.proxies || []).join(', ');
         const extra =
             type === 'url-test' || type === 'fallback'
                 ? ', url=http://www.gstatic.com/generate_204, interval=300, tolerance=50'
@@ -569,6 +589,6 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
     return sections.join('\n\n') + '\n';
 }
 
-function escapeRegExp(str: any) {
+function escapeRegExp(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
