@@ -23,10 +23,14 @@ export function canUseLocalStorage() {
 /**
  * 读取并 JSON 解析一个偏好值。
  * @param {string} key 存储键
- * @param {(value: unknown) => unknown} validate 校验并归一化；返回 undefined 视为不合法
- * @param {unknown} fallback 不存在 / 损坏 / 不合法时的返回值
+ * @param {(value: unknown) => T | undefined} validate 校验并归一化；返回 undefined 视为不合法
+ * @param {T} fallback 不存在 / 损坏 / 不合法时的返回值
  */
-export function readPreference(key: any, validate: any, fallback: any) {
+export function readPreference<T>(
+    key: string,
+    validate: (value: unknown) => T | undefined,
+    fallback: T
+): T {
     try {
         if (!canUseLocalStorage()) return fallback;
         const raw = localStorage.getItem(key);
@@ -43,7 +47,7 @@ export function readPreference(key: any, validate: any, fallback: any) {
  * 写入偏好（JSON 序列化）并回读校验。
  * @returns {boolean} 是否真正落盘
  */
-export function writePreference(key: any, value: any) {
+export function writePreference(key: string, value: unknown): boolean {
     try {
         if (!canUseLocalStorage()) return false;
         const serialized = JSON.stringify(value);
@@ -60,7 +64,7 @@ export function writePreference(key: any, value: any) {
  * 用于历史遗留的裸字符串键（如 `'true'` 标记），避免改变已存数据的格式。
  * @returns {boolean} 是否真正落盘
  */
-export function writeRawPreference(key: any, value: any) {
+export function writeRawPreference(key: string, value: unknown): boolean {
     try {
         if (!canUseLocalStorage()) return false;
         const serialized = String(value);
@@ -76,7 +80,7 @@ export function writeRawPreference(key: any, value: any) {
  * 读取原始字符串偏好。
  * @returns {string|null}
  */
-export function readRawPreference(key: any) {
+export function readRawPreference(key: string): string | null {
     try {
         if (!canUseLocalStorage()) return null;
         return localStorage.getItem(key);
@@ -90,7 +94,7 @@ export function readRawPreference(key: any) {
  * 删除偏好并回读校验。
  * @returns {boolean} key 是否确实已不存在
  */
-export function removePreference(key: any) {
+export function removePreference(key: string): boolean {
     try {
         if (!canUseLocalStorage()) return false;
         localStorage.removeItem(key);

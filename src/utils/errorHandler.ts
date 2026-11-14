@@ -7,16 +7,42 @@ import { t } from '../i18n/index.ts';
 import { isChunkLoadError } from './chunk-reload.ts';
 import { isNetworkErrorMessage } from './network-error.ts';
 
-let toastHandler: any = null;
-let monitoringEndpoint: any = null;
-let monitoringHeaders: any = null;
+/** 可以被错误处理器消化的形状（第三方抛出的值通常只保证这两项） */
+interface ErrorLike {
+    message?: string;
+    stack?: string;
+}
 
-function resolveMonitoringEndpoint() {
-    if (
-        typeof window !== 'undefined' &&
-        (window as Record<string, any>).__MISUB_ERROR_REPORT_URL__
-    ) {
-        return (window as Record<string, any>).__MISUB_ERROR_REPORT_URL__;
+/** 错误处理器对外产出的错误记录 */
+export interface ErrorInfo {
+    timestamp: string | number;
+    message: string;
+    stack?: string;
+    context?: string;
+    additionalData?: Record<string, unknown>;
+    count: number;
+    key: string;
+}
+
+export type ToastHandler = (message: string, type?: string, duration?: number) => void;
+
+declare global {
+    interface Window {
+        /** 运行时可注入的错误上报地址（见 resolveMonitoringEndpoint） */
+        __MISUB_ERROR_REPORT_URL__?: string;
+        /** 老版本通过 window 注入 toast 的兼容入口 */
+        showToast?: ToastHandler;
+        errorHandler?: ErrorHandler;
+    }
+}
+
+let toastHandler: ToastHandler | null = null;
+let monitoringEndpoint: string | null = null;
+let monitoringHeaders: Record<string, string> | null = null;
+
+function resolveMonitoringEndpoint(): string | null {
+    if (typeof window !== 'undefined' && window.__MISUB_ERROR_REPORT_URL__) {
+        return window.__MISUB_ERROR_REPORT_URL__;
     }
     if (typeof import.meta !== 'undefined' && import.meta.env) {
         return import.meta.env.VITE_ERROR_REPORT_URL || null;
@@ -26,11 +52,17 @@ function resolveMonitoringEndpoint() {
 
 monitoringEndpoint = resolveMonitoringEndpoint();
 
-export function setToastHandler(handler: any) {
-    toastHandler = typeof handler === 'function' ? handler : null;
+export function setToastHandler(handler: unknown) {
+    toastHandler = typeof handler === 'function' ? (handler as ToastHandler) : null;
 }
 
-export function configureErrorMonitoring({ endpoint, headers }: Record<string, any> = {}) {
+export function configureErrorMonitoring({
+    endpoint,
+    headers,
+}: {
+    endpoint?: string | null;
+    headers?: Record<string, string> | null;
+} = {}) {
     if (endpoint !== undefined) {
         monitoringEndpoint = endpoint || null;
     }
@@ -40,43 +72,49 @@ export function configureErrorMonitoring({ endpoint, headers }: Record<string, a
 }
 
 class ErrorHandler {
+    errorCounts: Map<string, number>;
+    lastErrors: Map<string, ErrorInfo>;
+    /** 错误计数重置窗口（毫秒） */
+    errorResetTime: number;
+
     constructor() {
-        (this as Record<string, any>).errorCounts = new Map();
-        (this as Record<string, any>).lastErrors = new Map();
-        (this as Record<string, any>).errorResetTime = 60000; // 1 分钟
+        this.errorCounts = new Map();
+        this.lastErrors = new Map();
+        this.errorResetTime = 60000; // 1 分钟
     }
 
     /**
      * 处理并记录错误
-     * @param {Error} error - 错误对象
+     * @param {unknown} error - 错误对象
      * @param {string} context - 错误上下文
      * @param {Object} additionalData - 附加数据
      */
-    handleError(error: any, context = '', additionalData = {}) {
-        const errorKey = this.getErrorKey(error, context);
+    handleError(error: unknown, context = '', additionalData: Record<string, unknown> = {}) {
+        const errorLike = (error ?? {}) as ErrorLike;
+        const errorKey = this.getErrorKey(errorLike, context);
 
         // 更新错误计数
         this.updateErrorCount(errorKey);
 
         // 构建错误信息
-        const errorInfo = {
+        const errorInfo: ErrorInfo = {
             timestamp: new Date().toISOString(),
-            message: error.message || '未知错误',
-            stack: error.stack,
+            message: errorLike.message || '未知错误',
+            stack: errorLike.stack,
             context,
             additionalData,
-            count: (this as Record<string, any>).errorCounts.get(errorKey),
+            count: this.errorCounts.get(errorKey) ?? 0,
             key: errorKey,
         };
 
         // 记录错误
-        console.error(`[${context || 'Global Error'}] ${error.message}`, {
+        console.error(`[${context || 'Global Error'}] ${errorLike.message}`, {
             ...errorInfo,
-            stack: error.stack,
+            stack: errorLike.stack,
         });
 
         // 保存最近的错误
-        (this as Record<string, any>).lastErrors.set(errorKey, {
+        this.lastErrors.set(errorKey, {
             ...errorInfo,
             timestamp: Date.now(),
         });
@@ -99,11 +137,11 @@ class ErrorHandler {
 
     /**
      * 生成错误的唯一键
-     * @param {Error} error - 错误对象
+     * @param {ErrorLike} error - 错误对象
      * @param {string} context - 上下文
      * @returns {string} 错误键
      */
-    getErrorKey(error: any, context: any) {
+    getErrorKey(error: ErrorLike, context: string): string {
         const message = error.message || '未知错误';
         const stack = error.stack?.split('\n')[0] || '';
         return `${context}:${message}:${stack}`.substring(0, 100);
@@ -113,9 +151,9 @@ class ErrorHandler {
      * 更新错误计数
      * @param {string} errorKey - 错误键
      */
-    updateErrorCount(errorKey: any) {
-        const current = (this as Record<string, any>).errorCounts.get(errorKey) || 0;
-        (this as Record<string, any>).errorCounts.set(errorKey, current + 1);
+    updateErrorCount(errorKey: string) {
+        const current = this.errorCounts.get(errorKey) || 0;
+        this.errorCounts.set(errorKey, current + 1);
     }
 
     /**
@@ -123,10 +161,10 @@ class ErrorHandler {
      */
     cleanupOldErrors() {
         const now = Date.now();
-        for (const [key, error] of (this as Record<string, any>).lastErrors.entries()) {
-            if (now - error.timestamp > (this as Record<string, any>).errorResetTime) {
-                (this as Record<string, any>).errorCounts.delete(key);
-                (this as Record<string, any>).lastErrors.delete(key);
+        for (const [key, error] of this.lastErrors.entries()) {
+            if (now - Number(error.timestamp) > this.errorResetTime) {
+                this.errorCounts.delete(key);
+                this.lastErrors.delete(key);
             }
         }
     }
@@ -136,8 +174,8 @@ class ErrorHandler {
      * @param {string} errorKey - 错误键
      * @returns {boolean} 是否显示通知
      */
-    shouldShowUserNotification(errorKey: any) {
-        const count = (this as Record<string, any>).errorCounts.get(errorKey) || 0;
+    shouldShowUserNotification(errorKey: string): boolean {
+        const count = this.errorCounts.get(errorKey) || 0;
 
         // 第一次错误或错误次数是 5 的倍数时显示
         return count === 1 || count % 5 === 0;
@@ -148,12 +186,12 @@ class ErrorHandler {
      * @param {Object} errorInfo - 错误信息
      * @returns {boolean} 是否发送
      */
-    shouldSendToMonitoring(errorInfo: any) {
+    shouldSendToMonitoring(errorInfo: ErrorInfo): boolean {
         // 仅发送关键错误或高频错误
         return (
             errorInfo.count >= 3 ||
-            errorInfo.context?.includes('critical') ||
-            errorInfo.message?.includes('network')
+            Boolean(errorInfo.context?.includes('critical')) ||
+            Boolean(errorInfo.message?.includes('network'))
         );
     }
 
@@ -161,10 +199,9 @@ class ErrorHandler {
      * 显示用户通知
      * @param {Object} errorInfo - 错误信息
      */
-    showUserNotification(errorInfo: any) {
-        const handler =
-            toastHandler ||
-            (typeof window !== 'undefined' ? (window as Record<string, any>).showToast : null);
+    showUserNotification(errorInfo: ErrorInfo) {
+        const handler: ToastHandler | null =
+            toastHandler || (typeof window !== 'undefined' ? (window.showToast ?? null) : null);
         if (!handler) return;
 
         let message = this.getUserFriendlyMessage(errorInfo);
@@ -184,14 +221,19 @@ class ErrorHandler {
      * @param {Object} errorInfo - 错误信息
      * @returns {string} 用户友好的消息
      */
-    getUserFriendlyMessage(errorInfo: any) {
+    getUserFriendlyMessage(errorInfo: {
+        message: string;
+        context?: string;
+        additionalData?: Record<string, unknown>;
+        count?: number;
+    }): string {
         const { message, context } = errorInfo;
 
         if (message.includes('timeout')) {
             return t('errors.timeout');
         }
         if (message.includes('Resource load failed')) {
-            const failedSrc = errorInfo.additionalData?.src || '';
+            const failedSrc = String(errorInfo.additionalData?.src || '');
             const fileName = failedSrc.split('/').pop() || 'unknown';
             if (typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent)) {
                 return t('errors.resourceLoadIntercepted', { fileName });
@@ -249,7 +291,7 @@ class ErrorHandler {
      * 发送错误到监控服务
      * @param {Object} errorInfo - 错误信息
      */
-    async sendToMonitoringService(errorInfo: any) {
+    async sendToMonitoringService(errorInfo: ErrorInfo) {
         try {
             const endpoint = monitoringEndpoint || resolveMonitoringEndpoint();
             if (!endpoint) return;
@@ -286,12 +328,12 @@ class ErrorHandler {
      */
     getErrorStats() {
         return {
-            totalErrors: Array.from((this as Record<string, any>).errorCounts.values()).reduce(
-                (sum: number, count: any) => sum + count,
+            totalErrors: Array.from(this.errorCounts.values()).reduce(
+                (sum, count) => sum + count,
                 0
             ),
-            uniqueErrors: (this as Record<string, any>).errorCounts.size,
-            recentErrors: Array.from((this as Record<string, any>).lastErrors.values()),
+            uniqueErrors: this.errorCounts.size,
+            recentErrors: Array.from(this.lastErrors.values()),
         };
     }
 
@@ -299,8 +341,8 @@ class ErrorHandler {
      * 重置错误统计
      */
     reset() {
-        (this as Record<string, any>).errorCounts.clear();
-        (this as Record<string, any>).lastErrors.clear();
+        this.errorCounts.clear();
+        this.lastErrors.clear();
     }
 }
 
@@ -308,7 +350,7 @@ const globalErrorHandler = new ErrorHandler();
 
 export { ErrorHandler, globalErrorHandler };
 
-export const handleError = (error: any, context: any, data: any) => {
+export const handleError = (error: unknown, context = '', data: Record<string, unknown> = {}) => {
     return globalErrorHandler.handleError(error, context, data);
 };
 
@@ -317,5 +359,5 @@ export const getErrorStats = () => {
 };
 
 if (typeof window !== 'undefined') {
-    (window as Record<string, any>).errorHandler = globalErrorHandler;
+    window.errorHandler = globalErrorHandler;
 }

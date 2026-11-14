@@ -34,7 +34,7 @@ const NETWORK_ERROR_PATTERNS = [
  * @param {unknown} message 错误消息（或任意可字符串化的值）
  * @returns {boolean} 是否属于网络类失败
  */
-export function isNetworkErrorMessage(message: any) {
+export function isNetworkErrorMessage(message: unknown) {
     const text = String(message ?? '').toLowerCase();
     if (!text) return false;
 

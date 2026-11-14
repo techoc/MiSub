@@ -1,19 +1,19 @@
-import { ref, watch } from 'vue';
+import { ref, watch, type Ref } from 'vue';
 
 /**
  * 一个Vue组合式函数，接收一个响应式数字，返回一个带动画效果的响应式数字。
  * @param {import('vue').Ref<number>} targetValue - 目标数字 (必须是一个ref或computed)
  * @returns {import('vue').Ref<number>} - 一个会从旧值动画到新值的ref
  */
-export function useAnimatedCounter(targetValue: any) {
+export function useAnimatedCounter(targetValue: Ref<number>) {
     const displayValue = ref(targetValue.value || 0);
-    let animationFrameId: any = null;
+    let animationFrameId: number | null = null;
 
-    const animate = (from: any, to: any) => {
+    const animate = (from: number, to: number) => {
         const duration = 700; // 动画持续时间 (毫秒)
         const start = performance.now();
 
-        const update = (now: any) => {
+        const update = (now: number) => {
             const elapsed = now - start;
             const progress = Math.min(elapsed / duration, 1);
 

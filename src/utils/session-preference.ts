@@ -19,7 +19,7 @@ export function canUseSessionStorage() {
 }
 
 /** 读取裸字符串；不存在或不可用时返回 null */
-export function readSessionPreference(key: any) {
+export function readSessionPreference(key: string): string | null {
     try {
         if (!canUseSessionStorage()) return null;
         return sessionStorage.getItem(key);
@@ -30,7 +30,7 @@ export function readSessionPreference(key: any) {
 }
 
 /** 写入裸字符串；返回是否真正落盘（已回读校验） */
-export function writeSessionPreference(key: any, value: any) {
+export function writeSessionPreference(key: string, value: unknown): boolean {
     try {
         if (!canUseSessionStorage()) return false;
         const serialized = String(value);
@@ -43,7 +43,7 @@ export function writeSessionPreference(key: any, value: any) {
 }
 
 /** 删除；返回 key 是否确实消失 */
-export function removeSessionPreference(key: any) {
+export function removeSessionPreference(key: string): boolean {
     try {
         if (!canUseSessionStorage()) return false;
         sessionStorage.removeItem(key);

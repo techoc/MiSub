@@ -2,8 +2,14 @@
  * Deep compare two objects for equality
  * Uses JSON.stringify for simplicity and effectiveness with plain data objects
  */
-function isEqual(a: any, b: any) {
+function isEqual(a: unknown, b: unknown) {
     return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** 差异计算的最小对象契约：必须带唯一 id */
+export interface DiffItem {
+    id: string | number;
+    [key: string]: unknown;
 }
 
 /**
@@ -13,9 +19,9 @@ function isEqual(a: any, b: any) {
  * @param {Array} current - The current array
  * @returns {Object} { added: [], updated: [], removed: [] } or null if no difference
  */
-export function calculateDiff(original: any[] = [], current: any[] = []) {
-    const added: any[] = [];
-    const updated: any[] = [];
+export function calculateDiff<T extends DiffItem>(original: T[] = [], current: T[] = []) {
+    const added: T[] = [];
+    const updated: T[] = [];
     const removedIdSet = new Set(original.map((item) => item.id));
     const originalMap = new Map(original.map((item) => [item.id, item]));
 

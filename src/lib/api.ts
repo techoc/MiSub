@@ -11,13 +11,14 @@ import { t } from '../i18n/index.ts';
  * @param {string} context - 错误上下文
  * @returns {Object} 标准错误响应
  */
-function handleApiError(error: any, context = '') {
+function handleApiError(error: unknown, context = '') {
     console.error(`[API Error - ${context}]`, error);
 
+    const err = (error ?? {}) as { name?: string; message?: string };
     let errorType = 'unknown';
     let errorMessage;
 
-    let status: any = null;
+    let status: number | null = null;
 
     if (error instanceof APIError) {
         status = error.status;
@@ -29,23 +30,23 @@ function handleApiError(error: any, context = '') {
             const message = error.message || `HTTP ${error.status}`;
             errorMessage = formatHttpErrorMessage(error.status, message);
         }
-    } else if (error.name === 'AbortError') {
+    } else if (err.name === 'AbortError') {
         errorType = 'timeout';
         errorMessage = t('settings.requestTimeout');
-    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+    } else if (err.name === 'TypeError' && String(err.message).includes('fetch')) {
         errorType = 'network';
         errorMessage = t('settings.networkFailedGeneric');
-    } else if (error.message === 'UNAUTHORIZED') {
+    } else if (err.message === 'UNAUTHORIZED') {
         errorType = 'auth';
         errorMessage = t('settings.authFailedRelogin');
-    } else if (error.message.includes('HTTP')) {
+    } else if (String(err.message).includes('HTTP')) {
         errorType = 'server';
-        errorMessage = error.message;
-    } else if (error.name === 'SyntaxError') {
+        errorMessage = err.message;
+    } else if (err.name === 'SyntaxError') {
         errorType = 'server';
         errorMessage = t('settings.serverResponseInvalid');
     } else {
-        errorMessage = error.message || t('settings.operationFailed');
+        errorMessage = err.message || t('settings.operationFailed');
     }
 
     return {
@@ -61,7 +62,7 @@ function extractHttpStatus(message = '') {
     return match ? Number(match[1]) : null;
 }
 
-function formatHttpErrorMessage(status: any, message = '') {
+function formatHttpErrorMessage(status: number | null | undefined, message = '') {
     const normalizedMessage = String(message || '').trim();
     if (!status) return normalizedMessage;
     if (new RegExp(`^HTTP\\s+${status}\\b`, 'i').test(normalizedMessage)) {
@@ -70,13 +71,22 @@ function formatHttpErrorMessage(status: any, message = '') {
     return `HTTP ${status}: ${normalizedMessage || `HTTP ${status}`}`;
 }
 
-function normalizeApiFailure(data: any, fallbackMessage = t('settings.operationFailed')) {
-    const error = data?.error || data?.message || fallbackMessage;
-    const status = data?.status || extractHttpStatus(error);
+function normalizeApiFailure(
+    data: unknown,
+    fallbackMessage = t('settings.operationFailed')
+) {
+    const payload = (data ?? {}) as {
+        error?: string;
+        message?: string;
+        status?: number;
+        errorType?: string;
+    };
+    const error = payload.error || payload.message || fallbackMessage;
+    const status = payload.status || extractHttpStatus(error);
     return {
         success: false,
         error,
-        errorType: data?.errorType || (status ? 'server' : 'unknown'),
+        errorType: payload.errorType || (status ? 'server' : 'unknown'),
         status,
         data,
     };
@@ -102,7 +112,7 @@ export async function fetchInitialData() {
     }
 }
 
-export async function login(password: any) {
+export async function login(password: string) {
     try {
         const data = await api.post('/api/login', { password });
         return { success: true, data };
@@ -119,7 +129,7 @@ export async function login(password: any) {
 }
 
 // [核心修改] saveMisubs 现在接收并发送 profiles
-export async function saveMisubs(misubs: any, profiles: any) {
+export async function saveMisubs(misubs: unknown, profiles: unknown) {
     try {
         // 数据预验证
         if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
@@ -137,7 +147,7 @@ export async function saveMisubs(misubs: any, profiles: any) {
 }
 
 export async function fetchNodeCount(
-    subUrl: any,
+    subUrl: string,
     fetchProxy = '',
     plusAsSpace = false,
     userAgent = ''
@@ -147,7 +157,7 @@ export async function fetchNodeCount(
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
 
-        const payload: Record<string, any> = { url: subUrl };
+        const payload: Record<string, unknown> = { url: subUrl };
         if (fetchProxy) {
             payload.fetchProxy = fetchProxy;
         }
@@ -202,7 +212,7 @@ export async function fetchPublicConfig() {
     }
 }
 
-export async function saveSettings(settings: any) {
+export async function saveSettings(settings: Record<string, unknown>) {
     try {
         return await api.post('/api/settings', settings);
     } catch (error) {
@@ -227,7 +237,7 @@ export async function resetSettings() {
  * @param {string[]} subscriptionIds - 要更新的订阅ID数组
  * @returns {Promise<Object>} - 更新结果
  */
-export async function batchUpdateNodes(subscriptionIds: any) {
+export async function batchUpdateNodes(subscriptionIds: string[]) {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -295,7 +305,7 @@ export async function migrateLegacyD1() {
     }
 }
 
-export async function fetchGithubLatestRelease(repo: any) {
+export async function fetchGithubLatestRelease(repo: string) {
     try {
         return await api.get(`/api/github/release?repo=${encodeURIComponent(repo)}`);
     } catch (error) {
@@ -303,7 +313,7 @@ export async function fetchGithubLatestRelease(repo: any) {
     }
 }
 
-export async function testSubconverterBackend(backend: any, target = 'clash') {
+export async function testSubconverterBackend(backend: string, target = 'clash') {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -327,7 +337,7 @@ export async function testSubconverterBackend(backend: any, target = 'clash') {
  * @param {string} userAgent - User-Agent
  * @returns {Promise<Object>} - 测试结果
  */
-export async function testSubscription(url: any, userAgent: any) {
+export async function testSubscription(url: string, userAgent: string) {
     try {
         return await api.post('/api/debug_subscription', { url, userAgent });
     } catch (error) {
