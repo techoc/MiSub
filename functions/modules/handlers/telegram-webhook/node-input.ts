@@ -34,7 +34,7 @@ export async function handleNodeInput(
     options = {}
 ) {
     // 同一批导入的节点共用一个分组名（文件导入用文件名，文本导入用时间）
-    const importGroupName = options.groupName || buildImportGroupName(options);
+    const importGroupName = (options as Record<string, any>).groupName || buildImportGroupName(options);
     try {
         const cache = requestCache || createRequestCache();
         const config = await getTelegramPushConfig(env, cache);
@@ -194,7 +194,7 @@ export async function handleNodeInput(
         } catch (cacheError) {
             console.warn(
                 '[Telegram Push] Failed to clear node caches after node import:',
-                cacheError?.message || cacheError
+                (cacheError as Error | undefined)?.message || cacheError
             );
         }
 

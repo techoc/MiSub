@@ -36,7 +36,7 @@ export async function handleDisguiseRequest(context, preloadedSettings: KvRecord
         settings = settingsData || {};
     }
 
-    const disguise = settings.disguise;
+    const disguise = settings.disguise!;
 
     // Custom Login Path Logic (Priority: High)
     // If the user accessed the configured custom login path, ALWAYS allow access.
@@ -75,7 +75,7 @@ export async function handleDisguiseRequest(context, preloadedSettings: KvRecord
     // If Public Page is enabled, we allow access to root '/' and '/explore'.
     // NOTE: We do NOT automatically allow /login here anymore if disguise is on.
     const isPublicAccessAllowed =
-        settings.enablePublicPage && (url.pathname === '/' || url.pathname === '/explore');
+        settings.enablePublicPage! && (url.pathname === '/' || url.pathname === '/explore');
     if (isPublicAccessAllowed) {
         return null; // Allow access
     }

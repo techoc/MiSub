@@ -70,7 +70,7 @@ export function groupNodeLinesByRegion(nodes: any[] = [], options: Record<string
     nodes.forEach((node) => {
         const tagName = node.tag || node.name;
         let region = '其他';
-        const override = regionOverrides.find((rule) => rule.pattern.test(tagName));
+        const override = regionOverrides.find((rule) => rule.pattern.test(tagName)!);
 
         // 1. 用户自定义规则优先，用于修正自动地区识别误判
         if (override) {

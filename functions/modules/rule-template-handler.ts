@@ -116,9 +116,9 @@ export async function handleRuleTemplatesRequest(request, env) {
             try {
                 body = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
             } catch (e) {
-                if (e?.status === 413) {
+                if ((e as { status?: number } | undefined)?.status === 413) {
                     return createJsonResponse(
-                        { success: false, message: e.message, error: e.message },
+                        { success: false, message: (e as Error).message, error: (e as Error).message },
                         413
                     );
                 }

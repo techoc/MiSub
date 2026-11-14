@@ -182,7 +182,7 @@ export function parseTuicUrl(url) {
 
         // ALPN
         if (params.get('alpn')) {
-            proxy.alpn = params.get('alpn').split(',');
+            proxy.alpn = params.get('alpn').split(',')!;
         }
 
         // Skip cert verify
@@ -505,7 +505,7 @@ export function parseAnytlsUrl(url) {
             proxy.sni = sni;
         }
 
-        if (params.get('alpn')) proxy.alpn = params.get('alpn').split(',');
+        if (params.get('alpn')) proxy.alpn = params.get('alpn').split(',')!;
         if (params.get('insecure') === '1' || params.get('allowInsecure') === '1')
             proxy['skip-cert-verify'] = true;
         const pinnedPeerCertSha256 =

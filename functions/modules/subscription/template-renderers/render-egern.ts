@@ -340,7 +340,7 @@ export function renderEgernFromTemplateModel(model, options: Record<string, any>
     };
 
     if (normalizedModel.settings.managedConfigUrl) {
-        config.auto_update = {
+        (config as Record<string, any>).auto_update = {
             url: s(normalizedModel.settings.managedConfigUrl),
             interval: normalizedModel.settings.interval || 86400,
         };

@@ -192,7 +192,7 @@ export function parseVlessUrl(url) {
 
         // ALPN
         if (params.get('alpn')) {
-            proxy.alpn = params.get('alpn').split(',');
+            proxy.alpn = params.get('alpn').split(',')!;
         }
 
         // [重要] dialer-proxy 链式代理

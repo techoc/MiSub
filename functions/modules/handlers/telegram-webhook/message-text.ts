@@ -36,7 +36,7 @@ export function extractNodeName(url) {
 /**
  * 提取节点链接（支持多种协议）
  */
-export function extractNodeUrls(text) {
+export function extractNodeUrls(text): any[] {
     const protocols = [
         'ss://',
         'ssr://',

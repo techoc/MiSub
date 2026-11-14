@@ -99,7 +99,7 @@ export async function fetchSubscriptionNodes(
             }
         }
 
-        if (fetchProxy && typeof fetchProxy === 'string' && fetchProxy.trim()) {
+        if (fetchProxy && typeof fetchProxy === 'string' && (fetchProxy as Record<string, any>).trim()) {
             requestUrl = buildFetchProxyUrl(fetchProxy, url, effectiveUserAgent);
         }
 

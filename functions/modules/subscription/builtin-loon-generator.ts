@@ -317,9 +317,9 @@ export function generateBuiltinLoonConfig(nodeList, options: Record<string, any>
     // (已在 urlsToClashProxies 中全局处理)
 
     for (const clashProxy of proxies) {
-        const baseName = sanitizeNodeName(clashProxy.name);
+        const baseName = sanitizeNodeName(clashProxy.name!);
         const uniqueName = getUniqueName(baseName, usedNames);
-        clashProxy.name = uniqueName;
+        clashProxy.name! = uniqueName;
 
         const line = clashProxyToLoonResult(clashProxy);
         if (line) {

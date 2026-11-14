@@ -6,7 +6,7 @@ const DEFAULT_MAX_INLINE_NODE_COUNT = 80;
 const MEMORY_CACHE_SYMBOL = '__misubExternalNodesCallbackCache';
 
 function getCrypto() {
-    const cryptoImpl = globalThis.crypto;
+    const cryptoImpl = (globalThis as Record<string, any>).crypto;
     if (!cryptoImpl?.subtle) {
         throw new Error('WebCrypto subtle API is unavailable');
     }
@@ -112,7 +112,7 @@ function resolveExternalNodesD1Adapter(env: Record<string, any> = {}) {
     try {
         return StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
     } catch (error) {
-        console.warn('[ExternalNodesCallback] D1 storage unavailable:', error?.message || error);
+        console.warn('[ExternalNodesCallback] D1 storage unavailable:', (error as Error | undefined)?.message || error);
         return null;
     }
 }
@@ -325,7 +325,7 @@ export async function handleExternalNodesCallbackRequest(request, env: Record<st
     try {
         payload = await verifyExternalNodesToken(token, resolveExternalNodesCallbackSecret(env));
     } catch (err) {
-        const message = err?.message || 'Invalid callback token';
+        const message = (err as Error | undefined)?.message || 'Invalid callback token';
         const status = /expired/i.test(message) ? 410 : 403;
         return new Response(message, { status });
     }

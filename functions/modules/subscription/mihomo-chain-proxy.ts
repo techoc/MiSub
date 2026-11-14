@@ -183,7 +183,7 @@ export function applyMihomoChainProxyToClashConfig(
 
     const chainGroupNames = new Set(
         chainConfigs
-            .flatMap((chain) => [chain?.group, chain?.entry])
+            .flatMap((chain) => [(chain as Record<string, any> | undefined)?.group, (chain as Record<string, any> | undefined)?.entry])
             .map((name) => String(name || '').trim())
             .filter(Boolean)
     );

@@ -16,7 +16,7 @@ export function groupNodeLinesByProtocol(nodeLines = []) {
         if (matched.length > 0) {
             grouped.push({
                 name,
-                lines: matched.map((item) => item.line),
+                lines: matched.map((item) => (item as Record<string, any>).line),
                 count: matched.length,
             });
         }

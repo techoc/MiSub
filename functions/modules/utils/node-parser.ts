@@ -405,11 +405,11 @@ export function parseNodeList(content, options: Record<string, any> = {}) {
                         fixedUrl = fixResult.fixedUrl;
                         ss2022Warning = {
                             type: 'ss2022_auto_fixed',
-                            message: `已自动修复: ${fixResult.changes.from} → ${fixResult.changes.to}`,
-                            originalCipher: fixResult.changes.from,
-                            fixedCipher: fixResult.changes.to,
+                            message: `已自动修复: ${fixResult.changes.from!} → ${fixResult.changes.to!}`,
+                            originalCipher: fixResult.changes.from!,
+                            fixedCipher: fixResult.changes.to!,
                         };
-                        console.warn(`[SS 2022] 自动修复节点: ${fixResult.changes.reason}`);
+                        console.warn(`[SS 2022] 自动修复节点: ${fixResult.changes.reason!}`);
                     } else {
                         ss2022Warning = {
                             type: 'ss2022_invalid',

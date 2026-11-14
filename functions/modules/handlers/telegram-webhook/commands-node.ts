@@ -44,13 +44,13 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
         if (target.type === 'all') {
             indicesToDelete = indexMapping;
         } else if (target.type === 'index') {
-            for (const idx of target.values) {
+            for (const idx of target.values!) {
                 if (idx >= 0 && idx < userNodes.length) {
                     indicesToDelete.push(indexMapping[idx]);
                 }
             }
         } else if (target.type === 'id') {
-            for (const id of target.values) {
+            for (const id of target.values!) {
                 const foundIdx = allSubscriptions.findIndex((s) => s.id === id);
                 if (foundIdx !== -1 && indexMapping.includes(foundIdx)) {
                     indicesToDelete.push(foundIdx);
@@ -177,12 +177,12 @@ export async function handleToggleCommand(chatId, userId, args, env, enable) {
             return;
         }
 
-        let indicesToToggle = [];
+        let indicesToToggle: any[] = [];
 
         if (target.type === 'all') {
             indicesToToggle = [...indexMapping];
         } else if (target.type === 'index') {
-            for (const idx of target.values) {
+            for (const idx of target.values!) {
                 if (idx >= 0 && idx < userNodes.length) {
                     indicesToToggle.push(indexMapping[idx]);
                 }
@@ -579,7 +579,7 @@ export async function handleCopyCommand(chatId, userId, args, env) {
         if (target.type === 'all') {
             indicesToCopy = userNodes.map((_, i) => i);
         } else if (target.type === 'index') {
-            indicesToCopy = target.values.filter((idx) => idx >= 0 && idx < userNodes.length);
+            indicesToCopy = target.values.filter((idx) => idx >= 0 && idx < userNodes.length)!;
         }
 
         if (indicesToCopy.length === 0) {

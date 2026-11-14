@@ -304,7 +304,7 @@ export async function authMiddleware(request, env) {
         const diagnostic = await getAuthSessionDiagnostic(request, env);
         return diagnostic.isAuthenticated;
     } catch (e) {
-        console.error('[Auth] 鉴权失败', { ...logMeta, error: e?.message });
+        console.error('[Auth] 鉴权失败', { ...logMeta, error: (e as Error | undefined)?.message });
         return false;
     }
 }
@@ -327,7 +327,7 @@ export async function handleLogin(request, env) {
     } catch (e) {
         console.error('[API Error /login] Request body parse failed', {
             ...logMeta,
-            error: e?.message,
+            error: (e as Error | undefined)?.message,
         });
         if (e instanceof RequestBodyTooLargeError) {
             return new Response(JSON.stringify({ error: e.message }), {
@@ -366,7 +366,7 @@ export async function handleLogin(request, env) {
         }
         return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
     } catch (e) {
-        console.error('[API Error /login] Login handler failed', { ...logMeta, error: e?.message });
+        console.error('[API Error /login] Login handler failed', { ...logMeta, error: (e as Error | undefined)?.message });
         return new Response(JSON.stringify({ error: '登录处理失败' }), { status: 500 });
     }
 }

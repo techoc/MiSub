@@ -430,7 +430,7 @@ export function renderSingboxFromTemplateModel(model, options: Record<string, an
         (outbound) => (outbound.outbounds || []).length > 0
     );
     const renderedGroupTags = new Set(groupOutbounds.map((outbound) => outbound.tag));
-    const renderedProxyTags = new Set(proxyOutbounds.map((outbound) => outbound.tag));
+    const renderedProxyTags = new Set(proxyOutbounds.map((outbound) => outbound.tag!));
     // DNS 出口 detour 只能引用真实渲染出来的组；组已不再因空成员被丢弃，
     // 降级只剩两种来源：injectDnsExitGroup=false 显式关闭，或 explicit DNS
     // 覆盖跳过注入导致模型中没有该组

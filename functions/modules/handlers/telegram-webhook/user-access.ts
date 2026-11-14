@@ -110,7 +110,7 @@ export async function checkRateLimit(userId, env, config) {
 /**
  * 获取用户通过 Telegram 添加的节点
  */
-export async function getUserNodes(userId, env) {
+export async function getUserNodes(userId, env): Promise<any[]> {
     const storageAdapter = await getStorageAdapter(env);
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
 
@@ -132,7 +132,7 @@ export async function getUserNodes(userId, env) {
 /**
  * 获取所有节点和用户节点的索引映射
  */
-export async function getNodesWithMapping(userId, env) {
+export async function getNodesWithMapping(userId, env): Promise<Record<string, any>> {
     const storageAdapter = await getStorageAdapter(env);
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
 

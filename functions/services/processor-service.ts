@@ -71,7 +71,7 @@ export function isClashYamlProfileTemplate(templateText) {
             typeof parsed === 'object' &&
             !Array.isArray(parsed) &&
             Array.isArray(parsed['proxy-groups']) &&
-            Array.isArray(parsed.rules)
+            Array.isArray((parsed as Record<string, any>).rules)
         );
     } catch {
         return false;
@@ -106,9 +106,9 @@ function normalizeYamlChainConfigs(config) {
         .map((declaration) => ({
             ...declaration,
             // Long names are the documented YAML form; short names mirror the unified model.
-            group: declaration.group ?? declaration['landing-group'],
-            entry: declaration.entry ?? declaration['entry-group'],
-            prefix: declaration.prefix ?? declaration['clone-prefix'],
+            group: (declaration as Record<string, any>).group ?? declaration['landing-group'],
+            entry: (declaration as Record<string, any>).entry ?? declaration['entry-group'],
+            prefix: (declaration as Record<string, any>).prefix ?? declaration['clone-prefix'],
         }));
 }
 
@@ -127,7 +127,7 @@ export function renderClashYamlProfileTemplate(templateText, nodeList, options: 
     const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
 
     const chainConfigs = normalizeYamlChainConfigs(config);
-    config.proxies = proxies;
+    (config as Record<string, any>).proxies = proxies;
     if (chainConfigs.length > 0) {
         applyMihomoChainProxyToClashConfig(config, {
             chainConfigs,
@@ -142,12 +142,12 @@ export function renderClashYamlProfileTemplate(templateText, nodeList, options: 
             'bind-address': generatorOptions.allowLan ? '0.0.0.0' : '127.0.0.1',
             ipv6: generatorOptions.ipv6,
             'external-controller': '127.0.0.1:9090',
-            dns: resolveSafeDnsConfig(config.dns, {
+            dns: resolveSafeDnsConfig((config as Record<string, any>).dns, {
                 mode: options.dnsMode,
                 proxyGroup: '🌐 DNS 出口',
                 generatorOptions,
             }),
-            proxies: config.proxies,
+            proxies: (config as Record<string, any>).proxies,
         },
         {
             indent: 2,

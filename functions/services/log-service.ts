@@ -58,7 +58,7 @@ async function resolvePrimaryLogStorage(env) {
     }
 
     return {
-        storageType: storage.type || storageType,
+        storageType: (storage as Record<string, any>).type || storageType,
         storage,
     };
 }

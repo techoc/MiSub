@@ -50,8 +50,8 @@ export async function handlePublicPreviewRequest(request, env) {
             await StorageFactory.getStorageType(env)
         );
         const profile =
-            typeof storageAdapter.getProfileById === 'function'
-                ? await storageAdapter.getProfileById(profileId)
+            typeof (storageAdapter as Record<string, any>).getProfileById === 'function'
+                ? await (storageAdapter as Record<string, any>).getProfileById(profileId)
                 : ((await storageAdapter.get(KV_KEY_PROFILES)) || []).find(
                       (p) => (p.customId && p.customId === profileId) || p.id === profileId
                   );

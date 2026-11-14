@@ -111,12 +111,12 @@ export function shouldRenderClashYamlProfileTemplateLocally({
     targetFormat = '',
     templateSource = {},
 } = {}) {
-    if (!isExternalMode || targetFormat !== 'clash' || templateSource?.kind !== 'remote')
+    if (!isExternalMode || targetFormat !== 'clash' || (templateSource as Record<string, any> | undefined)?.kind !== 'remote')
         return false;
     try {
-        const parsed = new URL(String(templateSource.value || '').trim());
+        const parsed = new URL(String((templateSource as Record<string, any>).value || '').trim());
         return /\.ya?ml$/i.test(parsed.pathname);
     } catch {
-        return /\.ya?ml(?:[?#].*)?$/i.test(String(templateSource.value || '').trim());
+        return /\.ya?ml(?:[?#].*)?$/i.test(String((templateSource as Record<string, any>).value || '').trim());
     }
 }

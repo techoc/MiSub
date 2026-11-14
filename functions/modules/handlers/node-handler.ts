@@ -53,7 +53,7 @@ function detectSubscriptionBodyError(text) {
     const status = statusMatch ? Number(statusMatch[1]) : undefined;
     const message = status ? `HTTP ${status}: ${summary}` : summary;
     const error = new Error(message);
-    if (status) error.status = status;
+    if (status) (error as { status?: number }).status = status;
     return error;
 }
 
@@ -445,8 +445,8 @@ export async function handleNodeCountRequest(request, env) {
                         });
                     }
 
-                    if (typeof storageAdapter.updateSubscriptionById === 'function') {
-                        await storageAdapter.updateSubscriptionById(subToUpdate.id, (current) => ({
+                    if (typeof (storageAdapter as Record<string, any>).updateSubscriptionById === 'function') {
+                        await (storageAdapter as Record<string, any>).updateSubscriptionById(subToUpdate.id, (current) => ({
                             ...current,
                             nodeCount: result.count,
                             ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),

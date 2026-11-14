@@ -128,8 +128,8 @@ export async function handleProfileMode(
     );
 
     const profile =
-        typeof storageAdapter.getProfileById === 'function'
-            ? await storageAdapter.getProfileById(profileId)
+        typeof (storageAdapter as Record<string, any>).getProfileById === 'function'
+            ? await (storageAdapter as Record<string, any>).getProfileById(profileId)
             : ((await storageAdapter.get(KV_KEY_PROFILES)) || []).find(
                   (p) => (p.customId && p.customId === profileId) || p.id === profileId
               );
@@ -157,7 +157,7 @@ export async function handleProfileMode(
     );
     profileSubIds.forEach((id) => {
         const sub = misubMap.get(id);
-        if (sub && sub.enabled && /^https?:\/\//i.test(sub.url)) {
+        if (sub && (sub as Record<string, any>).enabled && /^https?:\/\//i.test((sub as Record<string, any>).url)) {
             targetMisubs.push(sub);
         }
     });
@@ -167,7 +167,7 @@ export async function handleProfileMode(
     if (Array.isArray(profileNodeIds)) {
         profileNodeIds.forEach((id) => {
             const node = misubMap.get(id);
-            if (node && node.enabled) targetManualNodes.push(node);
+            if (node && (node as Record<string, any>).enabled) targetManualNodes.push(node);
         });
     }
 
@@ -184,21 +184,21 @@ export async function handleProfileMode(
     }
     // 处理手工节点（直接解析节点URL），并将用户自定义名称写入 URL。
     const manualNodeResults = allManualNodes.map((node) => {
-        const customName = typeof node.name === 'string' ? (node.name as Record<string, any>).trim() : '';
-        const effectiveUrl = customName ? applyManualNodeName(node.url, customName) : node.url;
+        const customName = typeof (node as Error).name === 'string' ? ((node as Error).name as Record<string, any>).trim() : '';
+        const effectiveUrl = customName ? applyManualNodeName((node as Record<string, any>).url, customName) : (node as Record<string, any>).url;
 
         const nodeInfo = parseNodeInfo(effectiveUrl);
         return {
-            subscriptionName: node.name || '手工节点',
-            group: node.group || '',
+            subscriptionName: (node as Error).name || '手工节点',
+            group: (node as Record<string, any>).group || '',
             url: effectiveUrl,
             success: true,
             nodes: [
                 {
                     ...nodeInfo,
                     url: effectiveUrl,
-                    subscriptionName: node.name || '手工节点',
-                    group: node.group || '',
+                    subscriptionName: (node as Error).name || '手工节点',
+                    group: (node as Record<string, any>).group || '',
                 },
             ],
             error: null,
@@ -352,7 +352,7 @@ export async function handleProfileMode(
             return {
                 ...nodeInfo,
                 subscriptionName:
-                    originalNode?.subscriptionName || nodeInfo.subscriptionName || '未知',
+                    originalNode?.subscriptionName || (nodeInfo as Record<string, any>).subscriptionName || '未知',
             };
         });
     }

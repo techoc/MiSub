@@ -27,8 +27,8 @@ export async function handleSingleSubscriptionMode(
 
     // 查找订阅
     const subscription =
-        typeof storageAdapter.getSubscriptionById === 'function'
-            ? await storageAdapter.getSubscriptionById(subscriptionId)
+        typeof (storageAdapter as Record<string, any>).getSubscriptionById === 'function'
+            ? await (storageAdapter as Record<string, any>).getSubscriptionById(subscriptionId)
             : ((await storageAdapter.get(KV_KEY_SUBS)) || []).find(
                   (sub) => sub.id === subscriptionId
               );

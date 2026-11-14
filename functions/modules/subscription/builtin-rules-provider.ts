@@ -738,11 +738,11 @@ export function getRemoteProviderDefinitions(
     });
 
     usedTags.forEach((tag) => {
-        const source = REMOTE_SOURCES[tag];
+        const source = REMOTE_SOURCES[(tag as string)];
         if (!source) return;
 
         if (format === 'clash') {
-            providers[tag] = {
+            providers[(tag as string)] = {
                 type: 'http',
                 behavior: 'classical',
                 url: pinRemoteRuleUrl(source.clash),
@@ -750,7 +750,7 @@ export function getRemoteProviderDefinitions(
                 interval: 86400,
             };
         } else if (format === 'singbox' || format === 'sing-box') {
-            providers[tag] = {
+            providers[(tag as string)] = {
                 tag: tag,
                 type: 'remote',
                 format: String(source.singbox || '')

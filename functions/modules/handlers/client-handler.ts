@@ -344,8 +344,8 @@ export async function handleClientRequest(request, env) {
                 body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
             } catch (e) {
                 return createErrorResponse(
-                    e?.status === 413 ? e.message : 'Invalid JSON body',
-                    e?.status || 400
+                    (e as { status?: number } | undefined)?.status === 413 ? (e as Error).message : 'Invalid JSON body',
+                    (e as { status?: number } | undefined)?.status || 400
                 );
             }
 

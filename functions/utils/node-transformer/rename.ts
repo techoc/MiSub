@@ -253,7 +253,7 @@ export function applyScriptRename(record, expression) {
     } catch (error) {
         console.warn(
             '[NodeTransform] Invalid rename DSL expression:',
-            error?.message || String(error)
+            (error as Error | undefined)?.message || String(error)
         );
         return record.name;
     }
@@ -266,7 +266,7 @@ export function evaluateScriptExpression(record, expression) {
     } catch (error) {
         console.warn(
             '[NodeTransform] Invalid filter DSL expression:',
-            error?.message || String(error)
+            (error as Error | undefined)?.message || String(error)
         );
         return true;
     }

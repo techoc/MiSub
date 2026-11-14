@@ -96,7 +96,7 @@ function certPemToPinSha256(pem) {
     if (body.length < 64) return '';
     try {
         const hex = sha256Hex(base64ToBytes(body));
-        return hex.toUpperCase().match(/.{2}/g).join(':');
+        return hex.toUpperCase().match(/.{2}/g).join(':')!;
     } catch (e) {
         console.debug('[NodeParser] cert fingerprint failed:', e);
         return '';

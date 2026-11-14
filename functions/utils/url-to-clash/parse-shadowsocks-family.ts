@@ -146,15 +146,15 @@ export function parseSsUrl(url) {
 
                 // 协议兼容性映射 (TLS / Host)
                 if (
-                    pluginDetails.opts.tls ||
-                    (pluginDetails.opts.mode as Record<string, any> | undefined)?.includes('tls') ||
-                    pluginDetails.opts.security === 'tls'
+                    (pluginDetails.opts as Record<string, any>).tls ||
+                    ((pluginDetails.opts as Record<string, any>).mode as Record<string, any> | undefined)?.includes('tls') ||
+                    (pluginDetails.opts as Record<string, any>).security === 'tls'
                 ) {
                     proxy.tls = true;
                 }
-                if (pluginDetails.opts.host) {
-                    proxy.sni = pluginDetails.opts.host;
-                    proxy.servername = pluginDetails.opts.host;
+                if ((pluginDetails.opts as Record<string, any>).host) {
+                    proxy.sni = (pluginDetails.opts as Record<string, any>).host;
+                    proxy.servername = (pluginDetails.opts as Record<string, any>).host;
                 }
             }
         }

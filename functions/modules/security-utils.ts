@@ -91,7 +91,7 @@ export async function safeFetchPublicUrl(inputUrl, init: Record<string, any> = {
     const validation = validatePublicFetchUrl(inputUrl);
     if (!validation.ok) {
         const error = new Error(validation.error);
-        error.status = 400;
+        (error as { status?: number }).status = 400;
         throw error;
     }
 
@@ -114,7 +114,7 @@ export async function safeFetchPublicUrl(inputUrl, init: Record<string, any> = {
         }
         if (redirectCount >= maxRedirects) {
             const error = new Error('Too many redirects');
-            error.status = 400;
+            (error as { status?: number }).status = 400;
             throw error;
         }
 
@@ -122,14 +122,14 @@ export async function safeFetchPublicUrl(inputUrl, init: Record<string, any> = {
         const nextValidation = validatePublicFetchUrl(nextUrl.toString());
         if (!nextValidation.ok) {
             const error = new Error(nextValidation.error);
-            error.status = 400;
+            (error as { status?: number }).status = 400;
             throw error;
         }
         currentUrl = nextValidation.url.toString();
     }
 
     const error = new Error('Too many redirects');
-    error.status = 400;
+    (error as { status?: number }).status = 400;
     throw error;
 }
 
@@ -160,7 +160,7 @@ export function assertPublicFetchUrl(inputUrl) {
     const validation = validatePublicFetchUrl(inputUrl);
     if (!validation.ok) {
         const error = new Error(validation.error);
-        error.status = 400;
+        (error as { status?: number }).status = 400;
         throw error;
     }
     return validation.url;
@@ -170,7 +170,7 @@ export function assertPublicNetworkUrl(inputUrl) {
     const validation = validatePublicNetworkUrl(inputUrl);
     if (!validation.ok) {
         const error = new Error(validation.error);
-        error.status = 400;
+        (error as { status?: number }).status = 400;
         throw error;
     }
     return validation.url;

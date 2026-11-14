@@ -113,7 +113,7 @@ export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
             if (!proxy) return null;
 
             // [URL 参数覆盖] 补全对 TFO/UDP/SCV 的映射
-            if (options.enableTfo !== undefined) proxy.tfo = options.enableTfo;
+            if (options.enableTfo !== undefined) (proxy as Record<string, any>).tfo = options.enableTfo;
 
             if (options.enableUdp !== undefined) {
                 const type = (proxy.type || '').toLowerCase();
@@ -122,11 +122,11 @@ export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
                 );
 
                 if (options.enableUdp) {
-                    proxy.udp = true;
+                    (proxy as Record<string, any>).udp = true;
                 } else if (!isNativeUdp) {
-                    proxy.udp = false;
+                    (proxy as Record<string, any>).udp = false;
                 } else {
-                    proxy.udp = true; // 原生 UDP 协议即便开关关闭也保持开启
+                    (proxy as Record<string, any>).udp = true; // 原生 UDP 协议即便开关关闭也保持开启
                 }
             }
 
@@ -141,16 +141,16 @@ export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
             }
 
             // [智能增强] 注入元数据
-            proxy.metadata = extractNodeMetadata(proxy.name);
+            (proxy as Record<string, any>).metadata = extractNodeMetadata(proxy.name);
 
             // [自动补全] 仅在名称中完全没有国旗/地球 Emoji 时才尝试补全，避免重复添加或干扰用户重命名
             const HAS_EMOJI_REGEX = /([\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F30D}-\u{1F30F}])/u;
             if (
                 options.addFlagEmoji !== false &&
-                (proxy.metadata as Record<string, any>).flag &&
+                ((proxy as Record<string, any>).metadata as Record<string, any>).flag &&
                 !HAS_EMOJI_REGEX.test(proxy.name)
             ) {
-                proxy.name = `${(proxy.metadata as Record<string, any>).flag} ${proxy.name}`;
+                proxy.name = `${((proxy as Record<string, any>).metadata as Record<string, any>).flag} ${proxy.name}`;
             }
 
             return proxy;

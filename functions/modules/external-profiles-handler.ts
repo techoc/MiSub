@@ -35,8 +35,8 @@ async function getProfileById(storageAdapter, id) {
 
 async function validateProfileReferences(
     storageAdapter,
-    subscriptionIds = undefined,
-    manualNodeIds = undefined
+    subscriptionIds: string[] | undefined = undefined,
+    manualNodeIds: string[] | undefined = undefined
 ) {
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
     const byId = new Map(allSubscriptions.map((item) => [item.id, item]));
@@ -138,7 +138,7 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
 export async function handleExternalProfilesRequest(
     request,
     env,
-    { id = null, relation = null, action = null } = {}
+    { id = null, relation = null, action = null }: Record<string, any> = {}
 ) {
     const storageAdapter = await getExternalStorageAdapter(env);
     const url = new URL(request.url);

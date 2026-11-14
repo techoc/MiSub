@@ -19,10 +19,10 @@ export class NoopStorageAdapter {
     async list() {
         return [];
     }
-    async getAllSubscriptions() {
+    async getAllSubscriptions(): Promise<any[]> {
         return [];
     }
-    async getAllProfiles() {
+    async getAllProfiles(): Promise<any[]> {
         return [];
     }
     // 批量写接口与 put() 语义保持一致：无存储时视为成功、不落盘。

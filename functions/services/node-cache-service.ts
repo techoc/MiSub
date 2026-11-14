@@ -279,7 +279,7 @@ export async function clearAllNodeCaches(storageAdapter, options: Record<string,
 
             // 删除缓存
             for (const keyInfo of keys) {
-                const key = typeof keyInfo === 'string' ? keyInfo : keyInfo.name || keyInfo;
+                const key = typeof keyInfo === 'string' ? keyInfo : (keyInfo as Error).name || keyInfo;
                 if (preserveKeys.has(key)) {
                     skipped++;
                     continue;

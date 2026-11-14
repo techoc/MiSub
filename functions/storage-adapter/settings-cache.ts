@@ -32,7 +32,7 @@ export class SettingsCache {
     static async get(env, adapter = null) {
         const now = Date.now();
         if (adapter) {
-            const scope = adapter.kv || adapter.db || null;
+            const scope = (adapter as Record<string, any>).kv || (adapter as Record<string, any>).db || null;
             let settings: any = null;
             if (scope) {
                 const memo = adapterSettingsMemos.get(scope);
@@ -40,9 +40,9 @@ export class SettingsCache {
                     return memo.data;
                 }
             }
-            if (typeof adapter.get === 'function') {
+            if (typeof (adapter as Record<string, any>).get === 'function') {
                 try {
-                    settings = await adapter.get(DATA_KEYS.SETTINGS);
+                    settings = await (adapter as Record<string, any>).get(DATA_KEYS.SETTINGS);
                 } catch (adapterError) {
                     console.warn('[Storage Cache] Adapter read failed:', (adapterError as Error).message);
                 }

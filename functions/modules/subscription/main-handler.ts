@@ -437,7 +437,7 @@ async function runSubscriptionPipeline(context) {
             } catch (err) {
                 console.warn(
                     '[ExternalTemplate] Local Clash YAML profile render failed, falling back to external redirect:',
-                    err?.message || err
+                    (err as Error | undefined)?.message || err
                 );
             }
         }
@@ -785,7 +785,7 @@ export async function handleMisubRequest(context: PagesEventContext) {
     try {
         return await storeOutput(context, response);
     } catch (err) {
-        console.warn('[Output Cache] Failed to store output:', err?.message || err);
+        console.warn('[Output Cache] Failed to store output:', (err as Error | undefined)?.message || err);
         return response;
     }
 }

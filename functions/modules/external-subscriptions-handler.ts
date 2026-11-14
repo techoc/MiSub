@@ -106,15 +106,15 @@ export async function inspectRemoteSubscription(env, payload: Record<string, any
     );
     const body = await response.json();
 
-    if (body?.success && body?.data) {
+    if ((body as Record<string, any> | undefined)?.success && (body as Record<string, any> | undefined)?.data) {
         return {
             ok: true,
             requestedUrl,
             effectiveUserAgent,
             fetchProxyUsed: runtime.fetchProxy || '',
             plusAsSpace: runtime.plusAsSpace,
-            nodeCount: Number((body.data as Record<string, any>).count) || 0,
-            userInfo: (body.data as Record<string, any>).userInfo || null,
+            nodeCount: Number(((body as Record<string, any>).data as Record<string, any>).count) || 0,
+            userInfo: ((body as Record<string, any>).data as Record<string, any>).userInfo || null,
         };
     }
 
@@ -124,11 +124,11 @@ export async function inspectRemoteSubscription(env, payload: Record<string, any
         effectiveUserAgent,
         fetchProxyUsed: runtime.fetchProxy || '',
         plusAsSpace: runtime.plusAsSpace,
-        nodeCount: Number(body?.count) || 0,
-        userInfo: body?.userInfo || null,
+        nodeCount: Number((body as Record<string, any> | undefined)?.count) || 0,
+        userInfo: (body as Record<string, any> | undefined)?.userInfo || null,
         errorCode: 'subscription_refresh_failed',
-        message: body?.error || 'Subscription refresh failed',
-        status: Number(body?.status) || 502,
+        message: (body as Record<string, any> | undefined)?.error || 'Subscription refresh failed',
+        status: Number((body as { status?: number } | undefined)?.status) || 502,
     };
 }
 
@@ -146,7 +146,11 @@ async function persistSubscriptionRefresh(storageAdapter, current, inspection) {
     return updated;
 }
 
-export async function handleExternalSubscriptionsRequest(request, env, selector: KvRecord | null = null) {
+export async function handleExternalSubscriptionsRequest(
+    request,
+    env,
+    selector: string | KvRecord | null = null
+) {
     const storageAdapter = await getExternalStorageAdapter(env);
     const url = new URL(request.url);
     const action = typeof selector === 'object' && selector ? selector.action || null : null;

@@ -439,9 +439,9 @@ export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any
     for (const clashProxy of proxies) {
         const result = clashProxyToSurgeResult(clashProxy);
         if (result) {
-            result.clashProxy = clashProxy; // 存储以保留元数据
+            (result as Record<string, any>).clashProxy = clashProxy; // 存储以保留元数据
             results.push(result);
-            proxyNames.push(sanitizeNodeName(clashProxy.name));
+            proxyNames.push(sanitizeNodeName(clashProxy.name!));
         }
     }
 

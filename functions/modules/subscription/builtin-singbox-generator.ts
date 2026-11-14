@@ -293,8 +293,8 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
     // (已在 urlsToClashProxies 中全局处理)
 
     for (const clashProxy of proxies) {
-        const baseName = sanitizeName(clashProxy.name);
-        clashProxy.name = getUniqueName(baseName, usedNames);
+        const baseName = sanitizeName(clashProxy.name!);
+        clashProxy.name! = getUniqueName(baseName, usedNames);
 
         const outbound = buildOutbound(clashProxy);
         if (outbound) {

@@ -354,7 +354,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                     // 获取对应列表
                     // 获取对应列表
                     let fullList = await getUserNodes(userId, env);
-                    let targetList = [];
+                    let targetList: any[] = [];
 
                     if (type === 'sub') {
                         // Must match handleListCommand's filtering logic for 'sub'
@@ -657,7 +657,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
                     if (idx >= 0 && idx < targetList.length) {
                         const targetItem = targetList[idx];
-                        const isEnabled = targetItem.enabled;
+                        const isEnabled = (targetItem as Record<string, any>).enabled;
 
                         await answerCallbackQuery(
                             callbackQuery.id,
@@ -671,7 +671,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                             const originalSubs = await storageAdapter.getAllSubscriptions();
                             // Match by ID if possible, or some unique property.
                             // Subscription objects usually have IDs.
-                            const subToUpdate = originalSubs.find((s) => s.id === targetItem.id);
+                            const subToUpdate = originalSubs.find((s) => s.id === (targetItem as Record<string, any>).id);
 
                             if (subToUpdate) {
                                 subToUpdate.enabled = !isEnabled;
@@ -690,7 +690,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
                             // If handleDisableCommand uses `getUserNodes` without filtering, we need to map `idx` back to `allNodes` index.
                             const allNodes = await getUserNodes(userId, env);
-                            const realIdx = allNodes.findIndex((n) => n.id === targetItem.id);
+                            const realIdx = allNodes.findIndex((n) => n.id === (targetItem as Record<string, any>).id);
 
                             if (realIdx !== -1) {
                                 if (isEnabled) {

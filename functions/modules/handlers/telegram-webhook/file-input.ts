@@ -42,13 +42,13 @@ async function downloadTelegramFile(message, config) {
         `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(doc.file_id)}`
     );
     const fileData = await fileRes.json();
-    if (!fileData?.ok || !(fileData.result as Record<string, any> | undefined)?.file_path) {
+    if (!(fileData as Record<string, any> | undefined)?.ok || !((fileData as Record<string, any>).result as Record<string, any> | undefined)?.file_path) {
         throw new Error('获取文件路径失败（文件可能已过期）');
     }
 
     // 2. 下载正文
     const contentRes = await fetch(
-        `https://api.telegram.org/file/bot${token}/${(fileData.result as Record<string, any>).file_path}`
+        `https://api.telegram.org/file/bot${token}/${((fileData as Record<string, any>).result as Record<string, any>).file_path}`
     );
     if (!contentRes.ok) {
         throw new Error(`下载文件失败（HTTP ${contentRes.status}）`);
@@ -57,7 +57,7 @@ async function downloadTelegramFile(message, config) {
     const text = await contentRes.text();
     return {
         text,
-        fileName: doc.file_name || (fileData.result as Record<string, any>).file_path.split('/').pop() || 'file',
+        fileName: doc.file_name || ((fileData as Record<string, any>).result as Record<string, any>).file_path.split('/').pop() || 'file',
     };
 }
 
@@ -89,7 +89,7 @@ export async function handleFileInput(chatId, message, userId, config, env, requ
         if (nodes.length > 0) {
             // extractValidNodes 返回节点链接字符串数组
             const nodeLines = nodes
-                .map((n) => (typeof n === 'string' ? n : n?.url))
+                .map((n) => (typeof n === 'string' ? n : (n as Record<string, any> | undefined)?.url))
                 .filter(Boolean)
                 .join('\n');
             await sendTelegramMessage(

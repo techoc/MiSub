@@ -18,13 +18,13 @@ export function createRequestId() {
     return `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createExternalSuccess(data, status = 200, meta = undefined) {
+export function createExternalSuccess(data, status = 200, meta: unknown = undefined) {
     const body: Record<string, any> = { success: true, data };
     if (meta) body.meta = meta;
     return createJsonResponse(body, status);
 }
 
-export function createExternalError(code, message, status = 400, details = undefined) {
+export function createExternalError(code, message, status = 400, details: unknown = undefined) {
     const error: Record<string, any> = { code, message };
     if (details !== undefined) error.details = details;
     return createJsonResponse({ success: false, error }, status);
@@ -57,8 +57,8 @@ export async function readExternalJson(request) {
     try {
         return await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
     } catch (error) {
-        throw Object.assign(new Error(error?.message || 'Invalid JSON'), {
-            status: error?.status || 400,
+        throw Object.assign(new Error((error as Error | undefined)?.message || 'Invalid JSON'), {
+            status: (error as { status?: number } | undefined)?.status || 400,
             code: 'invalid_json',
         });
     }

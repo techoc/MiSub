@@ -160,7 +160,7 @@ export function buildExternalSubconverterUrl({
         }
     }
 
-    const effectiveOptions = { ...(globalSub.defaultOptions || {}), ...(profileSub.options || {}) };
+    const effectiveOptions = { ...((globalSub as Record<string, any>).defaultOptions || {}), ...((profileSub as Record<string, any>).options || {}) };
     const flagMap = {
         udp: 'udp',
         emoji: 'emoji',
