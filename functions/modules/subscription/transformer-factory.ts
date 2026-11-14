@@ -6,11 +6,11 @@ import { generateBuiltinSingboxConfig } from './builtin-singbox-generator.ts';
 import { generateBuiltinEgernConfig } from './builtin-egern-generator.ts';
 
 export function transformBuiltinSubscription(
-    nodeList: any,
-    targetFormat: any,
-    options: Record<string, any> = {}
+    nodeList: string,
+    targetFormat: unknown,
+    options: Record<string, unknown> = {}
 ) {
-    const normalized = (targetFormat || '').toLowerCase();
+    const normalized = String(targetFormat || '').toLowerCase();
     const targetKey = normalized.startsWith('surge&ver=') ? 'surge' : normalized;
 
     switch (targetKey) {

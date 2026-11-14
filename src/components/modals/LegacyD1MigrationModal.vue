@@ -18,10 +18,17 @@
     const { t } = useI18n();
 
     const isMigrating = ref(false);
-    const logs = ref<any[]>([]);
+    /** 迁移日志条目 */
+    interface MigrationLog {
+        time: string;
+        message: string;
+        type: string;
+    }
+
+    const logs = ref<MigrationLog[]>([]);
     const step = ref('check');
 
-    const addLog = (message: any, type = 'info') => {
+    const addLog = (message: string, type = 'info') => {
         logs.value.unshift({ time: new Date().toLocaleTimeString(), message, type });
     };
 
@@ -86,7 +93,7 @@
         }
     };
 
-    const getLogClass = (type: any) => {
+    const getLogClass = (type: string) => {
         if (type === 'success') return 'text-green-400';
         if (type === 'error') return 'text-red-400';
         return 'text-gray-500 dark:text-gray-400';

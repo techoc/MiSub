@@ -27,16 +27,17 @@
         set: (val) => emit('update:modelValue', val),
     });
 
-    const updateValue = (patch: any) => {
+    const updateValue = (patch: Record<string, unknown>) => {
         params.value = {
             ...params.value,
             ...patch,
         };
     };
 
-    const statusLabel = (enabled: any) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
+    const statusLabel = (enabled: unknown): string =>
+        t(enabled ? 'operators.statusOn' : 'operators.statusOff');
 
-    const toggleProtocol = (protocol: any) => {
+    const toggleProtocol = (protocol: string) => {
         const current = new Set(params.value.prefer?.protocolOrder || []);
         if (current.has(protocol)) {
             current.delete(protocol);

@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import { computed } from 'vue';
+    import type { PropType } from 'vue';
     import { useVirtualScroll } from '@/composables/useVirtualScroll.ts';
     import { useI18n } from '../../../../i18n/index.ts';
 
@@ -7,7 +8,7 @@
 
     const props = defineProps({
         nodes: {
-            type: Array,
+            type: Array as PropType<PreviewNode[]>,
             default: () => [],
         },
         copiedNodeId: {
@@ -15,11 +16,11 @@
             default: '',
         },
         parseNodeInfo: {
-            type: Function as any,
+            type: Function as PropType<(node: PreviewNode) => ParsedPreviewNode>,
             required: true,
         },
         getProtocolStyle: {
-            type: Function as any,
+            type: Function as PropType<(protocol: string) => string>,
             required: true,
         },
         // [New] Selection Mode Props
@@ -32,6 +33,26 @@
             default: () => new Set(),
         },
     });
+
+    /** 预览节点（与 NodePreviewModal 的 PreviewNode 一致） */
+    interface PreviewNode {
+        name: string;
+        url: string;
+        protocol: string;
+        region: string;
+        server?: string;
+        port?: string | number;
+        [key: string]: unknown;
+    }
+
+    /** 节点解析结果（与 NodePreviewModal 的 ParsedNodeInfo 一致） */
+    interface ParsedPreviewNode {
+        name: string;
+        server: string;
+        port: string | number;
+        protocol: string;
+        region: string;
+    }
 
     const emit = defineEmits(['copy', 'toggle-select']);
 
@@ -46,7 +67,7 @@
         overscan: 10,
     });
 
-    const handleRowClick = (node: any) => {
+    const handleRowClick = (node: PreviewNode) => {
         if (props.selectionMode) {
             emit('toggle-select', node.url);
         }

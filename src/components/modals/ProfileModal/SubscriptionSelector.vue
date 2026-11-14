@@ -41,21 +41,28 @@
     const orderedSelectedSubs = computed({
         get() {
             const subMap = new Map(
-                props.subscriptions.map((s) => [(s as Record<string, any>).id, s])
+                (props.subscriptions || []).map((s) => {
+                    const record = (s || {}) as Record<string, unknown>;
+                    return [String(record.id), record] as const;
+                })
             );
-            return props.selectedIds.map((id) => subMap.get(id)).filter(Boolean);
+            return (props.selectedIds || []).map((id) => subMap.get(String(id))).filter(Boolean);
         },
         set(newList) {
             const availableIds = new Set(
-                props.subscriptions.map((sub) => (sub as Record<string, any>).id)
+                (props.subscriptions || []).map((sub) =>
+                    String((sub as Record<string, unknown> | null)?.id)
+                )
             );
-            const reorderedIds = newList.map((sub) => (sub as Record<string, any>).id);
+            const reorderedIds = newList.map((sub) =>
+                String((sub as Record<string, unknown> | null)?.id)
+            );
             let reorderedIndex = 0;
 
             // 隐藏的禁用订阅仍保留原有关联，避免仅调整可见订阅顺序时被误删。
             const mergedIds = props.selectedIds
                 .map((id) => {
-                    if (!availableIds.has(id)) return id;
+                    if (!availableIds.has(String(id))) return id;
                     return reorderedIds[reorderedIndex++];
                 })
                 .filter(Boolean);

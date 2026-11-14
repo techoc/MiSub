@@ -1,7 +1,24 @@
 import { LogService, anonymizeLogToken } from '../../services/log-service.ts';
 
-export function shouldSkipLogging(userAgentHeader: any) {
-    return userAgentHeader.includes('MiSub-Backend') || userAgentHeader.includes('TelegramBot');
+import type { KvRecord } from '../../../types/models.ts';
+
+/** 访问日志入口参数 */
+interface AccessLogInput {
+    context: KvRecord;
+    env: Env;
+    request: Request;
+    userAgentHeader: string;
+    targetFormat?: string;
+    token?: string | number | null;
+    profileIdentifier?: string | number | null;
+    subName?: string;
+    domain?: string;
+    [key: string]: unknown;
+}
+
+export function shouldSkipLogging(userAgentHeader: unknown): boolean {
+    const ua = String(userAgentHeader || '');
+    return ua.includes('MiSub-Backend') || ua.includes('TelegramBot');
 }
 
 export function logAccessSuccess({
@@ -14,7 +31,7 @@ export function logAccessSuccess({
     profileIdentifier,
     subName,
     domain,
-}: any) {
+}: AccessLogInput) {
     const stats = context?.generationStats || {};
     const clientIp =
         request.headers.get('CF-Connecting-IP') ||
@@ -68,7 +85,7 @@ export function logAccessError({
     subName,
     domain,
     errorMessage,
-}: any) {
+}: AccessLogInput) {
     const stats = context?.generationStats || {};
     const clientIp =
         request.headers.get('CF-Connecting-IP') ||

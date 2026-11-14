@@ -1,4 +1,5 @@
 <script setup lang="ts">
+    import type { PropType } from 'vue';
     import { computed, defineAsyncComponent, reactive, watch } from 'vue';
     import { useI18n } from '../../i18n/index.ts';
     import SettingsLayout from '../layout/SettingsLayout.vue';
@@ -81,15 +82,15 @@
             default: 'h-full',
         },
         exportBackup: {
-            type: Function as any,
+            type: Function as PropType<() => void>,
             default: null,
         },
         importBackup: {
-            type: Function as any,
+            type: Function as PropType<() => void>,
             default: null,
         },
         handleReset: {
-            type: Function as any,
+            type: Function as PropType<() => void>,
             default: null,
         },
     });

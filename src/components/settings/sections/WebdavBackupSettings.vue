@@ -19,7 +19,14 @@
     const isBackingUp = ref(false);
     const isRestoring = ref(false);
     const isLoadingRemoteFiles = ref(false);
-    const remoteFiles = ref<any[]>([]);
+    /** 远端备份文件 */
+    interface RemoteBackupFile {
+        name?: string;
+        path?: string;
+        [key: string]: unknown;
+    }
+
+    const remoteFiles = ref<RemoteBackupFile[]>([]);
 
     const ensureConfig = () => {
         if (!props.settings.webdavBackup) {
@@ -92,7 +99,7 @@
         input.type = 'file';
         input.accept = 'application/json';
         input.onchange = (event) => {
-            const file = (event.target as Record<string, any>).files?.[0];
+            const file = (event.target as HTMLInputElement | null)?.files?.[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -153,7 +160,7 @@
         }
     };
 
-    const restoreRemoteFile = async (file: any) => {
+    const restoreRemoteFile = async (file: RemoteBackupFile) => {
         if (!file?.path) return;
         const confirmed = await confirmAction({
             message: t('settings.webdavRestoreRemoteConfirm', { name: file.name }),

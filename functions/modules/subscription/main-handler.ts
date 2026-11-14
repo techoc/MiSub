@@ -266,7 +266,7 @@ async function runSubscriptionPipeline(context: PipelineContext): Promise<Respon
     // === 缓存机制：快速响应客户端请求 ===
     const cacheKey = generateCacheKey(
         profileIdentifier ? 'profile' : 'token',
-        profileIdentifier || token
+        String(profileIdentifier || token || '')
     );
 
     // 检查是否强制刷新（通过 URL 参数）

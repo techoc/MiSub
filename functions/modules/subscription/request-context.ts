@@ -15,7 +15,9 @@
  * @param {Array} allProfiles - 订阅组列表
  * @returns {{token: string, profileIdentifier: (string|null)}}
  */
-export function resolveRequestContext(url: any, config: any, allProfiles: any) {
+
+import type { KvRecord } from '../../../types/models.ts';
+export function resolveRequestContext(url: URL, config: KvRecord, allProfiles: KvRecord[]) {
     let token;
     let profileIdentifier = null;
     const pathSegments = url.pathname.split('/').filter(Boolean);

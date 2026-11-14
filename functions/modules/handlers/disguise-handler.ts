@@ -4,7 +4,7 @@ import { createDisguiseResponse } from '../disguise-page.ts';
 import { authMiddleware } from '../auth-middleware.ts';
 
 import type { KvRecord } from '../../../types/models.ts';
-function normalizeLoginPath(customLoginPath: any) {
+function normalizeLoginPath(customLoginPath: unknown): string {
     if (typeof customLoginPath !== 'string') return '/login';
     const normalized = customLoginPath.trim().replace(/^\/+/, '');
     return normalized ? `/${normalized}` : '/login';
@@ -20,7 +20,7 @@ function normalizeLoginPath(customLoginPath: any) {
  * @returns {Promise<Response|null>}
  */
 export async function handleDisguiseRequest(
-    context: any,
+    context: KvRecord,
     preloadedSettings: KvRecord | null = null
 ) {
     const { request, env } = context;
@@ -82,8 +82,7 @@ export async function handleDisguiseRequest(
     // 伪装判定不能把 undefined 当成关闭，否则公开页「显示开启但实际被拦」。
     // 动态导入避免 config <-> handler 的循环依赖（同 KV_KEY_SETTINGS 的既有写法）
     const { DEFAULT_SETTINGS } = await import('../config.ts');
-    const enablePublicPage =
-        settings!.enablePublicPage ?? (DEFAULT_SETTINGS as Record<string, any>).enablePublicPage;
+    const enablePublicPage = settings!.enablePublicPage ?? DEFAULT_SETTINGS.enablePublicPage;
     const isPublicAccessAllowed =
         enablePublicPage && (url.pathname === '/' || url.pathname === '/explore');
     if (isPublicAccessAllowed) {

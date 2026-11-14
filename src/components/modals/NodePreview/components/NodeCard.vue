@@ -1,10 +1,11 @@
 <script setup lang="ts">
+    import type { PropType } from 'vue';
     import { useI18n } from '../../../../i18n/index.ts';
 
     const { t } = useI18n();
     const props = defineProps({
         nodes: {
-            type: Array,
+            type: Array as PropType<PreviewNode[]>,
             default: () => [],
         },
         copiedNodeId: {
@@ -12,11 +13,11 @@
             default: '',
         },
         parseNodeInfo: {
-            type: Function as any,
+            type: Function as PropType<(node: PreviewNode) => ParsedPreviewNode>,
             required: true,
         },
         getProtocolStyle: {
-            type: Function as any,
+            type: Function as PropType<(protocol: string) => string>,
             required: true,
         },
         // [New] Selection Mode Props
@@ -30,9 +31,29 @@
         },
     });
 
+    /** 预览节点（与 NodePreviewModal 的 PreviewNode 一致） */
+    interface PreviewNode {
+        name: string;
+        url: string;
+        protocol: string;
+        region: string;
+        server?: string;
+        port?: string | number;
+        [key: string]: unknown;
+    }
+
+    /** 节点解析结果（与 NodePreviewModal 的 ParsedNodeInfo 一致） */
+    interface ParsedPreviewNode {
+        name: string;
+        server: string;
+        port: string | number;
+        protocol: string;
+        region: string;
+    }
+
     const emit = defineEmits(['copy', 'toggle-select']);
 
-    const handleCardClick = (node: any) => {
+    const handleCardClick = (node: PreviewNode) => {
         if (props.selectionMode) {
             emit('toggle-select', node.url);
         }
