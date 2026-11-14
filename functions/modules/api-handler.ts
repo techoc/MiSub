@@ -26,6 +26,7 @@ import { sendTgNotification, checkAndNotify } from './notifications.ts';
 import { clearAllNodeCaches } from '../services/node-cache-service.ts';
 import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.ts';
 import { maybeRunScheduledTasks } from './scheduled-task-runner.ts';
+import { invalidateOutputCache } from './subscription/main-handler/output-cache.ts';
 
 import {
     KV_KEY_SUBS,
@@ -476,6 +477,8 @@ export async function handleMisubsSave(request: any, env: any) {
 
         // 步骤6.5: 清除节点缓存（订阅变动后确保拉取最新数据）
         try {
+            // 订阅数据变更后渲染输出也必须失效（缓存键不含数据版本）
+            invalidateOutputCache();
             const preserveKeys = (Array.isArray(finalMisubs) ? finalMisubs : [])
                 .filter((sub) => sub?.enableNodeCache === true)
                 .map((sub) => buildSubscriptionNodeCacheKey(sub));
@@ -683,6 +686,7 @@ export async function handleSettingsSave(request: any, env: any) {
         if (!preferencesOnly) {
             // 清除节点缓存（设置变更可能影响节点处理逻辑）
             try {
+                invalidateOutputCache();
                 await clearAllNodeCaches(storageAdapter);
             } catch (cacheError) {
                 console.warn('[API] Failed to clear node caches:', (cacheError as Error).message);

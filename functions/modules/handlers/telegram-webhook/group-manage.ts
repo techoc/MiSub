@@ -4,6 +4,7 @@
  */
 
 import { clearAllNodeCaches } from '../../../services/node-cache-service.ts';
+import { invalidateOutputCache } from '../../subscription/main-handler/output-cache.ts';
 import { escapeHtml } from '../../utils.ts';
 import { createRequestCache, getCachedStorageAdapter, getCachedSubscriptions } from './cache.ts';
 import { editTelegramMessage, sendTelegramMessage } from './telegram-api.ts';
@@ -244,7 +245,10 @@ export async function applyGroupOperation(
     }
 
     // 清理节点缓存，避免前端读到旧数据
-    if (type === 'node') await clearAllNodeCaches(env);
+    if (type === 'node') {
+        invalidateOutputCache();
+        await clearAllNodeCaches(env);
+    }
 
     return changed;
 }

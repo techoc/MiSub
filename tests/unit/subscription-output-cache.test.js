@@ -43,8 +43,23 @@ function createStorageAdapter({ settings = {}, subscriptions = [], profiles = []
             store.set(key, value);
             return true;
         }),
-        getAllSubscriptions: vi.fn(async () => subscriptions),
-        getAllProfiles: vi.fn(async () => profiles),
+        getAllSubscriptions: vi.fn(async () => store.get('misub_subscriptions_v1') || []),
+        getAllProfiles: vi.fn(async () => store.get('misub_profiles_v1') || []),
+        // KV list/delete 语义：保存接口靠它们清理节点缓存（与真实适配器一致；
+        // 适配器 list 以字符串 prefix 调用，KV namespace 以 { prefix } 调用）
+        delete: vi.fn(async (key) => store.delete(key)),
+        list: vi.fn(async (prefixOrOptions = {}) => {
+            const prefix =
+                typeof prefixOrOptions === 'string'
+                    ? prefixOrOptions
+                    : prefixOrOptions.prefix || '';
+            return {
+                keys: [...store.keys()]
+                    .filter((key) => key.startsWith(prefix))
+                    .map((name) => ({ name })),
+                list_complete: true,
+            };
+        }),
         getSubscriptionsByIds: vi.fn(async (ids) =>
             subscriptions.filter((item) => ids.includes(item.id))
         ),
@@ -133,6 +148,49 @@ describe('subscription rendered-output cache (isolate-level)', () => {
             // 第二次请求命中输出缓存：不再重跑管线（以 getAllSubscriptions 的读取次数为观测）
             expect(adapter.getAllSubscriptions).toHaveBeenCalledTimes(1);
             expect(fetchMock).toHaveBeenCalledTimes(1);
+        } finally {
+            logSpy.mockRestore();
+        }
+    });
+
+    it('re-renders after subscription data is saved (output cache invalidated)', async () => {
+        // 回归：输出缓存键只含 URL+UA，保存接口清理了节点缓存却没清理输出缓存，
+        // 编辑订阅后的 TTL 窗口内会继续返回旧配置（真实故障：手工节点新增不生效）。
+        const adapter = createStorageAdapter({
+            settings: baseSettings,
+            subscriptions: [baseSubscription],
+        });
+        createAdapter.mockReturnValue(adapter);
+        let nodeBody = 'trojan://pass@example.com:443#OldNode';
+        const fetchMock = vi.fn(async () => new Response(nodeBody, { status: 200 }));
+        vi.stubGlobal('fetch', fetchMock);
+        const logSpy = silenceRequestLogs();
+
+        try {
+            const url = 'https://misub.example/stable-token?target=nodes';
+            const first = await callHandler(adapter, url, { 'User-Agent': 'ClashMeta' });
+            expect(await first.response.text()).toContain('OldNode');
+
+            // 上游内容变化 + 用户通过保存接口落盘新的订阅组数据
+            nodeBody = 'trojan://pass@example.com:443#NewNode';
+            const { handleMisubsSave } = await import('../../functions/modules/api-handler.ts');
+            const saveResponse = await handleMisubsSave(
+                new Request('https://misub.example/api/misubs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        misubs: [baseSubscription],
+                        profiles: [{ ...baseProfile, name: 'My Group Renamed' }],
+                    }),
+                }),
+                {}
+            );
+            expect(saveResponse.status).toBe(200);
+
+            const second = await callHandler(adapter, url, { 'User-Agent': 'ClashMeta' });
+            const secondText = await second.response.text();
+            expect(secondText).toContain('NewNode');
+            expect(secondText).not.toContain('OldNode');
         } finally {
             logSpy.mockRestore();
         }

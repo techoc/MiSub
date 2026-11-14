@@ -38,9 +38,19 @@ MiSub 前后端开发规范。所有新代码与重构应遵循本页约定；�
 
 - **自动化已就位**：ESLint（flat config，`npm run lint`）+ Prettier（`.prettierrc.json`，`npm run format`）+ EditorConfig。提交前跑 `npm run lint` 与 `npm run format:check`。如需批量统一历史文件，先引入工具 + 配置，再跑全量测试验证无行为变化，最后单独提交。
 
+## TypeScript
+
+- 项目为纯 TypeScript：`functions/` 与 `src/` 全部 `.ts`，Vue SFC 用 `<script setup lang="ts">`；仅 `tests/` 保持 `.js`（import 说明符显式带 `.ts` 后缀）。
+- 类型检查：`npm run typecheck`（`vue-tsc` 覆盖 src + .vue；`tsc` 覆盖 functions），**必须 0 错误**。
+- 严格度：`strict: true` 全量开启（含 `noImplicitAny`）。隐式 any 必须显式标注 `: any`，不得靠关闭规则兜底。
+- 类型边界：
+    - 后端入口/上下文用 `types/functions-env.d.ts` 的 `Env` / `PagesEventContext`。
+    - 共享模型放 `types/models.ts`（已知字段精确 + `[key: string]: any` 长尾）。
+- 务实标注（迁移债）：`as Record<string, any>`、非空断言 `!`、参数 `: any` 是已接受的现状；**新增代码优先写真实类型**，改动某文件时顺手收紧该文件的标注，不做全仓批量重写。
+
 ## Frontend Structure
 
-- Vue 3 SFC，**一律 `<script setup>`**（126/126 已符合），纯 JS（不引 TS）。
+- Vue 3 SFC，**一律 `<script setup lang="ts">`**（131/131 已符合）；SFC 脚本与 `src/` 下代码一律 TypeScript。
 - 组件目录职责：
     - `src/components/ui/*`：基础原子组件（Button、Input），**禁止在业务页面复制一套按钮/输入框风格**。
     - `src/components/shared/*`：共享复合组件（FormModal）。
@@ -62,7 +72,7 @@ MiSub 前后端开发规范。所有新代码与重构应遵循本页约定；�
     - `functions/utils/*` + `functions/modules/utils/*`：纯工具函数，无副作用。
 - 数据访问统一走 `functions/storage-adapter.ts`（KV/D1 抽象），**禁止直接调 `env.KV` / `env.DB`**。
 - 订阅输出格式差异隔离在 transformer/generator/renderer 层。
-- 超过 ~800 行的文件应拆（当前最大 `handlers/telegram-webhook-handler.js` 2790 行为拆分候选）。
+- 超过 ~800 行的文件应拆（当前最大 `handlers/telegram-webhook-handler.ts`（facade + telegram-webhook/ 子模块）为拆分候选）。
 
 ## Testing
 
@@ -70,6 +80,7 @@ MiSub 前后端开发规范。所有新代码与重构应遵循本页约定；�
 - 行为变更用 TDD：先写复现失败的测试，再修复，再跑针对性测试。
 - 涉及外部资源（订阅 URL、cookie、token、webhook）必须用 sanitized fixtures，**禁止真实凭据进测试/提交**。
 - 提交前必跑：
+    - `npm run typecheck`（0 错误）
     - `npm run test:run`（全量，须全绿）
     - `npm run lint`（0 error；warning 为已知技术债）
     - `npm run build`

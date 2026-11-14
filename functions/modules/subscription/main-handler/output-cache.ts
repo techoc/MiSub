@@ -38,6 +38,17 @@ export function resetOutputCacheForTests() {
 }
 
 /**
+ * 让全部渲染输出缓存失效（生产路径）。
+ *
+ * 缓存键只含 method+path+query+UA，不含订阅数据版本；数据（订阅/订阅组/
+ * 设置/规则模板）变更后必须显式调用本函数，否则 TTL 窗口内会继续返回
+ * 旧配置。与 clearAllNodeCaches 在同样的数据变更点调用。
+ */
+export function invalidateOutputCache() {
+    resetOutputCacheForTests();
+}
+
+/**
  * 管线在运行过程中把「命中路径补记」所需的字段挂到 context 上。
  * target-resolver 挂 downloadCountKey；编排器在访问日志分支挂
  * loggable/targetFormat/subName 等。

@@ -24,8 +24,8 @@
 ├─ schema.sql               # D1 表结构
 ├─ wrangler-cf-pages.toml   # Cloudflare Pages 配置（绑定/环境变量在 Pages 控制台维护）
 ├─ package.json             # 脚本与依赖
-├─ vite.config.js           # Vite 配置
-└─ vitest.config.js         # Vitest 配置
+├─ vite.config.ts           # Vite 配置
+└─ vitest.config.ts         # Vitest 配置
 ```
 
 ## 前端 (`src/`)
@@ -33,7 +33,7 @@
 ```
 src/
 ├─ App.vue                  # 应用根组件
-├─ main.js                  # 应用启动入口
+├─ main.ts                  # 应用启动入口
 ├─ router/                  # Vue Router 配置
 ├─ views/                   # 路由级页面
 ├─ components/              # UI 组件、布局、弹窗
@@ -50,7 +50,7 @@ src/
 
 - `src/views/`：页面级视图（仪表盘、设置、订阅等），负责页面整体布局。
 - `src/components/settings/sections/`：设置面板详情分区，新设定的 UI 组件建议放在此处。
-- `src/composables/`：跨组件复用的业务逻辑（如 `useSettingsLogic.js`, `useBackupLogic.js`）。
+- `src/composables/`：跨组件复用的业务逻辑（如 `useSettingsLogic.ts`, `useBackupLogic.ts`）。
 - `src/stores/`：全局状态管理（会话 Auth、UI 状态、数据缓存）。
 - `src/utils/protocols/`：协议转换、解析与校验核心工具。
 
@@ -83,8 +83,8 @@ src/components/
 
 ```
 functions/
-├─ [[path]].js              # Pages Functions 入口，负责路由分发与伪装逻辑
-├─ storage-adapter.js       # KV/D1 存储适配层
+├─ [[path]].ts              # Pages Functions 入口，负责路由分发与伪装逻辑
+├─ storage-adapter.ts       # KV/D1 存储适配层
 ├─ middleware/              # 中间件（CORS、认证、安全头）
 ├─ modules/                 # 核心模块（API、订阅、处理器）
 ├─ services/                # 后端业务服务（缓存、聚合、日志）
@@ -95,7 +95,7 @@ functions/
 
 - `functions/[[path]].ts`：
     - 全局入口，拦截所有请求。
-    - **伪装逻辑**：调用 `disguise-handler.js`，根据配置决定是否伪装根路径或 SPA 路由。
+    - **伪装逻辑**：调用 `disguise-handler.ts`，根据配置决定是否伪装根路径或 SPA 路由。
     - **路由分发**：将 `/api/*` 分发给 API 路由，`/sub/*` 分发给订阅处理，`/cron` 分发给定时任务。
     - **SPA 回退**：处理前端路由的 `index.html` 返回。
 
@@ -106,8 +106,8 @@ functions/
 
 ```
 functions/modules/
-├─ api-router.js            # API 路由表
-├─ api-handler.js           # 通用 API 处理逻辑
+├─ api-router.ts            # API 路由表
+├─ api-handler.ts           # 通用 API 处理逻辑
 ├─ handlers/                # 按功能拆分的 API 处理器（Controller 层）
 ├─ subscription/            # 订阅请求处理流水线
 └─ utils/                   # 后端专用工具（地理识别/解析/校验等）
@@ -119,44 +119,44 @@ functions/modules/
 
 ```
 functions/modules/handlers/
-├─ disguise-handler.js      # [新增] 伪装页面逻辑处理器
-├─ guestbook-handler.js     # 留言板：公开/管理接口
-├─ client-handler.js        # 客户端推荐数据接口
-├─ node-handler.js          # 节点统计、健康检查、批量更新
-├─ debug-handler.js         # 调试与系统信息接口
-├─ error-report-handler.js  # 前端错误上报
-└─ telegram-webhook-handler.js # Telegram Bot 推送回调
+├─ disguise-handler.ts      # [新增] 伪装页面逻辑处理器
+├─ guestbook-handler.ts     # 留言板：公开/管理接口
+├─ client-handler.ts        # 客户端推荐数据接口
+├─ node-handler.ts          # 节点统计、健康检查、批量更新
+├─ debug-handler.ts         # 调试与系统信息接口
+├─ error-report-handler.ts  # 前端错误上报
+└─ telegram-webhook-handler.ts # Telegram Bot 推送回调
 ```
 
 #### 2. 订阅处理 (`functions/modules/subscription/`)
 
 ```
 functions/modules/subscription/
-├─ main-handler.js          # 主订阅请求入口
-├─ user-agent-utils.js      # [新增] User-Agent 解析与格式判断
-├─ preview-handler.js       # 预览节点列表接口
-├─ cache-manager.js         # 订阅缓存策略管理
-├─ request-context.js       # 请求上下文解析
-├─ transformer-factory.js   # 订阅格式转换分发工厂
-└─ access-logger.js         # 访问日志记录
+├─ main-handler.ts          # 主订阅请求入口
+├─ user-agent-utils.ts      # [新增] User-Agent 解析与格式判断
+├─ preview-handler.ts       # 预览节点列表接口
+├─ cache-manager.ts         # 订阅缓存策略管理
+├─ request-context.ts       # 请求上下文解析
+├─ transformer-factory.ts   # 订阅格式转换分发工厂
+└─ access-logger.ts         # 访问日志记录
 ```
 
 functions/modules/utils/
-├─ node-cleaner.js # [新增] 节点清洗与URL修复
-├─ node-parser.js # 节点解析 (Parse Logic)
-├─ operator-runner.js # [新增] 操作符执行引擎 (Core Runtime)
-├─ node-transformer.js # 节点变换工具集
+├─ node-cleaner.ts # [新增] 节点清洗与URL修复
+├─ node-parser.ts # 节点解析 (Parse Logic)
+├─ operator-runner.ts # [新增] 操作符执行引擎 (Core Runtime)
+├─ node-transformer.ts # 节点变换工具集
 └─ ...
 
 ### 服务层 (`functions/services/`)
 
 ```
 functions/services/
-├─ subscription-service.js  # 订阅核心业务 (生成、组合)
-├─ fetch-utils.js           # [新增] 网络请求工具 (Fetch/Retry/Concurrency)
-├─ node-cache-service.js    # 节点数据缓存服务
-├─ log-service.js           # 访问日志读写服务
-└─ notification-service.js  # 通知服务封装
+├─ subscription-service.ts  # 订阅核心业务 (生成、组合)
+├─ fetch-utils.ts           # [新增] 网络请求工具 (Fetch/Retry/Concurrency)
+├─ node-cache-service.ts    # 节点数据缓存服务
+├─ log-service.ts           # 访问日志读写服务
+└─ notification-service.ts  # 通知服务封装
 ```
 
 ## 开发约定
@@ -171,8 +171,8 @@ functions/services/
 
 ### 2. 伪装与安全
 
-- 伪装逻辑位于 `functions/modules/handlers/disguise-handler.ts`，在 `[[path]].js` 中被优先调用。
-- 涉及敏感操作的 API 需在 `api-router.js` 中添加 `authMiddleware` 保护。
+- 伪装逻辑位于 `functions/modules/handlers/disguise-handler.ts`，在 `[[path]].ts` 中被优先调用。
+- 涉及敏感操作的 API 需在 `api-router.ts` 中添加 `authMiddleware` 保护。
 
 ### 3. 公共资源
 
