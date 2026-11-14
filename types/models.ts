@@ -45,6 +45,8 @@ export interface SubscriptionItem {
     error?: string | null;
     errorType?: string | null;
     lastFetchedAt?: string | number | null;
+    /** 机场身份：把同一机场的多个订阅归入一个显示组（前端派生，不落库） */
+    airportIdentity?: { groupId: string; name: string } | null;
     /** 前端瞬时态：保存前会被剥离（不落库） */
     isUpdating?: boolean;
     enableNodeCache?: boolean;

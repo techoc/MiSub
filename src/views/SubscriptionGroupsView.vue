@@ -19,6 +19,11 @@
         matchesSubscriptionStatus,
     } from '../utils/dashboard-deeplink.ts';
 
+    import type { SubscriptionItem } from '../../types/models.ts';
+
+    /** 机场身份（显示组） */
+    type AirportIdentity = NonNullable<SubscriptionItem['airportIdentity']>;
+
     const dataStore = useDataStore();
     const { showToast } = useToastStore();
     const { markDirty } = dataStore;
@@ -72,7 +77,7 @@
         showBulkImportModal.value = true;
     };
 
-    const handleDeleteSubscriptionWithCleanup = (subId: any) => {
+    const handleDeleteSubscriptionWithCleanup = (subId: string) => {
         deleteSubscription(subId);
         cleanupSubscriptions(subId);
     };
@@ -88,12 +93,12 @@
         () => import('../components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
-    const previewSubscriptionId = ref<any>(null);
+    const previewSubscriptionId = ref('');
     const previewSubscriptionName = ref('');
     const previewSubscriptionUrl = ref('');
 
     // 将当前显示组确认为一个机场身份，并统一显示组名；订阅源自身名称保持不变。
-    const handleRenameGroup = (ids: any, baseName: any, requestedGroupId: any) => {
+    const handleRenameGroup = (ids: string[], baseName: string, requestedGroupId?: string) => {
         const base = String(baseName || '').trim();
         if (!base || !Array.isArray(ids) || ids.length === 0) return;
         const groupId =
@@ -124,7 +129,7 @@
     };
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
-    const handleApplyDetectedName = (subscriptionId: any, name: any) => {
+    const handleApplyDetectedName = (subscriptionId: string | undefined, name: string) => {
         const target = String(name || '').trim();
         if (!target) return;
         // useSubscriptions 的 updateSubscription 接收「完整订阅对象」而非 (id, patch)
@@ -140,7 +145,10 @@
         showToast(t('subscriptions.nameApplied', { name: target }), 'success');
     };
 
-    const handleAssignAirportGroup = (ids: any, identity: any) => {
+    const handleAssignAirportGroup = (
+        ids: string[],
+        identity: AirportIdentity | null | undefined
+    ) => {
         const groupId = String(identity?.groupId || '').trim();
         const name = String(identity?.name || '').trim();
         if (!groupId || !name || !Array.isArray(ids)) return;
@@ -150,7 +158,10 @@
         });
     };
 
-    const handleSplitAirportGroup = (ids: any, identity: any) => {
+    const handleSplitAirportGroup = (
+        ids: string[],
+        identity: AirportIdentity | null | undefined
+    ) => {
         const groupId = String(identity?.groupId || '').trim();
         const name = String(identity?.name || '').trim();
         if (!groupId || !name || !Array.isArray(ids)) return;
@@ -160,15 +171,15 @@
         });
     };
 
-    const handleResetAirportIdentity = (ids: any) => {
-        (ids || []).forEach((id: any) => {
+    const handleResetAirportIdentity = (ids: string[]) => {
+        (ids || []).forEach((id) => {
             const target = subscriptions.value.find((sub) => sub.id === id);
             if (target) updateSubscription({ ...target, airportIdentity: null });
         });
         showToast(t('subscriptions.airportIdentityReset'), 'success');
     };
 
-    const handlePreviewSubscription = (subscriptionId: any) => {
+    const handlePreviewSubscription = (subscriptionId: string) => {
         const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
         if (subscription) {
             previewSubscriptionId.value = subscriptionId;
@@ -189,7 +200,7 @@
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
 
-    const handleQRCode = (id: any) => {
+    const handleQRCode = (id: string) => {
         const sub = subscriptions.value.find((s) => s.id === id);
         if (sub) {
             qrCodeUrl.value = sub.url ?? '';
@@ -202,7 +213,7 @@
     // The dashboard health cards link here with a status. Previously the query
     // was dropped, so the user landed on an unfiltered list.
     const activeStatusFilter = ref('');
-    const STATUS_FILTER_LABEL_KEYS = {
+    const STATUS_FILTER_LABEL_KEYS: Record<string, string> = {
         disabled: 'subscriptions.filterStatusDisabled',
         error: 'subscriptions.filterStatusError',
         expired: 'subscriptions.filterStatusExpired',
@@ -211,7 +222,7 @@
     };
 
     const statusFilterLabel = computed(() => {
-        const key = (STATUS_FILTER_LABEL_KEYS as Record<string, any>)[activeStatusFilter.value];
+        const key = STATUS_FILTER_LABEL_KEYS[activeStatusFilter.value];
         return key ? t(key) : '';
     });
 
