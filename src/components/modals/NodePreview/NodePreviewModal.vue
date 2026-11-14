@@ -1,4 +1,6 @@
+
 <script setup lang="ts">
+    import type { SubscriptionDraft } from '../../../../types/models.ts';
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
     import { api, APIError } from '../../../lib/http.ts';
     import { useToastStore } from '../../../stores/toast.ts';
@@ -71,7 +73,7 @@
 
     // [New] Selection Mode State
     const pickingMode = ref(false);
-    const selectedUrls = ref(new Set());
+    const selectedUrls = ref(new Set<string>());
 
     const toggleNodeSelection = (url: any) => {
         if (selectedUrls.value.has(url)) {
@@ -107,7 +109,7 @@
             // Add nodes to data store as manual nodes
             // You can also add logic here to associate them specifically with props.profileId
             // For now, we'll use bulk import logic to create manual nodes
-            const nodesToAdd = urls.map((url) => {
+            const nodesToAdd: SubscriptionDraft[] = urls.map((url) => {
                 // Try to find full node object from allNodes
                 const originalNode = allNodes.value.find(
                     (n) => (n as Record<string, any>).url === url

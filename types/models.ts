@@ -15,19 +15,65 @@ export interface ProxyNode {
     [key: string]: any;
 }
 
+/** 订阅流量信息（后端 userInfo / 订阅头解析产物） */
+export interface SubscriptionUserInfo {
+    upload?: number;
+    download?: number;
+    total?: number;
+    /** 到期时间戳（秒） */
+    expire?: number;
+    [key: string]: any;
+}
+
 /** 订阅条目（KV misub_subscriptions_v1 / profiles 内的元素，或手动节点） */
 export interface SubscriptionItem {
     id: string;
     name: string;
-    /** 手动节点：协议分享链接；远程订阅：订阅 URL */
+    /** 手动节点：协议分享链接或节点说明；远程订阅：订阅 URL */
     url?: string;
+    /** 'manual' 等来源标记 */
+    type?: string;
+    enabled?: boolean;
+    customId?: string;
+    description?: string;
+    remark?: string;
+    note?: string;
+    website?: string;
+    nodeCount?: number;
+    userInfo?: SubscriptionUserInfo | null;
+    lastError?: string | null;
+    error?: string | null;
+    errorType?: string | null;
+    lastFetchedAt?: string | number | null;
+    /** 前端瞬时态：保存前会被剥离（不落库） */
+    isUpdating?: boolean;
+    enableNodeCache?: boolean;
+    excludeTraffic?: boolean;
+    fetchProxy?: string;
+    plusAsSpace?: boolean;
+    customUserAgent?: string;
+    /** 长尾字段随协议/版本扩展 */
     [key: string]: any;
 }
+
+/** 尚未落库的订阅草稿：id 由后端保存流程补齐 */
+export type SubscriptionDraft = Omit<SubscriptionItem, 'id'> & { id?: string };
 
 /** 订阅分组（KV misub_profiles_v1 中的元素） */
 export interface ProfileItem {
     id: string;
     name: string;
+    customId?: string;
+    enabled?: boolean;
+    /** 引用的远程订阅 id 列表（也兼容内联对象的历史格式） */
+    subscriptions?: Array<string | SubscriptionItem>;
+    /** 引用的手动节点（订阅条目）id 列表 */
+    manualNodes?: Array<string | SubscriptionItem>;
+    /** 嵌套订阅组 id 列表 */
+    subProfiles?: string[];
+    ruleLevel?: string;
+    clashRuleLevel?: string;
+    expiresAt?: string | number | null;
     [key: string]: any;
 }
 
@@ -57,6 +103,9 @@ export interface MisubSettings {
     };
     [key: string]: any;
 }
+
+/** 尚未落库的分组草稿：id 由保存流程生成 */
+export type ProfileDraft = Omit<ProfileItem, 'id'> & { id?: string };
 
 /** KV 读出的通用记录形状 */
 export type KvRecord = Record<string, any>;

@@ -86,7 +86,7 @@
         if (type === 'subscription') {
             const sub = subscriptions.value.find((s) => s.id === id);
             if (sub) {
-                qrCodeUrl.value = sub.url;
+                qrCodeUrl.value = sub.url ?? '';
                 qrCodeTitle.value = sub.name || t('subscriptions.qrCodeTitle');
                 showQRCodeModal.value = true;
             }
@@ -430,7 +430,7 @@
         if (subscription) {
             previewSubscriptionId.value = subscriptionId;
             previewSubscriptionName.value = subscription.name || t('subscriptions.unnamed');
-            previewSubscriptionUrl.value = subscription.url;
+            previewSubscriptionUrl.value = subscription.url ?? '';
             previewProfileId.value = null;
             previewProfileName.value = '';
             showNodePreviewModal.value = true;
@@ -508,7 +508,7 @@
                     :filtered-count="filteredSubscriptionCount"
                     :is-refreshing="isRefreshingSubscriptions"
                     :refresh-error="subscriptionRefreshError"
-                    :last-refresh-at="lastSubscriptionRefreshAt"
+                    :last-refresh-at="lastSubscriptionRefreshAt ?? undefined"
                     :subscriptions="subscriptions"
                     :paginated-subscriptions="paginatedSubscriptions"
                     :current-page="subsCurrentPage"
@@ -660,7 +660,7 @@
     <ProfileModal
         v-if="showProfileModal"
         v-model:show="showProfileModal"
-        :profile="editingProfile"
+        :profile="editingProfile ?? undefined"
         :is-new="isNewProfile"
         :all-subscriptions="subscriptions"
         :all-manual-nodes="manualNodes"

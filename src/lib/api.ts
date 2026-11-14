@@ -6,12 +6,51 @@ import { api, APIError } from './http.ts';
 import { t } from '../i18n/index.ts';
 
 /**
+ * 端点到调用方的统一结果形状：成功带 data，失败带 error/errorType/status。
+ * 用可选字段而非判别联合：调用方（composable/组件）已按这个约定读取，
+ * 逐个加判别只会引来大量无意义窄化分支。
+ */
+export interface ApiResult<T = unknown> {
+    success: boolean;
+    data?: T;
+    error?: string;
+    errorType?: string;
+    status?: number | null;
+}
+
+/** /api/subconverter/test 的结果（后端附加可用性/耗时字段） */
+export interface SubconverterTestResult extends ApiResult {
+    available?: boolean;
+    message?: string;
+    endpoint?: string;
+    elapsedMs?: number;
+}
+
+/** /api/github/release 的结果（GitHub Release 字段） */
+export interface GithubReleaseResult extends ApiResult {
+    tag_name?: string;
+    html_url?: string;
+    name?: string;
+}
+
+/** /api/batch_update_nodes 的结果（逐订阅明细） */
+export interface BatchUpdateResult extends ApiResult {
+    message?: string;
+    results?: Array<{
+        subscriptionId?: string;
+        id?: string;
+        success?: boolean;
+        nodeCount?: number;
+    }>;
+}
+
+/**
  * 统一的 API 错误处理辅助函数
  * @param {Error} error - 错误对象
  * @param {string} context - 错误上下文
  * @returns {Object} 标准错误响应
  */
-function handleApiError(error: unknown, context = '') {
+function handleApiError(error: unknown, context = ''): ApiResult {
     console.error(`[API Error - ${context}]`, error);
 
     const err = (error ?? {}) as { name?: string; message?: string };
@@ -74,7 +113,7 @@ function formatHttpErrorMessage(status: number | null | undefined, message = '')
 function normalizeApiFailure(
     data: unknown,
     fallbackMessage = t('settings.operationFailed')
-) {
+): ApiResult {
     const payload = (data ?? {}) as {
         error?: string;
         message?: string;
@@ -112,7 +151,7 @@ export async function fetchInitialData() {
     }
 }
 
-export async function login(password: string) {
+export async function login(password: string): Promise<ApiResult> {
     try {
         const data = await api.post('/api/login', { password });
         return { success: true, data };
@@ -129,7 +168,7 @@ export async function login(password: string) {
 }
 
 // [核心修改] saveMisubs 现在接收并发送 profiles
-export async function saveMisubs(misubs: unknown, profiles: unknown) {
+export async function saveMisubs(misubs: unknown, profiles: unknown): Promise<ApiResult> {
     try {
         // 数据预验证
         if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
@@ -151,7 +190,7 @@ export async function fetchNodeCount(
     fetchProxy = '',
     plusAsSpace = false,
     userAgent = ''
-) {
+): Promise<ApiResult> {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -237,7 +276,9 @@ export async function resetSettings() {
  * @param {string[]} subscriptionIds - 要更新的订阅ID数组
  * @returns {Promise<Object>} - 更新结果
  */
-export async function batchUpdateNodes(subscriptionIds: string[]) {
+export async function batchUpdateNodes(
+    subscriptionIds: string[]
+): Promise<BatchUpdateResult> {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -305,7 +346,7 @@ export async function migrateLegacyD1() {
     }
 }
 
-export async function fetchGithubLatestRelease(repo: string) {
+export async function fetchGithubLatestRelease(repo: string): Promise<GithubReleaseResult> {
     try {
         return await api.get(`/api/github/release?repo=${encodeURIComponent(repo)}`);
     } catch (error) {
@@ -313,7 +354,10 @@ export async function fetchGithubLatestRelease(repo: string) {
     }
 }
 
-export async function testSubconverterBackend(backend: string, target = 'clash') {
+export async function testSubconverterBackend(
+    backend: string,
+    target = 'clash'
+): Promise<SubconverterTestResult> {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -337,7 +381,7 @@ export async function testSubconverterBackend(backend: string, target = 'clash')
  * @param {string} userAgent - User-Agent
  * @returns {Promise<Object>} - 测试结果
  */
-export async function testSubscription(url: string, userAgent: string) {
+export async function testSubscription(url: string, userAgent: string): Promise<ApiResult> {
     try {
         return await api.post('/api/debug_subscription', { url, userAgent });
     } catch (error) {

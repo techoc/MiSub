@@ -173,7 +173,7 @@
         if (subscription) {
             previewSubscriptionId.value = subscriptionId;
             previewSubscriptionName.value = subscription.name || t('subscriptions.unnamed');
-            previewSubscriptionUrl.value = subscription.url;
+            previewSubscriptionUrl.value = subscription.url ?? '';
             showNodePreviewModal.value = true;
         }
     };
@@ -192,7 +192,7 @@
     const handleQRCode = (id: any) => {
         const sub = subscriptions.value.find((s) => s.id === id);
         if (sub) {
-            qrCodeUrl.value = sub.url;
+            qrCodeUrl.value = sub.url ?? '';
             qrCodeTitle.value = sub.name || t('subscriptions.qrCodeTitle');
             showQRCodeModal.value = true;
         }

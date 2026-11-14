@@ -4,15 +4,16 @@ import { useDataStore } from '../stores/useDataStore';
 import { useToastStore } from '../stores/toast';
 import { generateProfileId } from '../utils/id.ts';
 import { t } from '../i18n/index.ts';
+import type { ProfileDraft, ProfileItem } from '../../types/models.ts';
 
-export function useProfiles(markDirty: any) {
+export function useProfiles(markDirty: () => void) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     const { profiles, settings } = storeToRefs(dataStore);
 
     /* Pagination setup */
     const isNewProfile = ref(false);
-    const editingProfile = ref<any>(null);
+    const editingProfile = ref<ProfileDraft | null>(null);
     const showProfileModal = ref(false);
     const showDeleteProfilesModal = ref(false);
 
@@ -26,11 +27,11 @@ export function useProfiles(markDirty: any) {
 
         return profiles.value.filter((profile) =>
             [
-                (profile as Error).name,
-                (profile as Record<string, any>).description,
-                (profile as Record<string, any>).desc,
-                (profile as Record<string, any>).remark,
-                (profile as Record<string, any>).customId,
+                profile.name,
+                profile.description,
+                profile.desc,
+                profile.remark,
+                profile.customId,
             ].some((value) =>
                 String(value || '')
                     .toLowerCase()
@@ -52,14 +53,14 @@ export function useProfiles(markDirty: any) {
         profilesCurrentPage.value = 1;
     });
 
-    function changeProfilesPage(page: any) {
+    function changeProfilesPage(page: number) {
         if (page < 1 || page > profilesTotalPages.value) return;
         profilesCurrentPage.value = page;
     }
 
-    const handleProfileToggle = (updatedProfile: any) => {
+    const handleProfileToggle = (updatedProfile: ProfileItem) => {
         const index = profiles.value.findIndex(
-            (p) => (p as Record<string, any>).id === updatedProfile.id
+            (p) => p.id === updatedProfile.id
         );
         if (index !== -1) {
             profiles.value[index].enabled = updatedProfile.enabled;
@@ -87,11 +88,11 @@ export function useProfiles(markDirty: any) {
         showProfileModal.value = true;
     };
 
-    const handleEditProfile = (profileId: any) => {
+    const handleEditProfile = (profileId: string) => {
         const profile = profiles.value.find(
             (p) =>
-                (p as Record<string, any>).id === profileId ||
-                (p as Record<string, any>).customId === profileId
+                p.id === profileId ||
+                p.customId === profileId
         );
         if (profile) {
             isNewProfile.value = false;
@@ -104,7 +105,7 @@ export function useProfiles(markDirty: any) {
             if (!editingProfile.value!.ruleLevel && editingProfile.value!.clashRuleLevel) {
                 editingProfile.value!.ruleLevel = editingProfile.value!.clashRuleLevel;
             }
-            editingProfile.value!.expiresAt = (profile as Record<string, any>).expiresAt || '';
+            editingProfile.value!.expiresAt = profile.expiresAt || '';
             if (!Array.isArray(editingProfile.value!.operators)) {
                 editingProfile.value!.operators = [];
             }
@@ -112,7 +113,7 @@ export function useProfiles(markDirty: any) {
         }
     };
 
-    const handleSaveProfile = (profileData: any) => {
+    const handleSaveProfile = (profileData: ProfileItem) => {
         if (!profileData || !profileData.name) {
             showToast(t('profiles.nameRequired'), 'error');
             return;
@@ -123,8 +124,8 @@ export function useProfiles(markDirty: any) {
                 profileData.customId &&
                 profiles.value.some(
                     (p) =>
-                        (p as Record<string, any>).id !== profileData.id &&
-                        (p as Record<string, any>).customId === profileData.customId
+                        p.id !== profileData.id &&
+                        p.customId === profileData.customId
                 )
             ) {
                 showToast(t('profiles.customIdExists', { id: profileData.customId }), 'error');
@@ -135,7 +136,7 @@ export function useProfiles(markDirty: any) {
             dataStore.addProfile({ ...profileData, id: generateProfileId() });
         } else {
             const index = profiles.value.findIndex(
-                (p) => (p as Record<string, any>).id === profileData.id
+                (p) => p.id === profileData.id
             );
             if (index !== -1) {
                 profiles.value[index] = profileData;
@@ -145,7 +146,7 @@ export function useProfiles(markDirty: any) {
         showProfileModal.value = false;
     };
 
-    const handleDeleteProfile = (profileId: any) => {
+    const handleDeleteProfile = (profileId: string) => {
         dataStore.removeProfile(profileId);
         markDirty();
     };
@@ -156,7 +157,7 @@ export function useProfiles(markDirty: any) {
         showDeleteProfilesModal.value = false;
     };
 
-    const copyProfileLink = (profileId: any) => {
+    const copyProfileLink = (profileId: string) => {
         const token = settings.value?.profileToken;
         if (!token || token === 'auto' || !token.trim()) {
             showToast(t('profiles.fixedTokenRequired'), 'error');
@@ -164,12 +165,12 @@ export function useProfiles(markDirty: any) {
         }
         const profile = profiles.value.find(
             (p) =>
-                (p as Record<string, any>).id === profileId ||
-                (p as Record<string, any>).customId === profileId
+                p.id === profileId ||
+                p.customId === profileId
         );
         if (!profile) return;
         const identifier =
-            (profile as Record<string, any>).customId || (profile as Record<string, any>).id;
+            profile.customId || profile.id;
         const link = `${window.location.origin}/${token}/${identifier}`;
 
         // Clipboard API Fallback for non-secure contexts (http)
@@ -208,7 +209,7 @@ export function useProfiles(markDirty: any) {
     };
 
     // Clash 专用链接复制（带 builtin 转换器参数）
-    const copyClashLink = (profileId: any) => {
+    const copyClashLink = (profileId: string) => {
         const token = settings.value?.profileToken;
         if (!token || token === 'auto' || !token.trim()) {
             showToast(t('profiles.fixedTokenRequired'), 'error');
@@ -216,12 +217,12 @@ export function useProfiles(markDirty: any) {
         }
         const profile = profiles.value.find(
             (p) =>
-                (p as Record<string, any>).id === profileId ||
-                (p as Record<string, any>).customId === profileId
+                p.id === profileId ||
+                p.customId === profileId
         );
         if (!profile) return;
         const identifier =
-            (profile as Record<string, any>).customId || (profile as Record<string, any>).id;
+            profile.customId || profile.id;
         // 添加 Clash 专用参数
         const link = `${window.location.origin}/${token}/${identifier}?target=clash&builtin=1`;
 
@@ -259,31 +260,27 @@ export function useProfiles(markDirty: any) {
         }
     };
 
-    const cleanupSubscriptions = (subId: any) => {
+    const cleanupSubscriptions = (subId: string) => {
         profiles.value.forEach((p) => {
-            (p as Record<string, any>).subscriptions = (
-                p as Record<string, any>
-            ).subscriptions.filter((id: any) => id !== subId);
+            p.subscriptions = (p.subscriptions ?? []).filter((id) => id !== subId);
         });
     };
 
-    const cleanupNodes = (nodeId: any) => {
+    const cleanupNodes = (nodeId: string) => {
         profiles.value.forEach((p) => {
-            (p as Record<string, any>).manualNodes = (p as Record<string, any>).manualNodes.filter(
-                (id: any) => id !== nodeId
-            );
+            p.manualNodes = (p.manualNodes ?? []).filter((id) => id !== nodeId);
         });
     };
 
     const cleanupAllSubscriptions = () => {
         profiles.value.forEach((p) => {
-            (p as Record<string, any>).subscriptions = [];
+            p.subscriptions = [];
         });
     };
 
     const cleanupAllNodes = () => {
         profiles.value.forEach((p) => {
-            (p as Record<string, any>).manualNodes = [];
+            p.manualNodes = [];
         });
     };
 

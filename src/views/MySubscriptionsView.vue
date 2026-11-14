@@ -187,7 +187,7 @@
         <ProfileModal
             v-if="showProfileModal"
             v-model:show="showProfileModal"
-            :profile="editingProfile"
+            :profile="editingProfile ?? undefined"
             :is-new="isNewProfile"
             :all-subscriptions="subscriptions"
             :all-manual-nodes="manualNodes"

@@ -8,6 +8,7 @@ import { DEFAULT_SETTINGS } from '../constants/default-settings.ts';
 import { TIMING } from '../constants/timing.ts';
 import { api } from '../lib/http.ts';
 import { t } from '../i18n/index.ts';
+import type { KvRecord, ProfileItem, SubscriptionItem } from '../../types/models.ts';
 
 const isDev = import.meta.env.DEV;
 
@@ -20,30 +21,30 @@ export const useDataStore = defineStore('data', () => {
     const editorStore = useEditorStore();
 
     // --- State ---
-    const subscriptions = ref<any[]>([]);
-    const profiles = ref<any[]>([]);
-    const ruleTemplates = ref([]);
+    const subscriptions = ref<SubscriptionItem[]>([]);
+    const profiles = ref<ProfileItem[]>([]);
+    const ruleTemplates = ref<KvRecord[]>([]);
     const settings = computed(() => settingsStore.config);
 
     // Store Status
     const isLoading = ref(false);
     const saveState = ref('idle');
-    const lastUpdated = ref<any>(null);
+    const lastUpdated = ref<Date | null>(null);
     const hasDataLoaded = computed(() => !!lastUpdated.value);
 
     // Derived Dirty State (from Editor)
     const isDirty = computed(() => editorStore.isDirty);
 
     // --- Getters ---
-    const activeSubscriptions = computed(() =>
-        subscriptions.value.filter((sub) => (sub as Record<string, any>).enabled)
-    );
-    const activeProfiles = computed(() =>
-        profiles.value.filter((profile) => (profile as Record<string, any>).enabled)
-    );
+    const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => sub.enabled));
+    const activeProfiles = computed(() => profiles.value.filter((profile) => profile.enabled));
 
     // --- Internal: Snapshot for rollback/diffing ---
-    let lastSavedData = {
+    let lastSavedData: {
+        subscriptions: SubscriptionItem[];
+        profiles: ProfileItem[];
+        ruleTemplates: KvRecord[];
+    } = {
         subscriptions: [],
         profiles: [],
         ruleTemplates: [],
@@ -52,11 +53,16 @@ export const useDataStore = defineStore('data', () => {
     // --- Actions ---
 
     // Data Hydration (avoid re-fetching if passed from outside)
-    function hydrateFromData(data: any) {
+    function hydrateFromData(data: {
+        misubs?: SubscriptionItem[];
+        profiles?: ProfileItem[];
+        ruleTemplates?: KvRecord[];
+        config?: Record<string, unknown>;
+    } | null) {
         if (!data) return false;
 
         try {
-            const cleanSubs = (data.misubs || []).map((sub: any) => ({
+            const cleanSubs = (data.misubs || []).map((sub) => ({
                 ...sub,
                 isUpdating: false,
             }));
@@ -75,7 +81,7 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    let fetchDataPromise: any = null;
+    let fetchDataPromise: Promise<boolean> | null = null;
 
     async function fetchData(forceRefresh = false) {
         if (fetchDataPromise) return fetchDataPromise;
@@ -136,14 +142,14 @@ export const useDataStore = defineStore('data', () => {
 
         try {
             const sanitizedSubs = subscriptions.value.map((sub) => {
-                const { isUpdating, ...rest } = sub as Record<string, any>;
+                const { isUpdating, ...rest } = sub;
                 return rest;
             });
 
             const payload = {
                 misubs: sanitizedSubs,
                 profiles: profiles.value.map((profile) => {
-                    const normalizedProfile = { ...(profile as Record<string, any>) };
+                    const normalizedProfile: ProfileItem = { ...profile };
                     normalizedProfile.ruleLevel =
                         normalizedProfile.ruleLevel || normalizedProfile.clashRuleLevel || '';
                     delete normalizedProfile.clashRuleLevel;
@@ -179,8 +185,8 @@ export const useDataStore = defineStore('data', () => {
 
             // Update cache with the most recent merged data
             dataCache.set({
-                misubs: subscriptions.value.map((s) => {
-                    const { isUpdating, ...rest } = s as Record<string, any>;
+                misubs: subscriptions.value.map((sub) => {
+                    const { isUpdating, ...rest } = sub;
                     return rest;
                 }),
                 profiles: profiles.value,
@@ -214,7 +220,10 @@ export const useDataStore = defineStore('data', () => {
      * @returns {Promise<boolean>} 成功时为 true；失败时**抛出**（沿用既有约定，
      *          调用方自行 catch，静默模式下尤其需要）
      */
-    async function saveSettings(newSettings: any, options: Record<string, any> = {}) {
+    async function saveSettings(
+        newSettings: Record<string, unknown>,
+        options: { silent?: boolean; preferencesOnly?: boolean } = {}
+    ) {
         const { silent = false, preferencesOnly = false } = options;
         editorStore.setLoading(true);
         try {
@@ -253,7 +262,7 @@ export const useDataStore = defineStore('data', () => {
         return ruleTemplates.value;
     }
 
-    async function saveRuleTemplates(items: any[] = ruleTemplates.value) {
+    async function saveRuleTemplates(items: KvRecord[] = ruleTemplates.value) {
         editorStore.setLoading(true);
         try {
             const result = await api.post('/api/rule_templates', { templates: items });
@@ -292,7 +301,7 @@ export const useDataStore = defineStore('data', () => {
         dataCache.clear();
     }
 
-    function syncCachedConfig(nextConfig: any) {
+    function syncCachedConfig(nextConfig: Record<string, unknown>) {
         const cachedData = dataCache.get();
         if (!cachedData) return;
 
@@ -306,69 +315,62 @@ export const useDataStore = defineStore('data', () => {
     }
 
     // --- Proxy Actions (Mutators) ---
-    function addSubscription(subscription: any) {
+    function addSubscription(subscription: SubscriptionItem) {
         subscriptions.value.unshift(subscription);
         markDirty();
     }
 
-    function overwriteSubscriptions(items: any) {
+    function overwriteSubscriptions(items: SubscriptionItem[]) {
         subscriptions.value = items;
     }
 
-    function removeSubscription(id: any) {
-        const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
+    function removeSubscription(id: string) {
+        const index = subscriptions.value.findIndex((s) => s.id === id);
         if (index !== -1) {
             subscriptions.value.splice(index, 1);
         }
     }
 
-    function updateSubscription(id: any, updates: any) {
-        const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
+    function updateSubscription(id: string, updates: Partial<SubscriptionItem>) {
+        const index = subscriptions.value.findIndex((s) => s.id === id);
         if (index !== -1) {
             subscriptions.value[index] = { ...subscriptions.value[index], ...updates };
             markDirty();
         }
     }
 
-    function addProfile(profile: any) {
+    function addProfile(profile: ProfileItem) {
         profiles.value.unshift(profile);
     }
 
-    function overwriteProfiles(items: any) {
+    function overwriteProfiles(items: ProfileItem[]) {
         profiles.value = items;
     }
 
-    function removeProfile(id: any) {
+    function removeProfile(id: string) {
         const index = profiles.value.findIndex(
             (p) =>
-                (p as Record<string, any>).id === id || (p as Record<string, any>).customId === id
+                p.id === id || p.customId === id
         );
         if (index !== -1) {
             const removed = profiles.value.splice(index, 1)[0];
-            removeProfileFromProfiles(
-                [
-                    (removed as Record<string, any>).id,
-                    (removed as Record<string, any>).customId,
-                ].filter(Boolean)
-            );
+            removeProfileFromProfiles([removed.id, removed.customId].filter(Boolean) as string[]);
         }
     }
 
-    function removeProfileFromProfiles(profileIds: any) {
+    function removeProfileFromProfiles(profileIds: string | string[]) {
         const idsToRemove = Array.isArray(profileIds) ? new Set(profileIds) : new Set([profileIds]);
         if (idsToRemove.size === 0) return;
 
         let modified = false;
         profiles.value.forEach((profile) => {
             if (
-                Array.isArray((profile as Record<string, any>).subProfiles) &&
-                (profile as Record<string, any>).subProfiles.length > 0
+                Array.isArray(profile.subProfiles) &&
+                profile.subProfiles.length > 0
             ) {
-                const originalLength = (profile as Record<string, any>).subProfiles.length;
-                (profile as Record<string, any>).subProfiles = (
-                    profile as Record<string, any>
-                ).subProfiles.filter((id: any) => !idsToRemove.has(id));
-                if ((profile as Record<string, any>).subProfiles.length !== originalLength) {
+                const originalLength = profile.subProfiles.length;
+                profile.subProfiles = profile.subProfiles.filter((id) => !idsToRemove.has(id));
+                if (profile.subProfiles.length !== originalLength) {
                     modified = true;
                 }
             }
@@ -379,21 +381,19 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    function removeManualNodeFromProfiles(nodeIds: any) {
+    function removeManualNodeFromProfiles(nodeIds: string | string[]) {
         const idsToRemove = Array.isArray(nodeIds) ? new Set(nodeIds) : new Set([nodeIds]);
         if (idsToRemove.size === 0) return;
 
         let modified = false;
         profiles.value.forEach((profile) => {
             if (
-                Array.isArray((profile as Record<string, any>).manualNodes) &&
-                (profile as Record<string, any>).manualNodes.length > 0
+                Array.isArray(profile.manualNodes) &&
+                profile.manualNodes.length > 0
             ) {
-                const originalLength = (profile as Record<string, any>).manualNodes.length;
-                (profile as Record<string, any>).manualNodes = (
-                    profile as Record<string, any>
-                ).manualNodes.filter((id: any) => !idsToRemove.has(id));
-                if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
+                const originalLength = profile.manualNodes.length;
+                profile.manualNodes = profile.manualNodes.filter((id) => !idsToRemove.has(String(id)));
+                if (profile.manualNodes.length !== originalLength) {
                     modified = true;
                 }
             }
@@ -407,21 +407,21 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    function removeSubscriptionFromProfiles(subIds: any) {
+    function removeSubscriptionFromProfiles(subIds: string | string[]) {
         const idsToRemove = Array.isArray(subIds) ? new Set(subIds) : new Set([subIds]);
         if (idsToRemove.size === 0) return;
 
         let modified = false;
         profiles.value.forEach((profile) => {
             if (
-                Array.isArray((profile as Record<string, any>).subscriptions) &&
-                (profile as Record<string, any>).subscriptions.length > 0
+                Array.isArray(profile.subscriptions) &&
+                profile.subscriptions.length > 0
             ) {
-                const originalLength = (profile as Record<string, any>).subscriptions.length;
-                (profile as Record<string, any>).subscriptions = (
-                    profile as Record<string, any>
-                ).subscriptions.filter((id: any) => !idsToRemove.has(id));
-                if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
+                const originalLength = profile.subscriptions.length;
+                profile.subscriptions = profile.subscriptions.filter(
+                    (id) => !idsToRemove.has(String(id))
+                );
+                if (profile.subscriptions.length !== originalLength) {
                     modified = true;
                 }
             }
@@ -444,50 +444,48 @@ export const useDataStore = defineStore('data', () => {
 
         // 收集所有当前存在的订阅和手动节点 ID
         const validIds = new Set(
-            subscriptions.value.map((item) => (item as Record<string, any>).id)
+            subscriptions.value.map((item) => item.id)
         );
 
         let modified = false;
         profiles.value.forEach((profile) => {
             // 1. 处理手动节点引用
             if (
-                Array.isArray((profile as Record<string, any>).manualNodes) &&
-                (profile as Record<string, any>).manualNodes.length > 0
+                Array.isArray(profile.manualNodes) &&
+                profile.manualNodes.length > 0
             ) {
-                const originalLength = (profile as Record<string, any>).manualNodes.length;
-                const seenIds = new Set();
-                (profile as Record<string, any>).manualNodes = (
-                    profile as Record<string, any>
-                ).manualNodes.filter((id: any) => {
+                const originalLength = profile.manualNodes.length;
+                const seenIds = new Set<string>();
+                profile.manualNodes = profile.manualNodes.filter((id) => {
+                    const key = String(id);
                     // ID 必须存在且未被重复记录
-                    if (validIds.has(id) && !seenIds.has(id)) {
-                        seenIds.add(id);
+                    if (validIds.has(key) && !seenIds.has(key)) {
+                        seenIds.add(key);
                         return true;
                     }
                     return false;
                 });
-                if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
+                if (profile.manualNodes.length !== originalLength) {
                     modified = true;
                 }
             }
 
             // 2. 处理机场订阅引用
             if (
-                Array.isArray((profile as Record<string, any>).subscriptions) &&
-                (profile as Record<string, any>).subscriptions.length > 0
+                Array.isArray(profile.subscriptions) &&
+                profile.subscriptions.length > 0
             ) {
-                const originalLength = (profile as Record<string, any>).subscriptions.length;
-                const seenIds = new Set();
-                (profile as Record<string, any>).subscriptions = (
-                    profile as Record<string, any>
-                ).subscriptions.filter((id: any) => {
-                    if (validIds.has(id) && !seenIds.has(id)) {
-                        seenIds.add(id);
+                const originalLength = profile.subscriptions.length;
+                const seenIds = new Set<string>();
+                profile.subscriptions = profile.subscriptions.filter((id) => {
+                    const key = String(id);
+                    if (validIds.has(key) && !seenIds.has(key)) {
+                        seenIds.add(key);
                         return true;
                     }
                     return false;
                 });
-                if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
+                if (profile.subscriptions.length !== originalLength) {
                     modified = true;
                 }
             }

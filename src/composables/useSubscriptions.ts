@@ -8,10 +8,18 @@ import { handleError } from '../utils/errorHandler.ts';
 import { TIMING } from '../constants/timing.ts';
 import { t } from '../i18n/index.ts';
 import { getAirportIdentityKey } from '../utils/airport-identity.ts';
+import type { SubscriptionItem, SubscriptionUserInfo } from '../../types/models.ts';
+
+/** /api/node_count 的载荷（兼容 { count, userInfo } 与 { data: {...} } 两种包裹） */
+interface NodeCountPayload {
+    count?: number;
+    userInfo?: SubscriptionUserInfo | null;
+    data?: NodeCountPayload;
+}
 
 const isDev = import.meta.env.DEV;
 
-export function useSubscriptions(markDirty: any) {
+export function useSubscriptions(markDirty: () => void) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     // Rename the store ref to avoid confusion, as it contains ALL items
@@ -21,14 +29,14 @@ export function useSubscriptions(markDirty: any) {
     const subscriptions = computed(() => {
         return (allSubscriptions.value || []).filter(
             (sub) =>
-                (sub as Record<string, any>).url &&
-                /^https?:\/\//.test((sub as Record<string, any>).url)
+                sub.url &&
+                /^https?:\/\//.test(sub.url)
         );
     });
 
     const searchQuery = ref('');
     const refreshError = ref(false);
-    const lastRefreshAt = ref<any>(null);
+    const lastRefreshAt = ref<string | null>(null);
     const isRefreshing = ref(false);
     const filteredSubscriptions = computed(() => {
         const query = searchQuery.value.trim().toLowerCase();
@@ -36,13 +44,13 @@ export function useSubscriptions(markDirty: any) {
 
         return subscriptions.value.filter((sub) =>
             [
-                (sub as Error).name,
-                (sub as Record<string, any>).description,
-                (sub as Record<string, any>).remark,
-                (sub as Record<string, any>).note,
-                (sub as Record<string, any>).website,
-                (sub as Record<string, any>).url,
-                (sub as Record<string, any>).customId,
+                sub.name,
+                sub.description,
+                sub.remark,
+                sub.note,
+                sub.website,
+                sub.url,
+                sub.customId,
             ].some((value) =>
                 String(value || '')
                     .toLowerCase()
@@ -54,20 +62,20 @@ export function useSubscriptions(markDirty: any) {
     const subsCurrentPage = ref(1);
     const subsItemsPerPage = 6;
     const enabledSubscriptions = computed(() =>
-        subscriptions.value.filter((s) => (s as Record<string, any>).enabled)
+        subscriptions.value.filter((s) => s.enabled)
     );
 
     /** 保持同一站点订阅相邻，避免分页后多个机场组交错出现。 */
     const orderedFilteredSubscriptions = computed(() => {
         const filteredIds = new Set(
-            filteredSubscriptions.value.map((sub) => (sub as Record<string, any>).id)
+            filteredSubscriptions.value.map((sub) => sub.id)
         );
-        const ordered: any[] = [];
+        const ordered: SubscriptionItem[] = [];
         const groups = new Map();
         (allSubscriptions.value || []).forEach((sub) => {
             if (
-                !filteredIds.has((sub as Record<string, any>).id) ||
-                !/^https?:\/\//i.test(String((sub as Record<string, any>).url || ''))
+                !filteredIds.has(sub.id) ||
+                !/^https?:\/\//i.test(String(sub.url || ''))
             )
                 return;
             const key = getAirportIdentityKey(sub);
@@ -86,17 +94,15 @@ export function useSubscriptions(markDirty: any) {
     const totalRemainingTraffic = computed(() => {
         const REASONABLE_TRAFFIC_LIMIT_BYTES = 10 * 1024 * 1024 * 1024 * 1024 * 1024; // 10 PB in bytes
         return subscriptions.value.reduce((acc, sub) => {
-            if ((sub as Record<string, any>).excludeTraffic) return acc;
+            if (sub.excludeTraffic) return acc;
             if (
-                (sub as Record<string, any>).enabled &&
-                (sub as Record<string, any>).userInfo &&
-                (sub as Record<string, any>).userInfo.total > 0 &&
-                (sub as Record<string, any>).userInfo.total < REASONABLE_TRAFFIC_LIMIT_BYTES
+                sub.enabled &&
+                sub.userInfo &&
+                Number(sub.userInfo.total || 0) > 0 &&
+                Number(sub.userInfo.total || 0) < REASONABLE_TRAFFIC_LIMIT_BYTES
             ) {
-                const used =
-                    ((sub as Record<string, any>).userInfo.upload || 0) +
-                    ((sub as Record<string, any>).userInfo.download || 0);
-                const remaining = (sub as Record<string, any>).userInfo.total - used;
+                const used = (sub.userInfo.upload || 0) + (sub.userInfo.download || 0);
+                const remaining = Number(sub.userInfo.total || 0) - used;
                 return acc + Math.max(0, remaining);
             }
             return acc;
@@ -122,35 +128,35 @@ export function useSubscriptions(markDirty: any) {
         }
     });
 
-    function changeSubsPage(page: any) {
+    function changeSubsPage(page: number) {
         if (page < 1 || page > subsTotalPages.value) return;
         subsCurrentPage.value = page;
     }
 
-    async function handleUpdateNodeCount(subId: any, isInitialLoad = false) {
+    async function handleUpdateNodeCount(subId: string, isInitialLoad = false) {
         // Find in the filtered list
         const subToUpdate = subscriptions.value.find(
-            (s) => (s as Record<string, any>).id === subId
+            (s) => s.id === subId
         );
         if (!subToUpdate) return false;
         // Double check URL just in case
-        if (!(subToUpdate as Record<string, any>).url.startsWith('http')) return false;
+        if (!subToUpdate.url?.startsWith('http')) return false;
 
         if (!isInitialLoad) {
-            (subToUpdate as Record<string, any>).isUpdating = true;
+            subToUpdate.isUpdating = true;
         }
 
         // 添加超时保护:如果30秒后仍在更新状态,强制重置
         const timeoutId = setTimeout(() => {
-            if ((subToUpdate as Record<string, any>).isUpdating) {
+            if (subToUpdate.isUpdating) {
                 console.warn(
-                    `[handleUpdateNodeCount] Timeout protection triggered for ${(subToUpdate as Error).name}`
+                    `[handleUpdateNodeCount] Timeout protection triggered for ${subToUpdate.name}`
                 );
-                (subToUpdate as Record<string, any>).isUpdating = false;
+                subToUpdate.isUpdating = false;
                 if (!isInitialLoad) {
                     showToast(
                         t('subscriptions.updateTimeoutReset', {
-                            name: (subToUpdate as Error).name || t('subscriptions.fallbackName'),
+                            name: subToUpdate.name || t('subscriptions.fallbackName'),
                         }),
                         'warning'
                     );
@@ -160,10 +166,10 @@ export function useSubscriptions(markDirty: any) {
 
         try {
             const result = await fetchNodeCount(
-                (subToUpdate as Record<string, any>).url,
-                (subToUpdate as Record<string, any>).fetchProxy,
-                Boolean((subToUpdate as Record<string, any>).plusAsSpace),
-                (subToUpdate as Record<string, any>).customUserAgent
+                String(subToUpdate.url ?? ''),
+                subToUpdate.fetchProxy,
+                Boolean(subToUpdate.plusAsSpace),
+                subToUpdate.customUserAgent
             );
 
             // 清除超时保护
@@ -172,11 +178,11 @@ export function useSubscriptions(markDirty: any) {
             // 检查是否成功
             if (!result.success) {
                 const subscriptionName =
-                    (subToUpdate as Error).name || t('subscriptions.fallbackName');
+                    subToUpdate.name || t('subscriptions.fallbackName');
                 let userMessage = t('subscriptions.updateFailed', { name: subscriptionName });
 
                 // 根据 errorType 提供更友好的错误提示
-                switch ((result as Record<string, any>).errorType) {
+                switch (result.errorType) {
                     case 'timeout':
                         userMessage = t('subscriptions.updateTimeoutRetry', {
                             name: subscriptionName,
@@ -192,20 +198,20 @@ export function useSubscriptions(markDirty: any) {
                         userMessage = t('subscriptions.updateFailedWithMessage', {
                             name: subscriptionName,
                             message:
-                                (result as Record<string, any>).error ||
+                                result.error ||
                                 t('subscriptions.unknownError'),
                         });
                 }
 
                 if (
-                    (result as Record<string, any>).errorType === 'server' &&
-                    ((result as Record<string, any>).error ||
+                    result.errorType === 'server' &&
+                    (result.error ||
                         (result as { status?: number }).status)
                 ) {
                     userMessage = t('subscriptions.updateFailedWithMessage', {
                         name: subscriptionName,
                         message:
-                            (result as Record<string, any>).error ||
+                            result.error ||
                             `HTTP ${(result as { status?: number }).status}`,
                     });
                 }
@@ -213,17 +219,15 @@ export function useSubscriptions(markDirty: any) {
                 // 只有非静默加载时才显示 Toast
                 if (!isInitialLoad) showToast(userMessage, 'error');
                 console.error(
-                    `[handleUpdateNodeCount] Failed for ${(subToUpdate as Error).name}:`,
-                    (result as Record<string, any>).error
+                    `[handleUpdateNodeCount] Failed for ${subToUpdate.name}:`,
+                    result.error
                 );
 
                 // 重要: 记录错误到本地对象中(非持久化,仅用于UI展示,直到下次持久化保存)
-                (subToUpdate as Record<string, any>).lastError = (
-                    result as Record<string, any>
-                ).error;
-                if ((subToUpdate as Record<string, any>).enableNodeCache !== true) {
-                    (subToUpdate as Record<string, any>).nodeCount = 0;
-                    (subToUpdate as Record<string, any>).userInfo = null;
+                subToUpdate.lastError = result.error ?? null;
+                if (subToUpdate.enableNodeCache !== true) {
+                    subToUpdate.nodeCount = 0;
+                    subToUpdate.userInfo = null;
                     if (!isInitialLoad) {
                         markDirty();
                         void dataStore.saveData();
@@ -233,18 +237,18 @@ export function useSubscriptions(markDirty: any) {
             }
 
             // 成功获取数据
-            const data =
-                (result as Record<string, any>).data.data || (result as Record<string, any>).data; // 兼容后端返回结构
-            (subToUpdate as Record<string, any>).nodeCount = data.count || 0;
-            (subToUpdate as Record<string, any>).userInfo = data.userInfo || null;
-            (subToUpdate as Record<string, any>).lastError = null; // 成功后清除错误状态
+            const payload = (result.data ?? {}) as NodeCountPayload;
+            const data = payload.data || payload; // 兼容后端返回结构
+            subToUpdate.nodeCount = data.count || 0;
+            subToUpdate.userInfo = data.userInfo || null;
+            subToUpdate.lastError = null; // 成功后清除错误状态
             // 记录上一次成功获取订阅的时间（随订阅一起持久化）
-            (subToUpdate as Record<string, any>).lastFetchedAt = new Date().toISOString();
+            subToUpdate.lastFetchedAt = new Date().toISOString();
 
             if (!isInitialLoad) {
                 showToast(
                     t('subscriptions.updateSuccess', {
-                        name: (subToUpdate as Error).name || t('subscriptions.fallbackName'),
+                        name: subToUpdate.name || t('subscriptions.fallbackName'),
                     }),
                     'success'
                 );
@@ -258,54 +262,54 @@ export function useSubscriptions(markDirty: any) {
             clearTimeout(timeoutId);
 
             handleError(error, 'Subscription Update Error', {
-                subscriptionName: (subToUpdate as Error).name,
+                subscriptionName: subToUpdate.name,
                 subscriptionId: subId,
                 isInitialLoad,
             });
 
             const errorMessage = t('subscriptions.updateUnexpectedError', {
-                name: (subToUpdate as Error).name || t('subscriptions.fallbackName'),
+                name: subToUpdate.name || t('subscriptions.fallbackName'),
             });
             if (!isInitialLoad) {
                 showToast(errorMessage, 'error');
             }
             return false;
         } finally {
-            if (subToUpdate) (subToUpdate as Record<string, any>).isUpdating = false;
+            if (subToUpdate) subToUpdate.isUpdating = false;
         }
     }
 
-    function addSubscription(sub: any) {
+    function addSubscription(sub: SubscriptionItem) {
         dataStore.addSubscription(sub);
         subsCurrentPage.value = 1;
         handleUpdateNodeCount(sub.id);
         markDirty();
     }
 
-    function updateSubscription(updatedSub: any) {
+    function updateSubscription(updatedSub: SubscriptionItem) {
         // Verify it exists in our filtered list
         const originalSub = subscriptions.value.find(
-            (s) => (s as Record<string, any>).id === updatedSub.id
+            (s) => s.id === updatedSub.id
         );
         if (originalSub) {
-            const urlChanged = (originalSub as Record<string, any>).url !== updatedSub.url;
+            const urlChanged = originalSub.url !== updatedSub.url;
             dataStore.updateSubscription(updatedSub.id, updatedSub);
 
             if (urlChanged) {
                 // Re-fetch from filtered list to get the reactive object
                 const sub = subscriptions.value.find(
-                    (s) => (s as Record<string, any>).id === updatedSub.id
+                    (s) => s.id === updatedSub.id
                 );
                 if (sub) {
-                    (sub as Record<string, any>).nodeCount = 0;
-                    handleUpdateNodeCount((sub as Record<string, any>).id);
+                    sub.nodeCount = 0;
+                    handleUpdateNodeCount(sub.id);
                 }
             }
             markDirty();
         }
     }
 
-    function deleteSubscription(subId: any) {
+    function deleteSubscription(subId: string) {
         dataStore.removeSubscription(subId);
         // 清理组合订阅中对该订阅源的引用
         dataStore.removeSubscriptionFromProfiles(subId);
@@ -318,7 +322,7 @@ export function useSubscriptions(markDirty: any) {
     function deleteAllSubscriptions() {
         // Only remove the subscriptions visible in this composable (i.e. HTTP subs)
         // Avoid removing manual nodes which are also in dataStore but filtered out here
-        const idsToRemove = subscriptions.value.map((s) => (s as Record<string, any>).id);
+        const idsToRemove = subscriptions.value.map((s) => s.id);
 
         // 如果没有订阅，提示并返回
         if (idsToRemove.length === 0) {
@@ -335,21 +339,21 @@ export function useSubscriptions(markDirty: any) {
         showToast(t('subscriptions.clearedCount', { count: idsToRemove.length }), 'success');
     }
 
-    async function addSubscriptionsFromBulk(subs: any) {
+    async function addSubscriptionsFromBulk(subs: SubscriptionItem[]) {
         // Reverse insert to maintain order
         for (let i = subs.length - 1; i >= 0; i--) {
             dataStore.addSubscription(subs[i]);
         }
         markDirty();
 
-        const subsToUpdate = subs.filter((sub: any) => sub.url && sub.url.startsWith('http'));
+        const subsToUpdate = subs.filter((sub) => sub.url && sub.url.startsWith('http'));
 
         if (subsToUpdate.length > 0) {
             showToast(t('subscriptions.batchUpdating', { count: subsToUpdate.length }), 'info');
 
             // Use individual updates instead of batch backend update
             // This avoids 400 error because backend doesn't have these IDs yet.
-            const updatePromises = subsToUpdate.map((sub: any) => handleUpdateNodeCount(sub.id));
+            const updatePromises = subsToUpdate.map((sub) => handleUpdateNodeCount(sub.id));
 
             // handleUpdateNodeCount 内部已逐个提示失败，自身不抛出，
             // 所以 Promise.allSettled 恒为 fulfilled —— 原先包在这里的 try/catch 是死代码。
@@ -377,10 +381,10 @@ export function useSubscriptions(markDirty: any) {
     async function batchUpdateAllSubscriptions() {
         const subsToUpdate = subscriptions.value.filter(
             (sub) =>
-                (sub as Record<string, any>).enabled &&
-                (sub as Record<string, any>).url &&
-                (sub as Record<string, any>).url.startsWith('http') &&
-                !(sub as Record<string, any>).isUpdating
+                sub.enabled &&
+                sub.url &&
+                sub.url.startsWith('http') &&
+                !sub.isUpdating
         );
 
         if (subsToUpdate.length === 0) {
@@ -391,41 +395,40 @@ export function useSubscriptions(markDirty: any) {
         isRefreshing.value = true;
         refreshError.value = false;
         subsToUpdate.forEach((sub) => {
-            (sub as Record<string, any>).isUpdating = true;
+            sub.isUpdating = true;
         });
         showToast(t('subscriptions.refreshing', { count: subsToUpdate.length }), 'info');
 
         try {
             const result = await batchUpdateNodes(
-                subsToUpdate.map((sub) => (sub as Record<string, any>).id)
+                subsToUpdate.map((sub) => sub.id)
             );
 
             if (result && result.success) {
                 let successCount = 0;
                 const resultList = Array.isArray(result.results) ? result.results : [];
 
-                resultList.forEach((updateResult: any) => {
+                resultList.forEach((updateResult) => {
                     const id = updateResult.subscriptionId || updateResult.id;
                     const sub = subscriptions.value.find(
-                        (s) => (s as Record<string, any>).id === id
+                        (s) => s.id === id
                     );
                     if (!sub) return;
 
                     if (updateResult.success) {
-                        (sub as Record<string, any>).nodeCount = updateResult.nodeCount || 0;
+                        sub.nodeCount = updateResult.nodeCount || 0;
                         // 记录上一次成功获取订阅的时间（随订阅一起持久化）
-                        (sub as Record<string, any>).lastFetchedAt = new Date().toISOString();
+                        sub.lastFetchedAt = new Date().toISOString();
                         successCount++;
                     }
                 });
 
                 for (const sub of subsToUpdate) {
                     try {
-                        const result = await fetchNodeCount((sub as Record<string, any>).url);
-                        if (result.success && (result as Record<string, any>).data.userInfo) {
-                            (sub as Record<string, any>).userInfo = (
-                                result as Record<string, any>
-                            ).data.userInfo;
+                        const result = await fetchNodeCount(String(sub.url ?? ''));
+                        const payload = (result.data ?? {}) as NodeCountPayload;
+                        if (result.success && payload.userInfo) {
+                            sub.userInfo = payload.userInfo;
                         }
                     } catch (error) {
                         if (isDev) {
@@ -457,7 +460,7 @@ export function useSubscriptions(markDirty: any) {
                 );
                 refreshError.value = true;
                 for (const sub of subsToUpdate) {
-                    await handleUpdateNodeCount((sub as Record<string, any>).id);
+                    await handleUpdateNodeCount(sub.id);
                 }
             }
         } catch (error) {
@@ -467,33 +470,33 @@ export function useSubscriptions(markDirty: any) {
             });
             showToast(t('subscriptions.refreshFallback'), 'error');
             for (const sub of subsToUpdate) {
-                await handleUpdateNodeCount((sub as Record<string, any>).id);
+                await handleUpdateNodeCount(sub.id);
             }
         } finally {
             lastRefreshAt.value = new Date().toISOString();
             isRefreshing.value = false;
             subsToUpdate.forEach((sub) => {
-                (sub as Record<string, any>).isUpdating = false;
+                sub.isUpdating = false;
             });
         }
     }
 
     // ========== 定时自动更新功能 ==========
     const DEFAULT_INTERVAL_MS = TIMING.AUTO_UPDATE_INTERVAL_MS;
-    let autoUpdateTimerId: any = null;
+    let autoUpdateTimerId: ReturnType<typeof setInterval> | null = null;
     let currentIntervalMs = DEFAULT_INTERVAL_MS;
 
     async function autoUpdateAllSubscriptions() {
         try {
             const subsToUpdate = subscriptions.value.filter(
                 (sub) =>
-                    (sub as Record<string, any>).enabled &&
-                    (sub as Record<string, any>).url &&
-                    (sub as Record<string, any>).url.startsWith('http') &&
-                    !(sub as Record<string, any>).isUpdating
+                    sub.enabled &&
+                    sub.url &&
+                    sub.url.startsWith('http') &&
+                    !sub.isUpdating
             );
             for (const sub of subsToUpdate) {
-                await handleUpdateNodeCount((sub as Record<string, any>).id, true);
+                await handleUpdateNodeCount(sub.id, true);
             }
         } catch (e) {
             // 后台定时任务：handleUpdateNodeCount 内部已逐个提示失败，
@@ -502,7 +505,7 @@ export function useSubscriptions(markDirty: any) {
         }
     }
 
-    function startAutoUpdate(intervalMinutes: any = null) {
+    function startAutoUpdate(intervalMinutes: number | null = null) {
         // 如果传入间隔，使用传入值；否则从 settings 读取
         let intervalMs;
         if (intervalMinutes !== null) {
@@ -552,19 +555,19 @@ export function useSubscriptions(markDirty: any) {
         }
     }
 
-    function restartAutoUpdate(intervalMinutes: any) {
+    function restartAutoUpdate(intervalMinutes: number) {
         stopAutoUpdate();
         startAutoUpdate(intervalMinutes);
     }
 
-    function reorderSubscriptions(newOrder: any) {
+    function reorderSubscriptions(newOrder: SubscriptionItem[]) {
         // 1. Get all Manual Nodes (to preserve them)
         // We can't rely just on manualNodes computed because it might be filtered or not imported here.
         // Instead, filter from source of truth: allSubscriptions
         const currentManualNodes = (allSubscriptions.value || []).filter(
             (item) =>
-                !(item as Record<string, any>).url ||
-                !/^https?:\/\//.test((item as Record<string, any>).url)
+                !item.url ||
+                !/^https?:\/\//.test(item.url)
         );
 
         // 2. Combine New Ordered Subscriptions + Existing Manual Nodes
