@@ -1,8 +1,9 @@
 import { generateNodeId } from '../id.ts';
 import { base64Encode } from './common/base64.ts';
+import type { SubscriptionItem } from '../../../types/models.ts';
 
-export function parseLoonConfig(content: any) {
-    const nodes: any[] = [];
+export function parseLoonConfig(content: string): SubscriptionItem[] {
+    const nodes: SubscriptionItem[] = [];
     const lines = content.split('\n');
 
     for (const rawLine of lines) {
@@ -46,32 +47,32 @@ export function parseLoonConfig(content: any) {
     return nodes;
 }
 
-function parseNameAndParams(line: any) {
+function parseNameAndParams(line: string): { name: string; params: string[] } | null {
     const equalIndex = line.indexOf('=');
     if (equalIndex === -1) return null;
     const name = line.slice(0, equalIndex).trim();
     const config = line.slice(equalIndex + 1).trim();
-    const params = config.split(',').map((p: any) => p.trim());
+    const params = config.split(',').map((p: string) => p.trim());
     return { name, params };
 }
 
-function parseExtraParams(extra: any) {
-    const map = new Map();
-    extra.forEach((param: any) => {
-        const [key, value] = param.split('=').map((p: any) => p.trim());
+function parseExtraParams(extra: string[]): Map<string, string> {
+    const map = new Map<string, string>();
+    extra.forEach((param) => {
+        const [key, value] = param.split('=').map((p) => p.trim());
         if (key && value !== undefined) map.set(key.toLowerCase(), value.replace(/^"|"$/g, ''));
     });
     return map;
 }
 
-function parseLoonVmess(line: any) {
+function parseLoonVmess(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, uuid, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'vmess' || !server || !port || !uuid) return null;
     const options = parseExtraParams(extra);
 
-    const config: Record<string, any> = {
+    const config: Record<string, unknown> = {
         v: '2',
         ps: parsed.name,
         add: server,
@@ -99,7 +100,7 @@ function parseLoonVmess(line: any) {
     };
 }
 
-function parseLoonSS(line: any) {
+function parseLoonSS(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, method, password] = parsed.params;
@@ -115,17 +116,17 @@ function parseLoonSS(line: any) {
     };
 }
 
-function parseLoonTrojan(line: any) {
+function parseLoonTrojan(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, password, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'trojan' || !server || !port || !password) return null;
     const options = parseExtraParams(extra);
-    const urlParams: any[] = [];
-    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
+    const urlParams: string[] = [];
+    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni')!)}`);
     if (options.get('transport') === 'ws') urlParams.push('type=ws');
-    if (options.get('path')) urlParams.push(`path=${encodeURIComponent(options.get('path'))}`);
-    if (options.get('host')) urlParams.push(`host=${encodeURIComponent(options.get('host'))}`);
+    if (options.get('path')) urlParams.push(`path=${encodeURIComponent(options.get('path')!)}`);
+    if (options.get('host')) urlParams.push(`host=${encodeURIComponent(options.get('host')!)}`);
     if (options.get('skip-cert-verify') === 'true') urlParams.push('allowInsecure=1');
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
     return {
@@ -138,34 +139,34 @@ function parseLoonTrojan(line: any) {
     };
 }
 
-function parseLoonVless(line: any) {
+function parseLoonVless(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, uuid, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'vless' || !server || !port || !uuid) return null;
     const options = parseExtraParams(extra);
-    const urlParams: any[] = [];
+    const urlParams: string[] = [];
     if (options.get('transport'))
-        urlParams.push(`type=${encodeURIComponent(options.get('transport'))}`);
-    if (options.get('path')) urlParams.push(`path=${encodeURIComponent(options.get('path'))}`);
-    if (options.get('host')) urlParams.push(`host=${encodeURIComponent(options.get('host'))}`);
-    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
+        urlParams.push(`type=${encodeURIComponent(options.get('transport')!)}`);
+    if (options.get('path')) urlParams.push(`path=${encodeURIComponent(options.get('path')!)}`);
+    if (options.get('host')) urlParams.push(`host=${encodeURIComponent(options.get('host')!)}`);
+    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni')!)}`);
     if (options.get('tls') === 'true') urlParams.push('security=tls');
-    if (options.get('flow')) urlParams.push(`flow=${encodeURIComponent(options.get('flow'))}`);
+    if (options.get('flow')) urlParams.push(`flow=${encodeURIComponent(options.get('flow')!)}`);
     if (options.get('grpc-service-name'))
-        urlParams.push(`serviceName=${encodeURIComponent(options.get('grpc-service-name'))}`);
-    if (options.get('mode')) urlParams.push(`mode=${encodeURIComponent(options.get('mode'))}`);
+        urlParams.push(`serviceName=${encodeURIComponent(options.get('grpc-service-name')!)}`);
+    if (options.get('mode')) urlParams.push(`mode=${encodeURIComponent(options.get('mode')!)}`);
     if (options.get('transport') === 'xhttp' && options.get('host'))
-        urlParams.push(`xhttp-host=${encodeURIComponent(options.get('host'))}`);
+        urlParams.push(`xhttp-host=${encodeURIComponent(options.get('host')!)}`);
     if (options.get('transport') === 'xhttp' && options.get('path'))
-        urlParams.push(`xhttp-path=${encodeURIComponent(options.get('path'))}`);
+        urlParams.push(`xhttp-path=${encodeURIComponent(options.get('path')!)}`);
     if (options.get('reality') === 'true') urlParams.push('security=reality');
     if (options.get('public-key'))
-        urlParams.push(`pbk=${encodeURIComponent(options.get('public-key'))}`);
+        urlParams.push(`pbk=${encodeURIComponent(options.get('public-key')!)}`);
     if (options.get('short-id'))
-        urlParams.push(`sid=${encodeURIComponent(options.get('short-id'))}`);
-    if (options.get('alpn')) urlParams.push(`alpn=${encodeURIComponent(options.get('alpn'))}`);
-    if (options.get('fp')) urlParams.push(`fp=${encodeURIComponent(options.get('fp'))}`);
+        urlParams.push(`sid=${encodeURIComponent(options.get('short-id')!)}`);
+    if (options.get('alpn')) urlParams.push(`alpn=${encodeURIComponent(options.get('alpn')!)}`);
+    if (options.get('fp')) urlParams.push(`fp=${encodeURIComponent(options.get('fp')!)}`);
     if (options.get('skip-cert-verify') === 'true') urlParams.push('allowInsecure=1');
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
     return {
@@ -178,7 +179,7 @@ function parseLoonVless(line: any) {
     };
 }
 
-function parseLoonHttp(line: any) {
+function parseLoonHttp(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, username, password] = parsed.params;
@@ -197,14 +198,14 @@ function parseLoonHttp(line: any) {
     };
 }
 
-function parseLoonHysteria2(line: any) {
+function parseLoonHysteria2(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, password, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'hysteria2' || !server || !port || !password) return null;
     const options = parseExtraParams(extra);
-    const urlParams: any[] = [];
-    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
+    const urlParams: string[] = [];
+    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni')!)}`);
     if (options.get('skip-cert-verify') === 'true') urlParams.push('insecure=1');
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
     return {
@@ -217,17 +218,17 @@ function parseLoonHysteria2(line: any) {
     };
 }
 
-function parseLoonTuic(line: any) {
+function parseLoonTuic(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, tokenOrUuid, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'tuic' || !server || !port || !tokenOrUuid) return null;
     const options = parseExtraParams(extra);
     const auth = options.get('password')
-        ? `${encodeURIComponent(tokenOrUuid)}:${encodeURIComponent(options.get('password'))}`
+        ? `${encodeURIComponent(tokenOrUuid)}:${encodeURIComponent(options.get('password')!)}`
         : encodeURIComponent(tokenOrUuid);
-    const urlParams: any[] = [];
-    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
+    const urlParams: string[] = [];
+    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni')!)}`);
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
     return {
         id: generateNodeId(),
@@ -239,20 +240,20 @@ function parseLoonTuic(line: any) {
     };
 }
 
-function parseLoonWireGuard(line: any) {
+function parseLoonWireGuard(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, privateKey, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'wireguard' || !server || !port || !privateKey) return null;
     const options = parseExtraParams(extra);
-    const urlParams: any[] = [];
+    const urlParams: string[] = [];
     if (options.get('public-key'))
-        urlParams.push(`publickey=${encodeURIComponent(options.get('public-key'))}`);
+        urlParams.push(`publickey=${encodeURIComponent(options.get('public-key')!)}`);
     if (options.get('self-ip'))
-        urlParams.push(`address=${encodeURIComponent(options.get('self-ip'))}`);
+        urlParams.push(`address=${encodeURIComponent(options.get('self-ip')!)}`);
     if (options.get('client-id'))
         urlParams.push(
-            `reserved=${encodeURIComponent(options.get('client-id').replace(/\//g, ','))}`
+            `reserved=${encodeURIComponent(options.get('client-id')!.replace(/\//g, ','))}`
         );
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
     return {
@@ -265,7 +266,7 @@ function parseLoonWireGuard(line: any) {
     };
 }
 
-function parseLoonSnell(line: any) {
+function parseLoonSnell(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, psk] = parsed.params;
@@ -280,15 +281,15 @@ function parseLoonSnell(line: any) {
     };
 }
 
-function parseLoonAnyTLS(line: any) {
+function parseLoonAnyTLS(line: string) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, password, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'anytls' || !server || !port || !password) return null;
     const options = parseExtraParams(extra);
-    const urlParams: any[] = [];
-    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
-    if (options.get('alpn')) urlParams.push(`alpn=${encodeURIComponent(options.get('alpn'))}`);
+    const urlParams: string[] = [];
+    if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni')!)}`);
+    if (options.get('alpn')) urlParams.push(`alpn=${encodeURIComponent(options.get('alpn')!)}`);
     if (options.get('skip-cert-verify') === 'true') urlParams.push('allowInsecure=1');
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
     return {
