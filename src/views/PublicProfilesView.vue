@@ -18,6 +18,75 @@
 
     const isDev = import.meta.env.DEV;
 
+    /** 公开订阅组卡片数据 */
+    interface PublicProfile {
+        id: string;
+        name: string;
+        customId?: string;
+        description?: string;
+        updatedAt?: string;
+        subscriptionCount?: number;
+        manualNodeCount?: number;
+        [key: string]: unknown;
+    }
+
+    interface PublicAnnouncement {
+        enabled?: boolean;
+        title?: string;
+        content?: string;
+        type?: string;
+        dismissible?: boolean;
+        updatedAt?: string;
+        [key: string]: unknown;
+    }
+
+    interface PublicHero {
+        title1?: string;
+        title2?: string;
+        description?: string;
+    }
+
+    interface PublicGuestbook {
+        enabled?: boolean;
+        requireAudit?: boolean;
+        allowAnonymous?: boolean;
+    }
+
+    interface PublicCustomPage {
+        enabled?: boolean;
+        type?: string;
+        content?: string;
+        css?: string;
+        useDefaultLayout?: boolean;
+        allowExternalStylesheets?: boolean;
+        allowScripts?: boolean;
+        hideBranding?: boolean;
+        hideHeader?: boolean;
+        hideFooter?: boolean;
+    }
+
+    interface PublicConfig {
+        profileToken?: string;
+        defaultLocale?: string;
+        announcement?: PublicAnnouncement | null;
+        hero?: PublicHero;
+        guestbook?: PublicGuestbook;
+        customPage?: PublicCustomPage;
+        [key: string]: unknown;
+    }
+
+    /** 客户端下载条目 */
+    interface ClientEntry {
+        name?: string;
+        repo?: string;
+        version?: string;
+        icon?: string;
+        url?: string;
+        platforms?: string[];
+        platform?: string;
+        [key: string]: unknown;
+    }
+
     const NodePreviewModal = defineAsyncComponent(
         () => import('../components/modals/NodePreview/NodePreviewModal.vue')
     );
@@ -34,23 +103,23 @@
         () => import('../components/public/CustomPublicRenderer.vue')
     );
 
-    const publicProfiles = ref<any[]>([]);
+    const publicProfiles = ref<PublicProfile[]>([]);
     const loading = ref(true);
-    const error = ref<any>(null);
+    const error = ref<string | null>(null);
     const { showToast } = useToastStore();
     const { t, setLocale } = useI18n();
-    const config = ref<any>({});
-    const announcement = computed(() => (config.value as Record<string, any>).announcement);
-    const heroConfig = computed(
+    const config = ref<PublicConfig>({});
+    const announcement = computed(() => config.value.announcement);
+    const heroConfig = computed<PublicHero>(
         () =>
-            (config.value as Record<string, any>).hero || {
+            config.value.hero || {
                 title1: t('publicProfiles.heroTitle1'),
                 title2: t('publicProfiles.heroTitle2'),
                 description: t('publicProfiles.heroDescription'),
             }
     );
-    const guestbookConfig = computed(() => (config.value as Record<string, any>).guestbook || {});
-    const customPageConfig = computed(() => (config.value as Record<string, any>).customPage || {});
+    const guestbookConfig = computed<PublicGuestbook>(() => config.value.guestbook || {});
+    const customPageConfig = computed<PublicCustomPage>(() => config.value.customPage || {});
     const parsedCustomPageSource = computed(() =>
         parseCustomPageSource(
             customPageConfig.value.content || '',
@@ -111,7 +180,7 @@
 
     const showGuestbookModal = ref(false);
     const showQuickImportModal = ref(false);
-    const selectedProfileForImport = ref<any>(null);
+    const selectedProfileForImport = ref<PublicProfile | null>(null);
 
     const handleGuestbookTrigger = () => {
         if (guestbookConfig.value && guestbookConfig.value.enabled === false) {
@@ -135,7 +204,7 @@
                 config.value = data.config || {};
 
                 // 应用服务端默认显示语言（仅当访客未显式选择过语言时）
-                const serverLocale = (config.value as Record<string, any>).defaultLocale;
+                const serverLocale = config.value.defaultLocale;
                 if (serverLocale && !hasStoredLocale()) {
                     setLocale(serverLocale);
                 }
@@ -150,8 +219,8 @@
         }
     };
 
-    const copyLink = async (profile: any) => {
-        const token = (config.value as Record<string, any>).profileToken || 'profiles';
+    const copyLink = async (profile: PublicProfile) => {
+        const token = config.value.profileToken || 'profiles';
         const identifier = profile.customId || profile.id;
         const link = `${window.location.origin}/${token}/${identifier}`;
 
@@ -180,7 +249,7 @@
         }
     };
 
-    const clients = ref<any[]>([]);
+    const clients = ref<ClientEntry[]>([]);
 
     const fetchClients = async () => {
         try {
@@ -197,32 +266,30 @@
 
     const fetchClientVersions = async () => {
         clients.value.forEach(async (client) => {
-            if (!(client as Record<string, any>).repo) return;
+            if (!client.repo) return;
             try {
-                const data = await api.get(
-                    `/api/github/release?repo=${(client as Record<string, any>).repo}`
-                );
+                const data = await api.get(`/api/github/release?repo=${client.repo}`);
                 if (data && data.tag_name) {
-                    (client as Record<string, any>).version = data.tag_name;
+                    client.version = data.tag_name;
                 }
             } catch (e) {
-                console.warn(`Failed to fetch version for ${(client as Error).name}`, e);
+                console.warn(`Failed to fetch version for ${client.name}`, e);
             }
         });
     };
 
-    const getPlatformLabel = (p: any) => {
-        const map = {
+    const getPlatformLabel = (p: unknown) => {
+        const map: Record<string, string> = {
             windows: 'Windows',
             macos: 'macOS',
             linux: 'Linux',
             android: 'Android',
             ios: 'iOS',
         };
-        return (map as Record<string, any>)[p] || p;
+        return map[String(p)] || String(p);
     };
 
-    const getClientVersionLabel = (client: any) => {
+    const getClientVersionLabel = (client: ClientEntry) => {
         if (client.version) return client.version;
         if (!client.repo && client.platforms?.includes('ios'))
             return t('publicProfiles.appStoreVersion');
@@ -230,30 +297,30 @@
     };
 
     const showPreviewModal = ref(false);
-    const previewProfileId = ref<any>(null);
+    const previewProfileId = ref<string | null>(null);
     const previewProfileName = ref('');
 
-    const handlePreview = (profile: any) => {
+    const handlePreview = (profile: PublicProfile) => {
         previewProfileId.value = profile.id;
         previewProfileName.value = profile.name;
         showPreviewModal.value = true;
     };
 
-    const handleQuickImport = (profile: any) => {
+    const handleQuickImport = (profile: PublicProfile) => {
         selectedProfileForImport.value = profile;
         showQuickImportModal.value = true;
     };
 
     // QR Code in Card
-    const expandedQRCards = ref(new Set());
-    const qrCanvasRefs = ref<any>({});
+    const expandedQRCards = ref(new Set<string>());
+    const qrCanvasRefs = ref<Record<string, HTMLCanvasElement>>({});
 
-    const registerQrCanvas = (profileId: any, canvas: any) => {
+    const registerQrCanvas = (profileId: string, canvas: HTMLCanvasElement | null) => {
         if (!canvas) return;
         qrCanvasRefs.value[profileId] = canvas;
     };
 
-    const toggleQRCode = async (profile: any) => {
+    const toggleQRCode = async (profile: PublicProfile) => {
         const profileId = profile.id;
         if (expandedQRCards.value.has(profileId)) {
             expandedQRCards.value.delete(profileId);
@@ -262,7 +329,7 @@
             await nextTick();
             const canvas = qrCanvasRefs.value[profileId];
             if (canvas) {
-                const token = (config.value as Record<string, any>).profileToken || 'profiles';
+                const token = config.value.profileToken || 'profiles';
                 const identifier = profile.customId || profile.id;
                 const link = `${window.location.origin}/${token}/${identifier}`;
                 try {
@@ -280,9 +347,9 @@
         }
     };
 
-    const isQRExpanded = (profileId: any) => expandedQRCards.value.has(profileId);
+    const isQRExpanded = (profileId: string) => expandedQRCards.value.has(profileId);
 
-    const downloadQRCode = (profile: any) => {
+    const downloadQRCode = (profile: PublicProfile) => {
         const canvas = qrCanvasRefs.value[profile.id];
         if (!canvas) return;
         const url = canvas.toDataURL('image/png');
@@ -293,8 +360,8 @@
         showToast(t('publicProfiles.qrDownloaded'), 'success');
     };
 
-    const getPlatformStyle = (p: any) => {
-        const map = {
+    const getPlatformStyle = (p: unknown) => {
+        const map: Record<string, string> = {
             windows:
                 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30',
             macos: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300 border border-slate-200 dark:border-slate-500/30',
@@ -305,9 +372,7 @@
                 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30',
             ios: 'bg-gray-800 text-white dark:bg-white dark:text-gray-900 border border-gray-700 dark:border-gray-200',
         };
-        return (
-            (map as Record<string, any>)[p] || 'bg-gray-100 text-gray-800 border border-gray-200'
-        );
+        return map[String(p)] || 'bg-gray-100 text-gray-800 border border-gray-200';
     };
 
     const ICONS = {
@@ -658,7 +723,7 @@
                                                     client.icon.startsWith('data:'))
                                             "
                                             :src="client.icon"
-                                            :alt="client.name"
+                                            :alt="client.name ?? ''"
                                             class="w-full h-full object-cover rounded-lg p-1"
                                         />
                                         <span v-else>{{ client.icon }}</span>
@@ -732,7 +797,7 @@
             v-if="showPreviewModal"
             :show="showPreviewModal"
             @update:show="showPreviewModal = $event"
-            :profile-id="previewProfileId"
+            :profile-id="previewProfileId ?? undefined"
             :profile-name="previewProfileName"
             api-endpoint="/api/public/preview"
         />
@@ -745,7 +810,7 @@
 
         <QuickImportModal
             :show="showQuickImportModal"
-            :profile="selectedProfileForImport"
+            :profile="selectedProfileForImport ?? undefined"
             :clients="clients"
             :profile-token="config.profileToken || 'profiles'"
             @close="showQuickImportModal = false"
