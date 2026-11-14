@@ -9,21 +9,29 @@ import { renderEgernFromTemplateModel } from './template-renderers/render-egern.
 import { urlsToClashProxies } from '../../utils/url-to-clash.ts';
 import { getUniqueName } from './name-utils.ts';
 
+import type { KvRecord } from '../../../types/models.ts';
+
+/** 模板渲染选项（透传给解析器/优化器/渲染器） */
+type TemplatePipelineOptions = Record<string, unknown>;
+
 /**
  * 处理重名节点，确保每个节点名称唯一
- * @param {Object[]} proxies - 代理对象数组
+ * @param proxies - 代理对象数组
  */
-function deduplicateNames(proxies: any) {
+function deduplicateNames(proxies: unknown): void {
     if (!Array.isArray(proxies)) return;
-    const usedNames = new Map();
-    proxies.forEach((proxy) => {
+    const usedNames = new Map<string, number>();
+    proxies.forEach((proxy: KvRecord) => {
         if (proxy && proxy.name) {
             proxy.name = getUniqueName(proxy.name, usedNames);
         }
     });
 }
 
-export function renderClashFromIniTemplate(templateText: any, options: Record<string, any> = {}) {
+export function renderClashFromIniTemplate(
+    templateText: unknown,
+    options: TemplatePipelineOptions = {}
+): string {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -45,7 +53,10 @@ export function renderClashFromIniTemplate(templateText: any, options: Record<st
     return renderClashFromTemplateModel(model, options);
 }
 
-export function renderSingboxFromIniTemplate(templateText: any, options: Record<string, any> = {}) {
+export function renderSingboxFromIniTemplate(
+    templateText: unknown,
+    options: TemplatePipelineOptions = {}
+): string {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -64,7 +75,10 @@ export function renderSingboxFromIniTemplate(templateText: any, options: Record<
     return renderSingboxFromTemplateModel(model, options);
 }
 
-export function renderSurgeFromIniTemplate(templateText: any, options: Record<string, any> = {}) {
+export function renderSurgeFromIniTemplate(
+    templateText: unknown,
+    options: TemplatePipelineOptions = {}
+): string {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -83,7 +97,10 @@ export function renderSurgeFromIniTemplate(templateText: any, options: Record<st
     return renderSurgeFromTemplateModel(model, options);
 }
 
-export function renderLoonFromIniTemplate(templateText: any, options: Record<string, any> = {}) {
+export function renderLoonFromIniTemplate(
+    templateText: unknown,
+    options: TemplatePipelineOptions = {}
+): string {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -102,7 +119,10 @@ export function renderLoonFromIniTemplate(templateText: any, options: Record<str
     return renderLoonFromTemplateModel(model, options);
 }
 
-export function renderQuanxFromIniTemplate(templateText: any, options: Record<string, any> = {}) {
+export function renderQuanxFromIniTemplate(
+    templateText: unknown,
+    options: TemplatePipelineOptions = {}
+): string {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
@@ -121,7 +141,10 @@ export function renderQuanxFromIniTemplate(templateText: any, options: Record<st
     return renderQuanxFromTemplateModel(model, options);
 }
 
-export function renderEgernFromIniTemplate(templateText: any, options: Record<string, any> = {}) {
+export function renderEgernFromIniTemplate(
+    templateText: unknown,
+    options: TemplatePipelineOptions = {}
+): string {
     const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
     const proxyUrls = nodeList
         .split('\n')
