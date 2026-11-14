@@ -10,7 +10,7 @@ import { createRequestCache, getCachedStorageAdapter, getCachedSubscriptions } f
 import { editTelegramMessage, sendTelegramMessage } from './telegram-api.ts';
 import { getUserNodes } from './user-access.ts';
 
-import type { KvRecord } from '../../../../types/models.ts';
+import type { KvRecord, SubscriptionItem } from '../../../../types/models.ts';
 /**
  * 节点分组选择面板：列出所有分组及数量，点击进入该分组列表。
  *
@@ -18,12 +18,12 @@ import type { KvRecord } from '../../../../types/models.ts';
  * 先选分组再看列表比直接翻页友好得多。
  */
 export async function handleGroupSelect(
-    chatId: any,
-    userId: any,
-    env: any,
-    messageId: KvRecord | null = null,
-    type = 'node',
-    requestCache: Record<string, any> | null = null
+    chatId: string | number,
+    userId: string | number,
+    env: Env,
+    messageId: string | number | null = null,
+    type: string = 'node',
+    requestCache: KvRecord | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
@@ -33,10 +33,10 @@ export async function handleGroupSelect(
             : allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
     // 统计分组
-    const groupCounts = new Map();
+    const groupCounts = new Map<string, number>();
     let ungrouped = 0;
     nodes.forEach((n) => {
-        const g = (n.group || '').trim();
+        const g = String(n.group || '').trim();
         if (g) groupCounts.set(g, (groupCounts.get(g) || 0) + 1);
         else ungrouped++;
     });
@@ -48,7 +48,7 @@ export async function handleGroupSelect(
     }
 
     // 构建分组按钮（每行 2 个）
-    const buttons: any[] = [];
+    const buttons: Array<Array<{ text: string; callback_data: string }>> = [];
     const entries = Array.from(groupCounts.entries()).sort((a, b) => b[1] - a[1]);
     for (let i = 0; i < entries.length; i += 2) {
         const row: Array<{ text: string; callback_data: string }> = [];
@@ -91,12 +91,12 @@ export async function handleGroupSelect(
  * 对应网站的「批量分组」功能。
  */
 export async function handleGroupManage(
-    chatId: any,
-    userId: any,
-    env: any,
-    messageId: KvRecord | null = null,
-    type = 'node',
-    requestCache: Record<string, any> | null = null
+    chatId: string | number,
+    userId: string | number,
+    env: Env,
+    messageId: string | number | null = null,
+    type: string = 'node',
+    requestCache: KvRecord | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
@@ -105,10 +105,10 @@ export async function handleGroupManage(
             ? allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''))
             : allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
-    const groupCounts = new Map();
+    const groupCounts = new Map<string, number>();
     let ungrouped = 0;
     nodes.forEach((n) => {
-        const g = (n.group || '').trim();
+        const g = String(n.group || '').trim();
         if (g) groupCounts.set(g, (groupCounts.get(g) || 0) + 1);
         else ungrouped++;
     });
@@ -119,7 +119,7 @@ export async function handleGroupManage(
         (ungrouped > 0 ? `，${ungrouped} 项未分组` : '') +
         '\n\n点击分组可重命名或删除：';
 
-    const buttons: any[] = [];
+    const buttons: Array<Array<{ text: string; callback_data: string }>> = [];
     Array.from(groupCounts.entries())
         .sort((a, b) => b[1] - a[1])
         .forEach(([name, count]) => {
@@ -150,13 +150,13 @@ export async function handleGroupManage(
  * 单个分组的操作面板（重命名 / 删除 / 查看）。
  */
 export async function handleGroupActions(
-    chatId: any,
-    userId: any,
-    env: any,
-    messageId: any,
-    type: any,
-    groupName: any,
-    requestCache: Record<string, any> | null = null
+    chatId: string | number,
+    userId: string | number,
+    env: Env,
+    messageId: string | number | null,
+    type: string,
+    groupName: string,
+    requestCache: KvRecord | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
@@ -164,7 +164,7 @@ export async function handleGroupActions(
         type === 'sub'
             ? allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''))
             : allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
-    const count = nodes.filter((n) => (n.group || '').trim() === groupName).length;
+    const count = nodes.filter((n) => String(n.group || '').trim() === groupName).length;
 
     const text =
         `\uD83D\uDCC1 <b>${escapeHtml(groupName)}</b>\n\n` +
@@ -201,24 +201,24 @@ export async function handleGroupActions(
  * @param {string} op rename | clear | delete
  */
 export async function applyGroupOperation(
-    chatId: any,
-    userId: any,
-    env: any,
-    type: any,
-    groupName: any,
+    chatId: string | number,
+    userId: string | number,
+    env: Env,
+    type: string,
+    groupName: string,
     op = 'rename',
-    newName: KvRecord | null = null,
-    requestCache: Record<string, any> | null = null
+    newName: string | null = null,
+    requestCache: KvRecord | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const storageAdapter = await getCachedStorageAdapter(env, cache);
-    const allSubscriptions = await getCachedSubscriptions(env, cache);
+    const allSubscriptions: SubscriptionItem[] = await getCachedSubscriptions(env, cache);
 
     let changed = 0;
-    allSubscriptions.forEach((sub: any) => {
-        if ((sub.group || '').trim() !== groupName) return;
+    allSubscriptions.forEach((sub) => {
+        if (String(sub.group || '').trim() !== groupName) return;
         // 订阅源与节点都按 type 筛选
-        const isSub = /^https?:\/\//i.test(sub.url || '');
+        const isSub = /^https?:\/\//i.test(String(sub.url || ''));
         if (type === 'sub' ? !isSub : isSub) return;
 
         if (op === 'rename') sub.group = newName;
@@ -228,10 +228,10 @@ export async function applyGroupOperation(
 
     if (op === 'delete') {
         // 删除分组：把成员移除（这里语义同「删除该组内所有项」）
-        const remaining = allSubscriptions.filter((sub: any) => {
-            const isSub = /^https?:\/\//i.test(sub.url || '');
+        const remaining = allSubscriptions.filter((sub) => {
+            const isSub = /^https?:\/\//i.test(String(sub.url || ''));
             const sameType = type === 'sub' ? isSub : !isSub;
-            const sameGroup = (sub.group || '').trim() === groupName;
+            const sameGroup = String(sub.group || '').trim() === groupName;
             if (sameType && sameGroup) {
                 changed++;
                 return false;
@@ -276,7 +276,7 @@ export function parseTargetArgs(args: string[]): ParsedTarget {
     }
 
     // 支持逗号分隔的多个值
-    const parts = arg.split(/[,，\s]+/).filter((p: any) => p);
+    const parts = arg.split(/[,，\s]+/).filter((p) => p);
     const indices: number[] = [];
     const ids: string[] = [];
 
