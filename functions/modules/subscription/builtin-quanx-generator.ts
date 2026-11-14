@@ -14,18 +14,31 @@ import {
     pruneProxyGroups,
 } from './builtin-rules-provider.ts';
 import { normalizeGeneratorOptions } from './generator-options.ts';
+import type { ProxyNode } from '../../../types/models.ts';
+
+/** QuanX 生成器选项 */
+interface QuanxGeneratorOptions {
+    managedConfigUrl?: string;
+    interval?: number;
+    skipCertVerify?: boolean;
+    enableUdp?: boolean;
+    enableTfo?: boolean;
+    ruleLevel?: string;
+    generatorOptions?: Record<string, unknown>;
+    [key: string]: unknown;
+}
 
 const ICON_REPO = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
 
-function cleanControlChars(str: any) {
+function cleanControlChars(str: string): string {
     if (typeof str !== 'string') return str;
     // eslint-disable-next-line no-control-regex
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
-function sanitizeNodeName(name: any) {
+function sanitizeNodeName(name: unknown): string {
     if (!name) return 'Untitled';
-    let safe = cleanControlChars(name);
+    let safe = cleanControlChars(name as string);
     // QuanX lines are comma-separated and uses = for key-value.
     // Semicolons and quotes can also be problematic in some versions.
     safe = safe.replace(/,/g, ' ').replace(/=/g, '-').replace(/;/g, ' ').replace(/["']/g, '');
@@ -33,12 +46,12 @@ function sanitizeNodeName(name: any) {
     return safe || 'Untitled';
 }
 
-function qxQuote(value: any) {
+function qxQuote(value: unknown): string {
     if (value === undefined || value === null) return '';
     return encodeURIComponent(String(value));
 }
 
-function getIconByNodeName(name: any) {
+function getIconByNodeName(name: string): string | null {
     if (/港|HK|Hong Kong/i.test(name)) return `${ICON_REPO}/Hong_Kong.png`;
     if (/台|TW|Taiwan/i.test(name)) return `${ICON_REPO}/Taiwan.png`;
     if (/日|JP|Japan/i.test(name)) return `${ICON_REPO}/Japan.png`;
@@ -52,13 +65,13 @@ function getIconByNodeName(name: any) {
     return null;
 }
 
-function appendQxTlsParams(extraParts: any, proxy: any) {
+function appendQxTlsParams(extraParts: string[], proxy: ProxyNode) {
     if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
         extraParts.push('tls-verification=false');
     }
 }
 
-function normalizeQxVmessMethod(method: any) {
+function normalizeQxVmessMethod(method: unknown): string {
     const normalized = String(method || '')
         .trim()
         .toLowerCase();
@@ -66,7 +79,8 @@ function normalizeQxVmessMethod(method: any) {
     return normalized;
 }
 
-function buildQxLine(proxy: any) {
+function buildQxLine(proxyInput: unknown): string | null {
+    const proxy = proxyInput as ProxyNode | null;
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const name = sanitizeNodeName(proxy.name);
@@ -77,7 +91,7 @@ function buildQxLine(proxy: any) {
     if (type === 'ss' || type === 'shadowsocks') {
         const method = proxy.cipher || 'aes-128-gcm';
         const password = proxy.password || '';
-        const extraParts: any[] = [];
+        const extraParts: string[] = [];
 
         // 插件支持
         const plugin = proxy.plugin || '';
@@ -102,7 +116,7 @@ function buildQxLine(proxy: any) {
         const uuid = proxy.uuid || '';
         const method = normalizeQxVmessMethod(proxy.cipher);
         const aid = Number.isFinite(Number(proxy.alterId)) ? Number(proxy.alterId) : 0;
-        const extraParts: any[] = [];
+        const extraParts: string[] = [];
         const sni = proxy.sni || proxy.servername;
         const hasTlsLayer = proxy.tls || sni;
         if (proxy.network === 'ws' || proxy['ws-opts']) {
@@ -122,7 +136,7 @@ function buildQxLine(proxy: any) {
 
     if (type === 'trojan') {
         const password = proxy.password || '';
-        const extraParts: any[] = [];
+        const extraParts: string[] = [];
         if (proxy.network === 'ws' || proxy['ws-opts']) {
             extraParts.push('obfs=ws');
             const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
@@ -142,7 +156,7 @@ function buildQxLine(proxy: any) {
 
     if (type === 'vless') {
         const uuid = proxy.uuid || '';
-        const extraParts = ['method=none'];
+        const extraParts: string[] = ['method=none'];
         const transport = proxy.network || 'tcp';
         const isReality = proxy.security === 'reality' || !!proxy['reality-opts'];
         const hasTlsLayer = proxy.tls || isReality;
@@ -189,7 +203,7 @@ function buildQxLine(proxy: any) {
     if (type === 'http' || type === 'https') {
         const username = proxy.username || '';
         const password = proxy.password || '';
-        const extraParts: any[] = [];
+        const extraParts: string[] = [];
         if (type === 'https') extraParts.push('over-tls=true');
         if (proxy.sni || proxy.servername)
             extraParts.push(`tls-host=${proxy.sni || proxy.servername}`);
@@ -204,7 +218,7 @@ function buildQxLine(proxy: any) {
     }
 
     if (type === 'tuic') {
-        const parts: any[] = [];
+        const parts: string[] = [];
         if (proxy.uuid) parts.push(proxy.uuid || '');
         if (proxy.password) parts.push(proxy.password || '');
         if (proxy.sni || proxy.servername) parts.push(`sni=${proxy.sni || proxy.servername}`);
@@ -250,7 +264,7 @@ function buildQxLine(proxy: any) {
     return null;
 }
 
-export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string, any> = {}) {
+export function generateBuiltinQuanxConfig(nodeList: string, options: QuanxGeneratorOptions = {}) {
     const {
         managedConfigUrl = '',
         interval = 86400,
@@ -264,12 +278,12 @@ export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line: any) => line.trim())
-        .filter((line: any) => line && !line.startsWith('#'));
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('#'));
 
     const proxyLines: string[] = [];
-    const proxiesWithMetadata: any[] = [];
-    const usedNames = new Map();
+    const proxiesWithMetadata: ProxyNode[] = [];
+    const usedNames = new Map<string, number>();
 
     // 转换为 Clash 代理对象
     const proxies = urlsToClashProxies(nodeUrls, options);
@@ -285,7 +299,7 @@ export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string
         if (!line) continue;
 
         proxyLines.push(line);
-        proxiesWithMetadata.push(clashProxy);
+        proxiesWithMetadata.push(clashProxy as ProxyNode);
     }
 
     const dnsLines = [
@@ -298,7 +312,7 @@ export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string
         return `#!MANAGED-CONFIG http://example.com interval=86400 strict=false\n\n[general]\nserver_check_url = http://www.gstatic.com/generate_204\nexcluded_routes = 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10, 10.0.0.0/8\n\n[dns]\n${dnsLines}\n\n[server_remote]\n\n[server_local]\n\n[rewrite_remote]\n\n[rewrite_local]\n\n[mitm]\n`;
     }
 
-    const sections: any[] = [];
+    const sections: string[] = [];
     if (managedConfigUrl) {
         sections.push(`#!MANAGED-CONFIG ${managedConfigUrl} interval=${interval} strict=false`);
     }
@@ -311,11 +325,12 @@ export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string
     sections.push(`[server_local]\n${proxyLines.join('\n')}`);
 
     const levelKey = (ruleLevel || 'std').toUpperCase();
-    const policyFactory = (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
+    const policyFactory =
+        POLICY_GROUPS[levelKey as keyof typeof POLICY_GROUPS] || POLICY_GROUPS.STD;
     let abstractGroups = policyFactory(proxiesWithMetadata, options);
     abstractGroups = pruneProxyGroups(abstractGroups, proxiesWithMetadata);
 
-    const groupIcons = {
+    const groupIcons: Record<string, string> = {
         [DEFAULT_SELECT_GROUP]: `${ICON_REPO}/Proxy.png`,
         [DEFAULT_RELAY_GROUP]: `${ICON_REPO}/Proxy.png`,
         自动选择: `${ICON_REPO}/Speedtest.png`,
@@ -335,8 +350,8 @@ export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string
         '🇬🇧 英国节点': `${ICON_REPO}/United_Kingdom.png`,
     };
 
-    const groupLines = abstractGroups.map((group: any) => {
-        const normalizePolicyMember = (member: any) => {
+    const groupLines = abstractGroups.map((group) => {
+        const normalizePolicyMember = (member: string): string => {
             const upper = String(member || '').toUpperCase();
             if (upper === 'DIRECT') return 'direct';
             if (upper === 'REJECT') return 'reject';
@@ -349,23 +364,23 @@ export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string
         if (group.type === 'fallback') type = 'available';
         if (group.type === 'relay') type = 'static';
 
-        const proxies = group.proxies.map(normalizePolicyMember).join(', ');
-        const icon = (groupIcons as Record<string, any>)[group.name]
-            ? `, img-url=${(groupIcons as Record<string, any>)[group.name]}`
-            : '';
+        const proxies = (group.proxies || []).map(normalizePolicyMember).join(', ');
+        const icon = groupIcons[group.name] ? `, img-url=${groupIcons[group.name]}` : '';
         const extra = type === 'url-latency-benchmark' ? ', check-interval=300, tolerance=50' : '';
         return `${type}=${group.name}, ${proxies}${extra}${icon}`;
     });
 
     sections.push(`[policy]\n${groupLines.join('\n')}`);
 
-    const rawRules = getBuiltinRules(levelKey, 'quanx');
+    const rawRules = getBuiltinRules(levelKey, 'quanx').filter(
+        (rule): rule is string => typeof rule === 'string'
+    );
     const remoteRules = rawRules
-        .filter((r: any) => r.startsWith('filter_remote'))
-        .map((r: any) => r.replace(/^filter_remote,\s*/i, ''));
+        .filter((r) => r.startsWith('filter_remote'))
+        .map((r) => r.replace(/^filter_remote,\s*/i, ''));
     const localRules = rawRules
-        .filter((r: any) => !r.startsWith('filter_remote'))
-        .map((rule: any) =>
+        .filter((r) => !r.startsWith('filter_remote'))
+        .map((rule) =>
             rule
                 .replace(/^HOST-SUFFIX/i, 'host-suffix')
                 .replace(/^HOST-KEYWORD/i, 'host-keyword')
