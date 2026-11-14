@@ -5,10 +5,11 @@
 
 import { extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 
-export function parseHttpsUrl(url: any, isTls = true) {
+export function parseHttpsUrl(url: unknown, isTls = true): Record<string, unknown> | null {
     try {
+        const urlText = String(url || '');
         // https://username:password@server:port?params#name
-        const body = url.substring(isTls ? 8 : 7);
+        const body = urlText.substring(isTls ? 8 : 7);
         const atIndex = body.indexOf('@');
         let userInfo = '';
         let serverPart = body;
@@ -26,8 +27,8 @@ export function parseHttpsUrl(url: any, isTls = true) {
         }
 
         const { server, port } = parseHostPort(serverPart);
-        const params = parseQueryParams(url);
-        const name = extractName(url);
+        const params = parseQueryParams(urlText);
+        const name = extractName(urlText);
 
         let username = '';
         let password = '';
@@ -39,7 +40,7 @@ export function parseHttpsUrl(url: any, isTls = true) {
             username = decodeURIComponent(userInfo);
         }
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `HTTPS-${server}`,
             type: 'http',
             server,
@@ -74,10 +75,11 @@ export function parseHttpsUrl(url: any, isTls = true) {
  * @param {string} url - SOCKS5 URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSocks5Url(url: any) {
+export function parseSocks5Url(url: unknown): Record<string, unknown> | null {
     try {
+        const urlText = String(url || '');
         // socks5://username:password@server:port?tls=1#name
-        const body = url.substring(9);
+        const body = urlText.substring(9);
         const atIndex = body.indexOf('@');
         if (atIndex === -1) return null;
 
@@ -93,8 +95,8 @@ export function parseSocks5Url(url: any) {
         }
 
         const { server, port } = parseHostPort(serverPart);
-        const params = parseQueryParams(url);
-        const name = extractName(url);
+        const params = parseQueryParams(urlText);
+        const name = extractName(urlText);
 
         let username = '';
         let password = '';
@@ -110,7 +112,7 @@ export function parseSocks5Url(url: any) {
             params.get('tls') === '1' ||
             params.get('tls') === 'true' ||
             params.get('secure') === '1';
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `SOCKS5-${server}`,
             type: useTls ? 'socks5-tls' : 'socks5',
             server,

@@ -130,7 +130,10 @@
     );
 
     const showLegacyD1MigrationModal = ref(false);
-    const legacyD1Details = ref<any>({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
+    const legacyD1Details = ref<{
+        hasLegacySubscriptions: boolean;
+        hasLegacyProfiles: boolean;
+    }>({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
     const pendingVersionModal = ref(false);
 
     // Determine which login component to show (Custom Path -> NotFound, else -> Login)
@@ -144,9 +147,9 @@
 
     const isDefaultPassword = computed(() => {
         return (
-            (sessionStore.subscriptionConfig as Record<string, any> | undefined)
+            (sessionStore.subscriptionConfig as Record<string, unknown> | undefined)
                 ?.isDefaultPassword === true ||
-            (sessionStore.securityWarning as Record<string, any> | undefined)?.type ===
+            (sessionStore.securityWarning as Record<string, unknown> | undefined)?.type ===
                 'default_admin_password'
         );
     });
@@ -220,7 +223,7 @@
         }
     };
 
-    const handleLegacyD1MigrationClose = (value: any) => {
+    const handleLegacyD1MigrationClose = (value: boolean) => {
         showLegacyD1MigrationModal.value = value;
         if (!value && pendingVersionModal.value) {
             versionStore.openModal();

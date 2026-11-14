@@ -3,23 +3,24 @@
 
     const { t } = useI18n();
     import { ref, watch } from 'vue';
+    import type { PropType } from 'vue';
     import Modal from '../forms/Modal.vue';
     import SettingsPanel from './SettingsPanel.vue';
 
     const props = defineProps({
         show: Boolean,
-        exportBackup: Function as any,
-        importBackup: Function as any,
+        exportBackup: Function as PropType<() => void>,
+        importBackup: Function as PropType<() => void>,
     });
 
     const emit = defineEmits(['update:show']);
 
-    const settingsPanelRef = ref<any>(null);
+    const settingsPanelRef = ref<{ handleSave: () => Promise<boolean> } | null>(null);
 
     const handleConfirm = async () => {
         if (!settingsPanelRef.value) return;
 
-        const didSave = await (settingsPanelRef.value as Record<string, any>).handleSave();
+        const didSave = await settingsPanelRef.value.handleSave();
         if (didSave) {
             emit('update:show', false);
         }

@@ -13,8 +13,8 @@ import { TIMING } from '../constants/timing.ts';
 export function createLoadingState() {
     const isLoading = ref(false);
     const loadingMessage = ref('');
-    const error = ref<any>(null);
-    const lastUpdated = ref<any>(null);
+    const error = ref<unknown>(null);
+    const lastUpdated = ref<Date | null>(null);
 
     /**
      * 开始加载
@@ -44,7 +44,7 @@ export function createLoadingState() {
      * 设置错误
      * @param {string} errorMessage - 错误消息
      */
-    const setError = (errorMessage: any) => {
+    const setError = (errorMessage: unknown) => {
         error.value = errorMessage;
         isLoading.value = false;
         loadingMessage.value = '';
@@ -87,7 +87,7 @@ export function createLoadingState() {
  */
 export function createTimeoutLoadingState(timeout = TIMING.REQUEST_TIMEOUT_MS) {
     const loadingState = createLoadingState();
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const startLoading = (message = '加载中...') => {
         loadingState.startLoading(message);

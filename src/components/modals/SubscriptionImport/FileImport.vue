@@ -31,7 +31,7 @@
     const emit = defineEmits(['files']);
 
     const isDragging = ref(false);
-    const fileInput = ref<any>(null);
+    const fileInput = ref<HTMLInputElement | null>(null);
 
     const acceptAttr = IMPORT_FILE_ACCEPT;
 
@@ -39,17 +39,18 @@
 
     function openPicker() {
         if (props.isProcessing) return;
-        (fileInput.value as Record<string, any> | undefined)?.click();
+        fileInput.value?.click();
     }
 
-    function onInputChange(event: any) {
-        const files = event.target.files;
+    function onInputChange(event: Event) {
+        const input = event.target as HTMLInputElement | null;
+        const files = input?.files;
         if (files && files.length) emit('files', files);
         // 允许重复选择同一文件
-        event.target.value = '';
+        if (input) input.value = '';
     }
 
-    function onDrop(event: any) {
+    function onDrop(event: DragEvent) {
         isDragging.value = false;
         if (props.isProcessing) return;
         const files = event.dataTransfer?.files;

@@ -4,10 +4,17 @@
  * @param {Object} diff - The diff object { added: [], updated: [], removed: [] }
  * @returns {Array} The new array with patches applied
  */
-export function applyPatch(originalItems: any[] = [], diff: Record<string, any> = {}) {
+import type { KvRecord } from '../../types/models.ts';
+
+export function applyPatch(
+    originalItems: KvRecord[] = [],
+    diff: Record<string, unknown> = {}
+): KvRecord[] {
     if (!diff) return originalItems;
 
-    const { added = [], updated = [], removed = [] } = diff;
+    const added = Array.isArray(diff.added) ? (diff.added as KvRecord[]) : [];
+    const updated = Array.isArray(diff.updated) ? (diff.updated as KvRecord[]) : [];
+    const removed = Array.isArray(diff.removed) ? (diff.removed as unknown[]) : [];
     let newItems = [...originalItems];
 
     // 1. Remove items
@@ -19,7 +26,7 @@ export function applyPatch(originalItems: any[] = [], diff: Record<string, any> 
     // 2. Update items
     if (updated.length > 0) {
         // Create a map for faster lookup
-        const updatesMap = new Map(updated.map((item: any) => [item.id, item]));
+        const updatesMap = new Map(updated.map((item) => [item.id, item]));
         newItems = newItems.map((item) => {
             if (updatesMap.has(item.id)) {
                 // Merge existing item with updates
@@ -36,7 +43,7 @@ export function applyPatch(originalItems: any[] = [], diff: Record<string, any> 
     if (added.length > 0) {
         // Filter out any that might already exist to prevent duplicates if ID conflict
         const existingIds = new Set(newItems.map((i) => i.id));
-        const validAdds = added.filter((item: any) => !existingIds.has(item.id));
+        const validAdds = added.filter((item) => !existingIds.has(item.id));
         newItems = [...newItems, ...validAdds];
     }
 

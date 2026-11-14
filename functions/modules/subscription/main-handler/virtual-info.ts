@@ -10,13 +10,24 @@ import {
     mergeSubscriptionUserInfo,
 } from './user-info.ts';
 
+import type { KvRecord, SubscriptionItem } from '../../../../types/models.ts';
+
+/** buildPrependedVirtualNodes 入参 */
+interface BuildPrependedVirtualNodesInput {
+    context: unknown;
+    config: KvRecord;
+    targetMisubs: SubscriptionItem[];
+    currentProfile: { expiresAt?: string | number | null } | null | undefined;
+    isProfileExpired: boolean;
+}
+
 export function buildPrependedVirtualNodes({
     context,
     config,
     targetMisubs,
     currentProfile,
     isProfileExpired,
-}: any) {
+}: BuildPrependedVirtualNodesInput) {
     let prependedContentForSubconverter = '';
 
     if (isProfileExpired) {
@@ -31,9 +42,9 @@ export function buildPrependedVirtualNodes({
                 : 0;
             const expireTimestamp =
                 profileExpireTimestamp > 0 ? profileExpireTimestamp : totalUserInfo.expire;
-            const virtualNodes: any[] = [];
+            const virtualNodes: string[] = [];
 
-            const totalRemainingBytes = targetMisubs.reduce((acc: any, sub: any) => {
+            const totalRemainingBytes = targetMisubs.reduce((acc: number, sub) => {
                 const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;
                 if (userInfo && userInfo.total > 0) {
                     const used = (userInfo.upload || 0) + (userInfo.download || 0);

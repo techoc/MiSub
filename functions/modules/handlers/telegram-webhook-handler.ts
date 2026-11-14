@@ -38,7 +38,7 @@ import { handleCallbackQuery } from './telegram-webhook/callback.ts';
 /**
  * 主 Webhook 处理函数
  */
-export async function handleTelegramWebhook(request: any, env: any) {
+export async function handleTelegramWebhook(request: Request, env: Env) {
     try {
         const requestCache = createRequestCache();
         // 获取配置
@@ -113,14 +113,13 @@ export async function handleTelegramWebhook(request: any, env: any) {
         return createJsonResponse({ ok: true });
     } catch (error) {
         console.error('[Telegram Push] Webhook handler error:', error);
+        const errStatus = (error as { status?: unknown } | null)?.status;
+        const status = typeof errStatus === 'number' ? errStatus : 500;
         return createJsonResponse(
             {
-                error:
-                    (error as Record<string, any>).status === 413
-                        ? (error as Error).message
-                        : 'Internal server error',
+                error: status === 413 ? (error as Error).message : 'Internal server error',
             },
-            (error as Record<string, any>).status || 500
+            status
         );
     }
 }

@@ -6,7 +6,7 @@
             type: String,
             required: true,
             validator: (value) =>
-                ['idle', 'loading', 'success', 'error', 'warning'].includes(value as any),
+                ['idle', 'loading', 'success', 'error', 'warning'].includes(String(value)),
         },
         message: {
             type: String,
@@ -15,12 +15,15 @@
         size: {
             type: String,
             default: 'md',
-            validator: (value) => ['sm', 'md', 'lg'].includes(value as any),
+            validator: (value: unknown) => ['sm', 'md', 'lg'].includes(String(value)),
         },
     });
 
     const statusConfig = computed(() => {
-        const configs = {
+        const configs: Record<
+            string,
+            { color: string; bg: string; icon: string; animate?: string }
+        > = {
             idle: {
                 color: 'text-gray-500 dark:text-gray-400',
                 bg: 'bg-gray-100 dark:bg-gray-800',
@@ -48,11 +51,11 @@
                 icon: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
             },
         };
-        return (configs as Record<string, any>)[props.status] || configs.idle;
+        return configs[props.status] || configs.idle;
     });
 
     const sizeClasses = computed(() => {
-        const sizes = {
+        const sizes: Record<string, { container: string; icon: string }> = {
             sm: {
                 container: 'px-2 py-1 text-xs',
                 icon: 'w-3 h-3',
@@ -66,7 +69,7 @@
                 icon: 'w-5 h-5',
             },
         };
-        return (sizes as Record<string, any>)[props.size];
+        return sizes[props.size];
     });
 </script>
 

@@ -14,10 +14,17 @@
     const { t } = useI18n();
 
     const isMigrating = ref(false);
-    const logs = ref<any[]>([]);
+    /** 迁移日志条目 */
+    interface MigrationLog {
+        time: string;
+        message: string;
+        type: string;
+    }
+
+    const logs = ref<MigrationLog[]>([]);
     const step = ref('check'); // check, migrating, done, error
 
-    const addLog = (message: any, type = 'info') => {
+    const addLog = (message: string, type = 'info') => {
         const time = new Date().toLocaleTimeString();
         logs.value.unshift({ time, message, type });
     };
@@ -54,7 +61,7 @@
             } else {
                 addLog(t('d1Migration.logMigrateFailed', { message: result.message }), 'error');
                 if (result.details && Array.isArray(result.details)) {
-                    result.details.forEach((err: any) =>
+                    result.details.forEach((err: unknown) =>
                         addLog(t('d1Migration.logErrorDetail', { detail: err }), 'error')
                     );
                 }
@@ -100,7 +107,7 @@
         }
     };
 
-    const getLogClass = (type: any) => {
+    const getLogClass = (type: string) => {
         switch (type) {
             case 'success':
                 return 'text-green-400';
