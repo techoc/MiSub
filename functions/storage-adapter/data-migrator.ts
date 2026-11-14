@@ -48,35 +48,41 @@ export class DataMigrator {
      * @param {Object} env - Cloudflare 环境对象
      * @returns {Promise<Object>} 迁移结果
      */
-    static async migrateKVToD1(env: any) {
+    static async migrateKVToD1(env: Env) {
         try {
             const kvNs = resolveKV(env);
             if (!kvNs) throw new Error('No KV binding found');
             const kvAdapter = new KVStorageAdapter(kvNs);
-            const d1Adapter = new D1StorageAdapter(env.MISUB_DB);
+            const d1Adapter = new D1StorageAdapter(env.MISUB_DB!);
             await ensureD1Schema(d1Adapter.db);
 
             // keys: 逐键结果，'migrated' | 'empty' | 'failed'
-            const results = {
+            const results: {
+                subscriptions: boolean;
+                profiles: boolean;
+                settings: boolean;
+                keys: Record<string, string>;
+                errors: string[];
+            } = {
                 subscriptions: false,
                 profiles: false,
                 settings: false,
                 keys: {},
-                errors: [] as any[],
+                errors: [],
             };
 
-            const copyKey = async (key: any) => {
+            const copyKey = async (key: string): Promise<boolean> => {
                 try {
                     const value = await kvAdapter.get(key);
                     if (value === null || value === undefined) {
-                        (results.keys as Record<string, any>)[key] = 'empty';
+                        results.keys[key] = 'empty';
                         return false;
                     }
                     await d1Adapter.put(key, value);
-                    (results.keys as Record<string, any>)[key] = 'migrated';
+                    results.keys[key] = 'migrated';
                     return true;
                 } catch (error) {
-                    (results.keys as Record<string, any>)[key] = 'failed';
+                    results.keys[key] = 'failed';
                     results.errors.push(`${key} 迁移失败: ${(error as Error).message}`);
                     return false;
                 }
@@ -112,7 +118,7 @@ export class DataMigrator {
                     settings.storageType = STORAGE_TYPES.D1;
                     await d1Adapter.put(DATA_KEYS.SETTINGS, settings);
                     results.settings = true;
-                    (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'migrated';
+                    results.keys[DATA_KEYS.SETTINGS] = 'migrated';
                 } else {
                     // KV 里从未持久化过设置（全新部署只存过订阅/订阅组）：仍要写一条
                     // 最小 settings 行把 storageType 翻成 d1。否则数据已搬进 D1，但读取
@@ -121,10 +127,10 @@ export class DataMigrator {
                         storageType: STORAGE_TYPES.D1,
                     });
                     results.settings = true;
-                    (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'migrated';
+                    results.keys[DATA_KEYS.SETTINGS] = 'migrated';
                 }
             } catch (error) {
-                (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'failed';
+                results.keys[DATA_KEYS.SETTINGS] = 'failed';
                 results.errors.push(`设置迁移失败: ${(error as Error).message}`);
             }
 
@@ -135,16 +141,16 @@ export class DataMigrator {
         }
     }
 
-    static async migrateLegacyD1MainRows(env: any) {
+    static async migrateLegacyD1MainRows(env: Env) {
         if (!env?.MISUB_DB) throw new Error('D1 database not available');
 
         const d1Adapter = new D1StorageAdapter(env.MISUB_DB);
         await ensureD1Schema(d1Adapter.db);
 
-        const results = {
+        const results: { subscriptions: number; profiles: number; errors: string[] } = {
             subscriptions: 0,
             profiles: 0,
-            errors: [] as any[],
+            errors: [],
         };
 
         try {
@@ -173,10 +179,7 @@ export class DataMigrator {
                     await d1Adapter.putProfile(item);
                     results.profiles += 1;
                 }
-                await (d1Adapter.db as Record<string, any>)
-                    .prepare('DELETE FROM profiles WHERE id = ?')
-                    .bind('main')
-                    .run();
+                await d1Adapter.db.prepare('DELETE FROM profiles WHERE id = ?').bind('main').run();
                 invalidateD1CollectionCache(d1Adapter.db, 'profiles');
             }
         } catch (error) {
@@ -186,7 +189,7 @@ export class DataMigrator {
         return results;
     }
 
-    static async detectLegacyD1MainRows(env: any) {
+    static async detectLegacyD1MainRows(env: Env) {
         if (!env?.MISUB_DB) {
             return {
                 hasLegacySubscriptions: false,
@@ -200,15 +203,15 @@ export class DataMigrator {
             d1Adapter.db
                 .prepare('SELECT data FROM subscriptions WHERE id = ?')
                 .bind('main')
-                .first(),
-            (d1Adapter.db as Record<string, any>)
+                .first<{ data: string }>(),
+            d1Adapter.db
                 .prepare('SELECT data FROM profiles WHERE id = ?')
                 .bind('main')
-                .first(),
+                .first<{ data: string }>(),
         ]);
 
         const hasLegacySubscriptions = Array.isArray(
-            legacySubs ? JSON.parse(legacySubs.data as string) : null
+            legacySubs ? JSON.parse(legacySubs.data) : null
         );
         const hasLegacyProfiles = Array.isArray(
             legacyProfiles ? JSON.parse(legacyProfiles.data) : null
