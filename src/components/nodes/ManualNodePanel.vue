@@ -9,6 +9,13 @@
         DEFAULT_GROUP_KEY,
     } from '@/composables/manual-nodes/groups.ts';
 
+    /** 手动节点条目（本组件用到的字段） */
+    interface NodeLike {
+        id: string;
+        group?: unknown;
+        [key: string]: unknown;
+    }
+
     const props = defineProps({
         manualNodes: { type: Array, default: () => [] },
         paginatedManualNodes: Array,
@@ -52,7 +59,7 @@
     ]);
 
     const isSelectionMode = ref(false);
-    const selectedNodeIds = ref(new Set());
+    const selectedNodeIds = ref(new Set<string>());
 
     const {
         localSearchTerm,
@@ -65,8 +72,8 @@
         manualNodes: computed(() => props.manualNodes),
         paginatedManualNodes: computed(() => props.paginatedManualNodes || []),
         initialSearchTerm: computed(() => props.searchTerm || ''),
-        onBasePageChange: (page: any) => emit('changePage', page),
-        onSearchTermChange: (value: any) => emit('update:searchTerm', value),
+        onBasePageChange: (page: number) => emit('changePage', page),
+        onSearchTermChange: (value: string) => emit('update:searchTerm', value),
     });
 
     const toggleSelectionMode = () => {
@@ -74,7 +81,7 @@
         selectedNodeIds.value.clear();
     };
 
-    const toggleNodeSelection = (nodeId: any) => {
+    const toggleNodeSelection = (nodeId: string) => {
         if (selectedNodeIds.value.has(nodeId)) {
             selectedNodeIds.value.delete(nodeId);
         } else {
@@ -84,7 +91,7 @@
 
     const isAllSelected = computed(() => {
         if (paginatedNodes.value.length === 0) return false;
-        return paginatedNodes.value.every((node: any) => selectedNodeIds.value.has(node.id));
+        return paginatedNodes.value.every((node: NodeLike) => selectedNodeIds.value.has(node.id));
     });
 
     const selectedCount = computed(() => selectedNodeIds.value.size);
@@ -92,10 +99,10 @@
     const toggleSelectAll = () => {
         if (isAllSelected.value) {
             // Deselect all on current page
-            paginatedNodes.value.forEach((node: any) => selectedNodeIds.value.delete(node.id));
+            paginatedNodes.value.forEach((node: NodeLike) => selectedNodeIds.value.delete(node.id));
         } else {
             // Select all on current page
-            paginatedNodes.value.forEach((node: any) => selectedNodeIds.value.add(node.id));
+            paginatedNodes.value.forEach((node: NodeLike) => selectedNodeIds.value.add(node.id));
         }
     };
 
@@ -125,7 +132,8 @@
             const normalizedActiveGroup =
                 activeGroup === DEFAULT_GROUP_KEY ? '' : normalizeManualNodeGroupName(activeGroup);
             nodes = nodes.filter(
-                (node: any) => normalizeManualNodeGroupName(node.group) === normalizedActiveGroup
+                (node: NodeLike) =>
+                    normalizeManualNodeGroupName(node.group) === normalizedActiveGroup
             );
         }
 
@@ -137,12 +145,12 @@
         set: (val) => emit('reorder', val),
     });
 
-    const handleDelete = (id: any) => emit('delete', id);
-    const handleEdit = (id: any) => emit('edit', id);
+    const handleDelete = (id: string) => emit('delete', id);
+    const handleEdit = (id: string) => emit('edit', id);
     const handleAdd = () => emit('add');
-    const handleChangePage = (page: any) => handlePageChange(page);
-    const handleSetViewMode = (mode: any) => emit('update:viewMode', mode);
-    const handleSearchTermUpdate = (value: any) => {
+    const handleChangePage = (page: number) => handlePageChange(page);
+    const handleSetViewMode = (mode: string) => emit('update:viewMode', mode);
+    const handleSearchTermUpdate = (value: string) => {
         localSearchTerm.value = value || '';
     };
     const handleToggleSort = () => {
