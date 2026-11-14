@@ -65,7 +65,7 @@ export async function handleHelpCommand(chatId: any, env: any) {
 export async function handleMenuCommand(
     chatId: any,
     env: any,
-    messageId: KvRecord | null = null,
+    messageId: string | number | null = null,
     requestCache: KvRecord | null = null
 ) {
     const keyboard = {
@@ -113,7 +113,7 @@ export async function handleListCommand(
     env: any,
     page = 0,
     type = 'all',
-    messageId: KvRecord | null = null,
+    messageId: string | number | null = null,
     requestCache: KvRecord | null = null,
     groupFilter: any = null
 ) {
@@ -274,7 +274,7 @@ export async function handleListCommand(
 export async function handleListTypeSelector(
     chatId: any,
     env: any,
-    messageId: KvRecord | null = null,
+    messageId: string | number | null = null,
     requestCache: KvRecord | null = null
 ) {
     const message =
