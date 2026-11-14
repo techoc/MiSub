@@ -1,6 +1,16 @@
+import type { SubscriptionItem } from '../../../types/models.ts';
+
+/** 去重计划（buildDedupPlan 的产物） */
+export interface DedupPlan {
+    totalNodes: number;
+    keepCount: number;
+    removeCount: number;
+    removeNodes: SubscriptionItem[];
+}
+
 const isDev = import.meta.env.DEV;
 
-const normalizeBase64 = (input: any) => {
+const normalizeBase64 = (input: unknown): string => {
     let s = String(input || '')
         .trim()
         .replace(/\s+/g, '');
@@ -19,7 +29,7 @@ const normalizeBase64 = (input: any) => {
     return s;
 };
 
-const safeBase64Decode = (input: any) => {
+const safeBase64Decode = (input: unknown): string => {
     try {
         const normalized = normalizeBase64(input);
         const binary = atob(normalized);
@@ -31,14 +41,12 @@ const safeBase64Decode = (input: any) => {
     }
 };
 
-const buildSortedQuery = (params: any) => {
-    const items = (Array.from(params.entries()) as [string, string][]).sort(([a], [b]) =>
-        a.localeCompare(b)
-    );
+const buildSortedQuery = (params: URLSearchParams): string => {
+    const items = Array.from(params.entries()).sort(([a], [b]) => a.localeCompare(b));
     return items.length ? `?${items.map(([k, v]) => `${k}=${v}`).join('&')}` : '';
 };
 
-const normalizeUrlForDedup = (url: any) => {
+const normalizeUrlForDedup = (url: unknown): string => {
     try {
         const raw = String(url || '').trim();
         if (!raw) return '';
@@ -47,15 +55,15 @@ const normalizeUrlForDedup = (url: any) => {
             const payload = raw.substring('vmess://'.length);
             const decoded = safeBase64Decode(payload);
             if (!decoded) return raw;
-            const nodeConfig = JSON.parse(decoded);
+            const nodeConfig = JSON.parse(decoded) as Record<string, unknown>;
             delete nodeConfig.ps;
             delete nodeConfig.remark;
             delete nodeConfig.remarks;
             delete nodeConfig.name;
             const sorted = Object.keys(nodeConfig)
                 .sort()
-                .reduce((obj, key) => {
-                    (obj as Record<string, any>)[key] = nodeConfig[key];
+                .reduce<Record<string, unknown>>((obj, key) => {
+                    obj[key] = nodeConfig[key];
                     return obj;
                 }, {});
             return `vmess://${JSON.stringify(sorted)}`;
@@ -105,11 +113,11 @@ const normalizeUrlForDedup = (url: any) => {
 
         return `${protocol}//${auth}${host}${port ? `:${port}` : ''}${path}${query}`;
     } catch {
-        return url;
+        return String(url ?? '');
     }
 };
 
-const getNodePriorityScore = (node: any) => {
+const getNodePriorityScore = (node: SubscriptionItem): number => {
     let score = 0;
     if (node.enabled) score += 8;
     if (node.name && node.name.trim()) score += 4;
@@ -119,9 +127,10 @@ const getNodePriorityScore = (node: any) => {
     return score;
 };
 
-export function buildDedupPlan(nodes: any) {
-    const enrichedNodes = nodes.map((node: any, index: any) => ({ ...node, __index: index }));
-    const bucket = new Map();
+export function buildDedupPlan(nodes: unknown): DedupPlan {
+    const list: SubscriptionItem[] = Array.isArray(nodes) ? nodes : [];
+    const enrichedNodes = list.map((node, index) => ({ ...node, __index: index }));
+    const bucket = new Map<string, typeof enrichedNodes>();
 
     for (const node of enrichedNodes) {
         const key = normalizeUrlForDedup(node.url);
@@ -131,8 +140,8 @@ export function buildDedupPlan(nodes: any) {
         bucket.set(key, list);
     }
 
-    const removeNodes: any[] = [];
-    const keepNodes: any[] = [];
+    const removeNodes: SubscriptionItem[] = [];
+    const keepNodes: SubscriptionItem[] = [];
 
     for (const list of bucket.values()) {
         if (list.length === 1) {
