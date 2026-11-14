@@ -11,13 +11,22 @@
  */
 export const DEFAULT_GROUP_KEY = '默认';
 
-export function normalizeManualNodeGroupName(groupName: any) {
+/** 可按 group 分组的节点条目 */
+interface GroupableNode {
+    group?: unknown;
+    [key: string]: unknown;
+}
+
+export function normalizeManualNodeGroupName(groupName: unknown): string {
     return typeof groupName === 'string' ? groupName.trim() : '';
 }
 
-export function collectManualNodeGroups(nodes: any, customOrder: any[] = []) {
-    const groups = new Set();
-    nodes.forEach((node: any) => {
+export function collectManualNodeGroups(
+    nodes: ReadonlyArray<GroupableNode>,
+    customOrder: string[] = []
+): string[] {
+    const groups = new Set<string>();
+    nodes.forEach((node) => {
         const group = normalizeManualNodeGroupName(node.group);
         if (group) {
             groups.add(group);
@@ -28,7 +37,7 @@ export function collectManualNodeGroups(nodes: any, customOrder: any[] = []) {
 
     // 如果有自定义顺序，按自定义顺序排列，然后追加新出现的分组
     if (customOrder && customOrder.length > 0) {
-        const orderedGroups: any[] = [];
+        const orderedGroups: string[] = [];
         const remaining = new Set(allGroups);
 
         // 先按自定义顺序添加
@@ -53,26 +62,29 @@ export function collectManualNodeGroups(nodes: any, customOrder: any[] = []) {
     return allGroups;
 }
 
-export function buildGroupedManualNodes(nodesToDisplay: any, manualNodeGroups: any) {
-    const groups = {};
+export function buildGroupedManualNodes(
+    nodesToDisplay: ReadonlyArray<GroupableNode>,
+    manualNodeGroups: ReadonlyArray<string>
+): Record<string, GroupableNode[]> {
+    const groups: Record<string, GroupableNode[]> = {};
     // Initialize groups
-    manualNodeGroups.forEach((group: any) => {
-        (groups as Record<string, any>)[group] = [];
+    manualNodeGroups.forEach((group) => {
+        groups[group] = [];
     });
-    (groups as Record<string, any>)[DEFAULT_GROUP_KEY] = []; // Default group for ungrouped nodes
+    groups[DEFAULT_GROUP_KEY] = []; // Default group for ungrouped nodes
 
-    nodesToDisplay.forEach((node: any) => {
+    nodesToDisplay.forEach((node) => {
         const groupName = normalizeManualNodeGroupName(node.group) || DEFAULT_GROUP_KEY;
-        if (!(groups as Record<string, any>)[groupName]) {
-            (groups as Record<string, any>)[groupName] = [];
+        if (!groups[groupName]) {
+            groups[groupName] = [];
         }
-        (groups as Record<string, any>)[groupName].push(node);
+        groups[groupName].push(node);
     });
 
-    const result = {};
+    const result: Record<string, GroupableNode[]> = {};
     Object.keys(groups).forEach((key) => {
-        if ((groups as Record<string, any>)[key].length > 0) {
-            (result as Record<string, any>)[key] = (groups as Record<string, any>)[key];
+        if (groups[key].length > 0) {
+            result[key] = groups[key];
         }
     });
 
