@@ -7,8 +7,38 @@ import { isHiddifyAgent } from '../user-agent-utils.ts';
 import { resolveGeneratorOptions } from '../generator-options.ts';
 import { normalizeDnsMode } from '../safe-dns.ts';
 
+import type { KvRecord } from '../../../../types/models.ts';
+
+/** 有效引擎判定入参 */
+interface EffectiveEngineInput {
+    searchParams?: URLSearchParams | null;
+    userAgent?: string;
+    profileEngineMode?: string;
+    globalEngineMode?: string;
+}
+
+/** 内置请求选项入参 */
+interface BuiltinRequestInput {
+    searchParams?: URLSearchParams | null;
+    userAgent?: string;
+    generatorOptions?: Record<string, unknown>;
+}
+
+/** 远程模板来源 */
+interface TemplateSource {
+    kind?: string;
+    value?: unknown;
+}
+
+/** 本地渲染 Clash YAML 模板判定入参 */
+interface TemplateRenderCheckInput {
+    isExternalMode?: boolean;
+    targetFormat?: string;
+    templateSource?: TemplateSource | null;
+}
+
 export function resolveBuiltinEngineFlags(
-    config: Record<string, any> = {},
+    config: Record<string, unknown> = {},
     isExternalMode = false
 ) {
     if (isExternalMode) {
@@ -29,7 +59,7 @@ export function resolveEffectiveEngine({
     userAgent = '',
     profileEngineMode = '',
     globalEngineMode = '',
-}: Record<string, any> = {}) {
+}: EffectiveEngineInput = {}): string {
     const params = searchParams || new URLSearchParams('');
     const builtinParam = (params.get('builtin') || '').toLowerCase();
     const engineParam = (params.get('engine') || '').toLowerCase();
@@ -59,7 +89,7 @@ export function resolveEffectiveEngine({
     return profileEngineMode || globalEngineMode || 'builtin';
 }
 
-function parseToggleValue(value: any) {
+function parseToggleValue(value: unknown): boolean | null {
     if (value === null || value === undefined) return null;
     const normalized = String(value).trim().toLowerCase();
     if (normalized === 'true' || normalized === '1') return true;
@@ -77,11 +107,11 @@ function parseToggleValue(value: any) {
  * @returns {boolean}
  */
 export function resolveInjectionToggle(
-    searchParams: any,
-    paramNames: any[] = [],
-    configValue: any,
+    searchParams: URLSearchParams | null | undefined,
+    paramNames: string[] = [],
+    configValue: unknown,
     fallback = true
-) {
+): boolean {
     const params = searchParams || new URLSearchParams('');
     for (const name of paramNames) {
         if (!params.has(name)) continue;
@@ -97,7 +127,7 @@ export function resolveBuiltinRequestOptions({
     searchParams,
     userAgent = '',
     generatorOptions = {},
-}: Record<string, any> = {}) {
+}: BuiltinRequestInput = {}) {
     const params = searchParams || new URLSearchParams('');
     const dnsMode = params.get('dns-mode') || params.get('dnsMode') || '';
     return {
@@ -105,7 +135,7 @@ export function resolveBuiltinRequestOptions({
         searchParams: params,
         hiddifyCompatible: isHiddifyAgent(userAgent),
         dnsMode: normalizeDnsMode(dnsMode),
-        generatorOptions: resolveGeneratorOptions(generatorOptions, params),
+        generatorOptions: resolveGeneratorOptions(generatorOptions, params as KvRecord | null),
     };
 }
 
@@ -113,19 +143,14 @@ export function shouldRenderClashYamlProfileTemplateLocally({
     isExternalMode = false,
     targetFormat = '',
     templateSource = {},
-} = {}) {
-    if (
-        !isExternalMode ||
-        targetFormat !== 'clash' ||
-        (templateSource as Record<string, any> | undefined)?.kind !== 'remote'
-    )
+}: TemplateRenderCheckInput = {}): boolean {
+    if (!isExternalMode || targetFormat !== 'clash' || templateSource?.kind !== 'remote')
         return false;
+    const raw = String(templateSource?.value || '').trim();
     try {
-        const parsed = new URL(String((templateSource as Record<string, any>).value || '').trim());
+        const parsed = new URL(raw);
         return /\.ya?ml$/i.test(parsed.pathname);
     } catch {
-        return /\.ya?ml(?:[?#].*)?$/i.test(
-            String((templateSource as Record<string, any>).value || '').trim()
-        );
+        return /\.ya?ml(?:[?#].*)?$/i.test(raw);
     }
 }
