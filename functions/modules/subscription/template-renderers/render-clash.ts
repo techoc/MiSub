@@ -6,7 +6,16 @@ import { normalizeGeneratorOptions } from '../generator-options.ts';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.ts';
 import { stripPolicyMembersForAutoGroup, withPolicyFallbacks } from '../policy-fallbacks.ts';
 
-function mapGroupType(type: any) {
+import type { KvRecord } from '../../../../types/models.ts';
+
+/** Clash 模板渲染选项（仅声明本模块用到的字段） */
+interface ClashRenderOptions {
+    generatorOptions?: Record<string, unknown>;
+    injectDnsExitGroup?: boolean;
+    [key: string]: unknown;
+}
+
+function mapGroupType(type: unknown): string {
     const normalized = String(type || '')
         .trim()
         .toLowerCase();
@@ -27,13 +36,17 @@ const CLASH_BUILTIN_POLICIES = new Set(['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS
  * 规则策略必须指向真实渲染出的组/节点或内置策略；
  * 渲染时被丢弃的组（空成员 fail-closed 等）不能留下悬空规则。
  */
-function isRenderableRulePolicy(policy: any, groupNames: any, proxyNames: any) {
+function isRenderableRulePolicy(
+    policy: unknown,
+    groupNames: Set<string>,
+    proxyNames: Set<string>
+): boolean {
     const value = String(policy || '').trim();
     if (!value) return false;
     return CLASH_BUILTIN_POLICIES.has(value) || groupNames.has(value) || proxyNames.has(value);
 }
 
-function filterAutoSelectMembers(group: any) {
+function filterAutoSelectMembers(group: KvRecord): unknown[] {
     const type = mapGroupType(group.type);
     if (!['url-test', 'fallback', 'load-balance'].includes(type)) {
         return Array.isArray(group.members) ? group.members.filter(Boolean) : [];
@@ -84,7 +97,7 @@ const ACL4SSR_ROOT_LIST_ONLY_FILES = new Set([
     'unban',
 ]);
 
-function toClashRuleProviderUrl(sourceUrl: any) {
+function toClashRuleProviderUrl(sourceUrl: string): string {
     if (!/^https?:\/\//i.test(String(sourceUrl || ''))) return sourceUrl;
 
     try {
@@ -123,7 +136,7 @@ function toClashRuleProviderUrl(sourceUrl: any) {
             return sourceUrl;
         }
 
-        let newPath;
+        let newPath: string;
         if (/\/Clash\/Ruleset\//i.test(repoPath)) {
             newPath = repoPath
                 .replace(/\/Clash\/Ruleset\//i, '/Clash/Providers/Ruleset/')
@@ -147,7 +160,7 @@ function toClashRuleProviderUrl(sourceUrl: any) {
     }
 }
 
-function isMrsProviderUrl(providerUrl: any) {
+function isMrsProviderUrl(providerUrl: string): boolean {
     try {
         return /\.mrs$/i.test(new URL(providerUrl).pathname);
     } catch {
@@ -155,7 +168,7 @@ function isMrsProviderUrl(providerUrl: any) {
     }
 }
 
-function getRuleProviderBehavior(providerUrl: any) {
+function getRuleProviderBehavior(providerUrl: string): string {
     try {
         const pathname = new URL(providerUrl).pathname;
         // Mihomo 的 mrs 仅支持 domain / ipcidr，配 classical 会在运行期报
@@ -175,14 +188,14 @@ function getRuleProviderBehavior(providerUrl: any) {
     return 'classical';
 }
 
-function appendRuleExtras(rule: any, rendered: any) {
+function appendRuleExtras(rule: KvRecord, rendered: string): string {
     // 保留模板作者声明的规则尾参（如 GEOIP 的 no-resolve——Aethersailor 模板全部携带，
     // 丢掉会让 GEOIP 命中前触发 DNS 解析，语义与性能都偏离原意）。
     const extras = Array.isArray(rule.extras) ? rule.extras.filter(Boolean) : [];
     return extras.length > 0 ? `${rendered},${extras.join(',')}` : rendered;
 }
 
-function mapRule(rule: any, ruleProviderMap: any) {
+function mapRule(rule: KvRecord, ruleProviderMap: Map<string, string>): string | null {
     const type = String(rule.type || '').toUpperCase();
     if (!type) return null;
     if (type === 'MATCH' || type === 'FINAL') return `MATCH,${rule.policy}`;
@@ -196,7 +209,10 @@ function mapRule(rule: any, ruleProviderMap: any) {
     return appendRuleExtras(rule, `${type},${rule.value},${rule.policy}`);
 }
 
-export function renderClashFromTemplateModel(model: any, options: Record<string, any> = {}) {
+export function renderClashFromTemplateModel(
+    model: Record<string, unknown>,
+    options: ClashRenderOptions = {}
+): string {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
@@ -209,8 +225,8 @@ export function renderClashFromTemplateModel(model: any, options: Record<string,
         });
     }
 
-    const ruleProviders = {};
-    const ruleProviderMap = new Map();
+    const ruleProviders: Record<string, Record<string, unknown>> = {};
+    const ruleProviderMap = new Map<string, string>();
     let providerCounter = 0;
 
     normalizedModel.rules.forEach((rule) => {
@@ -239,7 +255,7 @@ export function renderClashFromTemplateModel(model: any, options: Record<string,
         ruleProviderMap.set(providerUrl, providerName);
         const usesTextList = /\.(list|txt)$/i.test(providerUrl);
         const usesMrs = isMrsProviderUrl(providerUrl);
-        (ruleProviders as Record<string, any>)[providerName] = {
+        ruleProviders[providerName] = {
             type: 'http',
             behavior: getRuleProviderBehavior(providerUrl),
             url: providerUrl,
@@ -264,9 +280,15 @@ export function renderClashFromTemplateModel(model: any, options: Record<string,
                 : undefined,
         ...group.options,
     }));
-    const renderedGroupNames = new Set(renderedGroups.map((group) => group.name));
-    const renderedProxyNames = new Set(
-        normalizedModel.proxies.map((proxy) => proxy.name || proxy.tag).filter(Boolean)
+    const renderedGroupNames = new Set<string>(
+        renderedGroups.map((group) => (typeof group.name === 'string' ? group.name : ''))
+    );
+    const renderedProxyNames = new Set<string>(
+        normalizedModel.proxies
+            .map((proxy: { name?: unknown; tag?: unknown }) =>
+                String(proxy.name || proxy.tag || '')
+            )
+            .filter(Boolean)
     );
 
     // DNS 出口 detour 只能引用真实渲染出来的组；组已不再因空成员被丢弃，
