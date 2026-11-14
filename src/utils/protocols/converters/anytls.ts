@@ -2,7 +2,9 @@
  * AnyTLS配置转换为URL
  * 支持：TLS、SNI、ALPN、跳过证书验证
  */
-export function convertAnytlsToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertAnytlsToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port || !proxy.password) {
             return null;

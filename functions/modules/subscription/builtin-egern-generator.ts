@@ -1,7 +1,10 @@
 import { getBuiltinTemplate } from './builtin-template-registry.ts';
 import { renderEgernFromIniTemplate } from './template-pipeline.ts';
 
-export function generateBuiltinEgernConfig(nodeList: any, options: Record<string, any> = {}) {
+export function generateBuiltinEgernConfig(
+    nodeList: string,
+    options: Record<string, unknown> = {}
+) {
     const templateEntry =
         getBuiltinTemplate('clash_misub_minimal') || getBuiltinTemplate('clash_acl4ssr_lite');
     if (!templateEntry?.content) {

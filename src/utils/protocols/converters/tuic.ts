@@ -2,7 +2,9 @@
  * TUIC配置转换为URL
  * 支持完整参数：TUIC v4/v5、TLS、拥塞控制、UDP中继
  */
-export function convertTuicToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertTuicToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port) {
             return null;

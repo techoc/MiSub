@@ -2,7 +2,9 @@
  * Trojan配置转换为URL
  * 支持完整参数：TLS、Reality、WebSocket、gRPC、fingerprint
  */
-export function convertTrojanToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertTrojanToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port || !proxy.password) {
             return null;

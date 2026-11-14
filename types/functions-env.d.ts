@@ -54,7 +54,10 @@ declare global {
      * 仅声明本仓库实际用到的形状，避免引入完整 @types/node。
      */
     const Buffer: {
-        from(input: any, encoding?: string): { toString(encoding?: string): string };
+        from(
+            input: string | ArrayBuffer | ArrayLike<number>,
+            encoding?: string
+        ): { toString(encoding?: string): string };
     };
 }
 

@@ -1,6 +1,8 @@
 import { normalizeGeneratorOptions } from './generator-options.ts';
 
-export function createUnifiedTemplateModel(input: Record<string, any> = {}) {
+import type { KvRecord } from '../../../types/models.ts';
+
+export function createUnifiedTemplateModel(input: KvRecord = {}) {
     return {
         meta: {
             name: input.meta?.name || 'MiSub',
@@ -26,6 +28,6 @@ export function createUnifiedTemplateModel(input: Record<string, any> = {}) {
     };
 }
 
-export function normalizeUnifiedTemplateModel(model: Record<string, any> = {}) {
+export function normalizeUnifiedTemplateModel(model: KvRecord = {}) {
     return createUnifiedTemplateModel(model);
 }

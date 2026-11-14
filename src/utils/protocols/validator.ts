@@ -3,7 +3,7 @@ import { COMMON_NODE_PROTOCOLS } from '../../constants/nodeProtocols.ts';
 /**
  * 验证生成的URL是否有效
  */
-export function validateGeneratedUrl(url: any) {
+export function validateGeneratedUrl(url: unknown): boolean {
     if (!url || typeof url !== 'string') {
         return false;
     }

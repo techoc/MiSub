@@ -2,7 +2,9 @@
  * HTTP代理转换为URL
  * 支持完整参数：认证、TLS (HTTPS)、SNI
  */
-export function convertHttpToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertHttpToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port) {
             return null;

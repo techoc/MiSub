@@ -2,7 +2,9 @@
  * SOCKS5代理转换为URL
  * 支持完整参数：认证、TLS、UDP
  */
-export function convertSocks5ToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertSocks5ToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port) {
             return null;

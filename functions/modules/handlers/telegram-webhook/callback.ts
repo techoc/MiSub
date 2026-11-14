@@ -395,7 +395,7 @@ export async function handleCallbackQuery(
                         }
                     }
 
-                    const profiles = await storageAdapter.getAllProfiles();
+                    const profiles = (await storageAdapter.getAllProfiles()) as ProfileItem[];
                     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
@@ -493,7 +493,7 @@ export async function handleCallbackQuery(
                     const allNodes = await getUserNodes(userId, env);
                     const userNodes = allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
-                    const profiles = await storageAdapter.getAllProfiles();
+                    const profiles = (await storageAdapter.getAllProfiles()) as ProfileItem[];
                     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
@@ -532,7 +532,7 @@ export async function handleCallbackQuery(
                     const allNodes = await getUserNodes(userId, env);
                     const userNodes = allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
-                    const profiles = await storageAdapter.getAllProfiles();
+                    const profiles = (await storageAdapter.getAllProfiles()) as ProfileItem[];
                     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
@@ -542,7 +542,7 @@ export async function handleCallbackQuery(
                         const profile = profiles.find((p: ProfileItem) => p.id === boundProfileId);
                         if (profile && profile.manualNodes) {
                             profile.manualNodes = profile.manualNodes.filter(
-                                (id: string) => id !== node.id
+                                (id) => id !== node.id
                             );
                             await storageAdapter.putAllProfiles(profiles);
                             await answerCallbackQuery(
@@ -569,7 +569,7 @@ export async function handleCallbackQuery(
                     const allNodes = await getUserNodes(userId, env);
                     const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));
 
-                    const profiles = await storageAdapter.getAllProfiles();
+                    const profiles = (await storageAdapter.getAllProfiles()) as ProfileItem[];
                     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
@@ -607,7 +607,7 @@ export async function handleCallbackQuery(
                     const allNodes = await getUserNodes(userId, env);
                     const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));
 
-                    const profiles = await storageAdapter.getAllProfiles();
+                    const profiles = (await storageAdapter.getAllProfiles()) as ProfileItem[];
                     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
@@ -617,7 +617,7 @@ export async function handleCallbackQuery(
                         const profile = profiles.find((p: ProfileItem) => p.id === boundProfileId);
                         if (profile && profile.subscriptions) {
                             profile.subscriptions = profile.subscriptions.filter(
-                                (id: string) => id !== sub.id
+                                (id) => id !== sub.id
                             );
                             await storageAdapter.putAllProfiles(profiles);
                             await answerCallbackQuery(
@@ -682,7 +682,8 @@ export async function handleCallbackQuery(
                         if (isSub) {
                             // Find original index in KV_KEY_SUBS to update
                             // Since targetList is filtered, we need to find the item in the original storage
-                            const originalSubs = await storageAdapter.getAllSubscriptions();
+                            const originalSubs =
+                                (await storageAdapter.getAllSubscriptions()) as SubscriptionItem[];
                             // Match by ID if possible, or some unique property.
                             // Subscription objects usually have IDs.
                             const subToUpdate = originalSubs.find(
@@ -792,7 +793,8 @@ export async function handleCallbackQuery(
                         if (type === 'sub') {
                             // Create separate handleDeleteSub logic or direct DB manipulation safely
                             const storageAdapter = await getStorageAdapter(env);
-                            const originalSubs = await storageAdapter.getAllSubscriptions();
+                            const originalSubs =
+                                (await storageAdapter.getAllSubscriptions()) as SubscriptionItem[];
                             const realIdx = originalSubs.findIndex(
                                 (s: SubscriptionItem) => s.id === targetItem.id
                             );

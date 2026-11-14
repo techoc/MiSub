@@ -797,6 +797,8 @@ overwrite_original_rules=true`,
     },
 };
 
-export function getBuiltinTemplate(templateId: any) {
-    return (BUILTIN_TEMPLATE_REGISTRY as Record<string, any>)[templateId] || null;
+export function getBuiltinTemplate(templateId: unknown) {
+    const id = String(templateId);
+    const entry = Object.entries(BUILTIN_TEMPLATE_REGISTRY).find(([key]) => key === id);
+    return entry ? entry[1] : null;
 }

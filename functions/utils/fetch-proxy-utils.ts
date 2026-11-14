@@ -10,11 +10,15 @@
  * UA. Sending the User-Agent header to the proxy request is not enough when the
  * proxy chooses its own upstream UA, so include `ua=<encoded UA>` beside `url=`.
  */
-export function buildFetchProxyUrl(fetchProxy: any, targetUrl: any, userAgent = '') {
+export function buildFetchProxyUrl(
+    fetchProxy: unknown,
+    targetUrl: string | null | undefined,
+    userAgent = ''
+): string {
     const proxyPrefix = typeof fetchProxy === 'string' ? fetchProxy.trim() : '';
-    if (!proxyPrefix) return targetUrl;
+    if (!proxyPrefix) return String(targetUrl ?? '');
 
-    const encodedTarget = encodeURIComponent(targetUrl);
+    const encodedTarget = encodeURIComponent(String(targetUrl ?? ''));
     const ua = typeof userAgent === 'string' ? userAgent.trim() : '';
 
     if (!ua || /[?&]ua=/i.test(proxyPrefix)) {

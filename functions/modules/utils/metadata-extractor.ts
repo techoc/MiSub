@@ -15,7 +15,7 @@ const EMOJI_FLAG_REGEX = /[\u{1F1E6}-\u{1F1FF}]{2}/gu;
  * @param {string} name - 原始节点名称
  * @returns {Object} 结构化元数据
  */
-export function extractNodeMetadata(name: any) {
+export function extractNodeMetadata(name: unknown) {
     if (!name || typeof name !== 'string') {
         return {
             originalName: name,
@@ -50,7 +50,7 @@ export function extractNodeMetadata(name: any) {
     const autoFlag = flag || getRegionEmoji(region);
 
     // 3. 提取技术标签 (Tags)
-    const tags: any[] = [];
+    const tags: string[] = [];
     let tMatch;
     TAG_REGEX.lastIndex = 0;
     while ((tMatch = TAG_REGEX.exec(name)) !== null) {

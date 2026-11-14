@@ -9,10 +9,12 @@ import { convertSocks5ToUrl } from './converters/socks5.ts';
 import { convertHttpToUrl } from './converters/http.ts';
 import { convertWireguardToUrl } from './converters/wireguard.ts';
 
+import type { ProxyNode } from '../../../types/models.ts';
+
 /**
  * 转换Clash代理配置为标准URL
  */
-export function convertClashProxyToUrl(proxy: any) {
+export function convertClashProxyToUrl(proxy: ProxyNode | null | undefined): string | null {
     if (!proxy || typeof proxy !== 'object' || !proxy.type) {
         return null;
     }

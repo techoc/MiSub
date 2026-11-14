@@ -426,12 +426,9 @@ function parseSurgeSnell(line: string) {
         if (proxy.tfo !== undefined) urlParams.push(`tfo=${proxy.tfo}`);
 
         if (proxy['obfs-opts']) {
-            if (proxy['obfs-opts'].mode)
-                urlParams.push(`obfs=${proxy['obfs-opts'].mode}`);
+            if (proxy['obfs-opts'].mode) urlParams.push(`obfs=${proxy['obfs-opts'].mode}`);
             if (proxy['obfs-opts'].host)
-                urlParams.push(
-                    `obfs-host=${encodeURIComponent(proxy['obfs-opts'].host)}`
-                );
+                urlParams.push(`obfs-host=${encodeURIComponent(proxy['obfs-opts'].host)}`);
         }
 
         const query = urlParams.length > 0 ? `?${urlParams.join('&')}` : '';

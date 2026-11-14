@@ -2,7 +2,9 @@
  * WireGuard配置转换为URL
  * 采用标准格式，支持 reserved、preshared-key、IPv6
  */
-export function convertWireguardToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertWireguardToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port || !proxy['private-key']) {
             return null;

@@ -311,9 +311,7 @@ function parseQuantumultXVless(line: string) {
 
         const urlParams: string[] = [];
         extra.forEach((param) => {
-            const [key, value] = param
-                .split('=')
-                .map((p) => p.trim());
+            const [key, value] = param.split('=').map((p) => p.trim());
             if (!key || !value) return;
             switch (key.toLowerCase()) {
                 case 'transport':
@@ -395,9 +393,7 @@ function parseQuantumultXHysteria2(line: string) {
 
         const urlParams: string[] = [];
         extra.forEach((param) => {
-            const [key, value] = param
-                .split('=')
-                .map((p) => p.trim());
+            const [key, value] = param.split('=').map((p) => p.trim());
             if (!key || !value) return;
             if (
                 key.toLowerCase() === 'sni' ||
@@ -463,9 +459,7 @@ function parseQuantumultXTuic(line: string) {
             : encodeURIComponent(uuid.trim());
         const urlParams: string[] = [];
         extra.forEach((param) => {
-            const [key, value] = param
-                .split('=')
-                .map((p) => p.trim());
+            const [key, value] = param.split('=').map((p) => p.trim());
             if (!key || !value) return;
             if (key.toLowerCase() === 'sni' || key.toLowerCase() === 'peer')
                 urlParams.push(`sni=${encodeURIComponent(value)}`);
@@ -534,9 +528,7 @@ function parseQuantumultXAnyTLS(line: string) {
         let password = '';
         const urlParams: string[] = [];
         extra.forEach((param) => {
-            const [key, value] = param
-                .split('=')
-                .map((p) => p.trim());
+            const [key, value] = param.split('=').map((p) => p.trim());
             if (!key || !value) return;
             switch (key.toLowerCase()) {
                 case 'password':

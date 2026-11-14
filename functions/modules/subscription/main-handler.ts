@@ -60,7 +60,12 @@ import {
 } from './main-handler/output-cache.ts';
 
 import type { OutputCacheEntry } from './main-handler/output-cache.ts';
-import type { MisubSettings, SubscriptionItem } from '../../../types/models.ts';
+import type {
+    KvRecord,
+    MisubSettings,
+    ProfileItem,
+    SubscriptionItem,
+} from '../../../types/models.ts';
 
 /** 存储适配器（工厂返回的具体实现） */
 type StorageAdapter = ReturnType<typeof StorageFactory.createAdapter>;
@@ -123,11 +128,11 @@ async function runSubscriptionPipeline(context: PipelineContext): Promise<Respon
     context.storage = storageAdapter;
     // [性能] settings 走 SettingsCache（10s isolate 内缓存，写入路径会主动失效）。
     // 显式传入 adapter 以保证与 storageType 选择一致的读取来源。
-    const [settingsData, allMisubs, allProfiles] = await Promise.all([
+    const [settingsData, allMisubs, allProfiles] = (await Promise.all([
         SettingsCache.get(env, storageAdapter),
         storageAdapter.getAllSubscriptions(),
         storageAdapter.getAllProfiles(),
-    ]);
+    ])) as [KvRecord | null, SubscriptionItem[], ProfileItem[]];
     const settings = settingsData || {};
 
     // 自动迁移旧版 profile ID（去除 'profile_' 前缀）

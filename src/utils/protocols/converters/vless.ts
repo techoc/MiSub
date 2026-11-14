@@ -2,7 +2,9 @@
  * VLESS配置转换为URL
  * 支持完整参数：TLS、Reality、WebSocket、gRPC、HTTP/2、HTTPUpgrade
  */
-export function convertVlessToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertVlessToUrl(proxy: ProxyNode): string | null {
     try {
         // 兼容 uuid 和 UUID 两种写法
         const uuid = proxy.uuid || proxy.UUID;

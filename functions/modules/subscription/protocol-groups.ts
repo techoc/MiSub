@@ -9,14 +9,16 @@ export const PROTOCOL_GROUP_PATTERNS = [
     { name: 'WireGuard 节点', pattern: /\bwireguard\b/i },
 ];
 
-export function groupNodeLinesByProtocol(nodeLines = []) {
-    const grouped: any[] = [];
+export function groupNodeLinesByProtocol(
+    nodeLines: Array<{ line: string }> = []
+): Array<{ name: string; lines: string[]; count: number }> {
+    const grouped: Array<{ name: string; lines: string[]; count: number }> = [];
     for (const { name, pattern } of PROTOCOL_GROUP_PATTERNS) {
         const matched = nodeLines.filter(({ line }) => pattern.test(line));
         if (matched.length > 0) {
             grouped.push({
                 name,
-                lines: matched.map((item) => (item as Record<string, any>).line),
+                lines: matched.map((item) => item.line),
                 count: matched.length,
             });
         }

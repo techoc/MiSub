@@ -4,7 +4,7 @@
  * @param {Map<string, number>} usedNames
  * @returns {string}
  */
-export function getUniqueName(baseName: any, usedNames: any) {
+export function getUniqueName(baseName: string, usedNames: Map<string, number>): string {
     const count = (usedNames.get(baseName) || 0) + 1;
     usedNames.set(baseName, count);
     return count === 1 ? baseName : `${baseName}_${count - 1}`;

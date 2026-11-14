@@ -12,7 +12,7 @@ interface CorsMiddlewareOptions {
     headers?: string[];
     maxAge?: number;
     allowCredentials?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**

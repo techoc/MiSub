@@ -1,3 +1,5 @@
+import type { KvRecord } from '../../types/models.ts';
+
 /**
  * 无存储降级适配器（无可用持久化存储时，不读写持久数据）。
  * facade 拆分：原 storage-adapter.js 的 NoopStorageAdapter。
@@ -19,19 +21,19 @@ export class NoopStorageAdapter {
     async list() {
         return [];
     }
-    async getAllSubscriptions(): Promise<any[]> {
+    async getAllSubscriptions(): Promise<KvRecord[]> {
         return [];
     }
-    async getAllProfiles(): Promise<any[]> {
+    async getAllProfiles(): Promise<KvRecord[]> {
         return [];
     }
     // 批量写接口与 put() 语义保持一致：无存储时视为成功、不落盘。
     // （telegram 回调流程会调用 putAll*；此前缺失会让该路径抛 TypeError，
     //  put() 一直是静默成功的，对齐之。）
-    async putAllSubscriptions() {
+    async putAllSubscriptions(_items: KvRecord[]) {
         return true;
     }
-    async putAllProfiles() {
+    async putAllProfiles(_items: KvRecord[]) {
         return true;
     }
 }

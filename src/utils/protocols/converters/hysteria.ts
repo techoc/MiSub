@@ -2,7 +2,9 @@
  * Hysteria/Hysteria2配置转换为URL
  * 支持完整参数：TLS、端口跳跃、混淆、带宽限制
  */
-export function convertHysteriaToUrl(proxy: any) {
+import type { ProxyNode } from '../../../../types/models.ts';
+
+export function convertHysteriaToUrl(proxy: ProxyNode): string | null {
     try {
         if (!proxy.server || !proxy.port) {
             return null;
