@@ -27,7 +27,10 @@
     function applyFocusFromQuery() {
         if (!resolveProfileFocus(route.query?.focus)) return;
         nextTick(() => {
-            (profilesSectionRef.value as Record<string, any> | undefined)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            (profilesSectionRef.value as Record<string, any> | undefined)?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
         });
     }
 
@@ -207,7 +210,7 @@
 
         <NodePreviewModal
             :show="showNodePreviewModal"
-            :subscription-id="null"
+            :subscription-id="undefined"
             :subscription-name="''"
             :subscription-url="''"
             :profile-id="previewProfileId"

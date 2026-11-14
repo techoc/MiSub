@@ -64,9 +64,12 @@
     const filteredMessages = computed(() => {
         if (filterStatus.value === 'all') return messages.value;
         return messages.value.filter((m) => {
-            if (filterStatus.value === 'pending') return (m as { status?: number }).status === 'pending';
-            if (filterStatus.value === 'approved') return (m as { status?: number }).status === 'approved';
-            if (filterStatus.value === 'replied') return (m as { status?: number }).status === 'replied';
+            if (filterStatus.value === 'pending')
+                return (m as { status?: string }).status === 'pending';
+            if (filterStatus.value === 'approved')
+                return (m as { status?: string }).status === 'approved';
+            if (filterStatus.value === 'replied')
+                return (m as { status?: string }).status === 'replied';
             return true;
         });
     });
@@ -79,9 +82,13 @@
                 showToast(t('settings.guestbookActionSuccess'), 'success');
                 // Update local state
                 if (action === 'delete') {
-                    messages.value = messages.value.filter((m) => (m as Record<string, any>).id !== id);
+                    messages.value = messages.value.filter(
+                        (m) => (m as Record<string, any>).id !== id
+                    );
                 } else {
-                    const index = messages.value.findIndex((m) => (m as Record<string, any>).id === id);
+                    const index = messages.value.findIndex(
+                        (m) => (m as Record<string, any>).id === id
+                    );
                     if (index !== -1) {
                         messages.value[index] = data.data;
                     }

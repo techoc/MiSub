@@ -15,7 +15,7 @@
     const logoFailed = ref(false);
 
     const props = defineProps({
-        login: Function,
+        login: Function as any,
     });
 
     const submitLogin = async () => {
@@ -26,7 +26,7 @@
         isLoading.value = true;
         error.value = '';
         try {
-            await props.login(password.value);
+            await props.login!(password.value);
         } catch (err) {
             error.value = (err as Error).message || t('login.unknownError');
         } finally {

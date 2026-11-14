@@ -35,12 +35,12 @@
             return props.items;
         }
 
-        return props.items.filter((item) => {
+        return props.items.filter((item: any) => {
             // 文本搜索
             const matchesText =
                 !searchQuery.value ||
-                props.searchFields.some((field) =>
-                    item[field]?.toLowerCase().includes(searchQuery.value.toLowerCase())
+                props.searchFields.some((field: any) =>
+                    (((item[field]?.toLowerCase().includes(searchQuery.value.toLowerCase()) as any) as any) as any)
                 );
 
             // 过滤器匹配
@@ -61,9 +61,9 @@
 
         const suggestions = new Set();
 
-        props.items.forEach((item) => {
+        props.items.forEach((item: any) => {
             props.searchFields.forEach((field) => {
-                const value = item[field];
+                const value = ((((item as Record<string, any>)[field as any] as any) as any) as any);
                 if (value && value.toLowerCase().includes(searchQuery.value.toLowerCase())) {
                     // 提取匹配的部分作为建议
                     const words = value.split(/\s+/);
@@ -197,7 +197,7 @@
                 </p>
                 <button
                     v-for="suggestion in suggestions"
-                    :key="suggestion"
+                    :key="(suggestion as any)"
                     @click="selectSuggestion(suggestion)"
                     class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 misub-radius-md smooth-all"
                 >

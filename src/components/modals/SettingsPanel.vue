@@ -1,4 +1,5 @@
 <script setup lang="ts">
+    const reloadPage = () => window.location.reload();
     import { ref, onMounted } from 'vue';
     import MigrationModal from './MigrationModal.vue';
     import { useSettingsLogic } from '../../composables/useSettingsLogic.ts';
@@ -55,7 +56,7 @@
             always-show-header
             layout-class="h-full !shadow-none !border-0 !rounded-none !bg-transparent"
             @save="handleSave"
-            @reload-now="() => window.location.reload()"
+            @reload-now="reloadPage"
             @migrate="showMigrationModal = true"
         />
 

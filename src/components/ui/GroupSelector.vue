@@ -46,7 +46,9 @@
         if (inputRef.value) {
             const rect = (inputRef.value as Record<string, any>).getBoundingClientRect();
             const isInsideModal = Boolean(
-                (containerRef.value as Record<string, any> | undefined)?.closest('[role="dialog"][aria-modal="true"]')
+                (containerRef.value as Record<string, any> | undefined)?.closest(
+                    '[role="dialog"][aria-modal="true"]'
+                )
             );
             dropdownStyle.value = {
                 top: `${rect.bottom + window.scrollY + 4}px`,

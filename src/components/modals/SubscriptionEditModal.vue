@@ -69,7 +69,9 @@
 
     // 检查标签在当前激活模式中是否已选中
     const isSelected = (pattern) => {
-        return currentRulePool.value.some((rule) => (rule as Record<string, any>).pattern === pattern);
+        return currentRulePool.value.some(
+            (rule) => (rule as Record<string, any>).pattern === pattern
+        );
     };
 
     // 检查标签在另一个模式中是否已选中
@@ -96,12 +98,16 @@
         const pool = currentRulePool.value;
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
 
-        const index = pool.findIndex((rule) => (rule as Record<string, any>).pattern === tag.pattern);
+        const index = pool.findIndex(
+            (rule) => (rule as Record<string, any>).pattern === tag.pattern
+        );
         if (index !== -1) {
             pool.splice(index, 1);
         } else {
             // 如果已在另一个规则池中，将其从另一个池移除，避免同一标签同时存在
-            const otherIdx = otherPool.findIndex((rule) => (rule as Record<string, any>).pattern === tag.pattern);
+            const otherIdx = otherPool.findIndex(
+                (rule) => (rule as Record<string, any>).pattern === tag.pattern
+            );
             if (otherIdx !== -1) {
                 otherPool.splice(otherIdx, 1);
             }
@@ -116,7 +122,13 @@
         if (!keyword) return;
 
         const pool = currentRulePool.value;
-        if (pool.some((rule) => (rule as Record<string, any>).pattern === keyword || (rule as Record<string, any>).label === keyword)) {
+        if (
+            pool.some(
+                (rule) =>
+                    (rule as Record<string, any>).pattern === keyword ||
+                    (rule as Record<string, any>).label === keyword
+            )
+        ) {
             showToast(t('subscriptions.duplicateKeyword'), 'warning');
             return;
         }
@@ -124,7 +136,9 @@
         // 如果在另一个池中存在，先移除
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
         const otherIdx = otherPool.findIndex(
-            (rule) => (rule as Record<string, any>).pattern === keyword || (rule as Record<string, any>).label === keyword
+            (rule) =>
+                (rule as Record<string, any>).pattern === keyword ||
+                (rule as Record<string, any>).label === keyword
         );
         if (otherIdx !== -1) {
             otherPool.splice(otherIdx, 1);
@@ -202,9 +216,9 @@
         const allPresets = [...presetRegions, ...presetProtocols, ...presetKeywords];
         const preset = allPresets.find((p) => p.pattern === pattern);
         if (preset) {
-            const type = presetRegions.includes(preset)
+            const type = presetRegions.includes(preset as any)
                 ? 'region'
-                : presetProtocols.includes(preset)
+                : presetProtocols.includes(preset as any)
                   ? 'protocol'
                   : 'keyword';
             return { ...preset, type };
@@ -385,8 +399,12 @@
 
     const syncExcludeRuleScroll = () => {
         if (!excludeRuleTextarea.value || !excludeRuleHighlight.value) return;
-        (excludeRuleHighlight.value as Record<string, any>).scrollTop = (excludeRuleTextarea.value as Record<string, any>).scrollTop;
-        (excludeRuleHighlight.value as Record<string, any>).scrollLeft = (excludeRuleTextarea.value as Record<string, any>).scrollLeft;
+        (excludeRuleHighlight.value as Record<string, any>).scrollTop = (
+            excludeRuleTextarea.value as Record<string, any>
+        ).scrollTop;
+        (excludeRuleHighlight.value as Record<string, any>).scrollLeft = (
+            excludeRuleTextarea.value as Record<string, any>
+        ).scrollLeft;
     };
 
     const handleConfirm = () => {

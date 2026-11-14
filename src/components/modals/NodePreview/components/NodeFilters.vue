@@ -172,7 +172,7 @@
                         <option value="all">ALL PROTOCOLS</option>
                         <option
                             v-for="protocol in availableProtocols"
-                            :key="protocol"
+                            :key="(protocol as any)"
                             :value="protocol"
                         >
                             {{ (protocol as Record<string, any>).toUpperCase() }}
@@ -192,7 +192,7 @@
                         class="w-full rounded-1.5xl border border-gray-100 bg-white/50 px-4 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-500/10 dark:border-white/5 dark:bg-gray-800/50 dark:text-white transition-all shadow-sm appearance-none"
                     >
                         <option value="all">ALL REGIONS</option>
-                        <option v-for="region in availableRegions" :key="region" :value="region">
+                        <option v-for="region in availableRegions" :key="(region as any)" :value="region">
                             {{ region }}
                         </option>
                     </select>

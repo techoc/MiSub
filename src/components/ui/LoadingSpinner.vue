@@ -3,12 +3,13 @@
         type: {
             type: String,
             default: 'spinner', // spinner, dots, pulse, wave
-            validator: (value) => ['spinner', 'dots', 'pulse', 'wave', 'skeleton'].includes(value),
+            validator: (value) =>
+                ['spinner', 'dots', 'pulse', 'wave', 'skeleton'].includes(value as any),
         },
         size: {
             type: String,
             default: 'md', // sm, md, lg, xl
-            validator: (value) => ['sm', 'md', 'lg', 'xl'].includes(value),
+            validator: (value) => ['sm', 'md', 'lg', 'xl'].includes(value as any),
         },
         color: {
             type: String,

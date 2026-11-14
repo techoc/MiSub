@@ -20,7 +20,7 @@
 
     const props = defineProps({
         show: Boolean,
-        addNodesFromBulk: Function,
+        addNodesFromBulk: Function as any,
         groups: {
             // Added
             type: Array,
@@ -78,7 +78,7 @@
         );
         const duplicateCount = nodes.length - uniqueNodes.length;
 
-        props.addNodesFromBulk(uniqueNodes, targetGroupName);
+        props.addNodesFromBulk!(uniqueNodes, targetGroupName);
 
         const successMsg =
             t('importNodes.addedNodes', { count: uniqueNodes.length }) +

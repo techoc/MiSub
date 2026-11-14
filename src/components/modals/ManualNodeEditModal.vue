@@ -512,7 +512,7 @@
                             class="flex items-center gap-3 px-3 py-2 border-b border-gray-100 dark:border-gray-700/50 last:border-b-0"
                         >
                             <span class="text-xs text-gray-500 dark:text-gray-400 w-5 text-right">{{
-                                idx + 1
+                                (idx as number) + 1
                             }}</span>
                             <span
                                 v-if="node.protocol"

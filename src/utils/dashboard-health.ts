@@ -13,7 +13,10 @@ function getTrafficState(sub, now) {
     return getSubscriptionTrafficState(sub, now);
 }
 
-export function shouldShowFullGuide({ subscriptions = [], profiles = [] } = {}) {
+export function shouldShowFullGuide({
+    subscriptions = [],
+    profiles = [],
+}: { subscriptions?: any[]; profiles?: any[] } = {}) {
     return subscriptions.length === 0 || profiles.length === 0;
 }
 

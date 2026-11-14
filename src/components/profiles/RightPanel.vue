@@ -20,7 +20,7 @@
     const { t } = useI18n();
 
     const copied = ref(false);
-    let copyTimeout = null;
+    let copyTimeout: any = null;
 
     const formats = ['universal', 'Base64', 'Clash', 'Sing-Box', 'Surge', 'Loon'];
     const selectedFormat = ref('universal');
@@ -172,7 +172,10 @@
                     <option
                         v-for="profile in profiles"
                         :key="(profile as Record<string, any>).id"
-                        :value="(profile as Record<string, any>).customId || profile.id"
+                        :value="
+                            (profile as Record<string, any>).customId ||
+                            ((profile as Record<string, any>).id as any as any as any)
+                        "
                     >
                         {{ (profile as Error).name }}
                     </option>

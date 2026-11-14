@@ -113,7 +113,10 @@
 
         // 1. 文本占位符替换
         const nodeCount = props.profiles.reduce(
-            (sum, p) => sum + ((p as Record<string, any>).subscriptionCount || 0) + (p.manualNodeCount || 0),
+            (sum, p) =>
+                sum +
+                ((p as Record<string, any>).subscriptionCount || 0) +
+                (((p as Record<string, any>).manualNodeCount as any as any as any) || 0),
             0
         );
         const textVars = {

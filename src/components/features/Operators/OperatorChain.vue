@@ -181,7 +181,7 @@
     };
 
     const removeOperator = (index) => {
-        const newList = [...props.modelValue];
+        const newList: any[] = [...props.modelValue];
         newList.splice(index, 1);
         emit('update:modelValue', newList);
         if (expandedIndex.value === index) expandedIndex.value = null;
@@ -189,7 +189,7 @@
 
     const moveOperator = (event, index, direction) => {
         event.stopPropagation();
-        const newList = [...props.modelValue];
+        const newList: any[] = [...props.modelValue];
         const newIndex = index + direction;
         if (newIndex < 0 || newIndex >= newList.length) return;
         [newList[index], newList[newIndex]] = [newList[newIndex], newList[index]];
@@ -200,8 +200,8 @@
 
     const toggleOperator = (event, index) => {
         event.stopPropagation();
-        const newList = [...props.modelValue];
-        newList[index] = { ...newList[index], enabled: !newList[index].enabled };
+        const newList: any[] = [...props.modelValue];
+        newList[index] = { ...newList[index], enabled: !(((newList[index].enabled as any) as any) as any) };
         emit('update:modelValue', newList);
     };
 
@@ -224,7 +224,7 @@
     };
 
     const updateOperatorParams = (index, params) => {
-        const newList = [...props.modelValue];
+        const newList: any[] = [...props.modelValue];
         newList[index] = { ...newList[index], params };
         emit('update:modelValue', newList);
     };
@@ -530,7 +530,7 @@
                                         (e) =>
                                             updateOperatorParams(index, {
                                                 ...(op as Record<string, any>).params,
-                                                code: e.target.value,
+                                                code: (e.target as HTMLInputElement).value,
                                             })
                                     "
                                     class="w-full h-64 p-4 font-mono text-sm bg-slate-900/50 text-slate-200 border border-slate-700/50 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all resize-none"

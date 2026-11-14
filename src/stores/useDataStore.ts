@@ -250,7 +250,7 @@ export const useDataStore = defineStore('data', () => {
         return ruleTemplates.value;
     }
 
-    async function saveRuleTemplates(items = ruleTemplates.value) {
+    async function saveRuleTemplates(items: any[] = ruleTemplates.value) {
         editorStore.setLoading(true);
         try {
             const result = await api.post('/api/rule_templates', { templates: items });

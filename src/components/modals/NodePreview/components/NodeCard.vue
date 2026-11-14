@@ -12,11 +12,11 @@
             default: '',
         },
         parseNodeInfo: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         getProtocolStyle: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         // [New] Selection Mode Props

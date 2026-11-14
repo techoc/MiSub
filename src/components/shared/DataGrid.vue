@@ -161,8 +161,8 @@
             selectedKeys.value.push(key);
         }
 
-        const selectedRows = props.data.filter((row) =>
-            selectedKeySet.value.has(row[props.rowKey])
+        const selectedRows = props.data.filter((row: any) =>
+            selectedKeySet.value.has((((row[props.rowKey] as any) as any) as any))
         );
 
         emit('update:selectedRows', selectedRows);
@@ -176,8 +176,8 @@
             selectedKeys.value = paginatedData.value.map((row) => row[props.rowKey]);
         }
 
-        const selectedRows = props.data.filter((row) =>
-            selectedKeySet.value.has(row[props.rowKey])
+        const selectedRows = props.data.filter((row: any) =>
+            selectedKeySet.value.has((((row[props.rowKey] as any) as any) as any))
         );
 
         emit('update:selectedRows', selectedRows);
@@ -209,7 +209,7 @@
     watch(
         () => props.selectedRows,
         (newVal) => {
-            selectedKeys.value = newVal.map((row) => row[props.rowKey]);
+            selectedKeys.value = newVal.map((row: any) => (((row[props.rowKey] as any) as any) as any));
         },
         { immediate: true }
     );
@@ -256,7 +256,7 @@
                                 :key="(column as Record<string, any>).key"
                                 :class="[
                                     'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
-                                    (column as Record<string, any>).width ? `w-${column.width}` : '',
+                                    (column as Record<string, any>).width ? `w-${((((column as Record<string, any>).width as any) as any) as any)}` : '',
                                     (column as Record<string, any>).align === 'center' ? 'text-center' : '',
                                     (column as Record<string, any>).align === 'right' ? 'text-right' : '',
                                     (column as Record<string, any>).sticky === 'right'

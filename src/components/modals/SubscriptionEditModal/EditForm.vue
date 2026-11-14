@@ -52,14 +52,24 @@
             );
             if (res.success) {
                 showToast(
-                    t('subscriptions.proxyTestSuccess', { count: (res as Record<string, any>).data.count }),
+                    t('subscriptions.proxyTestSuccess', {
+                        count: (res as Record<string, any>).data.count,
+                    }),
                     'success'
                 );
             } else {
-                showToast(t('subscriptions.proxyTestFailed', { message: (res as Record<string, any>).error }), 'error');
+                showToast(
+                    t('subscriptions.proxyTestFailed', {
+                        message: (res as Record<string, any>).error,
+                    }),
+                    'error'
+                );
             }
         } catch (err) {
-            showToast(t('subscriptions.proxyTestError', { message: (err as Error).message }), 'error');
+            showToast(
+                t('subscriptions.proxyTestError', { message: (err as Error).message }),
+                'error'
+            );
         } finally {
             isTestingProxy.value = false;
         }

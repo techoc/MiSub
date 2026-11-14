@@ -24,7 +24,7 @@
         level: {
             type: Number,
             default: 1,
-            validator: (value) => value >= 1 && value <= 3,
+            validator: (value) => (value as any) >= 1 && (value as any) <= 3,
         },
     });
 

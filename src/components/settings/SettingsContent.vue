@@ -81,15 +81,15 @@
             default: 'h-full',
         },
         exportBackup: {
-            type: Function,
+            type: Function as any,
             default: null,
         },
         importBackup: {
-            type: Function,
+            type: Function as any,
             default: null,
         },
         handleReset: {
-            type: Function,
+            type: Function as any,
             default: null,
         },
     });

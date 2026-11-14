@@ -10,9 +10,9 @@
             type: Object,
             required: true,
         },
-        exportBackup: Function,
-        importBackup: Function,
-        handleReset: Function,
+        exportBackup: Function as any,
+        importBackup: Function as any,
+        handleReset: Function as any,
     });
 
     const { showToast } = useToastStore();
@@ -103,7 +103,10 @@
                 showToast(data.error || t('systemSettings.updateFailed'), 'error');
             }
         } catch (e) {
-            showToast(t('systemSettings.requestFailed', { message: (e as Error).message }), 'error');
+            showToast(
+                t('systemSettings.requestFailed', { message: (e as Error).message }),
+                'error'
+            );
         } finally {
             isUpdatingPassword.value = false;
         }

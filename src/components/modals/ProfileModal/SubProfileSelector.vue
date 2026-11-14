@@ -55,9 +55,9 @@
     const orderedSelectedProfiles = computed({
         get() {
             const profileMap = new Map();
-            props.allProfiles.forEach((p) => {
-                if ((p as Record<string, any>).id) profileMap.set(p.id, p);
-                if ((p as Record<string, any>).customId) profileMap.set(p.customId, p);
+            props.allProfiles.forEach((p: any) => {
+                if ((p as Record<string, any>).id) profileMap.set((((p.id as any) as any) as any), p);
+                if ((p as Record<string, any>).customId) profileMap.set((((p.customId as any) as any) as any), p);
             });
             return props.selectedIds.map((id) => profileMap.get(id)).filter(Boolean);
         },

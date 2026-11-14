@@ -13,7 +13,7 @@
         saveState: {
             type: String,
             required: true,
-            validator: (value) => ['idle', 'saving', 'success', 'error'].includes(value),
+            validator: (value) => ['idle', 'saving', 'success', 'error'].includes(value as any),
         },
     });
 

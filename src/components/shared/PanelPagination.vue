@@ -57,7 +57,7 @@
         return props.totalPages > 1;
     });
 
-    const pageInput = ref('');
+    const pageInput = ref<any>('');
 
     watch(
         () => props.currentPage,
@@ -101,7 +101,11 @@
                     @change="handleItemsPerPageChange"
                     class="form-select misub-radius-md text-xs py-1 pl-2 pr-6 border-gray-300 bg-gray-50 dark:bg-gray-900 dark:border-gray-600 focus-visible:ring-primary-500/50 focus:border-primary-500"
                 >
-                    <option v-for="option in itemsPerPageOptions" :key="option" :value="option">
+                    <option
+                        v-for="option in itemsPerPageOptions"
+                        :key="option as any"
+                        :value="option"
+                    >
                         {{ option === -1 ? t('common.all') : option }}
                     </option>
                 </select>

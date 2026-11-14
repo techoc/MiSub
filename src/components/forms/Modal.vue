@@ -33,7 +33,7 @@
         confirmVariant: {
             type: String,
             default: 'primary',
-            validator: (value) => ['primary', 'danger'].includes(value),
+            validator: (value) => ['primary', 'danger'].includes(value as any),
         },
     });
 
@@ -99,20 +99,23 @@
         () => props.show,
         async (val) => {
             if (val) {
-                previouslyFocused = document.activeElement;
+                previouslyFocused = document.activeElement as any;
                 window.addEventListener('keydown', handleKeydown);
                 await nextTick();
                 // 优先聚焦第一个可交互元素，否则聚焦弹窗面板本身
                 const focusable = getFocusableElements();
                 if (focusable.length) {
-                    focusable[0].focus();
+                    (focusable[0] as any).focus();
                 } else {
                     (modalPanelRef.value as Record<string, any> | undefined)?.focus();
                 }
             } else {
                 window.removeEventListener('keydown', handleKeydown);
                 // 还原焦点到触发元素
-                if (previouslyFocused && typeof (previouslyFocused as Record<string, any>).focus === 'function') {
+                if (
+                    previouslyFocused &&
+                    typeof (previouslyFocused as Record<string, any>).focus === 'function'
+                ) {
                     (previouslyFocused as Record<string, any>).focus();
                     previouslyFocused = null;
                 }
@@ -195,8 +198,10 @@
                                 <button
                                     @click="handleConfirm"
                                     :disabled="
-                                        confirmDisabled ||
-                                        (confirmKeyword && confirmInput !== confirmKeyword)
+                                        Boolean(
+                                            confirmDisabled ||
+                                            (confirmKeyword && confirmInput !== confirmKeyword)
+                                        )
                                     "
                                     :title="confirmDisabled ? confirmTitle : t('actions.confirm')"
                                     class="px-4 py-2 text-white font-semibold text-sm misub-radius-lg transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:opacity-70 disabled:cursor-not-allowed"

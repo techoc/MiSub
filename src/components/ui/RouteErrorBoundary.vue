@@ -61,7 +61,7 @@
 <script lang="ts">
     export default {
         errorCaptured(err) {
-            return this.$.exposed.errorCaptured(err);
+            return (this.$.exposed as any).errorCaptured(err);
         },
     };
 </script>

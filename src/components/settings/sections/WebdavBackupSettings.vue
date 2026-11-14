@@ -98,7 +98,7 @@
             reader.onload = async (e) => {
                 isRestoring.value = true;
                 try {
-                    const payload = JSON.parse(e.target!.result);
+                    const payload = JSON.parse(e.target!.result as string);
                     const scope = payload?.scope || 'dataOnly';
                     const label =
                         scope === 'dataAndSettings'
@@ -116,7 +116,9 @@
                     setTimeout(() => window.location.reload(), 800);
                 } catch (error) {
                     showToast(
-                        t('settings.webdavRestoreFailedWithMessage', { message: (error as Error).message }),
+                        t('settings.webdavRestoreFailedWithMessage', {
+                            message: (error as Error).message,
+                        }),
                         'error'
                     );
                 } finally {
@@ -141,7 +143,9 @@
             );
         } catch (error) {
             showToast(
-                t('settings.webdavLoadRemoteFailedWithMessage', { message: (error as Error).message }),
+                t('settings.webdavLoadRemoteFailedWithMessage', {
+                    message: (error as Error).message,
+                }),
                 'error'
             );
         } finally {
@@ -165,7 +169,9 @@
             setTimeout(() => window.location.reload(), 800);
         } catch (error) {
             showToast(
-                t('settings.webdavRestoreRemoteFailedWithMessage', { message: (error as Error).message }),
+                t('settings.webdavRestoreRemoteFailedWithMessage', {
+                    message: (error as Error).message,
+                }),
                 'error'
             );
         } finally {

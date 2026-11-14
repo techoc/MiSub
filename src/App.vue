@@ -144,12 +144,16 @@
 
     const isDefaultPassword = computed(() => {
         return (
-            (sessionStore.subscriptionConfig as Record<string, any> | undefined)?.isDefaultPassword === true ||
-            (sessionStore.securityWarning as Record<string, any> | undefined)?.type === 'default_admin_password'
+            (sessionStore.subscriptionConfig as Record<string, any> | undefined)
+                ?.isDefaultPassword === true ||
+            (sessionStore.securityWarning as Record<string, any> | undefined)?.type ===
+                'default_admin_password'
         );
     });
     const defaultPasswordWarningMessage = computed(
-        () => (sessionStore.securityWarning as Error | undefined)?.message || t('notices.defaultPasswordWarning')
+        () =>
+            (sessionStore.securityWarning as Error | undefined)?.message ||
+            t('notices.defaultPasswordWarning')
     );
 
     onMounted(async () => {

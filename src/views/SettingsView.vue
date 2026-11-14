@@ -1,4 +1,5 @@
 <script setup lang="ts">
+    const reloadPage = () => window.location.reload();
     import { ref, onMounted, onActivated, onUnmounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
     import { useI18n } from '../i18n/index.ts';
@@ -37,7 +38,7 @@
     // The dashboard's "去设置 Token" buttons land here with `?focus=`. Without
     // this the query was ignored and the user had to hunt for the field.
     const highlightedFocusId = ref('');
-    let highlightTimer = null;
+    let highlightTimer: any = null;
 
     function applyFocusFromQuery() {
         const focus = route.query?.focus;
@@ -125,7 +126,7 @@
             :handle-reset="handleReset"
             layout-class="h-full"
             @save="handleSave"
-            @reload-now="() => window.location.reload()"
+            @reload-now="reloadPage"
             @migrate="handleOpenMigrationModal"
         />
 

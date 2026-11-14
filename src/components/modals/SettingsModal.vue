@@ -8,8 +8,8 @@
 
     const props = defineProps({
         show: Boolean,
-        exportBackup: Function,
-        importBackup: Function,
+        exportBackup: Function as any,
+        importBackup: Function as any,
     });
 
     const emit = defineEmits(['update:show']);

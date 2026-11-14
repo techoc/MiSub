@@ -106,7 +106,7 @@
                     </button>
                     <button
                         v-for="group in manualNodeGroups"
-                        :key="group"
+                        :key="group as any"
                         @click="
                             emit('set-group-filter', activeGroupFilter === group ? null : group)
                         "
@@ -336,7 +336,7 @@
             </button>
             <button
                 v-for="group in manualNodeGroups"
-                :key="group"
+                :key="group as any"
                 @click="emit('set-group-filter', activeGroupFilter === group ? null : group)"
                 class="px-3 py-1 text-xs font-medium misub-radius-md transition-all border shrink-0"
                 :class="

@@ -82,7 +82,9 @@
     // 始终基于真实 profile id 排序，避免分页视图把页内索引用到全量列表上。
     const handleMoveUp = (profileId) => {
         const index = props.profiles!.findIndex(
-            (profile) => (profile as Record<string, any>).id === profileId || profile.customId === profileId
+            (profile: any) =>
+                (profile as Record<string, any>).id === profileId ||
+                (profile.customId as any as any as any) === profileId
         );
         if (index > 0) {
             emit('reorder', profileId, 'up');
@@ -91,7 +93,9 @@
 
     const handleMoveDown = (profileId) => {
         const index = props.profiles!.findIndex(
-            (profile) => (profile as Record<string, any>).id === profileId || profile.customId === profileId
+            (profile: any) =>
+                (profile as Record<string, any>).id === profileId ||
+                (profile.customId as any as any as any) === profileId
         );
         if (index !== -1 && index < props.profiles!.length - 1) {
             emit('reorder', profileId, 'down');
@@ -113,7 +117,7 @@
                         </h2>
                         <span
                             class="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200"
-                            >{{ profiles.length }}</span
+                            >{{ (profiles || []).length }}</span
                         >
                     </div>
                     <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start">
@@ -179,12 +183,12 @@
                         v-if="searchQuery"
                         class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400"
                     >
-                        {{ visibleCount }}/{{ profiles.length }}
+                        {{ visibleCount }}/{{ (profiles || []).length }}
                     </span>
                 </div>
             </div>
         </div>
-        <div v-if="profiles.length > 0">
+        <div v-if="(profiles || []).length > 0">
             <div
                 v-if="isSorting"
                 class="mb-4 rounded-xl border border-indigo-200/70 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300"
@@ -241,7 +245,7 @@
             <PanelPagination
                 v-if="
                     !isSorting &&
-                    totalPages > 1 &&
+                    (totalPages || 0) > 1 &&
                     paginatedProfiles &&
                     paginatedProfiles.length > 0
                 "

@@ -61,10 +61,10 @@
             return;
         }
 
-        const oldName = localGroups.value[(editingGroupIndex as string).value].name;
+        const oldName = localGroups.value[(editingGroupIndex as any).value].name;
         if (newName !== oldName) {
             emit('rename', oldName, newName);
-            localGroups.value[(editingGroupIndex as string).value].name = newName;
+            localGroups.value[(editingGroupIndex as any).value].name = newName;
         }
 
         cancelEdit();

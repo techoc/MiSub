@@ -540,7 +540,7 @@
                     :is-sorting="isSortingNodes"
                     :search-term="searchTerm"
                     :view-mode="manualNodeViewMode"
-                    :active-group-filter="activeGroupFilter"
+                    :active-group-filter="activeGroupFilter as any"
                     :ping-results="pingResults"
                     :pinging-nodes="pingingNodes"
                     :groups="manualNodeGroups"

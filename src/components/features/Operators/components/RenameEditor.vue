@@ -181,7 +181,7 @@
                                 :value="rule.pattern"
                                 @input="
                                     (e) => {
-                                        rule.pattern = e.target.value;
+                                        rule.pattern = (e.target as HTMLInputElement).value;
                                         updateParam('regex', props.modelValue.regex);
                                     }
                                 "
@@ -196,7 +196,7 @@
                                 :value="rule.replacement"
                                 @input="
                                     (e) => {
-                                        rule.replacement = e.target.value;
+                                        rule.replacement = (e.target as HTMLInputElement).value;
                                         updateParam('regex', props.modelValue.regex);
                                     }
                                 "
@@ -247,7 +247,12 @@
                     <div class="space-y-2">
                         <input
                             :value="props.modelValue.template.template || ''"
-                            @input="(e) => updateTemplate({ template: e.target.value })"
+                            @input="
+                                (e) =>
+                                    updateTemplate({
+                                        template: (e.target as HTMLInputElement).value,
+                                    })
+                            "
                             placeholder="{emoji}{region}-{index}"
                             class="w-full px-3 py-2 text-xs rounded-lg bg-white dark:bg-gray-800 border border-teal-100/50 dark:border-teal-900/30 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/10"
                             :aria-label="t('operators.templateRewrite')"
@@ -300,7 +305,10 @@
                         <input
                             :value="props.modelValue.template.offset || 1"
                             @input="
-                                (e) => updateTemplate({ offset: parseInt(e.target.value) || 1 })
+                                (e) =>
+                                    updateTemplate({
+                                        offset: parseInt((e.target as HTMLInputElement).value) || 1,
+                                    })
                             "
                             type="number"
                             class="w-14 px-2 py-1 text-[10px] rounded bg-white dark:bg-gray-800 border border-teal-100/30 outline-none"

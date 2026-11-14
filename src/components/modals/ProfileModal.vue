@@ -113,7 +113,10 @@
 
     const selectableSubscriptions = computed(() => {
         return (props.allSubscriptions || []).filter(
-            (sub) => (sub as Record<string, any>).enabled && sub.url && /^https?:\/\//.test(sub.url)
+            (sub: any) =>
+                (sub as Record<string, any>).enabled &&
+                (sub.url as any as any as any) &&
+                /^https?:\/\//.test(sub.url as any as any as any)
         );
     });
 
@@ -126,8 +129,10 @@
         const lowerCaseSearchTerm = subscriptionSearchTerm.value.toLowerCase();
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
-        return validSubs.filter((sub) => {
-            const subNameLower = (sub as Error).name ? sub.name.toLowerCase() : '';
+        return validSubs.filter((sub: any) => {
+            const subNameLower = (sub as Error).name
+                ? (sub.name.toLowerCase() as any as any as any)
+                : '';
 
             if (subNameLower.includes(lowerCaseSearchTerm)) {
                 return true;
@@ -143,7 +148,8 @@
     });
 
     const selectableSubProfiles = computed(() => {
-        const currentId = (localProfile.value as Record<string, any> | undefined)?.id || props.profile?.id;
+        const currentId =
+            (localProfile.value as Record<string, any> | undefined)?.id || props.profile?.id;
         return (dataStore.profiles || []).filter((p) => {
             if (!p) return false;
             if (currentId && (p.id === currentId || p.customId === currentId)) {
@@ -190,7 +196,9 @@
             if (activeManualNodeGroupFilter.value === DEFAULT_GROUP_KEY) {
                 nodes = nodes!.filter((n) => !(n as Record<string, any>).group);
             } else {
-                nodes = nodes!.filter((n) => (n as Record<string, any>).group === activeManualNodeGroupFilter.value);
+                nodes = nodes!.filter(
+                    (n) => (n as Record<string, any>).group === activeManualNodeGroupFilter.value
+                );
             }
         }
 
@@ -200,8 +208,10 @@
         const lowerCaseSearchTerm = nodeSearchTerm.value.toLowerCase();
         const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
 
-        return nodes!.filter((node) => {
-            const nodeNameLower = (node as Error).name ? node.name.toLowerCase() : '';
+        return nodes!.filter((node: any) => {
+            const nodeNameLower = (node as Error).name
+                ? (node.name.toLowerCase() as any as any as any)
+                : '';
 
             if (nodeNameLower.includes(lowerCaseSearchTerm)) {
                 return true;

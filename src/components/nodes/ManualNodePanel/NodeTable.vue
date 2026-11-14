@@ -90,7 +90,7 @@
                     <template #item="{ element: node }">
                         <div class="cursor-move">
                             <ManualNodeCard
-                                :node="node"
+                                :node="node as Record<string, any>"
                                 :is-selection-mode="isSelectionMode"
                                 :is-selected="selectedNodeIds.has(node.id)"
                                 :ping-result="pingResults[node.id]"
@@ -117,7 +117,7 @@
                     <template #item="{ element: node, index }">
                         <div class="cursor-move">
                             <ManualNodeList
-                                :node="node"
+                                :node="node as Record<string, any>"
                                 :index="index + 1"
                                 class="list-item-animation"
                                 :style="{ '--delay-index': Math.min(index, 20) }"
@@ -152,7 +152,7 @@
                     :style="{ '--delay-index': Math.min(index, 20) }"
                 >
                     <ManualNodeCard
-                        :node="node"
+                        :node="node as Record<string, any>"
                         :is-selection-mode="isSelectionMode"
                         :is-selected="selectedNodeIds.has((node as Record<string, any>).id)"
                         :ping-result="pingResults[(node as Record<string, any>).id]"
@@ -169,7 +169,7 @@
                 <ManualNodeList
                     v-for="(node, index) in paginatedNodes"
                     :key="(node as Record<string, any>).id"
-                    :node="node"
+                    :node="node as Record<string, any>"
                     :index="paginatedNodes.indexOf(node) + 1"
                     class="list-item-animation"
                     :style="{ '--delay-index': Math.min(index, 20) }"

@@ -109,7 +109,7 @@
             </button>
             <button
                 v-for="group in groups"
-                :key="group"
+                :key="group as any"
                 @click="emit('update:groupFilter', activeGroupFilter === group ? null : group)"
                 class="px-2.5 py-1 text-xs font-medium rounded-full transition-all border shrink-0 whitespace-nowrap"
                 :class="

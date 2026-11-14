@@ -82,7 +82,9 @@
     };
 
     const selectAll = () => {
-        filteredNodes.value.forEach((node) => selectedUrls.value.add((node as Record<string, any>).url));
+        filteredNodes.value.forEach((node) =>
+            selectedUrls.value.add((node as Record<string, any>).url)
+        );
     };
 
     const clearSelection = () => {
@@ -107,9 +109,13 @@
             // For now, we'll use bulk import logic to create manual nodes
             const nodesToAdd = urls.map((url) => {
                 // Try to find full node object from allNodes
-                const originalNode = allNodes.value.find((n) => (n as Record<string, any>).url === url);
+                const originalNode = allNodes.value.find(
+                    (n) => (n as Record<string, any>).url === url
+                );
                 return {
-                    name: ((originalNode as Error | undefined)?.name || 'Pick').split('#')[0].trim(),
+                    name: ((originalNode as Error | undefined)?.name || 'Pick')
+                        .split('#')[0]
+                        .trim(),
                     url: url,
                     enabled: true,
                 };
@@ -123,7 +129,10 @@
             pickingMode.value = false;
             selectedUrls.value.clear();
         } catch (err) {
-            showToast(t('nodePreview.saveSelectionFailed', { message: (err as Error).message }), 'error');
+            showToast(
+                t('nodePreview.saveSelectionFailed', { message: (err as Error).message }),
+                'error'
+            );
         }
     };
 
@@ -147,12 +156,16 @@
 
         // 协议过滤
         if (protocolFilter.value && protocolFilter.value !== 'all') {
-            result = result.filter((node) => (node as Record<string, any>).protocol === protocolFilter.value);
+            result = result.filter(
+                (node) => (node as Record<string, any>).protocol === protocolFilter.value
+            );
         }
 
         // 地区过滤
         if (regionFilter.value && regionFilter.value !== 'all') {
-            result = result.filter((node) => (node as Record<string, any>).region === regionFilter.value);
+            result = result.filter(
+                (node) => (node as Record<string, any>).region === regionFilter.value
+            );
         }
 
         // 搜索过滤
@@ -249,7 +262,7 @@
         error.value = '';
 
         try {
-            const requestData : Record<string, any> = {
+            const requestData: Record<string, any> = {
                 userAgent: 'v2rayN/7.23',
             };
 

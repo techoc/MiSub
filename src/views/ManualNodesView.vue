@@ -188,7 +188,7 @@
             :search-term="searchTerm"
             :view-mode="manualNodeViewMode"
             :groups="manualNodeGroups"
-            :active-group-filter="activeGroupFilter"
+            :active-group-filter="activeGroupFilter as any"
             :items-per-page="manualNodesPerPage"
             @update:items-per-page="(val) => (manualNodesPerPage = val)"
             @add="handleAddNode"

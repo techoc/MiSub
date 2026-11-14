@@ -11,7 +11,7 @@ export const useSessionStore = defineStore('session', () => {
     const sessionState = ref('loading'); // loading, loggedIn, loggedOut
     const initialData = ref(null);
     const subscriptionConfig = ref({}); // [NEW] Added subscriptionConfig
-    const securityWarning = ref(null);
+    const securityWarning = ref<any>(null);
     const defaultPublicConfig = Object.freeze({
         enablePublicPage: true,
         isLoginPath: false,

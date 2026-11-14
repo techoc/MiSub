@@ -109,7 +109,9 @@
             'reset-group',
             group.items.map((it) => it.id)
         );
-    const openAirportIdentityEditor = (ids = props.subscriptions.map((item) => (item as Record<string, any>).id)) => {
+    const openAirportIdentityEditor = (
+        ids = props.subscriptions.map((item) => (item as Record<string, any>).id)
+    ) => {
         groupNameInput.value = '';
         selectedAirportGroup.value = '';
         editingSubscriptionIds.value = [...ids];
@@ -273,7 +275,10 @@
     );
 
     const pageSubscriptionIds = computed(
-        () => new Set((props.paginatedSubscriptions || []).map((sub) => (sub as Record<string, any>).id))
+        () =>
+            new Set(
+                (props.paginatedSubscriptions || []).map((sub) => (sub as Record<string, any>).id)
+            )
     );
 
     /** 当前分页命中组内任一条时显示组；组本身完整呈现但按首条排序锚定。 */
@@ -490,7 +495,7 @@
                     <template #item="{ element: subscription }">
                         <div class="cursor-move">
                             <Card
-                                :misub="subscription"
+                                :misub="subscription as Record<string, any>"
                                 @delete="handleDelete(subscription.id)"
                                 @change="handleSortEnd"
                                 @update="handleUpdate(subscription.id)"
@@ -506,7 +511,7 @@
                 </draggable>
             </div>
         </div>
-        <div v-else-if="paginatedSubscriptions.length > 0" class="space-y-4">
+        <div v-else-if="(paginatedSubscriptions || []).length > 0" class="space-y-4">
             <!-- 按站点分组：同站点的多个订阅源折叠为一组 -->
             <template v-if="isGrouped">
                 <template v-for="group in visibleCollapsibleGroups" :key="group.key">
@@ -516,7 +521,7 @@
                         <div class="flex w-full items-center justify-between gap-3 px-4 py-3">
                             <button
                                 type="button"
-                                :aria-expanded="String(!isGroupCollapsed(group.key))"
+                                :aria-expanded="!isGroupCollapsed(group.key)"
                                 class="flex min-w-0 flex-1 items-center gap-2 text-left"
                                 @click="toggleGroup(group.key)"
                             >
@@ -598,13 +603,13 @@
                             class="grid grid-cols-1 gap-4 border-t border-gray-100/80 p-4 md:grid-cols-2 dark:border-white/10"
                         >
                             <div
-                                v-for="(subscription, index) in group.items"
+                                v-for="(subscription, index) in group.items as any[]"
                                 :key="subscription.id"
                                 class="list-item-animation"
                                 :style="{ '--delay-index': index }"
                             >
                                 <Card
-                                    :misub="subscription"
+                                    :misub="subscription as Record<string, any>"
                                     @delete="handleDelete(subscription.id)"
                                     @change="handleSortEnd"
                                     @update="handleUpdate(subscription.id)"
@@ -630,7 +635,7 @@
                         :style="{ '--delay-index': index }"
                     >
                         <Card
-                            :misub="subscription"
+                            :misub="subscription as Record<string, any>"
                             @delete="handleDelete(subscription.id)"
                             @change="handleSortEnd"
                             @update="handleUpdate(subscription.id)"
@@ -652,7 +657,7 @@
                     :style="{ '--delay-index': index }"
                 >
                     <Card
-                        :misub="subscription"
+                        :misub="subscription as Record<string, any>"
                         @delete="handleDelete((subscription as Record<string, any>).id)"
                         @change="handleSortEnd"
                         @update="handleUpdate((subscription as Record<string, any>).id)"
@@ -708,7 +713,7 @@
                 </button>
             </div>
         </div>
-        <div v-if="!isSorting && totalPages > 1" class="mt-4">
+        <div v-if="!isSorting && (totalPages || 0) > 1" class="mt-4">
             <PanelPagination
                 variant="panel"
                 :current-page="currentPage"

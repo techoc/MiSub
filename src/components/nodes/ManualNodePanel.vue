@@ -47,6 +47,8 @@
         'ping-all',
         'sort-by-latency',
         'manage-groups',
+        'batch-delete-nodes',
+        'set-group-filter',
     ]);
 
     const isSelectionMode = ref(false);

@@ -3,7 +3,7 @@
         type: {
             type: String,
             default: 'card', // card, list, dashboard
-            validator: (value) => ['card', 'list', 'dashboard'].includes(value),
+            validator: (value) => ['card', 'list', 'dashboard'].includes(value as any),
         },
         count: {
             type: Number,

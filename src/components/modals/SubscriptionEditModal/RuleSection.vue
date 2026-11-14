@@ -54,39 +54,39 @@
             required: true,
         },
         toggleTag: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         isSelected: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         isOtherSelected: {
-            type: Function,
+            type: Function as any,
             default: () => false,
         },
         addCustomKeyword: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         removeRule: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         removeKeepRule: {
-            type: Function,
+            type: Function as any,
             default: null,
         },
         removeExcludeRule: {
-            type: Function,
+            type: Function as any,
             default: null,
         },
         switchToAdvanced: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         switchToVisual: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
     });
@@ -265,7 +265,7 @@
                                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
                                 ]"
                             >
-                                {{ (tag as Record<string, any>).icon }} {{ tag.label }}
+                                {{ (tag as Record<string, any>).icon }} {{ ((((tag as Record<string, any>).label as any) as any) as any) }}
                             </button>
                         </div>
                     </div>
@@ -372,7 +372,7 @@
                                     :key="'keep-' + index"
                                     class="inline-flex items-center gap-1 px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 !min-h-0 !min-w-0"
                                 >
-                                    {{ (rule as Record<string, any>).icon ? (rule as Record<string, any>).icon + ' ' : '' }}{{ rule.label }}
+                                    {{ (rule as Record<string, any>).icon ? (rule as Record<string, any>).icon + ' ' : '' }}{{ ((((rule as Record<string, any>).label as any) as any) as any) }}
                                     <button
                                         type="button"
                                         @click="handleRemoveKeep(index)"

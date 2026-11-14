@@ -177,7 +177,8 @@
     const handleEdit = (client) => {
         isNew.value = false;
         editingClient.value = JSON.parse(JSON.stringify(client));
-        if (!(editingClient.value as Record<string, any>).platforms) (editingClient.value as Record<string, any>).platforms = [];
+        if (!(editingClient.value as Record<string, any>).platforms)
+            (editingClient.value as Record<string, any>).platforms = [];
         showEditModal.value = true;
     };
 
@@ -213,7 +214,8 @@
     };
 
     const handleSave = async () => {
-        if (!(editingClient.value as Error).name) return showToast(t('settings.clientNameRequired'), 'error');
+        if (!(editingClient.value as Error).name)
+            return showToast(t('settings.clientNameRequired'), 'error');
 
         saving.value = true;
         try {
@@ -228,7 +230,10 @@
                 showToast(data.message || t('settings.clientSaveFailed'), 'error');
             }
         } catch (e) {
-            showToast(t('settings.clientSaveFailedWithMessage', { message: (e as Error).message }), 'error');
+            showToast(
+                t('settings.clientSaveFailedWithMessage', { message: (e as Error).message }),
+                'error'
+            );
         } finally {
             saving.value = false;
         }
@@ -341,7 +346,7 @@
                         <p class="text-xs text-gray-500 truncate">{{ client.description }}</p>
                         <div class="flex flex-wrap gap-1 mt-2">
                             <span
-                                v-for="p in client.platforms"
+                                v-for="p in client.platforms as any[]"
                                 :key="p"
                                 class="px-1.5 py-0.5 text-[10px] rounded"
                                 :class="getPlatformClass(p)"

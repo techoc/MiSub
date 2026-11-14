@@ -342,7 +342,7 @@
                                 "
                                 @input="
                                     (e) => {
-                                        const v = parseInt(e.target.value);
+                                        const v = parseInt((e.target as HTMLInputElement).value);
                                         if (v >= 5) settings.autoUpdateInterval = v;
                                     }
                                 "

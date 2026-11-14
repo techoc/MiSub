@@ -40,11 +40,15 @@
     // 根据 selectedIds 顺序获取已选订阅对象列表
     const orderedSelectedSubs = computed({
         get() {
-            const subMap = new Map(props.subscriptions.map((s) => [(s as Record<string, any>).id, s]));
+            const subMap = new Map(
+                props.subscriptions.map((s) => [(s as Record<string, any>).id, s])
+            );
             return props.selectedIds.map((id) => subMap.get(id)).filter(Boolean);
         },
         set(newList) {
-            const availableIds = new Set(props.subscriptions.map((sub) => (sub as Record<string, any>).id));
+            const availableIds = new Set(
+                props.subscriptions.map((sub) => (sub as Record<string, any>).id)
+            );
             const reorderedIds = newList.map((sub) => (sub as Record<string, any>).id);
             let reorderedIndex = 0;
 

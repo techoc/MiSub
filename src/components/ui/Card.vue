@@ -137,7 +137,7 @@
         const now = new Date();
         expiryDate.setHours(0, 0, 0, 0);
         now.setHours(0, 0, 0, 0);
-        const diffDays = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays > REASONABLE_EXPIRY_LIMIT_DAYS) {
             return null;
         }

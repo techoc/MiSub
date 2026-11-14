@@ -17,7 +17,7 @@
         size: {
             type: String,
             default: 'medium',
-            validator: (value) => ['small', 'medium', 'large', 'xlarge'].includes(value),
+            validator: (value) => ['small', 'medium', 'large', 'xlarge'].includes(value as any),
         },
         closable: {
             type: Boolean,
@@ -94,7 +94,7 @@
     ]);
 
     const contentStyle = computed(() => {
-        const styles : Record<string, any> = {};
+        const styles: Record<string, any> = {};
         if (props.maxHeight) {
             styles.maxHeight = props.maxHeight;
         }
@@ -113,7 +113,9 @@
                 emit('opened');
                 // 自动聚焦到第一个输入框
                 if (contentRef.value) {
-                    const firstInput = (contentRef.value as Record<string, any>).querySelector('input, textarea, select');
+                    const firstInput = (contentRef.value as Record<string, any>).querySelector(
+                        'input, textarea, select'
+                    );
                     if (firstInput) {
                         firstInput.focus();
                     }

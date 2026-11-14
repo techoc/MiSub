@@ -45,7 +45,10 @@ overwrite_original_rules=true`;
     const isLoading = ref(false);
 
     const selectedTemplate = computed(
-        () => localTemplates.value.find((item) => (item as Record<string, any>).id === selectedId.value) || null
+        () =>
+            localTemplates.value.find(
+                (item) => (item as Record<string, any>).id === selectedId.value
+            ) || null
     );
     const hasTemplates = computed(() => localTemplates.value.length > 0);
 
@@ -60,7 +63,9 @@ overwrite_original_rules=true`;
         }
         if (
             selectedId.value &&
-            !localTemplates.value.some((item) => (item as Record<string, any>).id === selectedId.value)
+            !localTemplates.value.some(
+                (item) => (item as Record<string, any>).id === selectedId.value
+            )
         ) {
             selectedId.value = localTemplates.value[0]?.id || '';
         }
@@ -90,7 +95,9 @@ overwrite_original_rules=true`;
 
     function removeTemplate(template) {
         if (!template) return;
-        localTemplates.value = localTemplates.value.filter((item) => (item as Record<string, any>).id !== template.id);
+        localTemplates.value = localTemplates.value.filter(
+            (item) => (item as Record<string, any>).id !== template.id
+        );
         selectedId.value = localTemplates.value[0]?.id || '';
     }
 
@@ -109,7 +116,11 @@ overwrite_original_rules=true`;
         try {
             const saved = await dataStore.saveRuleTemplates(localTemplates.value);
             localTemplates.value = cloneTemplates(saved);
-            if (!localTemplates.value.some((item) => (item as Record<string, any>).id === selectedId.value)) {
+            if (
+                !localTemplates.value.some(
+                    (item) => (item as Record<string, any>).id === selectedId.value
+                )
+            ) {
                 selectedId.value = localTemplates.value[0]?.id || '';
             }
         } finally {

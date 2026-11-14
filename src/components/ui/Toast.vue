@@ -49,7 +49,7 @@
     >
         <TransitionGroup name="toast">
             <div
-                v-for="toast in toastStore.toasts"
+                v-for="toast in toastStore.toasts as any[]"
                 :key="toast.id"
                 :role="getToastRole(toast.type)"
                 :aria-live="getToastAriaLive(toast.type)"

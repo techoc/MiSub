@@ -317,11 +317,11 @@
             <div v-else class="drag-drop-items" :class="{ 'is-dragging': dragState.isDragging }">
                 <div
                     v-for="(item, index) in items"
-                    :key="item[itemKey] || index"
+                    :key="((((item as Record<string, any>)[itemKey] as any) as any) as any) || index"
                     :class="itemClasses(index, item)"
                     :style="itemStyle(index)"
                     class="drag-drop-item-wrapper"
-                    draggable="draggable"
+                    :draggable="true"
                     @click="handleItemClick(item, index)"
                     @dragstart="handleDragStart($event, index, item)"
                     @dragend="handleDragEnd($event)"

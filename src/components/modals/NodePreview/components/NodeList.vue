@@ -15,11 +15,11 @@
             default: '',
         },
         parseNodeInfo: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         getProtocolStyle: {
-            type: Function,
+            type: Function as any,
             required: true,
         },
         // [New] Selection Mode Props
@@ -93,7 +93,7 @@
                     >
                         <div :style="{ transform: `translateY(${offsetY}px)` }">
                             <div
-                                v-for="node in visibleItems.items"
+                                v-for="node in visibleItems.items as any[]"
                                 :key="`${node.url}_${node._virtualIndex}`"
                                 @click="handleRowClick(node)"
                                 class="group border-b border-gray-50 dark:border-white/5 hover:bg-gray-50/80 dark:hover:bg-indigo-500/5 transition-all"

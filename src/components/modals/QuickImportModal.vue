@@ -104,8 +104,12 @@
         if (!platform) return clients;
 
         // 将当前平台的客户端置顶
-        const platformClients = clients.filter((c) => (c as Record<string, any>).platforms?.includes(platform));
-        const otherClients = clients.filter((c) => !(c as Record<string, any>).platforms?.includes(platform));
+        const platformClients = clients.filter((c) =>
+            (c as Record<string, any>).platforms?.includes(platform)
+        );
+        const otherClients = clients.filter(
+            (c) => !(c as Record<string, any>).platforms?.includes(platform)
+        );
 
         return [...platformClients, ...otherClients];
     });

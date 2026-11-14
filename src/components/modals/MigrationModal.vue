@@ -66,7 +66,10 @@
             addLog(t('d1Migration.hintCheckSchema'), 'warning');
             addLog(t('d1Migration.hintRunSchema'), 'warning');
             addLog(t('d1Migration.hintCheckBinding'), 'warning');
-            showToast(t('d1Migration.toastMigrateFailed', { message: (err as Error).message }), 'error');
+            showToast(
+                t('d1Migration.toastMigrateFailed', { message: (err as Error).message }),
+                'error'
+            );
         } finally {
             isMigrating.value = false;
             addLog(t('d1Migration.logFinished'), 'info');

@@ -113,8 +113,8 @@
     // 重置过滤器
     const resetFilters = () => {
         const defaultValues = {};
-        props.filters.forEach((filter) => {
-            defaultValues[(filter as Record<string, any>).key] = filter.defaultValue ?? (filter.type === 'select' ? '' : '');
+        props.filters.forEach((filter: any) => {
+            defaultValues[(filter as Record<string, any>).key] = (((filter.defaultValue as any) as any) as any) ?? (((((filter as Record<string, any>).type as any) as any) as any) === 'select' ? '' : '');
         });
         localValues.value = defaultValues;
 
@@ -330,14 +330,14 @@
                     <div class="filter-input">
                         <!-- 文本输入 -->
                         <input
-                            v-if="(filter as Record<string, any>).type === 'text' || filter.type === 'search'"
+                            v-if="(filter as Record<string, any>).type === 'text' || ((((filter as Record<string, any>).type as any) as any) as any) === 'search'"
                             :type="(filter as Record<string, any>).type === 'search' ? 'search' : 'text'"
                             :placeholder="(filter as Record<string, any>).placeholder"
                             :value="filterValue(filter)"
                             :disabled="loading || (filter as Record<string, any>).disabled"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                             @input="handleFilterChange(filter, ($event.target as HTMLInputElement).value)"
-                            :aria-label="(filter as Record<string, any>).label || filter.placeholder"
+                            :aria-label="(filter as Record<string, any>).label || ((((filter as Record<string, any>).placeholder as any) as any) as any)"
                         />
 
                         <!-- 数字输入 -->
@@ -352,7 +352,7 @@
                             :step="(filter as Record<string, any>).step"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                             @input="handleFilterChange(filter, Number(($event.target as HTMLInputElement).value))"
-                            :aria-label="(filter as Record<string, any>).label || filter.placeholder"
+                            :aria-label="(filter as Record<string, any>).label || ((((filter as Record<string, any>).placeholder as any) as any) as any)"
                         />
 
                         <!-- 选择器 -->
@@ -384,7 +384,7 @@
                                 handleFilterChange(
                                     filter,
                                     Array.from(
-                                        ($event.target as HTMLInputElement).selectedOptions,
+                                        ($event.target as HTMLSelectElement).selectedOptions,
                                         (option) => (option as Record<string, any>).value
                                     )
                                 )

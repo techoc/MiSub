@@ -37,7 +37,9 @@
     });
 
     function getFocusableItems() {
-        return menuRef.value ? Array.from((menuRef.value as Record<string, any>).querySelectorAll(FOCUSABLE)) : [];
+        return menuRef.value
+            ? Array.from((menuRef.value as Record<string, any>).querySelectorAll(FOCUSABLE))
+            : [];
     }
 
     async function openMenu() {
@@ -56,7 +58,7 @@
     }
 
     function closeMenu(options = {}) {
-        const { restoreFocus = false } = options;
+        const { restoreFocus = false } = options as Record<string, any>;
         isOpen.value = false;
         if (restoreFocus) {
             (triggerRef.value as Record<string, any> | undefined)?.querySelector('button')?.focus();
@@ -64,8 +66,10 @@
     }
 
     function handleClickOutside(event) {
-        const isClickInTrigger = triggerRef.value && (triggerRef.value as Record<string, any>).contains(event.target);
-        const isClickInMenu = menuRef.value && (menuRef.value as Record<string, any>).contains(event.target);
+        const isClickInTrigger =
+            triggerRef.value && (triggerRef.value as Record<string, any>).contains(event.target);
+        const isClickInMenu =
+            menuRef.value && (menuRef.value as Record<string, any>).contains(event.target);
 
         if (!isClickInTrigger && !isClickInMenu) {
             closeMenu();

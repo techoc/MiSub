@@ -320,7 +320,7 @@
             :subscription-id="previewSubscriptionId"
             :subscription-name="previewSubscriptionName"
             :subscription-url="previewSubscriptionUrl"
-            :profile-id="null"
+            :profile-id="undefined"
             :profile-name="''"
             @update:show="showNodePreviewModal = $event"
         />

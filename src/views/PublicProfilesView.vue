@@ -199,7 +199,9 @@
         clients.value.forEach(async (client) => {
             if (!(client as Record<string, any>).repo) return;
             try {
-                const data = await api.get(`/api/github/release?repo=${(client as Record<string, any>).repo}`);
+                const data = await api.get(
+                    `/api/github/release?repo=${(client as Record<string, any>).repo}`
+                );
                 if (data && data.tag_name) {
                     (client as Record<string, any>).version = data.tag_name;
                 }
@@ -670,7 +672,7 @@
                                         </div>
                                         <div class="flex flex-wrap gap-1 mb-2">
                                             <span
-                                                v-for="platform in client.platforms"
+                                                v-for="platform in client.platforms as any[]"
                                                 :key="platform"
                                                 class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border"
                                                 :class="{
