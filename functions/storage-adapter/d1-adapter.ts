@@ -14,7 +14,10 @@ import {
  * D1 存储适配器
  */
 export class D1StorageAdapter {
-    constructor(d1Database) {
+    db: D1Database;
+    type: string;
+
+    constructor(d1Database: D1Database) {
         this.db = d1Database;
         this.type = STORAGE_TYPES.D1;
     }
@@ -330,7 +333,7 @@ export class D1StorageAdapter {
         return Boolean(result?.success);
     }
 
-    async getSubscriptionsByIds(ids = []) {
+    async getSubscriptionsByIds(ids: any[] = []) {
         if (!Array.isArray(ids) || ids.length === 0) return [];
         // D1 单条 SQL 绑定变量上限为 100，超过会报
         // "too many SQL variables" 而整条查询失败。

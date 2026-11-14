@@ -110,7 +110,7 @@ export async function getCache(storageAdapter, cacheKey) {
  * @param {string[]} sources - 来源订阅名称列表
  * @returns {Promise<boolean>}
  */
-export async function setCache(storageAdapter, cacheKey, nodes, sources = []) {
+export async function setCache(storageAdapter, cacheKey, nodes, sources: any[] = []) {
     try {
         const nodeCount = nodes.split('\n').filter((line) => line.trim()).length;
         if (isLikelyPartialAggregateNodeList(nodes)) {
@@ -316,7 +316,7 @@ export async function clearAllNodeCaches(storageAdapter, options: Record<string,
  * @param {string} token - Token（可选）
  * @returns {Promise<number>} 清除的缓存数量
  */
-export async function invalidateCaches(storageAdapter, profileIds = [], token: KvRecord | null = null) {
+export async function invalidateCaches(storageAdapter, profileIds: any[] = [], token: KvRecord | null = null) {
     let clearedCount = 0;
 
     // 清除 Profile 缓存

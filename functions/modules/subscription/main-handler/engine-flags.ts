@@ -75,7 +75,7 @@ function parseToggleValue(value) {
  */
 export function resolveInjectionToggle(
     searchParams,
-    paramNames = [],
+    paramNames: any[] = [],
     configValue,
     fallback = true
 ) {

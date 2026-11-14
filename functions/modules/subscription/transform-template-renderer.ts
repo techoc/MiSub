@@ -57,7 +57,7 @@ export function buildTransformTemplateContext({
     nodeCount = 0,
     regionGroups = [],
     protocolGroups = [],
-} = {}) {
+}: Record<string, any> = {}) {
     const normalizedRegionGroups = Array.isArray(regionGroups) ? regionGroups : [];
     const normalizedProtocolGroups = Array.isArray(protocolGroups) ? protocolGroups : [];
     const regionNames = normalizedRegionGroups.map((group) => group.name).filter(Boolean);

@@ -33,7 +33,7 @@ function hasIniShape(content) {
     return /\[(custom|proxy\s*group|rule|ruleset|proxy)\]/i.test(content);
 }
 
-export function normalizeCustomRuleTemplates(input = []) {
+export function normalizeCustomRuleTemplates(input: any[] = []) {
     if (!Array.isArray(input)) return [];
     const seen = new Set();
     const normalized: any[] = [];

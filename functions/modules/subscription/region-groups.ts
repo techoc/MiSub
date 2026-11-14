@@ -35,7 +35,7 @@ export const REGION_GROUP_PATTERNS = [
     { name: '🇦🇺 澳洲节点', pattern: /澳|AU|Australia/i },
 ];
 
-function normalizeRegionOverrides(overrides = []) {
+function normalizeRegionOverrides(overrides: any[] = []) {
     if (!Array.isArray(overrides)) return [];
     return overrides
         .map((rule) => {
@@ -63,7 +63,7 @@ export function isPlaceholderInfoNode(proxy) {
     return server === '127.0.0.1' || server === '::1';
 }
 
-export function groupNodeLinesByRegion(nodes = [], options: Record<string, any> = {}) {
+export function groupNodeLinesByRegion(nodes: any[] = [], options: Record<string, any> = {}) {
     const groups = new Map();
     const regionOverrides = normalizeRegionOverrides(options.regionOverrides);
 

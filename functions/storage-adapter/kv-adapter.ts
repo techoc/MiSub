@@ -8,7 +8,10 @@ import { DATA_KEYS, STORAGE_TYPES } from './shared.ts';
  * KV 存储适配器
  */
 export class KVStorageAdapter {
-    constructor(kvNamespace) {
+    kv: KVNamespace;
+    type: string;
+
+    constructor(kvNamespace: KVNamespace) {
         this.kv = kvNamespace;
         this.type = STORAGE_TYPES.KV;
     }
@@ -129,7 +132,7 @@ export class KVStorageAdapter {
         return filtered.length !== all.length;
     }
 
-    async getSubscriptionsByIds(ids = []) {
+    async getSubscriptionsByIds(ids: any[] = []) {
         const all = (await this.get(DATA_KEYS.SUBSCRIPTIONS)) || [];
         const idSet = new Set(ids);
         return all.filter((item) => idSet.has(item.id));
