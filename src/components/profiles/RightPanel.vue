@@ -20,15 +20,15 @@
     const { t } = useI18n();
 
     const copied = ref(false);
-    let copyTimeout: any = null;
+    let copyTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const formats = ['universal', 'Base64', 'Clash', 'Sing-Box', 'Surge', 'Loon'];
     const selectedFormat = ref('universal');
     const selectedId = ref('default');
 
-    const formatLabel = (format: any) =>
+    const formatLabel = (format: string): string =>
         format === 'universal' ? t('dashboard.linkCard.universalFormat') : format;
-    const isStableToken = (value: any) =>
+    const isStableToken = (value: unknown): boolean =>
         typeof value === 'string' &&
         value.trim() === value &&
         value !== 'auto' &&
@@ -39,7 +39,12 @@
     const profileTokenReady = computed(() => isStableToken(props.config?.profileToken));
 
     const setupTasks = computed(() => {
-        const tasks: any[] = [];
+        const tasks: Array<{
+            id: string;
+            title: string;
+            description: string;
+            to: string;
+        }> = [];
         if (!mainTokenReady.value) {
             tasks.push({
                 id: 'main-token',
@@ -101,10 +106,8 @@
             return baseUrl;
         }
 
-        const targetMapping = { 'Sing-Box': 'singbox', QuanX: 'quanx' };
-        const formatKey =
-            (targetMapping as Record<string, any>)[selectedFormat.value] ||
-            selectedFormat.value.toLowerCase();
+        const targetMapping: Record<string, string> = { 'Sing-Box': 'singbox', QuanX: 'quanx' };
+        const formatKey = targetMapping[selectedFormat.value] || selectedFormat.value.toLowerCase();
         return `${baseUrl}?${formatKey}`;
     });
 
@@ -116,14 +119,14 @@
         navigator.clipboard.writeText(subLink.value);
         showToast(t('notices.copied'), 'success');
         copied.value = true;
-        clearTimeout(copyTimeout);
+        clearTimeout(copyTimeout ?? undefined);
         copyTimeout = setTimeout(() => {
             copied.value = false;
         }, 2000);
     };
 
     onUnmounted(() => {
-        clearTimeout(copyTimeout);
+        clearTimeout(copyTimeout ?? undefined);
     });
 </script>
 

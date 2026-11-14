@@ -7,12 +7,12 @@
 
     // Screen readers announce each toast on insertion. Errors are assertive so
     // they interrupt; everything else is polite and waits for a pause.
-    const getToastRole = (type: any) => (type === 'error' ? 'alert' : 'status');
-    const getToastAriaLive = (type: any) => (type === 'error' ? 'assertive' : 'polite');
+    const getToastRole = (type: unknown) => (type === 'error' ? 'alert' : 'status');
+    const getToastAriaLive = (type: unknown) => (type === 'error' ? 'assertive' : 'polite');
 
     // 🆕 增强的 Toast 配置
-    const getToastConfig = (type: any) => {
-        const configs = {
+    const getToastConfig = (type: unknown) => {
+        const configs: Record<string, { bg: string; icon: string; ring: string }> = {
             success: {
                 bg: 'bg-gradient-to-r from-green-500 to-emerald-500',
                 icon: 'M5 13l4 4L19 7',
@@ -34,10 +34,10 @@
                 ring: 'ring-yellow-500/20',
             },
         };
-        return (configs as Record<string, any>)[type] || configs.info;
+        return configs[String(type)] || configs.info;
     };
 
-    const handleClose = (id: any) => {
+    const handleClose = (id: string) => {
         toastStore.removeToast(id);
     };
 </script>

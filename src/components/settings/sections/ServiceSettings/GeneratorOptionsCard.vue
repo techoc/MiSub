@@ -84,18 +84,23 @@
         },
     ];
 
-    function readPath(path: any) {
-        return path.split('.').reduce((value: any, key: any) => value?.[key], props.settings);
+    function readPath(path: string): boolean {
+        const value = path.split('.').reduce<unknown>((current, key) => {
+            if (!current || typeof current !== 'object') return undefined;
+            return (current as Record<string, unknown>)[key];
+        }, props.settings);
+        return Boolean(value);
     }
 
-    function writePath(path: any, value: any) {
+    function writePath(path: string, value: unknown) {
         const keys = path.split('.');
         let target = props.settings;
         for (const key of keys.slice(0, -1)) {
             if (!target[key] || typeof target[key] !== 'object') target[key] = {};
             target = target[key];
         }
-        target[keys.at(-1)] = value;
+        const lastKey = keys[keys.length - 1];
+        if (lastKey) target[lastKey] = value;
     }
 </script>
 

@@ -19,9 +19,27 @@
 
     const { showToast } = useToastStore();
     const { t, locale } = useI18n();
-    const logs = ref<any[]>([]);
+    /** 访问日志条目（/api/logs 返回项） */
+    interface LogEntry {
+        id?: string;
+        timestamp?: string | number;
+        status?: string;
+        userAgent?: string;
+        clientIp?: string;
+        geoInfo?: { country?: string; city?: string; isp?: string; asn?: string | number };
+        details?: {
+            duration?: number;
+            totalNodes?: number;
+            sourceCount?: number;
+            successCount?: number;
+        };
+        profileName?: string;
+        [key: string]: unknown;
+    }
+
+    const logs = ref<LogEntry[]>([]);
     const isLoading = ref(false);
-    const expandedLogId = ref<any>(null);
+    const expandedLogId = ref<string | undefined>(undefined);
 
     // Pagination State
     const currentPage = ref(1);
@@ -31,9 +49,7 @@
     // Pagination Computed Properties
     const filteredLogs = computed(() => {
         if (!props.filterProfileName) return logs.value;
-        return logs.value.filter(
-            (log) => (log as Record<string, any>).profileName === props.filterProfileName
-        );
+        return logs.value.filter((log) => log.profileName === props.filterProfileName);
     });
 
     const totalPages = computed(() => Math.max(1, Math.ceil(filteredLogs.value.length / pageSize)));
@@ -75,13 +91,13 @@
         }
     };
 
-    const formatTime = (ts: any) => {
+    const formatTime = (ts: string | number | null | undefined): string => {
         if (!ts) return '-';
         return new Date(ts).toLocaleString(locale.value, { hour12: false });
     };
 
-    const toggleExpand = (id: any) => {
-        expandedLogId.value = expandedLogId.value === id ? null : id;
+    const toggleExpand = (id: string | undefined) => {
+        expandedLogId.value = expandedLogId.value === id ? undefined : id;
     };
 
     // Pagination Controls

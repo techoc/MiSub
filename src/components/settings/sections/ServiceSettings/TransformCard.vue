@@ -27,7 +27,31 @@
         { value: 'custom_template', label: t('settings.transformCustomTemplate') },
     ]);
 
-    const selectedAsset = ref<any>(null);
+    /** 选中的转换模板资产 */
+    interface TransformAssetSelection {
+        id?: string;
+        url?: string;
+        name?: string;
+        [key: string]: unknown;
+    }
+
+    /** 后端测试结果 */
+    interface BackendTestStatus {
+        success: boolean;
+        message: string;
+        endpoint: string;
+        elapsedMs?: number;
+    }
+
+    /** 引擎切换前的设置快照 */
+    interface EngineSettingsSnapshot {
+        builtinSkipCertVerify?: unknown;
+        builtinEnableUdp?: unknown;
+        transformConfigMode?: unknown;
+        transformConfig?: unknown;
+    }
+
+    const selectedAsset = ref<TransformAssetSelection | null>(null);
 
     const flagOptions = computed(() => [
         { key: 'udp', label: t('settings.transformUdp'), icon: '⚡️' },
@@ -82,16 +106,16 @@
             props.settings.subconverter.engineMode === ''
     );
     const isExternalEngine = computed(() => props.settings.subconverter.engineMode === 'external');
-    const backendTestStatus = ref<any>(null);
+    const backendTestStatus = ref<BackendTestStatus | null>(null);
     const isTestingBackend = ref(false);
-    const previousEngineSettings = ref<any>(null);
-    const restoreEngineSnapshot = ref<any>(null);
+    const previousEngineSettings = ref<EngineSettingsSnapshot | null>(null);
+    const restoreEngineSnapshot = ref<EngineSettingsSnapshot | null>(null);
     const showEngineChangeWarning = ref(false);
     const engineChangeNoticeDismissed = ref(false);
     const backendTestToneClass = computed(() => {
         if (!backendTestStatus.value)
             return 'border-gray-100 bg-gray-50 text-gray-500 dark:border-white/5 dark:bg-white/5 dark:text-gray-400';
-        return (backendTestStatus.value as Record<string, any>).success
+        return backendTestStatus.value.success
             ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-900/20 dark:text-emerald-300'
             : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-900/20 dark:text-rose-300';
     });
