@@ -31,15 +31,15 @@ export async function fetchSubscriptionNodes(
     url: any,
     subscriptionName: any,
     userAgent: any,
-    customUserAgent: KvRecord | null = null,
+    customUserAgent: string | null = null,
     debug = false,
     excludeRules = '',
-    fetchProxy: KvRecord | null = null,
+    fetchProxy: string | null = null,
     skipCertVerify = false,
     plusAsSpace = false,
     enableNodeCache = false,
-    storageAdapter: KvRecord | null = null,
-    subscription = null
+    storageAdapter: unknown = null,
+    subscription: unknown = null
 ) {
     // 自动检测调试 Token
     const shouldDebug = debug || (url && url.includes('b0b422857bb46aba65da8234c84f38c6'));
@@ -99,11 +99,7 @@ export async function fetchSubscriptionNodes(
             }
         }
 
-        if (
-            fetchProxy &&
-            typeof fetchProxy === 'string' &&
-            (fetchProxy as Record<string, any>).trim()
-        ) {
+        if (fetchProxy && typeof fetchProxy === 'string' && fetchProxy.trim()) {
             requestUrl = buildFetchProxyUrl(fetchProxy, url, effectiveUserAgent);
         }
 

@@ -7,8 +7,72 @@ import { runOperatorChain } from '../../utils/operator-runner.ts';
 import { KV_KEY_SUBS, KV_KEY_PROFILES, KV_KEY_SETTINGS, DEFAULT_SETTINGS } from '../config.ts';
 import { fetchSubscriptionNodes } from './node-fetcher.ts';
 import { applyManualNodeName } from '../utils/node-cleaner.ts';
+import type { KvRecord, SubscriptionItem } from '../../../types/models.ts';
 
-function ensureArray(data: any) {
+/** profile-handler 用到的存储适配器最小面 */
+interface ProfileStorageAdapter {
+    get(key: string): Promise<unknown>;
+    getProfileById?(id: string): Promise<unknown>;
+    getSubscriptionsByIds?(ids: string[]): Promise<unknown[]>;
+}
+
+/** 订阅组记录（KV misub_profiles_v1 元素） */
+interface ProfileRecord {
+    id?: string;
+    customId?: string;
+    name?: string;
+    enabled?: boolean;
+    subscriptions?: Array<string | { id?: string }>;
+    manualNodes?: Array<string | SubscriptionItem>;
+    subProfiles?: string[];
+    nodeTransformPresetId?: string;
+    nodeTransform?: {
+        enabled?: boolean;
+        operators?: unknown;
+        rename?: { template?: { template?: string } };
+        [key: string]: unknown;
+    };
+    operators?: unknown;
+    [key: string]: unknown;
+}
+
+/** 旧版转换配置 */
+interface LegacyTransformConfig {
+    enabled?: boolean;
+    filter?: {
+        include?: { enabled?: boolean };
+        exclude?: { enabled?: boolean };
+        protocols?: { enabled?: boolean };
+        regions?: { enabled?: boolean };
+        script?: { enabled?: boolean };
+        useless?: { enabled?: boolean };
+        [key: string]: unknown;
+    };
+    rename?: {
+        regex?: { enabled?: boolean; rules?: unknown[] };
+        template?: {
+            enabled?: boolean;
+            template?: string;
+            indexStart?: number;
+            indexScope?: string;
+        };
+        script?: { enabled?: boolean; expression?: string };
+        [key: string]: unknown;
+    };
+    dedup?: { enabled?: boolean; [key: string]: unknown };
+    sort?: { enabled?: boolean; keys?: unknown[]; [key: string]: unknown };
+    [key: string]: unknown;
+}
+
+/** 转换算子 */
+interface TransformOp {
+    id: string;
+    type: string;
+    enabled: boolean;
+    params: Record<string, unknown>;
+}
+
+function ensureArray(data: unknown): unknown[] {
     if (!data) return [];
     if (Array.isArray(data)) return data;
     if (typeof data === 'string') {
@@ -22,10 +86,10 @@ function ensureArray(data: any) {
     return [];
 }
 
-function adaptLegacyTransform(config: any) {
+function adaptLegacyTransform(config: LegacyTransformConfig | null | undefined): TransformOp[] {
     if (!config || !config.enabled) return [];
 
-    const ops: any[] = [];
+    const ops: TransformOp[] = [];
     const filter = config.filter;
     if (
         filter &&
@@ -40,7 +104,7 @@ function adaptLegacyTransform(config: any) {
     }
 
     const regex = config.rename?.regex;
-    if (regex?.enabled && regex.rules?.length > 0) {
+    if (regex?.enabled && (regex.rules?.length ?? 0) > 0) {
         ops.push({
             id: 'legacy-rename-regex',
             type: 'rename',
@@ -82,7 +146,7 @@ function adaptLegacyTransform(config: any) {
     }
 
     const sort = config.sort;
-    if (sort?.enabled && sort.keys?.length > 0) {
+    if (sort?.enabled && (sort.keys?.length ?? 0) > 0) {
         ops.push({ id: 'legacy-sort', type: 'sort', enabled: true, params: { ...sort } });
     }
 
@@ -99,15 +163,15 @@ function adaptLegacyTransform(config: any) {
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleProfileMode(
-    request: any,
-    env: any,
-    profileId: any,
-    userAgent: any,
+    request: Request,
+    env: Env,
+    profileId: string,
+    userAgent: string,
     applyTransform = false,
     skipCertVerify = false,
     depth = 0,
-    visited = new Set()
-): Promise<Record<string, any>> {
+    visited = new Set<string>()
+): Promise<Record<string, unknown> | Response> {
     if (depth > 3 || (profileId && visited.has(profileId))) {
         console.warn(
             `[Profile Nesting] 触发深度超限或循环引用保护: profileId=${profileId}, depth=${depth}`
@@ -127,61 +191,77 @@ export async function handleProfileMode(
         await StorageFactory.getStorageType(env)
     );
 
-    const profile =
-        typeof (storageAdapter as Record<string, any>).getProfileById === 'function'
-            ? await (storageAdapter as Record<string, any>).getProfileById(profileId)
-            : ((await storageAdapter.get(KV_KEY_PROFILES)) || []).find(
-                  (p: any) => (p.customId && p.customId === profileId) || p.id === profileId
-              );
-    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || DEFAULT_SETTINGS;
+    const adapter = storageAdapter as unknown as ProfileStorageAdapter;
+    let profile: ProfileRecord | null = null;
+    if (typeof adapter.getProfileById === 'function') {
+        profile = (await adapter.getProfileById(profileId)) as ProfileRecord | null;
+    } else {
+        const rawProfiles = await adapter.get(KV_KEY_PROFILES);
+        const profileList = Array.isArray(rawProfiles) ? (rawProfiles as ProfileRecord[]) : [];
+        profile =
+            profileList.find(
+                (p) => (p.customId && p.customId === profileId) || p.id === profileId
+            ) ?? null;
+    }
+    const settings =
+        ((await adapter.get(KV_KEY_SETTINGS)) as Record<string, unknown> | null) ||
+        (DEFAULT_SETTINGS as unknown as Record<string, unknown>);
 
     if (!profile || !profile.enabled) {
         return createJsonResponse({ error: '订阅组不存在或已禁用' }, 404);
     }
 
-    const relatedIds = [
+    const relatedIds: string[] = [
         ...(Array.isArray(profile.subscriptions)
-            ? profile.subscriptions.map((item: any) => (typeof item === 'object' ? item.id : item))
+            ? profile.subscriptions.map((item) => (typeof item === 'object' ? item.id || '' : item))
             : []),
-        ...(Array.isArray(profile.manualNodes) ? profile.manualNodes : []),
-    ].filter(Boolean);
-    const relatedSubs =
-        typeof (storageAdapter as Record<string, any>).getSubscriptionsByIds === 'function'
-            ? await (storageAdapter as Record<string, any>).getSubscriptionsByIds(
-                  Array.from(new Set(relatedIds))
-              )
-            : (await storageAdapter.get(KV_KEY_SUBS)) || [];
-    const misubMap = new Map(relatedSubs.map((item: any) => [item.id, item]));
-
-    const targetMisubs: any[] = [];
-    const profileSubIds = (profile.subscriptions || []).map((item: any) =>
-        typeof item === 'object' ? item.id : item
+        ...(Array.isArray(profile.manualNodes)
+            ? profile.manualNodes.map((item) => (typeof item === 'object' ? item.id || '' : item))
+            : []),
+    ].filter((id): id is string => Boolean(id));
+    let relatedSubs: SubscriptionItem[];
+    if (typeof adapter.getSubscriptionsByIds === 'function') {
+        relatedSubs = (await adapter.getSubscriptionsByIds(
+            Array.from(new Set(relatedIds))
+        )) as SubscriptionItem[];
+    } else {
+        const rawSubs = await adapter.get(KV_KEY_SUBS);
+        relatedSubs = Array.isArray(rawSubs) ? (rawSubs as SubscriptionItem[]) : [];
+    }
+    const misubMap = new Map<string, SubscriptionItem>(
+        relatedSubs.map((item): [string, SubscriptionItem] => [item.id, item])
     );
-    profileSubIds.forEach((id: any) => {
+
+    const targetMisubs: SubscriptionItem[] = [];
+    const profileSubIds = (profile.subscriptions || [])
+        .map((item) => (typeof item === 'object' ? item.id || '' : item))
+        .filter((id): id is string => Boolean(id));
+    profileSubIds.forEach((id) => {
         const sub = misubMap.get(id);
-        if (
-            sub &&
-            (sub as Record<string, any>).enabled &&
-            /^https?:\/\//i.test((sub as Record<string, any>).url)
-        ) {
+        if (sub && sub.enabled && /^https?:\/\//i.test(String(sub.url || ''))) {
             targetMisubs.push(sub);
         }
     });
 
-    const targetManualNodes: any[] = [];
+    const targetManualNodes: SubscriptionItem[] = [];
     const profileNodeIds = profile.manualNodes || [];
     if (Array.isArray(profileNodeIds)) {
-        profileNodeIds.forEach((id) => {
+        profileNodeIds.forEach((entry) => {
+            const id = typeof entry === 'object' ? entry.id || '' : entry;
             const node = misubMap.get(id);
-            if (node && (node as Record<string, any>).enabled) targetManualNodes.push(node);
+            if (node && node.enabled) targetManualNodes.push(node);
         });
     }
 
     const httpProxyPattern = /^https?:\/\/[^/?#]+:\d+(?:[/?#]|$)/i;
-    const targetSubscriptions = targetMisubs.filter((sub) => !httpProxyPattern.test(sub.url));
-    const httpProxyNodes = targetMisubs.filter((sub) => httpProxyPattern.test(sub.url));
-    const seenManualIds = new Set();
-    const allManualNodes: any[] = [];
+    const targetSubscriptions = targetMisubs.filter(
+        (sub) => !httpProxyPattern.test(String(sub.url || ''))
+    );
+    const httpProxyNodes = targetMisubs.filter((sub) =>
+        httpProxyPattern.test(String(sub.url || ''))
+    );
+    const seenManualIds = new Set<string>();
+    const allManualNodes: SubscriptionItem[] = [];
     for (const node of [...httpProxyNodes, ...targetManualNodes]) {
         const key = node?.id || node?.url;
         if (!node || (key && seenManualIds.has(key))) continue;
@@ -190,26 +270,23 @@ export async function handleProfileMode(
     }
     // 处理手工节点（直接解析节点URL），并将用户自定义名称写入 URL。
     const manualNodeResults = allManualNodes.map((node) => {
-        const customName =
-            typeof (node as Record<string, any>).name === 'string'
-                ? ((node as Record<string, any>).name as string).trim()
-                : '';
+        const customName = typeof node.name === 'string' ? node.name.trim() : '';
         const effectiveUrl = customName
-            ? applyManualNodeName((node as Record<string, any>).url, customName)
-            : (node as Record<string, any>).url;
+            ? applyManualNodeName(String(node.url || ''), customName)
+            : String(node.url || '');
 
         const nodeInfo = parseNodeInfo(effectiveUrl);
         return {
-            subscriptionName: (node as Error).name || '手工节点',
-            group: (node as Record<string, any>).group || '',
+            subscriptionName: node.name || '手工节点',
+            group: node.group || '',
             url: effectiveUrl,
             success: true,
             nodes: [
                 {
                     ...nodeInfo,
                     url: effectiveUrl,
-                    subscriptionName: (node as Error).name || '手工节点',
-                    group: (node as Record<string, any>).group || '',
+                    subscriptionName: node.name || '手工节点',
+                    group: node.group || '',
                 },
             ],
             error: null,
@@ -239,7 +316,7 @@ export async function handleProfileMode(
 
     // 3. 处理嵌套的组合订阅 (Sub-Profiles)
     const profileSubProfileIds = profile.subProfiles || [];
-    const nestedSubProfileResults: any[] = [];
+    const nestedSubProfileResults: Array<Record<string, unknown>> = [];
     if (Array.isArray(profileSubProfileIds) && profileSubProfileIds.length > 0 && depth < 3) {
         const nextVisited = new Set(visited);
         if (profile.id) nextVisited.add(profile.id);
@@ -261,7 +338,11 @@ export async function handleProfileMode(
                     depth + 1,
                     nextVisited
                 );
-                if (subResult.success && Array.isArray(subResult.nodes)) {
+                if (
+                    !(subResult instanceof Response) &&
+                    subResult.success &&
+                    Array.isArray(subResult.nodes)
+                ) {
                     nestedSubProfileResults.push({
                         subscriptionName: subResult.profileName || '组合订阅',
                         group: subResult.profileName || '组合订阅',
@@ -282,30 +363,37 @@ export async function handleProfileMode(
     const allResults = [...subscriptionResults, ...manualNodeResults, ...nestedSubProfileResults];
 
     // 统计所有节点
-    const allNodes: any[] = [];
+    const allNodes: KvRecord[] = [];
     allResults.forEach((result) => {
         if (result.success) {
-            allNodes.push(...result.nodes);
+            const nodes = Array.isArray(result.nodes) ? result.nodes : [];
+            allNodes.push(...nodes);
         }
     });
 
     // 如果需要应用转换规则，则处理节点名称
-    let processedNodes = allNodes;
-    const presetNodeTransform = profile.nodeTransformPresetId
+    let processedNodes: KvRecord[] = allNodes;
+    const presetNodeTransform: LegacyTransformConfig | null = profile.nodeTransformPresetId
         ? Array.isArray(settings.nodeTransformPresets)
-            ? settings.nodeTransformPresets.find(
-                  (item: any) => item?.id === profile.nodeTransformPresetId
-              )?.config
+            ? ((
+                  settings.nodeTransformPresets as Array<{
+                      id?: string;
+                      config?: LegacyTransformConfig;
+                  }>
+              ).find((item) => item?.id === profile.nodeTransformPresetId)?.config ?? null)
             : null
         : null;
     const effectiveNodeTransform = profile.nodeTransform?.enabled
-        ? profile.nodeTransform
+        ? (profile.nodeTransform as LegacyTransformConfig)
         : presetNodeTransform;
 
     if (applyTransform) {
-        const nodeUrls = allNodes.map((node) => node.url);
-        const nodeMetadataByUrl = new Map(
-            allNodes.map((node) => [node.url, { group: node.group || '' }])
+        const nodeUrls = allNodes.map((node) => String(node.url || ''));
+        const nodeMetadataByUrl = new Map<string, { group: string }>(
+            allNodes.map((node): [string, { group: string }] => [
+                String(node.url || ''),
+                { group: String(node.group || '') },
+            ])
         );
 
         let activeOperators = ensureArray(profile?.operators);
@@ -326,7 +414,7 @@ export async function handleProfileMode(
             });
         }
 
-        let transformedUrls = nodeUrls;
+        let transformedUrls: string[] = nodeUrls;
         if (activeOperators.length > 0) {
             transformedUrls = await runOperatorChain(nodeUrls, activeOperators, {
                 subName: profile?.name,
@@ -349,7 +437,7 @@ export async function handleProfileMode(
             const nodeInfo = parseNodeInfo(transformedUrl);
             const originalNode = allNodes.find((n) => {
                 try {
-                    const origUrl = new URL(n.url);
+                    const origUrl = new URL(String(n.url || ''));
                     const transUrl = new URL(transformedUrl);
                     return origUrl.hostname === transUrl.hostname && origUrl.port === transUrl.port;
                 } catch {
@@ -360,7 +448,7 @@ export async function handleProfileMode(
                 ...nodeInfo,
                 subscriptionName:
                     originalNode?.subscriptionName ||
-                    (nodeInfo as Record<string, any>).subscriptionName ||
+                    (nodeInfo as Record<string, unknown>).subscriptionName ||
                     '未知',
             };
         });

@@ -182,7 +182,11 @@ export async function resolveSubscriptionTargets({
                                 1,
                                 new Set([profile.id, profile.customId].filter(Boolean))
                             );
-                            if (subResult.success && Array.isArray(subResult.nodes)) {
+                            if (
+                                !(subResult instanceof Response) &&
+                                subResult.success &&
+                                Array.isArray(subResult.nodes)
+                            ) {
                                 (subResult.nodes as Record<string, any>).forEach((node: any) => {
                                     targetMisubs.push({
                                         id: `nested-${subProfileId}-${node.url}`,
