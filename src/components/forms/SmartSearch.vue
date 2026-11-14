@@ -25,30 +25,51 @@
 
     const emit = defineEmits(['update:results', 'update:query']);
 
+    /** 待搜索条目（字段按 searchFields 动态读取） */
+    type SearchItem = Record<string, unknown>;
+
+    /** 快捷过滤器 */
+    interface SmartFilter {
+        key: string;
+        label?: string;
+        count?: number;
+        predicate: (item: SearchItem) => boolean;
+    }
+
     const searchQuery = ref('');
-    const activeFilters = ref(new Set());
-    const searchHistory = ref<any[]>([]);
+    const activeFilters = ref(new Set<string>());
+    const searchHistory = ref<string[]>([]);
+
+    // props 为 unknown[]，统一收窄后供脚本与模板使用
+    const items = computed<SearchItem[]>(() => (props.items || []) as SearchItem[]);
+    const searchFields = computed<string[]>(() =>
+        (props.searchFields || []).map((field) => String(field))
+    );
+    const filterList = computed<SmartFilter[]>(() => (props.filters || []) as SmartFilter[]);
 
     // 智能搜索结果
-    const searchResults = computed(() => {
+    const searchResults = computed<SearchItem[]>(() => {
         if (!searchQuery.value && activeFilters.value.size === 0) {
-            return props.items;
+            return items.value;
         }
 
-        return props.items.filter((item: any) => {
+        const query = searchQuery.value.toLowerCase();
+
+        return items.value.filter((item) => {
             // 文本搜索
             const matchesText =
                 !searchQuery.value ||
-                props.searchFields.some((field: any) =>
-                    (((item[field]?.toLowerCase().includes(searchQuery.value.toLowerCase()) as any) as any) as any)
-                );
+                searchFields.value.some((field) => {
+                    const value = item[field];
+                    return typeof value === 'string' && value.toLowerCase().includes(query);
+                });
 
             // 过滤器匹配
             const matchesFilters =
                 activeFilters.value.size === 0 ||
                 Array.from(activeFilters.value).every((filter) => {
-                    const filterConfig = props.filters.find((f) => (f as Record<string, any>).key === filter);
-                    return (filterConfig as Record<string, any> | undefined)?.predicate(item) ?? true;
+                    const filterConfig = filterList.value.find((entry) => entry.key === filter);
+                    return filterConfig?.predicate(item) ?? true;
                 });
 
             return matchesText && matchesFilters;
@@ -56,33 +77,30 @@
     });
 
     // 搜索建议
-    const suggestions = computed(() => {
+    const suggestions = computed<string[]>(() => {
         if (!searchQuery.value || searchQuery.value.length < 2) return [];
 
-        const suggestions = new Set();
+        const query = searchQuery.value.toLowerCase();
+        const suggestions = new Set<string>();
 
-        props.items.forEach((item: any) => {
-            props.searchFields.forEach((field) => {
-                const value = ((((item as Record<string, any>)[field as any] as any) as any) as any);
-                if (value && value.toLowerCase().includes(searchQuery.value.toLowerCase())) {
-                    // 提取匹配的部分作为建议
-                    const words = value.split(/\s+/);
-                    words.forEach((word: any) => {
-                        if (
-                            word.toLowerCase().includes(searchQuery.value.toLowerCase()) &&
-                            word.length > 2
-                        ) {
-                            suggestions.add(word);
-                        }
-                    });
-                }
+        items.value.forEach((item) => {
+            searchFields.value.forEach((field) => {
+                const value = item[field];
+                if (typeof value !== 'string' || !value.toLowerCase().includes(query)) return;
+
+                // 提取匹配的部分作为建议
+                value.split(/\s+/).forEach((word) => {
+                    if (word.toLowerCase().includes(query) && word.length > 2) {
+                        suggestions.add(word);
+                    }
+                });
             });
         });
 
         return Array.from(suggestions).slice(0, 5);
     });
 
-    const toggleFilter = (filterKey: any) => {
+    const toggleFilter = (filterKey: string) => {
         if (activeFilters.value.has(filterKey)) {
             activeFilters.value.delete(filterKey);
         } else {
@@ -91,12 +109,12 @@
         activeFilters.value = new Set(activeFilters.value); // 触发响应式更新
     };
 
-    const selectSuggestion = (suggestion: any) => {
+    const selectSuggestion = (suggestion: string) => {
         searchQuery.value = suggestion;
         addToHistory(suggestion);
     };
 
-    const addToHistory = (query: any) => {
+    const addToHistory = (query: string) => {
         if (query && !searchHistory.value.includes(query)) {
             searchHistory.value.unshift(query);
             searchHistory.value = searchHistory.value.slice(0, 10); // 保留最近10个
@@ -169,19 +187,19 @@
         <!-- 快捷过滤器 -->
         <div v-if="filters.length > 0" class="flex flex-wrap gap-2">
             <button
-                v-for="filter in filters"
-                :key="(filter as Record<string, any>).key"
-                @click="toggleFilter((filter as Record<string, any>).key)"
+                v-for="filter in filterList"
+                :key="filter.key"
+                @click="toggleFilter(filter.key)"
                 class="px-3 py-1.5 text-sm font-medium rounded-full smooth-all"
                 :class="
-                    activeFilters.has((filter as Record<string, any>).key)
+                    activeFilters.has(filter.key)
                         ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                 "
             >
-                {{ (filter as Record<string, any>).label }}
-                <span v-if="(filter as Record<string, any>).count !== undefined" class="ml-1 opacity-60">
-                    ({{ (filter as Record<string, any>).count }})
+                {{ filter.label }}
+                <span v-if="filter.count !== undefined" class="ml-1 opacity-60">
+                    ({{ filter.count }})
                 </span>
             </button>
         </div>
@@ -197,7 +215,7 @@
                 </p>
                 <button
                     v-for="suggestion in suggestions"
-                    :key="(suggestion as any)"
+                    :key="suggestion"
                     @click="selectSuggestion(suggestion)"
                     class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 misub-radius-md smooth-all"
                 >
