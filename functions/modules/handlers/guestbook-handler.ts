@@ -13,37 +13,74 @@ import {
 import { sendTgNotification } from '../notifications.ts';
 import { KV_KEY_GUESTBOOK, KV_KEY_SETTINGS, DEFAULT_SETTINGS } from '../config.ts';
 
+import type { MisubSettings } from '../../../types/models.ts';
+
 const GUESTBOOK_INDEX_KEY = `${KV_KEY_GUESTBOOK}_index`;
 const GUESTBOOK_ITEM_PREFIX = `${KV_KEY_GUESTBOOK}:item:`;
+
+/** 留言条目 */
+interface GuestbookMessage {
+    id: string;
+    nickname: string;
+    content: string;
+    type: string;
+    status: string;
+    createdAt: string;
+    isVisible: boolean;
+    reply: string | null;
+    replyAt: string | null;
+    [key: string]: unknown;
+}
+
+/** 留言板配置 */
+interface GuestbookConfig {
+    enabled: boolean;
+    requireAudit?: boolean;
+    allowAnonymous?: boolean;
+}
+
+/** 存储适配器（工厂返回的具体实现） */
+type GuestbookStorage = ReturnType<typeof StorageFactory.createAdapter>;
+
+/** 从未知错误中提取 HTTP 状态码 */
+function getErrorStatus(error: unknown): number {
+    const status = (error as { status?: unknown } | null)?.status;
+    return typeof status === 'number' ? status : 500;
+}
 
 /**
  * 获取存储适配器实例
  */
-async function getStorageAdapter(env: any) {
+async function getStorageAdapter(env: Env): Promise<GuestbookStorage> {
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }
 
-function getGuestbookItemKey(id: any) {
+function getGuestbookItemKey(id: unknown): string {
     return `${GUESTBOOK_ITEM_PREFIX}${id}`;
 }
 
-async function loadGuestbookMessages(storageAdapter: any) {
+async function loadGuestbookMessages(
+    storageAdapter: GuestbookStorage
+): Promise<GuestbookMessage[]> {
     const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
     if (Array.isArray(index) && index.length > 0) {
         const entries = await Promise.all(
             index.map((id) => storageAdapter.get(getGuestbookItemKey(id)))
         );
-        return entries.filter(Boolean);
+        return entries.filter(Boolean) as GuestbookMessage[];
     }
 
     const legacy = await storageAdapter.get(KV_KEY_GUESTBOOK);
-    return Array.isArray(legacy) ? legacy : [];
+    return Array.isArray(legacy) ? (legacy as GuestbookMessage[]) : [];
 }
 
-async function persistGuestbookMessage(storageAdapter: any, message: any) {
+async function persistGuestbookMessage(
+    storageAdapter: GuestbookStorage,
+    message: GuestbookMessage
+): Promise<void> {
     const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
-    const ids = Array.isArray(index) ? index : [];
+    const ids: unknown[] = Array.isArray(index) ? index : [];
     if (!ids.includes(message.id)) {
         ids.push(message.id);
         await storageAdapter.put(GUESTBOOK_INDEX_KEY, ids);
@@ -51,7 +88,7 @@ async function persistGuestbookMessage(storageAdapter: any, message: any) {
     await storageAdapter.put(getGuestbookItemKey(message.id), message);
 }
 
-async function removeGuestbookMessage(storageAdapter: any, id: any) {
+async function removeGuestbookMessage(storageAdapter: GuestbookStorage, id: string): Promise<void> {
     const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
     const ids = Array.isArray(index) ? index.filter((item) => item !== id) : [];
     await storageAdapter.put(GUESTBOOK_INDEX_KEY, ids);
@@ -62,15 +99,17 @@ async function removeGuestbookMessage(storageAdapter: any, id: any) {
  * 获取公开留言列表
  * 仅返回 isVisible 为 true 的留言
  */
-export async function handleGuestbookGet(env: any) {
+export async function handleGuestbookGet(env: Env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
-        const [messages, settings] = await Promise.all([
+        const [messages, rawSettings] = await Promise.all([
             loadGuestbookMessages(storageAdapter),
-            storageAdapter.get(KV_KEY_SETTINGS).then((res) => res || {}),
+            storageAdapter.get(KV_KEY_SETTINGS),
         ]);
+        const settings = (rawSettings || {}) as MisubSettings;
 
-        const guestbookConfig = settings.guestbook || DEFAULT_SETTINGS.guestbook;
+        const guestbookConfig: GuestbookConfig =
+            (settings.guestbook as GuestbookConfig | undefined) || DEFAULT_SETTINGS.guestbook;
 
         // 如果功能未启用，返回空列表或错误状态
         if (!guestbookConfig.enabled) {
@@ -114,38 +153,45 @@ export async function handleGuestbookGet(env: any) {
 /**
  * 提交新留言 (Public)
  */
-export async function handleGuestbookPost(request: any, env: any) {
+export async function handleGuestbookPost(request: Request, env: Env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
-        const settings = await storageAdapter.get(KV_KEY_SETTINGS).then((res) => res || {});
-        const guestbookConfig = settings.guestbook || DEFAULT_SETTINGS.guestbook;
+        const rawSettings = await storageAdapter.get(KV_KEY_SETTINGS);
+        const settings = (rawSettings || {}) as MisubSettings;
+        const guestbookConfig: GuestbookConfig =
+            (settings.guestbook as GuestbookConfig | undefined) || DEFAULT_SETTINGS.guestbook;
 
         if (!guestbookConfig.enabled) {
             return createErrorResponse('留言板功能未启用', 403);
         }
 
-        const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
+        const body = (await readJsonWithLimit(request, JSON_BODY_LIMITS.small)) as Record<
+            string,
+            unknown
+        >;
         const { nickname, content, type } = body;
 
         // 基础验证
-        if (!content || content.trim().length === 0) {
+        const contentText = typeof content === 'string' ? content : '';
+        if (!contentText || contentText.trim().length === 0) {
             return createErrorResponse('留言内容不能为空', 400);
         }
-        if (content.length > 500) {
+        if (contentText.length > 500) {
             return createErrorResponse('留言内容过长（最大500字）', 400);
         }
 
-        let finalNickname = nickname ? nickname.trim() : '匿名用户';
+        const nicknameText = typeof nickname === 'string' ? nickname.trim() : '';
+        let finalNickname = nicknameText || '匿名用户';
         if (finalNickname.length > 20) {
             finalNickname = finalNickname.substring(0, 20);
         }
 
         // 构建新留言
-        const newMessage = {
+        const newMessage: GuestbookMessage = {
             id: crypto.randomUUID(),
             nickname: finalNickname,
-            content: content.trim(),
-            type: type || 'general', // general, feature, bug
+            content: contentText.trim(),
+            type: typeof type === 'string' && type ? type : 'general', // general, feature, bug
             createdAt: new Date().toISOString(),
             status: 'pending',
             isVisible: !guestbookConfig.requireAudit, // 如果不需要审核，则默认可见
@@ -176,17 +222,15 @@ export async function handleGuestbookPost(request: any, env: any) {
         });
     } catch (e) {
         console.error('[Guestbook Error] Post:', e);
-        return createErrorResponse(
-            (e as Record<string, any>).status === 413 ? (e as Error).message : '提交留言失败',
-            (e as Record<string, any>).status || 500
-        );
+        const status = getErrorStatus(e);
+        return createErrorResponse(status === 413 ? (e as Error).message : '提交留言失败', status);
     }
 }
 
 /**
  * 获取管理端留言列表 (Auth Required)
  */
-export async function handleGuestbookManageGet(env: any) {
+export async function handleGuestbookManageGet(env: Env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const messages = await loadGuestbookMessages(storageAdapter);
@@ -212,10 +256,13 @@ export async function handleGuestbookManageGet(env: any) {
  * - delete: 删除
  * - toggle: 切换可见性
  */
-export async function handleGuestbookManageAction(request: any, env: any) {
+export async function handleGuestbookManageAction(request: Request, env: Env) {
     try {
-        const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
-        const { action, id, replyContent } = body; // action: 'reply' | 'delete' | 'toggle' | 'update_status'
+        const body = (await readJsonWithLimit(request, JSON_BODY_LIMITS.small)) as Record<
+            string,
+            unknown
+        >;
+        const { action, id, replyContent, status } = body; // action: 'reply' | 'delete' | 'toggle' | 'update_status'
 
         const storageAdapter = await getStorageAdapter(env);
         const messages = await loadGuestbookMessages(storageAdapter);
@@ -225,14 +272,13 @@ export async function handleGuestbookManageAction(request: any, env: any) {
             return createErrorResponse('留言不存在', 404);
         }
 
-        let updatedMessage = messages[index];
-        let notificationMsg: any = null;
+        const updatedMessage = messages[index];
 
         if (action === 'delete') {
             messages.splice(index, 1);
-            await removeGuestbookMessage(storageAdapter, id);
+            await removeGuestbookMessage(storageAdapter, String(id));
         } else if (action === 'reply') {
-            updatedMessage.reply = replyContent;
+            updatedMessage.reply = (replyContent ?? null) as string | null;
             updatedMessage.replyAt = new Date().toISOString();
             updatedMessage.status = 'replied';
             // 自动通过审核（如果回复了肯定是要显示的）
@@ -247,7 +293,7 @@ export async function handleGuestbookManageAction(request: any, env: any) {
             }
         } else if (action === 'status') {
             // 只更新状态，例如改为 'pending' or 'approved'
-            if (body.status) updatedMessage.status = body.status;
+            if (status) updatedMessage.status = String(status);
         } else {
             return createErrorResponse('未知操作', 400);
         }
@@ -263,9 +309,6 @@ export async function handleGuestbookManageAction(request: any, env: any) {
         });
     } catch (e) {
         console.error('[Guestbook Manage Error] Action:', e);
-        return createErrorResponse(
-            `操作失败: ${(e as Error).message}`,
-            (e as Record<string, any>).status || 500
-        );
+        return createErrorResponse(`操作失败: ${(e as Error).message}`, getErrorStatus(e));
     }
 }
