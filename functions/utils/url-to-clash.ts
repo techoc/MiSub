@@ -20,8 +20,14 @@ import {
     parseWireguardUrl,
 } from './url-to-clash/parse-modern-protocols.ts';
 import { parseHttpsUrl, parseSocks5Url } from './url-to-clash/parse-legacy-schemes.ts';
+import type { ProxyNode } from '../../types/models.ts';
 
-export function urlToClashProxy(url: any) {
+/** 各协议解析器返回宽松对象，这里统一收窄为 ProxyNode */
+function asProxyNode(proxy: unknown): ProxyNode | null {
+    return (proxy as ProxyNode | null) ?? null;
+}
+
+export function urlToClashProxy(url: unknown): ProxyNode | null {
     if (!url || typeof url !== 'string') return null;
 
     if (/^mierus:\/\//i.test(url)) {
@@ -45,7 +51,7 @@ export function urlToClashProxy(url: any) {
                 server = authority.slice(0, split);
                 port = Number(authority.slice(split + 1));
             }
-            const proxy: Record<string, any> = {
+            const proxy: ProxyNode = {
                 name: extractName(url) || `Mieru-${server}`,
                 type: 'mieru',
                 server,
@@ -65,33 +71,33 @@ export function urlToClashProxy(url: any) {
     const lowerUrl = url.toLowerCase();
 
     if (lowerUrl.startsWith('vless://')) {
-        return parseVlessUrl(url);
+        return asProxyNode(parseVlessUrl(url));
     } else if (lowerUrl.startsWith('trojan://')) {
-        return parseTrojanUrl(url);
+        return asProxyNode(parseTrojanUrl(url));
     } else if (lowerUrl.startsWith('vmess://')) {
-        return parseVmessUrl(url);
+        return asProxyNode(parseVmessUrl(url));
     } else if (lowerUrl.startsWith('ssr://')) {
-        return parseSsrUrl(url);
+        return asProxyNode(parseSsrUrl(url));
     } else if (lowerUrl.startsWith('ssd://')) {
-        return parseSsdUrl(url);
+        return asProxyNode(parseSsdUrl(url));
     } else if (lowerUrl.startsWith('ss://')) {
-        return parseSsUrl(url);
+        return asProxyNode(parseSsUrl(url));
     } else if (lowerUrl.startsWith('hysteria2://') || lowerUrl.startsWith('hy2://')) {
-        return parseHysteria2Url(url);
+        return asProxyNode(parseHysteria2Url(url));
     } else if (lowerUrl.startsWith('tuic://')) {
-        return parseTuicUrl(url);
+        return asProxyNode(parseTuicUrl(url));
     } else if (lowerUrl.startsWith('snell://')) {
-        return parseSnellUrl(url);
+        return asProxyNode(parseSnellUrl(url));
     } else if (lowerUrl.startsWith('wireguard://')) {
-        return parseWireguardUrl(url);
+        return asProxyNode(parseWireguardUrl(url));
     } else if (lowerUrl.startsWith('anytls://')) {
-        return parseAnytlsUrl(url);
+        return asProxyNode(parseAnytlsUrl(url));
     } else if (lowerUrl.startsWith('https://')) {
-        return parseHttpsUrl(url);
+        return asProxyNode(parseHttpsUrl(url));
     } else if (lowerUrl.startsWith('http://')) {
-        return parseHttpsUrl(url, false);
+        return asProxyNode(parseHttpsUrl(url, false));
     } else if (lowerUrl.startsWith('socks5://')) {
-        return parseSocks5Url(url);
+        return asProxyNode(parseSocks5Url(url));
     }
 
     // 不支持的协议
@@ -104,17 +110,19 @@ export function urlToClashProxy(url: any) {
  * @param {Object} options - 参数增强选项 (tfo, udp, scv 等)
  * @returns {Object[]} Clash 代理对象数组
  */
-export function urlsToClashProxies(urls: any, options: Record<string, any> = {}) {
+export function urlsToClashProxies(
+    urls: unknown,
+    options: Record<string, unknown> = {}
+): ProxyNode[] {
     if (!Array.isArray(urls)) return [];
 
     return urls
-        .map((url) => {
+        .map((url: unknown) => {
             const proxy = urlToClashProxy(url);
             if (!proxy) return null;
 
             // [URL 参数覆盖] 补全对 TFO/UDP/SCV 的映射
-            if (options.enableTfo !== undefined)
-                (proxy as Record<string, any>).tfo = options.enableTfo;
+            if (options.enableTfo !== undefined) proxy.tfo = options.enableTfo;
 
             if (options.enableUdp !== undefined) {
                 const type = (proxy.type || '').toLowerCase();
@@ -123,44 +131,43 @@ export function urlsToClashProxies(urls: any, options: Record<string, any> = {})
                 );
 
                 if (options.enableUdp) {
-                    (proxy as Record<string, any>).udp = true;
+                    proxy.udp = true;
                 } else if (!isNativeUdp) {
-                    (proxy as Record<string, any>).udp = false;
+                    proxy.udp = false;
                 } else {
-                    (proxy as Record<string, any>).udp = true; // 原生 UDP 协议即便开关关闭也保持开启
+                    proxy.udp = true; // 原生 UDP 协议即便开关关闭也保持开启
                 }
             }
 
-            if (options.skipCertVerify) (proxy as Record<string, any>)['skip-cert-verify'] = true;
+            if (options.skipCertVerify) proxy['skip-cert-verify'] = true;
 
-            if (
-                options.supportX25519mlkem768 !== undefined &&
-                (proxy as Record<string, any>)['reality-opts']
-            ) {
+            if (options.supportX25519mlkem768 !== undefined && proxy['reality-opts']) {
                 if (options.supportX25519mlkem768) {
-                    (proxy as Record<string, any>)['reality-opts']['support-x25519mlkem768'] = true;
+                    proxy['reality-opts']['support-x25519mlkem768'] = true;
                 } else {
-                    delete (proxy as Record<string, any>)['reality-opts']['support-x25519mlkem768'];
+                    delete proxy['reality-opts']['support-x25519mlkem768'];
                 }
             }
 
             // [智能增强] 注入元数据
-            (proxy as Record<string, any>).metadata = extractNodeMetadata(proxy.name);
+            const metadata = extractNodeMetadata(proxy.name);
+            proxy.metadata = metadata;
 
             // [自动补全] 仅在名称中完全没有国旗/地球 Emoji 时才尝试补全，避免重复添加或干扰用户重命名
             const HAS_EMOJI_REGEX = /([\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F30D}-\u{1F30F}])/u;
             if (
                 options.addFlagEmoji !== false &&
-                ((proxy as Record<string, any>).metadata as Record<string, any>).flag &&
+                metadata.flag &&
                 !HAS_EMOJI_REGEX.test(proxy.name)
             ) {
-                proxy.name = `${((proxy as Record<string, any>).metadata as Record<string, any>).flag} ${proxy.name}`;
+                proxy.name = `${metadata.flag} ${proxy.name}`;
             }
 
             return proxy;
         })
         .filter(
-            (proxy) => proxy !== null && (isVirtualInfoProxy(proxy) || !isLocalProxyEndpoint(proxy))
+            (proxy): proxy is ProxyNode =>
+                proxy !== null && (isVirtualInfoProxy(proxy) || !isLocalProxyEndpoint(proxy))
         );
 }
 
@@ -170,7 +177,7 @@ export function urlsToClashProxies(urls: any, options: Record<string, any> = {})
  * @param {Object} options - 配置选项
  * @returns {string} Clash YAML 配置
  */
-export function generateClashConfig(urls: any, options: Record<string, any> = {}) {
+export function generateClashConfig(urls: unknown, options: Record<string, unknown> = {}): string {
     const proxies = urlsToClashProxies(urls, options);
 
     if (proxies.length === 0) {
@@ -182,7 +189,7 @@ export function generateClashConfig(urls: any, options: Record<string, any> = {}
 
     for (const proxy of proxies) {
         // [元数据清理] 移除内部元数据字段，避免污染 YAML
-        const { metadata, ...rest } = proxy as Record<string, any>;
+        const { metadata, ...rest } = proxy;
         yaml += `  - ${JSON.stringify(rest)}\n`;
     }
 
