@@ -10,8 +10,33 @@ import { handleNodeInput } from './node-input.ts';
 import { sendTelegramMessage } from './telegram-api.ts';
 
 import type { KvRecord } from '../../../../types/models.ts';
+
 /** Telegram 单文件下载大小上限（字节），防止大文件拖垮 Worker */
 const TG_MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+/** 文件/照片附件的公共字段 */
+interface TelegramFileDoc {
+    file_id?: string;
+    file_name?: string;
+    file_size?: number;
+}
+
+/** Telegram message（仅声明本模块用到的字段） */
+interface TelegramFileMessage {
+    document?: TelegramFileDoc | null;
+    photo?: TelegramFileDoc[] | null;
+}
+
+/** getFile 响应 */
+interface TelegramFileResponse {
+    ok?: boolean;
+    result?: { file_path?: string };
+}
+
+/** 机器人配置（需含 bot_token） */
+interface TelegramFileConfig {
+    bot_token?: string;
+}
 
 /**
  * 下载 Telegram 消息中的文件/文档内容。
@@ -23,7 +48,10 @@ const TG_MAX_FILE_BYTES = 5 * 1024 * 1024;
  * @param {Object} config  机器人配置（需含 bot_token）
  * @returns {Promise<{text: string, fileName: string}>}
  */
-async function downloadTelegramFile(message: any, config: any) {
+async function downloadTelegramFile(
+    message: TelegramFileMessage | null | undefined,
+    config: TelegramFileConfig
+): Promise<{ text: string; fileName: string }> {
     const doc =
         message?.document || (message?.photo ? message.photo[message.photo.length - 1] : null);
     if (!doc) return { text: '', fileName: '' };
@@ -39,20 +67,16 @@ async function downloadTelegramFile(message: any, config: any) {
 
     // 1. getFile
     const fileRes = await fetch(
-        `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(doc.file_id)}`
+        `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(String(doc.file_id || ''))}`
     );
-    const fileData = await fileRes.json();
-    if (
-        !(fileData as Record<string, any> | undefined)?.ok ||
-        !((fileData as Record<string, any>).result as Record<string, any> | undefined)?.file_path
-    ) {
+    const fileData = (await fileRes.json()) as TelegramFileResponse | null;
+    const filePath = fileData?.result?.file_path;
+    if (!fileData?.ok || !filePath) {
         throw new Error('获取文件路径失败（文件可能已过期）');
     }
 
     // 2. 下载正文
-    const contentRes = await fetch(
-        `https://api.telegram.org/file/bot${token}/${((fileData as Record<string, any>).result as Record<string, any>).file_path}`
-    );
+    const contentRes = await fetch(`https://api.telegram.org/file/bot${token}/${filePath}`);
     if (!contentRes.ok) {
         throw new Error(`下载文件失败（HTTP ${contentRes.status}）`);
     }
@@ -60,12 +84,7 @@ async function downloadTelegramFile(message: any, config: any) {
     const text = await contentRes.text();
     return {
         text,
-        fileName:
-            doc.file_name ||
-            ((fileData as Record<string, any>).result as Record<string, any>).file_path
-                .split('/')
-                .pop() ||
-            'file',
+        fileName: doc.file_name || filePath.split('/').pop() || 'file',
     };
 }
 
@@ -83,11 +102,11 @@ async function downloadTelegramFile(message: any, config: any) {
  * @param {Object|null} requestCache
  */
 export async function handleFileInput(
-    chatId: any,
-    message: any,
-    userId: any,
-    config: any,
-    env: any,
+    chatId: string | number,
+    message: TelegramFileMessage | null | undefined,
+    userId: string | number,
+    config: TelegramFileConfig,
+    env: Env,
     requestCache: KvRecord | null = null
 ) {
     try {
@@ -100,12 +119,12 @@ export async function handleFileInput(
         }
 
         // 优先按「解析出节点」处理；若文件里是订阅链接，则由 handleNodeInput 识别
-        const nodes = extractValidNodes(text);
+        const nodes: unknown[] = extractValidNodes(text);
         if (nodes.length > 0) {
             // extractValidNodes 返回节点链接字符串数组
             const nodeLines = nodes
                 .map((n) =>
-                    typeof n === 'string' ? n : (n as Record<string, any> | undefined)?.url
+                    typeof n === 'string' ? n : String((n as { url?: unknown } | null)?.url || '')
                 )
                 .filter(Boolean)
                 .join('\n');
