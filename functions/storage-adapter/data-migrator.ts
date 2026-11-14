@@ -62,7 +62,7 @@ export class DataMigrator {
                 profiles: false,
                 settings: false,
                 keys: {},
-                errors: [],
+                errors: [] as any[],
             };
 
             const copyKey = async (key) => {
@@ -134,7 +134,7 @@ export class DataMigrator {
         const results = {
             subscriptions: 0,
             profiles: 0,
-            errors: [],
+            errors: [] as any[],
         };
 
         try {
@@ -163,7 +163,10 @@ export class DataMigrator {
                     await d1Adapter.putProfile(item);
                     results.profiles += 1;
                 }
-                await (d1Adapter.db as Record<string, any>).prepare('DELETE FROM profiles WHERE id = ?').bind('main').run();
+                await (d1Adapter.db as Record<string, any>)
+                    .prepare('DELETE FROM profiles WHERE id = ?')
+                    .bind('main')
+                    .run();
                 invalidateD1CollectionCache(d1Adapter.db, 'profiles');
             }
         } catch (error) {
@@ -188,11 +191,14 @@ export class DataMigrator {
                 .prepare('SELECT data FROM subscriptions WHERE id = ?')
                 .bind('main')
                 .first(),
-            (d1Adapter.db as Record<string, any>).prepare('SELECT data FROM profiles WHERE id = ?').bind('main').first(),
+            (d1Adapter.db as Record<string, any>)
+                .prepare('SELECT data FROM profiles WHERE id = ?')
+                .bind('main')
+                .first(),
         ]);
 
         const hasLegacySubscriptions = Array.isArray(
-            legacySubs ? JSON.parse(legacySubs.data) : null
+            legacySubs ? JSON.parse(legacySubs.data as string) : null
         );
         const hasLegacyProfiles = Array.isArray(
             legacyProfiles ? JSON.parse(legacyProfiles.data) : null

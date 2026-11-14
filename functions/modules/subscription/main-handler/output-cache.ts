@@ -125,7 +125,7 @@ function evictIfNeeded(incomingBytes) {
 /**
  * 命中查询。返回 Response 或 null。onHit(entry) 供编排器补记日志/计数。
  */
-export function matchCachedOutput(request, { onHit } = {}) {
+export function matchCachedOutput(request, { onHit }: Record<string, any> = {}) {
     if (!isCacheableRequest(request)) return null;
     const key = buildCacheKey(request);
     if (!key) return null;

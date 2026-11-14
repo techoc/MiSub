@@ -67,7 +67,7 @@ export async function checkAndNotify(sub, settings, env) {
     // 1. 检查订阅到期
     if (sub.userInfo.expire) {
         const expiryDate = new Date(sub.userInfo.expire * 1000);
-        const daysRemaining = Math.ceil((expiryDate - now) / ONE_DAY_MS);
+        const daysRemaining = Math.ceil((expiryDate.getTime() - now) / ONE_DAY_MS);
 
         if (daysRemaining <= (settings.NotifyThresholdDays || 7)) {
             if (!sub.lastNotifiedExpire || now - sub.lastNotifiedExpire > ONE_DAY_MS) {
@@ -168,8 +168,13 @@ export async function handleCronTrigger(env) {
             let hasTrafficUpdate = false;
             let hasNodeCountUpdate = false;
 
-            if (trafficResult.status === 'fulfilled' && (trafficResult as Record<string, any>).value.ok) {
-                const userInfoHeader = (trafficResult as Record<string, any>).value.headers.get('subscription-userinfo');
+            if (
+                trafficResult.status === 'fulfilled' &&
+                (trafficResult as Record<string, any>).value.ok
+            ) {
+                const userInfoHeader = (trafficResult as Record<string, any>).value.headers.get(
+                    'subscription-userinfo'
+                );
                 if (userInfoHeader) {
                     const info = {};
                     userInfoHeader.split(';').forEach((part) => {
@@ -185,7 +190,10 @@ export async function handleCronTrigger(env) {
                 }
             }
 
-            if (nodeCountResult.status === 'fulfilled' && (nodeCountResult as Record<string, any>).value.ok) {
+            if (
+                nodeCountResult.status === 'fulfilled' &&
+                (nodeCountResult as Record<string, any>).value.ok
+            ) {
                 const text = await (nodeCountResult as Record<string, any>).value.text();
                 let decoded = '';
                 try {
@@ -335,7 +343,10 @@ export async function handleCronTrigger(env) {
         if (failedSubscriptions.length > 0) {
             updateMessage += `\n❌ <b>失败详情:</b>\n`;
             failedSubscriptions.slice(0, 5).forEach((f) => {
-                const errorShort = (f.error as Record<string, any>).length > 30 ? f.error.substring(0, 30) + '...' : f.error;
+                const errorShort =
+                    (f.error as Record<string, any>).length > 30
+                        ? f.error.substring(0, 30) + '...'
+                        : f.error;
                 updateMessage += `• ${tgEscape(f.name)}: <code>${tgEscape(errorShort)}</code>\n`;
             });
         }

@@ -62,7 +62,12 @@ export async function handleHelpCommand(chatId, env) {
 /**
  * 处理 /menu 命令 - 快捷菜单
  */
-export async function handleMenuCommand(chatId, env, messageId: KvRecord | null = null, requestCache: KvRecord | null = null) {
+export async function handleMenuCommand(
+    chatId,
+    env,
+    messageId: KvRecord | null = null,
+    requestCache: KvRecord | null = null
+) {
     const keyboard = {
         inline_keyboard: [
             [
@@ -110,7 +115,7 @@ export async function handleListCommand(
     type = 'all',
     messageId: KvRecord | null = null,
     requestCache: KvRecord | null = null,
-    groupFilter = null
+    groupFilter: any = null
 ) {
     try {
         const cache = requestCache || createRequestCache();
@@ -264,7 +269,12 @@ export async function handleListCommand(
     }
 }
 
-export async function handleListTypeSelector(chatId, env, messageId: KvRecord | null = null, requestCache: KvRecord | null = null) {
+export async function handleListTypeSelector(
+    chatId,
+    env,
+    messageId: KvRecord | null = null,
+    requestCache: KvRecord | null = null
+) {
     const message =
         '📋 <b>请选择列表类型</b>\n\n' +
         '🚀 节点列表：手动添加的代理节点\n' +
@@ -293,7 +303,12 @@ export async function handleListTypeSelector(chatId, env, messageId: KvRecord | 
 /**
  * 处理 /stats 命令
  */
-export async function handleStatsCommand(chatId, userId, env, requestCache: KvRecord | null = null) {
+export async function handleStatsCommand(
+    chatId,
+    userId,
+    env,
+    requestCache: KvRecord | null = null
+) {
     try {
         const userNodes = await getUserNodes(userId, env);
 
@@ -330,7 +345,7 @@ export async function handleStatsCommand(chatId, userId, env, requestCache: KvRe
         if (Object.keys(protocolCounts).length > 0) {
             message += `<b>节点协议分布：</b>\n`;
             Object.entries(protocolCounts)
-                .sort((a, b) => b[1] - a[1])
+                .sort((a, b) => (b[1] as number) - (a[1] as number))
                 .forEach(([protocol, count]) => {
                     message += `• ${protocol}: ${count}\n`;
                 });

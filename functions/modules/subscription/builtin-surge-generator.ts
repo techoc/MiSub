@@ -441,7 +441,7 @@ export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any
         if (result) {
             (result as Record<string, any>).clashProxy = clashProxy; // 存储以保留元数据
             results.push(result);
-            proxyNames.push(sanitizeNodeName(clashProxy.name!));
+            proxyNames.push(sanitizeNodeName(clashProxy!.name));
         }
     }
 
@@ -459,7 +459,9 @@ export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any
                 `${uniqueName} = `
             );
             if (updatedResult.wireguardSection) {
-                updatedResult.wireguardSection = (results[i].wireguardSection as Record<string, any>).replace(
+                updatedResult.wireguardSection = (
+                    results[i].wireguardSection as Record<string, any>
+                ).replace(
                     new RegExp(
                         `WG_${escapeRegExp(baseName.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_'))}`,
                         'g'
@@ -504,7 +506,8 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
     const proxiesForGrouping = finalProxyNames.map((name, index) => ({
         tag: name,
         name: name,
-        metadata: (finalResults[index].clashProxy as Record<string, any> | undefined)?.metadata || {},
+        metadata:
+            (finalResults[index].clashProxy as Record<string, any> | undefined)?.metadata || {},
     }));
 
     // 生成策略组

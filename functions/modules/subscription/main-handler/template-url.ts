@@ -110,7 +110,7 @@ export function buildExternalSubconverterUrl({
     searchParams,
     templateSource,
     subName = '',
-} = {}) {
+}: Record<string, any> = {}) {
     const externalUrl = normalizeSubconverterBackend(backend);
     const params = searchParams || new URLSearchParams('');
 
@@ -160,7 +160,10 @@ export function buildExternalSubconverterUrl({
         }
     }
 
-    const effectiveOptions = { ...((globalSub as Record<string, any>).defaultOptions || {}), ...((profileSub as Record<string, any>).options || {}) };
+    const effectiveOptions = {
+        ...((globalSub as Record<string, any>).defaultOptions || {}),
+        ...((profileSub as Record<string, any>).options || {}),
+    };
     const flagMap = {
         udp: 'udp',
         emoji: 'emoji',

@@ -1,4 +1,4 @@
-/**
+import type { KvRecord } from '../../types/models.ts'; /**
  * VLESS xHTTP extra 字段双向映射。
  *
  * 字段表以 mihomo 的 common/convert/v.go 与 adapter/outbound/vless.go 为准。
@@ -474,7 +474,10 @@ export function serializeXhttpExtra(xhttpOpts, upstream: KvRecord | null = null)
  * Xray 的 downloadSettings 是独立 StreamConfig，缺省值不继承上行；mihomo 则在字段缺省时
  * 回退上行值。这里把缺省值写成显式值，让两边语义一致。
  */
-export function applyDownloadInheritanceGuard(xhttpOpts, { upstreamReality } = {}) {
+export function applyDownloadInheritanceGuard(
+    xhttpOpts,
+    { upstreamReality }: Record<string, any> = {}
+) {
     const ds = xhttpOpts && xhttpOpts['download-settings'];
     if (!isPlainObject(ds)) return xhttpOpts;
 

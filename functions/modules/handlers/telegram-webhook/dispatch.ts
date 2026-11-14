@@ -39,7 +39,14 @@ import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 处理命令
  */
-export async function handleCommand(chatId, text, userId, env, request, requestCache: KvRecord | null = null) {
+export async function handleCommand(
+    chatId,
+    text,
+    userId,
+    env,
+    request,
+    requestCache: KvRecord | null = null
+) {
     const parts = text.split(/\s+/);
     const command = parts[0].toLowerCase().split('@')[0]; // 移除 @botname
     const args = parts.slice(1);

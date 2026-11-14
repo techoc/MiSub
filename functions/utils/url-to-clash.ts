@@ -113,7 +113,8 @@ export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
             if (!proxy) return null;
 
             // [URL 参数覆盖] 补全对 TFO/UDP/SCV 的映射
-            if (options.enableTfo !== undefined) (proxy as Record<string, any>).tfo = options.enableTfo;
+            if (options.enableTfo !== undefined)
+                (proxy as Record<string, any>).tfo = options.enableTfo;
 
             if (options.enableUdp !== undefined) {
                 const type = (proxy.type || '').toLowerCase();
@@ -178,7 +179,7 @@ export function generateClashConfig(urls, options: Record<string, any> = {}) {
 
     for (const proxy of proxies) {
         // [元数据清理] 移除内部元数据字段，避免污染 YAML
-        const { metadata, ...rest } = proxy;
+        const { metadata, ...rest } = proxy as Record<string, any>;
         yaml += `  - ${JSON.stringify(rest)}\n`;
     }
 

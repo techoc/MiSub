@@ -34,7 +34,8 @@ export async function handleNodeInput(
     options = {}
 ) {
     // 同一批导入的节点共用一个分组名（文件导入用文件名，文本导入用时间）
-    const importGroupName = (options as Record<string, any>).groupName || buildImportGroupName(options);
+    const importGroupName =
+        (options as Record<string, any>).groupName || buildImportGroupName(options);
     try {
         const cache = requestCache || createRequestCache();
         const config = await getTelegramPushConfig(env, cache);
@@ -86,7 +87,7 @@ export async function handleNodeInput(
                 ? [...subscriptionUrls]
                 : [...subscriptionUrls, ...nodeUrls];
         const addedNodes: any[] = [];
-        const ignoredUrls = [];
+        const ignoredUrls: any[] = [];
 
         for (const url of allUrls) {
             // 去重检测
@@ -224,7 +225,9 @@ export async function handleNodeInput(
             message = `✅ <b>成功添加 ${addedNodes.length} 个项目</b>${ignoreMsg}\n\n`;
             addedNodes.slice(0, 5).forEach((node, index) => {
                 const isSub = /^https?:\/\//i.test(node.url);
-                const label = isSub ? '[订阅]' : `[${(node.url as Record<string, any>).split('://')[0].toUpperCase()}]`;
+                const label = isSub
+                    ? '[订阅]'
+                    : `[${(node.url as Record<string, any>).split('://')[0].toUpperCase()}]`;
                 message += `${index + 1}. ${escapeHtml(node.name)} ${label}\n`;
             });
             if (addedNodes.length > 5) {

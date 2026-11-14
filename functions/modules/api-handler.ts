@@ -220,7 +220,9 @@ export async function handleDataRequest(env, context: PagesEventContext | null =
             isDefaultPassword: await isUsingDefaultPassword(env),
         };
         try {
-            const taskContext: PagesEventContext | { env: Env; waitUntil?: PagesEventContext['waitUntil'] } = context || { env };
+            const taskContext:
+                PagesEventContext | { env: Env; waitUntil?: PagesEventContext['waitUntil'] } =
+                context || { env };
             const runPromise = maybeRunScheduledTasks(taskContext, { source: 'admin-api' });
             if (typeof taskContext.waitUntil !== 'function') {
                 runPromise.catch((error: unknown) =>
@@ -721,7 +723,10 @@ export async function handleSettingsReset(env) {
                 await d1Adapter.delete(KV_KEY_SETTINGS);
             }
         } catch (syncError) {
-            console.warn('[API Reset] Dual storage sync cleanup failed:', (syncError as Error).message);
+            console.warn(
+                '[API Reset] Dual storage sync cleanup failed:',
+                (syncError as Error).message
+            );
         }
 
         // 清除内存缓存

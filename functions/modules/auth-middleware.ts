@@ -117,7 +117,7 @@ export async function verifySignedToken(key, token) {
  * @returns {Promise<Object>}
  */
 export async function getAuthSessionDiagnostic(request, env) {
-    const result = {
+    const result: Record<string, any> = {
         isAuthenticated: false,
         reason: 'unknown',
         cookieHeaderPresent: false,
@@ -366,7 +366,10 @@ export async function handleLogin(request, env) {
         }
         return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
     } catch (e) {
-        console.error('[API Error /login] Login handler failed', { ...logMeta, error: (e as Error | undefined)?.message });
+        console.error('[API Error /login] Login handler failed', {
+            ...logMeta,
+            error: (e as Error | undefined)?.message,
+        });
         return new Response(JSON.stringify({ error: '登录处理失败' }), { status: 500 });
     }
 }

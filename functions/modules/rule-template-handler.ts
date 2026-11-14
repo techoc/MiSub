@@ -41,7 +41,8 @@ export function normalizeCustomRuleTemplates(input: any[] = []) {
     for (const item of input.slice(0, MAX_TEMPLATE_COUNT)) {
         if (!item || typeof item !== 'object') continue;
 
-        const content = typeof item.content === 'string' ? (item.content as Record<string, any>).trim() : '';
+        const content =
+            typeof item.content === 'string' ? (item.content as Record<string, any>).trim() : '';
         if (!content || content.length > MAX_TEMPLATE_CONTENT_LENGTH || !hasIniShape(content))
             continue;
 
@@ -118,7 +119,11 @@ export async function handleRuleTemplatesRequest(request, env) {
             } catch (e) {
                 if ((e as { status?: number } | undefined)?.status === 413) {
                     return createJsonResponse(
-                        { success: false, message: (e as Error).message, error: (e as Error).message },
+                        {
+                            success: false,
+                            message: (e as Error).message,
+                            error: (e as Error).message,
+                        },
                         413
                     );
                 }

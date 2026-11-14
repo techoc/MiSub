@@ -42,7 +42,10 @@ async function downloadTelegramFile(message, config) {
         `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(doc.file_id)}`
     );
     const fileData = await fileRes.json();
-    if (!(fileData as Record<string, any> | undefined)?.ok || !((fileData as Record<string, any>).result as Record<string, any> | undefined)?.file_path) {
+    if (
+        !(fileData as Record<string, any> | undefined)?.ok ||
+        !((fileData as Record<string, any>).result as Record<string, any> | undefined)?.file_path
+    ) {
         throw new Error('获取文件路径失败（文件可能已过期）');
     }
 
@@ -57,7 +60,12 @@ async function downloadTelegramFile(message, config) {
     const text = await contentRes.text();
     return {
         text,
-        fileName: doc.file_name || ((fileData as Record<string, any>).result as Record<string, any>).file_path.split('/').pop() || 'file',
+        fileName:
+            doc.file_name ||
+            ((fileData as Record<string, any>).result as Record<string, any>).file_path
+                .split('/')
+                .pop() ||
+            'file',
     };
 }
 
@@ -74,7 +82,14 @@ async function downloadTelegramFile(message, config) {
  * @param {Object} env
  * @param {Object|null} requestCache
  */
-export async function handleFileInput(chatId, message, userId, config, env, requestCache: KvRecord | null = null) {
+export async function handleFileInput(
+    chatId,
+    message,
+    userId,
+    config,
+    env,
+    requestCache: KvRecord | null = null
+) {
     try {
         await sendTelegramMessage(chatId, '📥 正在读取文件…', env);
 
@@ -89,7 +104,9 @@ export async function handleFileInput(chatId, message, userId, config, env, requ
         if (nodes.length > 0) {
             // extractValidNodes 返回节点链接字符串数组
             const nodeLines = nodes
-                .map((n) => (typeof n === 'string' ? n : (n as Record<string, any> | undefined)?.url))
+                .map((n) =>
+                    typeof n === 'string' ? n : (n as Record<string, any> | undefined)?.url
+                )
                 .filter(Boolean)
                 .join('\n');
             await sendTelegramMessage(

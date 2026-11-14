@@ -51,7 +51,9 @@ function parseOverride(raw) {
     try {
         const parsed = yaml.load(raw.trim());
         if (!isObject(parsed)) return {};
-        return isObject((parsed as Record<string, any>).dns) ? parsed.dns : parsed;
+        return isObject((parsed as Record<string, any>).dns)
+            ? (parsed as Record<string, any>).dns
+            : parsed;
     } catch {
         return {};
     }

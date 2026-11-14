@@ -1,4 +1,4 @@
-/**
+import type { KvRecord } from '../../types/models.ts'; /**
  * 节点缓存服务
  * 解决订阅拉取超时问题：缓存节点数据，快速响应客户端请求
  * @author MiSub Team
@@ -279,7 +279,8 @@ export async function clearAllNodeCaches(storageAdapter, options: Record<string,
 
             // 删除缓存
             for (const keyInfo of keys) {
-                const key = typeof keyInfo === 'string' ? keyInfo : (keyInfo as Error).name || keyInfo;
+                const key =
+                    typeof keyInfo === 'string' ? keyInfo : (keyInfo as Error).name || keyInfo;
                 if (preserveKeys.has(key)) {
                     skipped++;
                     continue;
@@ -316,7 +317,11 @@ export async function clearAllNodeCaches(storageAdapter, options: Record<string,
  * @param {string} token - Token（可选）
  * @returns {Promise<number>} 清除的缓存数量
  */
-export async function invalidateCaches(storageAdapter, profileIds: any[] = [], token: KvRecord | null = null) {
+export async function invalidateCaches(
+    storageAdapter,
+    profileIds: any[] = [],
+    token: KvRecord | null = null
+) {
     let clearedCount = 0;
 
     // 清除 Profile 缓存

@@ -220,7 +220,7 @@ export function validateNodeList(nodeUrls) {
 
         if (!validation.valid) {
             results.invalid++;
-            results.invalidNodes.push({
+            (results.invalidNodes as any[]).push({
                 index,
                 url,
                 error: validation.error,
@@ -228,7 +228,7 @@ export function validateNodeList(nodeUrls) {
             });
         } else if (validation.warning) {
             results.warnings++;
-            results.warningNodes.push({
+            (results.warningNodes as any[]).push({
                 index,
                 url,
                 warning: validation.warning,

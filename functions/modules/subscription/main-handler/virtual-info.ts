@@ -31,7 +31,7 @@ export function buildPrependedVirtualNodes({
                 : 0;
             const expireTimestamp =
                 profileExpireTimestamp > 0 ? profileExpireTimestamp : totalUserInfo.expire;
-            const virtualNodes = [];
+            const virtualNodes: any[] = [];
 
             const totalRemainingBytes = targetMisubs.reduce((acc, sub) => {
                 const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;

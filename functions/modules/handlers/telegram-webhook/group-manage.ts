@@ -22,7 +22,7 @@ export async function handleGroupSelect(
     env,
     messageId: KvRecord | null = null,
     type = 'node',
-    requestCache = null
+    requestCache: Record<string, any> | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
@@ -95,7 +95,7 @@ export async function handleGroupManage(
     env,
     messageId: KvRecord | null = null,
     type = 'node',
-    requestCache = null
+    requestCache: Record<string, any> | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
@@ -155,7 +155,7 @@ export async function handleGroupActions(
     messageId,
     type,
     groupName,
-    requestCache = null
+    requestCache: Record<string, any> | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
@@ -207,7 +207,7 @@ export async function applyGroupOperation(
     groupName,
     op = 'rename',
     newName: KvRecord | null = null,
-    requestCache = null
+    requestCache: Record<string, any> | null = null
 ) {
     const cache = requestCache || createRequestCache();
     const storageAdapter = await getCachedStorageAdapter(env, cache);

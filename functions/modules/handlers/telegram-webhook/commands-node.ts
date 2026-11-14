@@ -279,7 +279,13 @@ export async function handleSearchCommand(chatId, userId, args, env) {
 /**
  * 处理 /sub 命令 - 获取订阅链接
  */
-export async function handleSubCommand(chatId, args, env, request, requestCache: KvRecord | null = null) {
+export async function handleSubCommand(
+    chatId,
+    args,
+    env,
+    request,
+    requestCache: KvRecord | null = null
+) {
     try {
         const cache = requestCache || createRequestCache();
         const profiles = await getCachedProfiles(env, cache);
@@ -358,7 +364,11 @@ export async function handleSubCommand(chatId, args, env, request, requestCache:
         }
     } catch (error) {
         console.error('[Telegram Push] Sub command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 获取订阅失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
@@ -404,7 +414,11 @@ export async function handleSubCommandSimple(chatId, env, requestCache: KvRecord
         await sendTelegramMessage(chatId, message, env);
     } catch (error) {
         console.error('[Telegram Push] Sub command simple failed:', error);
-        await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 获取订阅失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
@@ -462,7 +476,11 @@ export async function handleRenameCommand(chatId, userId, args, env) {
         );
     } catch (error) {
         console.error('[Telegram Push] Rename command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 重命名失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 重命名失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
@@ -544,7 +562,11 @@ export async function handleInfoCommand(chatId, userId, args, env) {
         await sendTelegramMessage(chatId, message, env, { reply_markup: keyboard });
     } catch (error) {
         console.error('[Telegram Push] Info command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 获取详情失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 获取详情失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
@@ -574,12 +596,14 @@ export async function handleCopyCommand(chatId, userId, args, env) {
             return;
         }
 
-        let indicesToCopy = [];
+        let indicesToCopy: any[] = [];
 
         if (target.type === 'all') {
             indicesToCopy = userNodes.map((_, i) => i);
         } else if (target.type === 'index') {
-            indicesToCopy = target.values.filter((idx) => idx >= 0 && idx < userNodes.length)!;
+            indicesToCopy = (target.values as any[]).filter(
+                (idx) => idx >= 0 && idx < userNodes.length
+            );
         }
 
         if (indicesToCopy.length === 0) {
@@ -606,7 +630,11 @@ export async function handleCopyCommand(chatId, userId, args, env) {
         }
     } catch (error) {
         console.error('[Telegram Push] Copy command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 复制失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 复制失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
@@ -672,6 +700,10 @@ export async function handleExportCommand(chatId, userId, args, env) {
         );
     } catch (error) {
         console.error('[Telegram Push] Export command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 导出失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 导出失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }

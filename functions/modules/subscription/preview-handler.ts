@@ -80,7 +80,10 @@ export async function handlePublicPreviewRequest(request, env) {
 
         return createJsonResponse(result);
     } catch (e) {
-        return createErrorResponse(`Preview failed: ${(e as Error).message}`, (e as Record<string, any>).status || 500);
+        return createErrorResponse(
+            `Preview failed: ${(e as Error).message}`,
+            (e as Record<string, any>).status || 500
+        );
     }
 }
 
@@ -90,7 +93,7 @@ export async function handlePublicPreviewRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSubscriptionNodesRequest(request, env) {
+export async function handleSubscriptionNodesRequest(request, env): Promise<Record<string, any>> {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }

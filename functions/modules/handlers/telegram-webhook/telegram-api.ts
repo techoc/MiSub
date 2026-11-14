@@ -47,7 +47,13 @@ export async function sendTelegramMessage(chatId, text, env, options: Record<str
 /**
  * 编辑 Telegram 消息
  */
-export async function editTelegramMessage(chatId, messageId, text, env, options: Record<string, any> = {}) {
+export async function editTelegramMessage(
+    chatId,
+    messageId,
+    text,
+    env,
+    options: Record<string, any> = {}
+) {
     try {
         const config = await getTelegramPushConfig(env, options.requestCache || null);
         if (!config.bot_token) return;

@@ -26,7 +26,7 @@ export function applyPatch(originalItems: any[] = [], diff: Record<string, any> 
                 // Note: This assumes 'updated' contains the FULL item or partial updates?
                 // Usually safe to assume full item replacement for 'updated' based on frontend logic,
                 // but let's do a merge to be safe if only partial fields sent.
-                return { ...item, ...updatesMap.get(item.id) };
+                return { ...item, ...(updatesMap.get(item.id) ?? {}) };
             }
             return item;
         });

@@ -47,6 +47,7 @@ import {
     encodeArrayBufferToBase64,
 } from './subscription-service/filter-rules.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 // —— 兼容导出：测试与外部模块历史上直接从本路径引用这些 helper ——
 export {
     fetchAirportSiteTitle,
@@ -402,7 +403,7 @@ export async function generateCombinedNodeList(
     // --- 阶段 2: 核心转换引擎 (Logic Transformation Engine) ---
     // 优先级: 订阅组 Operator Chain > 全局默认 Operator Chain > 旧版 Node Pipeline (桥接模式)
 
-    let activeOperators = [];
+    let activeOperators: any[] = [];
 
     // 获取工作流配置（支持字符串自动解析）
     if (profilePrefixSettings?.operators) {

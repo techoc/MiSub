@@ -32,7 +32,8 @@ export class SettingsCache {
     static async get(env, adapter = null) {
         const now = Date.now();
         if (adapter) {
-            const scope = (adapter as Record<string, any>).kv || (adapter as Record<string, any>).db || null;
+            const scope =
+                (adapter as Record<string, any>).kv || (adapter as Record<string, any>).db || null;
             let settings: any = null;
             if (scope) {
                 const memo = adapterSettingsMemos.get(scope);
@@ -44,7 +45,10 @@ export class SettingsCache {
                 try {
                     settings = await (adapter as Record<string, any>).get(DATA_KEYS.SETTINGS);
                 } catch (adapterError) {
-                    console.warn('[Storage Cache] Adapter read failed:', (adapterError as Error).message);
+                    console.warn(
+                        '[Storage Cache] Adapter read failed:',
+                        (adapterError as Error).message
+                    );
                 }
             }
             if (settings && scope) {
@@ -67,7 +71,10 @@ export class SettingsCache {
                     const d1Adapter = new D1StorageAdapter(env.MISUB_DB);
                     settings = await d1Adapter.get(DATA_KEYS.SETTINGS);
                 } catch (d1Error) {
-                    console.warn('[Storage Cache] Failed to read from D1:', (d1Error as Error).message);
+                    console.warn(
+                        '[Storage Cache] Failed to read from D1:',
+                        (d1Error as Error).message
+                    );
                 }
             }
 
@@ -77,7 +84,10 @@ export class SettingsCache {
                     const raw = await kvNs.get(DATA_KEYS.SETTINGS);
                     settings = raw ? JSON.parse(raw) : null;
                 } catch (kvError) {
-                    console.warn('[Storage Cache] Failed to read from KV:', (kvError as Error).message);
+                    console.warn(
+                        '[Storage Cache] Failed to read from KV:',
+                        (kvError as Error).message
+                    );
                 }
             }
 

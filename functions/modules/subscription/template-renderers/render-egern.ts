@@ -245,7 +245,7 @@ function mapProxy(proxy) {
 
     // TCP Fast Open
     if (proxy.tfo) {
-        Object.values(mapped)[0].tcp_fast_open = true;
+        (Object.values(mapped)[0] as Record<string, any>).tcp_fast_open = true;
     }
 
     return mapped;

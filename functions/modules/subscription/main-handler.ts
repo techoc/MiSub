@@ -654,7 +654,9 @@ async function runSubscriptionPipeline(context) {
             }
 
             Object.entries(resultHeaders).forEach(([k, v]) => responseHeaders.set(k, v));
-            Object.entries(cacheHeaders).forEach(([key, value]) => responseHeaders.set(key, value));
+            Object.entries(cacheHeaders).forEach(([key, value]) =>
+                responseHeaders.set(key, value as string)
+            );
 
             if (!url.searchParams.has('callback_token') && !shouldSkipLogging) {
                 const clientIp =
@@ -785,7 +787,10 @@ export async function handleMisubRequest(context: PagesEventContext) {
     try {
         return await storeOutput(context, response);
     } catch (err) {
-        console.warn('[Output Cache] Failed to store output:', (err as Error | undefined)?.message || err);
+        console.warn(
+            '[Output Cache] Failed to store output:',
+            (err as Error | undefined)?.message || err
+        );
         return response;
     }
 }

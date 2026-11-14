@@ -128,7 +128,9 @@ export async function handleErrorReportRequest(request, env) {
     } catch (error) {
         console.error('[ErrorReport] Failed to save report:', error);
         return createErrorResponse(
-            (error as Record<string, any>).status === 413 ? (error as Error).message : 'Failed to save error report',
+            (error as Record<string, any>).status === 413
+                ? (error as Error).message
+                : 'Failed to save error report',
             (error as Record<string, any>).status || 500
         );
     }

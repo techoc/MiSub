@@ -46,8 +46,14 @@ function sha256Hex(bytes) {
     view.setUint32(total - 8, Math.floor(bits / 0x100000000), false);
     view.setUint32(total - 4, bits >>> 0, false);
 
-    let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
-    let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+    let h0 = 0x6a09e667,
+        h1 = 0xbb67ae85,
+        h2 = 0x3c6ef372,
+        h3 = 0xa54ff53a;
+    let h4 = 0x510e527f,
+        h5 = 0x9b05688c,
+        h6 = 0x1f83d9ab,
+        h7 = 0x5be0cd19;
     const w = new Uint32Array(64);
 
     for (let off = 0; off < total; off += 64) {
@@ -59,7 +65,14 @@ function sha256Hex(bytes) {
             const s1 = (rotr(y, 17) ^ rotr(y, 19) ^ (y >>> 10)) >>> 0;
             w[t] = (w[t - 16] + s0 + w[t - 7] + s1) >>> 0;
         }
-        let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+        let a = h0,
+            b = h1,
+            c = h2,
+            d = h3,
+            e = h4,
+            f = h5,
+            g = h6,
+            h = h7;
         for (let t = 0; t < 64; t++) {
             const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
             const ch = ((e & f) ^ (~e & g)) >>> 0;
@@ -67,18 +80,33 @@ function sha256Hex(bytes) {
             const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
             const maj = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
             const t2 = (S0 + maj) >>> 0;
-            h = g; g = f; f = e; e = (d + t1) >>> 0;
-            d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+            h = g;
+            g = f;
+            f = e;
+            e = (d + t1) >>> 0;
+            d = c;
+            c = b;
+            b = a;
+            a = (t1 + t2) >>> 0;
         }
-        h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0;
-        h4 = (h4 + e) >>> 0; h5 = (h5 + f) >>> 0; h6 = (h6 + g) >>> 0; h7 = (h7 + h) >>> 0;
+        h0 = (h0 + a) >>> 0;
+        h1 = (h1 + b) >>> 0;
+        h2 = (h2 + c) >>> 0;
+        h3 = (h3 + d) >>> 0;
+        h4 = (h4 + e) >>> 0;
+        h5 = (h5 + f) >>> 0;
+        h6 = (h6 + g) >>> 0;
+        h7 = (h7 + h) >>> 0;
     }
     return [h0, h1, h2, h3, h4, h5, h6, h7].map((x) => x.toString(16).padStart(8, '0')).join('');
 }
 
 /** base64 / base64url -> Uint8Array */
 function base64ToBytes(input) {
-    let s = String(input).replace(/[^A-Za-z0-9+/=_-]/g, '').replace(/-/g, '+').replace(/_/g, '/');
+    let s = String(input)
+        .replace(/[^A-Za-z0-9+/=_-]/g, '')
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
     const pad = s.length % 4;
     if (pad) s += '='.repeat(4 - pad);
     const bin = atob(s);
@@ -96,7 +124,7 @@ function certPemToPinSha256(pem) {
     if (body.length < 64) return '';
     try {
         const hex = sha256Hex(base64ToBytes(body));
-        return hex.toUpperCase().match(/.{2}/g).join(':')!;
+        return hex.toUpperCase().match(/.{2}/g)!.join(':');
     } catch (e) {
         console.debug('[NodeParser] cert fingerprint failed:', e);
         return '';
@@ -139,7 +167,9 @@ function v2rayNToUri(tag, cfg) {
     const sni = cfg.Sni || cfg.sni || cfg.ServerName || cfg.Host || '';
     const pin = certPemToPinSha256(cfg.Cert || cfg.cert || cfg.Certificate || '');
     // 有证书但算不出指纹时，必须跳过证书校验，否则客户端一定握手失败
-    const insecure = v2rayNFlag(cfg.AllowInsecure ?? cfg.allowInsecure ?? cfg.Insecure) || (!pin && !!(cfg.Cert || cfg.cert));
+    const insecure =
+        v2rayNFlag(cfg.AllowInsecure ?? cfg.allowInsecure ?? cfg.Insecure) ||
+        (!pin && !!(cfg.Cert || cfg.cert));
     const extra = cfg.ProtoExtraObj || {};
     const up = cfg.UpMbps ?? extra.UpMbps ?? cfg.upMbps;
     const down = cfg.DownMbps ?? extra.DownMbps ?? cfg.downMbps;
@@ -195,7 +225,8 @@ function v2rayNToUri(tag, cfg) {
         params.set('encryption', 'none');
         params.set('security', (cfg.StreamSecurity || cfg.streamSecurity || 'tls').toLowerCase());
         if (sni) params.set('sni', sni);
-        if (cfg.Network || cfg.network) params.set('type', String(cfg.Network || cfg.network).toLowerCase());
+        if (cfg.Network || cfg.network)
+            params.set('type', String(cfg.Network || cfg.network).toLowerCase());
         if (cfg.Path || cfg.path) params.set('path', cfg.Path || cfg.path);
         if (cfg.Host || cfg.host) params.set('host', cfg.Host || cfg.host);
         if (insecure) params.set('allowInsecure', '1');
@@ -218,7 +249,10 @@ function v2rayNToUri(tag, cfg) {
             type: 'none',
             host: cfg.Host || cfg.host || sni || '',
             path: cfg.Path || cfg.path || '/',
-            tls: (cfg.StreamSecurity || cfg.streamSecurity || '').toLowerCase() === 'tls' ? 'tls' : '',
+            tls:
+                (cfg.StreamSecurity || cfg.streamSecurity || '').toLowerCase() === 'tls'
+                    ? 'tls'
+                    : '',
             sni: sni || '',
         };
         return `vmess://${btoa(unescape(encodeURIComponent(JSON.stringify(vmessObj))))}`;

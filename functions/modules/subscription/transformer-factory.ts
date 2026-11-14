@@ -5,7 +5,11 @@ import { generateBuiltinQuanxConfig } from './builtin-quanx-generator.ts';
 import { generateBuiltinSingboxConfig } from './builtin-singbox-generator.ts';
 import { generateBuiltinEgernConfig } from './builtin-egern-generator.ts';
 
-export function transformBuiltinSubscription(nodeList, targetFormat, options: Record<string, any> = {}) {
+export function transformBuiltinSubscription(
+    nodeList,
+    targetFormat,
+    options: Record<string, any> = {}
+) {
     const normalized = (targetFormat || '').toLowerCase();
     const targetKey = normalized.startsWith('surge&ver=') ? 'surge' : normalized;
 

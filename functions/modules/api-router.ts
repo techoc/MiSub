@@ -351,7 +351,10 @@ export async function handleApiRequest(
                     ? Object.keys(env).map((k: string) => {
                           const v = (env as Record<string, unknown>)[k];
                           const t = typeof v;
-                          const isKVLike = !!v && t === 'object' && typeof (v as { get?: unknown }).get === 'function';
+                          const isKVLike =
+                              !!v &&
+                              t === 'object' &&
+                              typeof (v as { get?: unknown }).get === 'function';
                           return `${k}(${t}${isKVLike ? ',KV-like' : ''})`;
                       })
                     : [];
@@ -792,7 +795,10 @@ export async function handleExternalFetchRequest(request, env) {
         if ((error as Error).name === 'AbortError') {
             errorMessage = `Request timeout after ${timeout}ms`;
             errorDetails = { type: 'timeout', timeout };
-        } else if ((error as Error).message.includes('network') || (error as Error).message.includes('fetch')) {
+        } else if (
+            (error as Error).message.includes('network') ||
+            (error as Error).message.includes('fetch')
+        ) {
             errorMessage = 'Network error - unable to reach the server';
             errorDetails = { type: 'network', originalError: (error as Error).message };
         } else if ((error as Error).message.includes('DNS')) {
@@ -945,4 +951,3 @@ async function handleCronTriggerRequest(env) {
         return createErrorResponse(error, 500);
     }
 }
-

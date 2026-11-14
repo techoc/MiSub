@@ -151,7 +151,7 @@ export function applyMihomoChainProxy(model, { enableDialerProxy = true } = {}) 
  */
 export function applyMihomoChainProxyToClashConfig(
     config,
-    { chainConfigs = [], enableDialerProxy = true } = {}
+    { chainConfigs = [], enableDialerProxy = true }: Record<string, any> = {}
 ) {
     if (
         !config ||
@@ -183,7 +183,10 @@ export function applyMihomoChainProxyToClashConfig(
 
     const chainGroupNames = new Set(
         chainConfigs
-            .flatMap((chain) => [(chain as Record<string, any> | undefined)?.group, (chain as Record<string, any> | undefined)?.entry])
+            .flatMap((chain) => [
+                (chain as Record<string, any> | undefined)?.group,
+                (chain as Record<string, any> | undefined)?.entry,
+            ])
             .map((name) => String(name || '').trim())
             .filter(Boolean)
     );

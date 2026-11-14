@@ -97,7 +97,8 @@ function buildOutbound(proxy) {
             type: proxy.network === 'ws' ? 'ws' : 'tcp',
         };
         if (proxy['ws-opts']?.path || proxy.wsOpts?.path) {
-            (outbound.transport as Record<string, any>).path = proxy['ws-opts']?.path || proxy.wsOpts?.path;
+            (outbound.transport as Record<string, any>).path =
+                proxy['ws-opts']?.path || proxy.wsOpts?.path;
         }
         const host = proxy['ws-opts']?.headers?.Host || proxy.wsOpts?.headers?.Host;
         if (host) (outbound.transport as Record<string, any>).headers = { Host: host };
@@ -112,16 +113,22 @@ function buildOutbound(proxy) {
                 const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
                 if (wsOpts?.path) (outbound.transport as Record<string, any>).path = wsOpts.path;
                 if (wsOpts?.headers?.Host)
-                    (outbound.transport as Record<string, any>).headers = { Host: wsOpts.headers.Host };
+                    (outbound.transport as Record<string, any>).headers = {
+                        Host: wsOpts.headers.Host,
+                    };
             } else if (proxy.network === 'grpc') {
                 const grpcOpts = proxy['grpc-opts'] || proxy.grpcOpts;
                 if (grpcOpts?.['grpc-service-name'])
-                    (outbound.transport as Record<string, any>).service_name = grpcOpts['grpc-service-name'];
+                    (outbound.transport as Record<string, any>).service_name =
+                        grpcOpts['grpc-service-name'];
             } else if (proxy.network === 'xhttp') {
                 const xhttpOpts = proxy['xhttp-opts'] || proxy.xhttpOpts;
-                if (xhttpOpts?.path) (outbound.transport as Record<string, any>).path = xhttpOpts.path;
-                if (xhttpOpts?.host) (outbound.transport as Record<string, any>).host = xhttpOpts.host;
-                if (xhttpOpts?.mode) (outbound.transport as Record<string, any>).mode = xhttpOpts.mode;
+                if (xhttpOpts?.path)
+                    (outbound.transport as Record<string, any>).path = xhttpOpts.path;
+                if (xhttpOpts?.host)
+                    (outbound.transport as Record<string, any>).host = xhttpOpts.host;
+                if (xhttpOpts?.mode)
+                    (outbound.transport as Record<string, any>).mode = xhttpOpts.mode;
             }
         }
         if (proxy.flow) outbound.flow = proxy.flow;
@@ -189,7 +196,10 @@ function buildOutbound(proxy) {
             enabled: true,
             server_name: proxy.sni || proxy.servername || server,
         };
-        if (proxy.alpn) (outbound.tls as Record<string, any>).alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+        if (proxy.alpn)
+            (outbound.tls as Record<string, any>).alpn = Array.isArray(proxy.alpn)
+                ? proxy.alpn
+                : [proxy.alpn];
     } else if (type === 'anytls') {
         outbound.type = 'anytls';
         outbound.server = server;
@@ -250,14 +260,19 @@ function buildOutbound(proxy) {
     }
     if (
         (proxy.sni || proxy.servername) &&
-        ((type !== 'ss' && type !== 'shadowsocks') || proxy.tls || (outbound.tls as Record<string, any> | undefined)?.enabled)
+        ((type !== 'ss' && type !== 'shadowsocks') ||
+            proxy.tls ||
+            (outbound.tls as Record<string, any> | undefined)?.enabled)
     ) {
         outbound.tls = outbound.tls || {};
         (outbound.tls as Record<string, any>).server_name = proxy.sni || proxy.servername;
     }
     if (proxy['client-fingerprint']) {
         outbound.tls = outbound.tls || {};
-        (outbound.tls as Record<string, any>).utls = { enabled: true, fingerprint: proxy['client-fingerprint'] };
+        (outbound.tls as Record<string, any>).utls = {
+            enabled: true,
+            fingerprint: proxy['client-fingerprint'],
+        };
     }
 
     if (proxy.tfo) {
@@ -293,8 +308,8 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
     // (已在 urlsToClashProxies 中全局处理)
 
     for (const clashProxy of proxies) {
-        const baseName = sanitizeName(clashProxy.name!);
-        clashProxy.name! = getUniqueName(baseName, usedNames);
+        const baseName = sanitizeName(clashProxy!.name);
+        clashProxy!.name = getUniqueName(baseName, usedNames);
 
         const outbound = buildOutbound(clashProxy);
         if (outbound) {
@@ -389,7 +404,8 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
         ...(domesticDns ? [] : [getSingboxForeignRuleSet(dnsDetour)]),
         ...Object.values(ruleSetsMap).filter(
             (ruleSet) =>
-                (ruleSet as Record<string, any>).tag !== SINGBOX_CN_RULE_SET && ruleSet.tag !== SINGBOX_FOREIGN_RULE_SET
+                (ruleSet as Record<string, any>).tag !== SINGBOX_CN_RULE_SET &&
+                (ruleSet as Record<string, any>).tag !== SINGBOX_FOREIGN_RULE_SET
         ),
     ];
 

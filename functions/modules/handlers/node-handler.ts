@@ -316,7 +316,7 @@ export async function handleNodeCountRequest(request, env) {
                 } catch (e) {
                     if (e === fetchError) {
                         console.warn(
-                            `[NodeHandler] Skipping node count fallback because upstream returned an error body: ${e.message}`
+                            `[NodeHandler] Skipping node count fallback because upstream returned an error body: ${(e as Error).message}`
                         );
                     } else {
                         // 解析失败，尝试简单统计
@@ -387,11 +387,15 @@ export async function handleNodeCountRequest(request, env) {
                     ) {
                         errorType = 'timeout';
                         errorMessage = '订阅请求超时';
-                    } else if ((fetchError.message as Record<string, any> | undefined)?.includes('HTTP')) {
+                    } else if (
+                        (fetchError.message as Record<string, any> | undefined)?.includes('HTTP')
+                    ) {
                         errorType = 'server';
                         errorMessage = fetchError.message;
                     } else if (
-                        (fetchError.message as Record<string, any> | undefined)?.includes('network') ||
+                        (fetchError.message as Record<string, any> | undefined)?.includes(
+                            'network'
+                        ) ||
                         (fetchError.message as Record<string, any> | undefined)?.includes('fetch')
                     ) {
                         errorType = 'network';
@@ -445,15 +449,21 @@ export async function handleNodeCountRequest(request, env) {
                         });
                     }
 
-                    if (typeof (storageAdapter as Record<string, any>).updateSubscriptionById === 'function') {
-                        await (storageAdapter as Record<string, any>).updateSubscriptionById(subToUpdate.id, (current) => ({
-                            ...current,
-                            nodeCount: result.count,
-                            ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),
-                            userInfo: result.userInfo,
-                            lastError: null,
-                            lastUpdate: new Date().toISOString(),
-                        }));
+                    if (
+                        typeof (storageAdapter as Record<string, any>).updateSubscriptionById ===
+                        'function'
+                    ) {
+                        await (storageAdapter as Record<string, any>).updateSubscriptionById(
+                            subToUpdate.id,
+                            (current) => ({
+                                ...current,
+                                nodeCount: result.count,
+                                ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),
+                                userInfo: result.userInfo,
+                                lastError: null,
+                                lastUpdate: new Date().toISOString(),
+                            })
+                        );
                     } else {
                         const allSubs = structuredClone(originalSubs);
                         const target = allSubs.find((s) => s.url === subUrl);
@@ -577,7 +587,9 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
 
                 if (!(response as Record<string, any>).ok) {
-                    throw new Error(`HTTP ${(response as Record<string, any>).status}: ${response.statusText}`);
+                    throw new Error(
+                        `HTTP ${(response as Record<string, any>).status}: ${(response as Record<string, any>).statusText}`
+                    );
                 }
 
                 const text = await (response as Record<string, any>).text();
@@ -699,7 +711,8 @@ export async function handleCleanNodesRequest(request, env) {
                 profileId,
                 originalCount: (previewResult.nodes as Record<string, any>).length,
                 cleanedCount: uniqueNodes.length,
-                removedDuplicates: (previewResult.nodes as Record<string, any>).length - uniqueNodes.length,
+                removedDuplicates:
+                    (previewResult.nodes as Record<string, any>).length - uniqueNodes.length,
                 cleanedNodes: uniqueNodes,
             });
         } else {

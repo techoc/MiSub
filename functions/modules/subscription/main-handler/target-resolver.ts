@@ -130,7 +130,9 @@ export async function resolveSubscriptionTargets({
                             baseSub &&
                             (baseSub as Record<string, any>).enabled &&
                             typeof (baseSub as Record<string, any>).url === 'string' &&
-                            ((baseSub as Record<string, any>).url as Record<string, any>).startsWith('http')
+                            (
+                                (baseSub as Record<string, any>).url as Record<string, any>
+                            ).startsWith('http')
                         ) {
                             // 如果是对象，则合并覆盖配置（Profile 级别的设置优先级更高）
                             const sub = isObject ? { ...baseSub, ...item } : baseSub;
@@ -148,7 +150,9 @@ export async function resolveSubscriptionTargets({
                             node &&
                             (node as Record<string, any>).enabled &&
                             typeof (node as Record<string, any>).url === 'string' &&
-                            !((node as Record<string, any>).url as Record<string, any>).startsWith('http')
+                            !((node as Record<string, any>).url as Record<string, any>).startsWith(
+                                'http'
+                            )
                         ) {
                             targetMisubs.push(node);
                         }

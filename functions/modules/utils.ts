@@ -330,6 +330,7 @@ export function clashFix(content) {
 
 import { SYSTEM_CONSTANTS } from './config.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 /**
  * 根据客户端类型确定合适的用户代理
  * @param {string} originalUserAgent - 原始用户代理字符串
@@ -436,7 +437,11 @@ export function createTimeoutFetch(input, init: Record<string, any> = {}, timeou
  * @param {number} options.baseDelay - 基础延迟时间
  * @returns {Promise<Response>} 响应
  */
-export async function retryFetch(input, init: Record<string, any> = {}, options: Record<string, any> = {}) {
+export async function retryFetch(
+    input,
+    init: Record<string, any> = {},
+    options: Record<string, any> = {}
+) {
     const { maxRetries = 3, timeout = 10000, baseDelay = 1000 } = options;
 
     let lastError;
@@ -474,7 +479,11 @@ export async function retryFetch(input, init: Record<string, any> = {}, options:
  * @param {string} context - 操作上下文
  * @returns {Promise<any>} 操作结果
  */
-export async function safeStorageOperation(operation, fallback: KvRecord | null = null, context = '') {
+export async function safeStorageOperation(
+    operation,
+    fallback: KvRecord | null = null,
+    context = ''
+) {
     try {
         return await operation();
     } catch (error) {
@@ -640,6 +649,10 @@ export function getPublicBaseUrl(env, requestUrl) {
  * 自定义 API 错误类
  */
 export class APIError extends Error {
+    status: number;
+    code: string;
+    details: any;
+
     constructor(message, status = 500, code = 'INTERNAL_ERROR', details = null) {
         super(message);
         this.name = 'APIError';
@@ -672,6 +685,9 @@ export const JSON_BODY_LIMITS = {
 };
 
 export class RequestBodyTooLargeError extends Error {
+    status: number;
+    code: string;
+
     constructor(limitBytes) {
         super(`Request JSON body too large (max ${limitBytes} bytes)`);
         this.name = 'RequestBodyTooLargeError';

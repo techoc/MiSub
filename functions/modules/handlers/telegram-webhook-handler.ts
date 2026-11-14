@@ -114,7 +114,12 @@ export async function handleTelegramWebhook(request, env) {
     } catch (error) {
         console.error('[Telegram Push] Webhook handler error:', error);
         return createJsonResponse(
-            { error: (error as Record<string, any>).status === 413 ? (error as Error).message : 'Internal server error' },
+            {
+                error:
+                    (error as Record<string, any>).status === 413
+                        ? (error as Error).message
+                        : 'Internal server error',
+            },
             (error as Record<string, any>).status || 500
         );
     }

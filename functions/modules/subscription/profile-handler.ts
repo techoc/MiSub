@@ -107,7 +107,7 @@ export async function handleProfileMode(
     skipCertVerify = false,
     depth = 0,
     visited = new Set()
-) {
+): Promise<Record<string, any>> {
     if (depth > 3 || (profileId && visited.has(profileId))) {
         console.warn(
             `[Profile Nesting] 触发深度超限或循环引用保护: profileId=${profileId}, depth=${depth}`
@@ -146,8 +146,10 @@ export async function handleProfileMode(
         ...(Array.isArray(profile.manualNodes) ? profile.manualNodes : []),
     ].filter(Boolean);
     const relatedSubs =
-        typeof storageAdapter.getSubscriptionsByIds === 'function'
-            ? await storageAdapter.getSubscriptionsByIds(Array.from(new Set(relatedIds)))
+        typeof (storageAdapter as Record<string, any>).getSubscriptionsByIds === 'function'
+            ? await (storageAdapter as Record<string, any>).getSubscriptionsByIds(
+                  Array.from(new Set(relatedIds))
+              )
             : (await storageAdapter.get(KV_KEY_SUBS)) || [];
     const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 
@@ -157,7 +159,11 @@ export async function handleProfileMode(
     );
     profileSubIds.forEach((id) => {
         const sub = misubMap.get(id);
-        if (sub && (sub as Record<string, any>).enabled && /^https?:\/\//i.test((sub as Record<string, any>).url)) {
+        if (
+            sub &&
+            (sub as Record<string, any>).enabled &&
+            /^https?:\/\//i.test((sub as Record<string, any>).url)
+        ) {
             targetMisubs.push(sub);
         }
     });
@@ -175,7 +181,7 @@ export async function handleProfileMode(
     const targetSubscriptions = targetMisubs.filter((sub) => !httpProxyPattern.test(sub.url));
     const httpProxyNodes = targetMisubs.filter((sub) => httpProxyPattern.test(sub.url));
     const seenManualIds = new Set();
-    const allManualNodes = [];
+    const allManualNodes: any[] = [];
     for (const node of [...httpProxyNodes, ...targetManualNodes]) {
         const key = node?.id || node?.url;
         if (!node || (key && seenManualIds.has(key))) continue;
@@ -184,8 +190,13 @@ export async function handleProfileMode(
     }
     // 处理手工节点（直接解析节点URL），并将用户自定义名称写入 URL。
     const manualNodeResults = allManualNodes.map((node) => {
-        const customName = typeof (node as Error).name === 'string' ? ((node as Error).name as Record<string, any>).trim() : '';
-        const effectiveUrl = customName ? applyManualNodeName((node as Record<string, any>).url, customName) : (node as Record<string, any>).url;
+        const customName =
+            typeof (node as Record<string, any>).name === 'string'
+                ? ((node as Record<string, any>).name as string).trim()
+                : '';
+        const effectiveUrl = customName
+            ? applyManualNodeName((node as Record<string, any>).url, customName)
+            : (node as Record<string, any>).url;
 
         const nodeInfo = parseNodeInfo(effectiveUrl);
         return {
@@ -268,11 +279,7 @@ export async function handleProfileMode(
     }
 
     // 合并所有结果
-    const allResults = [
-        ...subscriptionResults,
-        ...manualNodeResults,
-        ...nestedSubProfileResults,
-    ];
+    const allResults = [...subscriptionResults, ...manualNodeResults, ...nestedSubProfileResults];
 
     // 统计所有节点
     const allNodes: any[] = [];
@@ -352,7 +359,9 @@ export async function handleProfileMode(
             return {
                 ...nodeInfo,
                 subscriptionName:
-                    originalNode?.subscriptionName || (nodeInfo as Record<string, any>).subscriptionName || '未知',
+                    originalNode?.subscriptionName ||
+                    (nodeInfo as Record<string, any>).subscriptionName ||
+                    '未知',
             };
         });
     }

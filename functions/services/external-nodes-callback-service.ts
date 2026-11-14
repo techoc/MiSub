@@ -51,7 +51,7 @@ function base64UrlToBytes(value) {
         typeof atob === 'function'
             ? atob(padded)
             : Buffer.from(padded, 'base64').toString('binary');
-    return Uint8Array.from(binary, (char) => (char as Record<string, any>).charCodeAt(0));
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
 function encodePayload(payload) {
@@ -112,7 +112,10 @@ function resolveExternalNodesD1Adapter(env: Record<string, any> = {}) {
     try {
         return StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
     } catch (error) {
-        console.warn('[ExternalNodesCallback] D1 storage unavailable:', (error as Error | undefined)?.message || error);
+        console.warn(
+            '[ExternalNodesCallback] D1 storage unavailable:',
+            (error as Error | undefined)?.message || error
+        );
         return null;
     }
 }
@@ -209,7 +212,11 @@ export async function putExternalNodes({
     return { cacheKey, nodeHash, reused: false, storage: 'memory' };
 }
 
-export async function getExternalNodes({ env = {}, profileId = 'default', nodeHash } = {}) {
+export async function getExternalNodes({
+    env = {},
+    profileId = 'default',
+    nodeHash,
+}: Record<string, any> = {}) {
     const cacheKey = buildExternalNodesCacheKey(profileId, nodeHash);
     const kv = resolveExternalNodesKv(env);
     if (kv?.get) {
@@ -236,7 +243,7 @@ export async function createExternalNodesToken({
     nodeHash,
     secret,
     expiresInSeconds = DEFAULT_EXTERNAL_NODES_TTL_SECONDS,
-} = {}) {
+}: Record<string, any> = {}) {
     if (!secret) {
         throw new Error('external nodes callback secret is missing');
     }
@@ -282,7 +289,11 @@ export function resolveExternalNodesCallbackSecret(env: Record<string, any> = {}
     return env?.CALLBACK_TOKEN_SECRET || env?.COOKIE_SECRET || '';
 }
 
-export function buildExternalNodesCallbackUrl(requestUrl, token, { encoding } = {}) {
+export function buildExternalNodesCallbackUrl(
+    requestUrl,
+    token,
+    { encoding }: Record<string, any> = {}
+) {
     const callbackUrl = new URL('/api/external-nodes-callback', requestUrl);
     callbackUrl.searchParams.set('token', token);
     if (encoding) {
@@ -298,7 +309,7 @@ export async function prepareExternalNodesCallback({
     nodesText = '',
     ttlSeconds = DEFAULT_EXTERNAL_NODES_TTL_SECONDS,
     encoding,
-} = {}) {
+}: Record<string, any> = {}) {
     const secret = resolveExternalNodesCallbackSecret(env);
     const stored = await putExternalNodes({ env, profileId, nodesText, ttlSeconds });
     const token = await createExternalNodesToken({

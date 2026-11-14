@@ -70,12 +70,16 @@ export function groupNodeLinesByRegion(nodes: any[] = [], options: Record<string
     nodes.forEach((node) => {
         const tagName = node.tag || node.name;
         let region = '其他';
-        const override = regionOverrides.find((rule) => rule.pattern.test(tagName)!);
+        const override = regionOverrides.find((rule) => rule!.pattern.test(tagName));
 
         // 1. 用户自定义规则优先，用于修正自动地区识别误判
         if (override) {
             region = override.region;
-        } else if (node.metadata && (node.metadata as Record<string, any>).region && node.metadata.region !== '其他') {
+        } else if (
+            node.metadata &&
+            (node.metadata as Record<string, any>).region &&
+            node.metadata.region !== '其他'
+        ) {
             // 2. 使用预提取的元数据
             region = (node.metadata as Record<string, any>).region;
         } else {

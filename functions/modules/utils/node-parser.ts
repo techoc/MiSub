@@ -193,7 +193,7 @@ function parseSurgeOrQxLine(line) {
 export function extractValidNodes(text) {
     if (!text || typeof text !== 'string') return [];
 
-    let nodes: string[] = [];
+    let nodes: any[] = [];
 
     // 0. 尝试解析为 sing-box / JSON 配置（outbounds 列表）
     const trimmed = text.trim();
@@ -216,7 +216,8 @@ export function extractValidNodes(text) {
         try {
             const yamlObj = yaml.load(text);
             // 兼容 proxies 和 Proxy 字段
-            const proxies = (yamlObj as Record<string, any>).proxies || yamlObj.Proxy;
+            const proxies =
+                (yamlObj as Record<string, any>).proxies || (yamlObj as Record<string, any>).Proxy;
 
             if (Array.isArray(proxies)) {
                 proxies.forEach((proxy) => {
@@ -405,11 +406,11 @@ export function parseNodeList(content, options: Record<string, any> = {}) {
                         fixedUrl = fixResult.fixedUrl;
                         ss2022Warning = {
                             type: 'ss2022_auto_fixed',
-                            message: `已自动修复: ${fixResult.changes.from!} → ${fixResult.changes.to!}`,
-                            originalCipher: fixResult.changes.from!,
-                            fixedCipher: fixResult.changes.to!,
+                            message: `已自动修复: ${fixResult.changes!.from} → ${fixResult.changes!.to}`,
+                            originalCipher: fixResult.changes!.from,
+                            fixedCipher: fixResult.changes!.to,
                         };
-                        console.warn(`[SS 2022] 自动修复节点: ${fixResult.changes.reason!}`);
+                        console.warn(`[SS 2022] 自动修复节点: ${fixResult.changes!.reason}`);
                     } else {
                         ss2022Warning = {
                             type: 'ss2022_invalid',
@@ -519,8 +520,8 @@ export function parseNodeList(content, options: Record<string, any> = {}) {
             const metadata = extractNodeMetadata(nodeInfo.name);
 
             const result: Record<string, any> = {
-                url: fixedUrl,
                 ...nodeInfo,
+                url: fixedUrl,
                 metadata: metadata,
             };
 
@@ -543,7 +544,7 @@ export function calculateProtocolStats(nodes) {
         const protocol = node.protocol || 'unknown';
         stats[protocol] = (stats[protocol] || 0) + 1;
     });
-    for (const [protocol, count] of Object.entries(stats)) {
+    for (const [protocol, count] of Object.entries(stats) as [string, number][]) {
         stats[protocol] = { count, percentage: Math.round((count / total) * 100) };
     }
     return stats;
@@ -559,8 +560,8 @@ export function calculateRegionStats(nodes) {
         const region = extractNodeRegion(node.name || '');
         stats[region] = (stats[region] || 0) + 1;
     });
-    for (const [region, count] of Object.entries(stats)) {
-        stats[region] = { count, percentage: Math.round((count / total) * 100) };
+    for (const [region, count] of Object.entries(stats) as [string, number][]) {
+        stats[region] = { count, percentage: Math.round((count / (total as number)) * 100) };
     }
     return stats;
 }

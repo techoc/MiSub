@@ -43,7 +43,12 @@ import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 处理 Callback Query（按钮回调）
  */
-export async function handleCallbackQuery(callbackQuery, env, request, requestCache: KvRecord | null = null) {
+export async function handleCallbackQuery(
+    callbackQuery,
+    env,
+    request,
+    requestCache: KvRecord | null = null
+) {
     const chatId = callbackQuery.message.chat.id;
     const messageId = callbackQuery.message.message_id;
     const userId = callbackQuery.from.id;
@@ -648,7 +653,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                     const storageAdapter = await getStorageAdapter(env);
 
                     let fullList = await getUserNodes(userId, env);
-                    let targetList = [];
+                    let targetList: any[] = [];
                     if (isSub) {
                         targetList = fullList.filter((n) => /^https?:\/\//i.test(n.url || ''));
                     } else {
@@ -671,7 +676,9 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                             const originalSubs = await storageAdapter.getAllSubscriptions();
                             // Match by ID if possible, or some unique property.
                             // Subscription objects usually have IDs.
-                            const subToUpdate = originalSubs.find((s) => s.id === (targetItem as Record<string, any>).id);
+                            const subToUpdate = originalSubs.find(
+                                (s) => s.id === (targetItem as Record<string, any>).id
+                            );
 
                             if (subToUpdate) {
                                 subToUpdate.enabled = !isEnabled;
@@ -690,7 +697,9 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
                             // If handleDisableCommand uses `getUserNodes` without filtering, we need to map `idx` back to `allNodes` index.
                             const allNodes = await getUserNodes(userId, env);
-                            const realIdx = allNodes.findIndex((n) => n.id === (targetItem as Record<string, any>).id);
+                            const realIdx = allNodes.findIndex(
+                                (n) => n.id === (targetItem as Record<string, any>).id
+                            );
 
                             if (realIdx !== -1) {
                                 if (isEnabled) {

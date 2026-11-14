@@ -13,6 +13,7 @@ import {
     VIRTUAL_INFO_NODE_UUID,
 } from './shared.ts';
 
+import type { KvRecord } from '../../../types/models.ts';
 // ============ 转换函数 ============
 
 export function matchesRegexRules(name, rules) {

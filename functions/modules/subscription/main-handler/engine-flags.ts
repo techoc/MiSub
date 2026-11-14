@@ -7,7 +7,10 @@ import { isHiddifyAgent } from '../user-agent-utils.ts';
 import { resolveGeneratorOptions } from '../generator-options.ts';
 import { normalizeDnsMode } from '../safe-dns.ts';
 
-export function resolveBuiltinEngineFlags(config: Record<string, any> = {}, isExternalMode = false) {
+export function resolveBuiltinEngineFlags(
+    config: Record<string, any> = {},
+    isExternalMode = false
+) {
     if (isExternalMode) {
         return {
             shouldSkipCertificateVerify: false,
@@ -26,7 +29,7 @@ export function resolveEffectiveEngine({
     userAgent = '',
     profileEngineMode = '',
     globalEngineMode = '',
-} = {}) {
+}: Record<string, any> = {}) {
     const params = searchParams || new URLSearchParams('');
     const builtinParam = (params.get('builtin') || '').toLowerCase();
     const engineParam = (params.get('engine') || '').toLowerCase();
@@ -94,7 +97,7 @@ export function resolveBuiltinRequestOptions({
     searchParams,
     userAgent = '',
     generatorOptions = {},
-} = {}) {
+}: Record<string, any> = {}) {
     const params = searchParams || new URLSearchParams('');
     const dnsMode = params.get('dns-mode') || params.get('dnsMode') || '';
     return {
@@ -111,12 +114,18 @@ export function shouldRenderClashYamlProfileTemplateLocally({
     targetFormat = '',
     templateSource = {},
 } = {}) {
-    if (!isExternalMode || targetFormat !== 'clash' || (templateSource as Record<string, any> | undefined)?.kind !== 'remote')
+    if (
+        !isExternalMode ||
+        targetFormat !== 'clash' ||
+        (templateSource as Record<string, any> | undefined)?.kind !== 'remote'
+    )
         return false;
     try {
         const parsed = new URL(String((templateSource as Record<string, any>).value || '').trim());
         return /\.ya?ml$/i.test(parsed.pathname);
     } catch {
-        return /\.ya?ml(?:[?#].*)?$/i.test(String((templateSource as Record<string, any>).value || '').trim());
+        return /\.ya?ml(?:[?#].*)?$/i.test(
+            String((templateSource as Record<string, any>).value || '').trim()
+        );
     }
 }

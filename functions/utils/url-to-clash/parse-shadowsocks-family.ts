@@ -147,7 +147,10 @@ export function parseSsUrl(url) {
                 // 协议兼容性映射 (TLS / Host)
                 if (
                     (pluginDetails.opts as Record<string, any>).tls ||
-                    ((pluginDetails.opts as Record<string, any>).mode as Record<string, any> | undefined)?.includes('tls') ||
+                    (
+                        (pluginDetails.opts as Record<string, any>).mode as
+                            Record<string, any> | undefined
+                    )?.includes('tls') ||
                     (pluginDetails.opts as Record<string, any>).security === 'tls'
                 ) {
                     proxy.tls = true;

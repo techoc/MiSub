@@ -77,11 +77,16 @@ export async function handleDebugSubscriptionRequest(request, env) {
                 userAgent: userAgent,
             },
             subscriptionInfo: {
-                totalSubscriptions: (nodeResult.subscriptions as Record<string, any> | undefined)?.length || 0,
+                totalSubscriptions:
+                    (nodeResult.subscriptions as Record<string, any> | undefined)?.length || 0,
                 successfulSubscriptions:
-                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter((s) => s.success).length || 0,
+                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter(
+                        (s) => s.success
+                    ).length || 0,
                 failedSubscriptions:
-                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter((s) => !s.success).length || 0,
+                    (nodeResult.subscriptions as Record<string, any> | undefined)?.filter(
+                        (s) => !s.success
+                    ).length || 0,
             },
             nodeInfo: {
                 totalNodes: nodeResult.totalCount || 0,
@@ -322,8 +327,10 @@ export async function handleExportDataRequest(request, env) {
             exportData,
             metadata: {
                 size: exportSize,
-                subscriptionsCount: (exportData.data.subscriptions as Record<string, any> | undefined)?.length || 0,
-                profilesCount: (exportData.data.profiles as Record<string, any> | undefined)?.length || 0,
+                subscriptionsCount:
+                    (exportData.data.subscriptions as Record<string, any> | undefined)?.length || 0,
+                profilesCount:
+                    (exportData.data.profiles as Record<string, any> | undefined)?.length || 0,
                 settingsCount: Object.keys(exportData.data.settings || {}).length,
             },
         });
@@ -429,7 +436,10 @@ export async function handlePreviewContentRequest(request, env) {
             fullContent: request.fullExport ? decodedContent : null,
         });
     } catch (e) {
-        return createErrorResponse(`内容预览失败: ${(e as Error).message}`, (e as Record<string, any>).status || 500);
+        return createErrorResponse(
+            `内容预览失败: ${(e as Error).message}`,
+            (e as Record<string, any>).status || 500
+        );
     }
 }
 

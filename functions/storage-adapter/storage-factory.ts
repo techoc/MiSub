@@ -90,7 +90,10 @@ export class StorageFactory {
             await d1Adapter.put(DATA_KEYS.SETTINGS, settings);
             return true;
         } catch (error) {
-            console.warn('[Storage] ensureD1Settings failed:', (error as Error | undefined)?.message || error);
+            console.warn(
+                '[Storage] ensureD1Settings failed:',
+                (error as Error | undefined)?.message || error
+            );
             return false;
         }
     }

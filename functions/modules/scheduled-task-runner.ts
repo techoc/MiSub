@@ -36,7 +36,10 @@ async function getStorage(env) {
     return StorageFactory.createAdapter(env, storageType);
 }
 
-export async function maybeRunScheduledTasks(context: Record<string, any> = {}, options: Record<string, any> = {}) {
+export async function maybeRunScheduledTasks(
+    context: Record<string, any> = {},
+    options: Record<string, any> = {}
+) {
     const env = context.env || context;
     if (!env) return { skipped: true, reason: 'missing-env' };
 

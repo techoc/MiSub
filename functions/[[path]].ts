@@ -99,7 +99,11 @@ async function fetchHostedAssetViaOrigin(request: Request, assetPath: string): P
     );
 }
 
-async function fetchStaticAsset(request: Request, env: Env, next: () => Promise<Response> | Response): Promise<Response> {
+async function fetchStaticAsset(
+    request: Request,
+    env: Env,
+    next: () => Promise<Response> | Response
+): Promise<Response> {
     if (typeof next === 'function') {
         return next();
     }
@@ -125,7 +129,11 @@ async function fetchStaticAsset(request: Request, env: Env, next: () => Promise<
     return new Response('Not Found', { status: 404 });
 }
 
-async function fetchSpaEntry(request: Request, env: Env, next: () => Promise<Response> | Response): Promise<Response> {
+async function fetchSpaEntry(
+    request: Request,
+    env: Env,
+    next: () => Promise<Response> | Response
+): Promise<Response> {
     const indexUrl = new URL('/', request.url);
 
     if (typeof env?.ASSETS?.fetch === 'function') {

@@ -1,3 +1,4 @@
+import type { KvRecord } from '../../../types/models.ts';
 const toBoolean = (value, fallback = false) => {
     if (typeof value === 'string') {
         const normalized = value.trim().toLowerCase();
@@ -59,7 +60,7 @@ export function normalizeGeneratorOptions(value: Record<string, any> = {}) {
     };
 }
 
-const SEARCH_PARAM_OPTIONS = [
+const SEARCH_PARAM_OPTIONS: Array<[string, (options: any, value: boolean) => void]> = [
     ['ipv6', (options, value) => (options.ipv6 = value)],
     ['allow-lan', (options, value) => (options.allowLan = value)],
     ['allowLan', (options, value) => (options.allowLan = value)],
@@ -82,7 +83,10 @@ function parseBooleanParam(value) {
     return null;
 }
 
-export function resolveGeneratorOptions(value: Record<string, any> = {}, searchParams: KvRecord | null = null) {
+export function resolveGeneratorOptions(
+    value: Record<string, any> = {},
+    searchParams: KvRecord | null = null
+) {
     const options = normalizeGeneratorOptions(value);
     if (!searchParams || typeof searchParams.has !== 'function') return options;
 

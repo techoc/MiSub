@@ -23,6 +23,7 @@ import { resolveSafeDnsConfig } from '../modules/subscription/safe-dns.ts';
 import { normalizeGeneratorOptions } from '../modules/subscription/generator-options.ts';
 import { applyMihomoChainProxyToClashConfig } from '../modules/subscription/mihomo-chain-proxy.ts';
 
+import type { KvRecord } from '../../types/models.ts';
 function getTemplateExtension(templateUrl) {
     const raw = typeof templateUrl === 'string' ? templateUrl.trim() : '';
     if (!raw) return '';
@@ -91,7 +92,7 @@ function normalizeYamlChainConfigs(config) {
     const rawDeclaration = config['x-misub-chain-proxy'];
     delete config['x-misub-chain-proxy'];
 
-    let declarations = [];
+    let declarations: any[] = [];
     if (Array.isArray(rawDeclaration)) {
         declarations = rawDeclaration;
     } else if (rawDeclaration && typeof rawDeclaration === 'object') {
@@ -112,7 +113,11 @@ function normalizeYamlChainConfigs(config) {
         }));
 }
 
-export function renderClashYamlProfileTemplate(templateText, nodeList, options: Record<string, any> = {}) {
+export function renderClashYamlProfileTemplate(
+    templateText,
+    nodeList,
+    options: Record<string, any> = {}
+) {
     const config = yaml.load(templateText);
     if (!config || typeof config !== 'object' || Array.isArray(config)) {
         return '';

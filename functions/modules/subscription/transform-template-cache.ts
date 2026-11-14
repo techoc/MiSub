@@ -1,6 +1,7 @@
 import { getCache } from '../../services/node-cache-service.ts';
 import { assertPublicNetworkUrl } from '../security-utils.ts';
 
+import type { KvRecord } from '../../../types/models.ts';
 const TEMPLATE_CACHE_PREFIX = 'transform_template_';
 const DEFAULT_REVALIDATE_INTERVAL_SECONDS = 5 * 60;
 const DEFAULT_CACHE_MAX_AGE_SECONDS = 24 * 60 * 60;

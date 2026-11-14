@@ -139,7 +139,7 @@ function hasGeolocationValue(info) {
     );
 }
 
-function mergeMissingGeolocationValues(current: Record<string, any> = {}, incoming: Record<string, any> = {}) {
+function mergeMissingGeolocationValues(current: any = {}, incoming: any = {}) {
     const merged = { ...current };
     for (const key of ['country', 'city', 'isp', 'asn']) {
         if (!merged[key] && incoming?.[key]) merged[key] = incoming[key];
@@ -169,7 +169,7 @@ async function fetchIpGeolocation(clientIp) {
             const info = provider.parse(body);
             if (!hasGeolocationValue(info)) continue;
 
-            result = mergeMissingGeolocationValues(result, info);
+            result = mergeMissingGeolocationValues(result ?? undefined, info);
             if (result.country && result.city && result.isp && result.asn) return result;
         } catch (error) {
             console.debug(`[NotificationService] ${provider.name} geolocation failed:`, error);

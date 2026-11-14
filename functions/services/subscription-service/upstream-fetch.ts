@@ -16,7 +16,11 @@ export const FETCH_CONFIG = {
     RETRYABLE_STATUS: [500, 502, 503, 504, 429], // 可重试的 HTTP 状态码
 };
 
-export async function fetchWithRetry(url, init: Record<string, any> = {}, options: Record<string, any> = {}) {
+export async function fetchWithRetry(
+    url,
+    init: Record<string, any> = {},
+    options: Record<string, any> = {}
+) {
     const {
         timeout = FETCH_CONFIG.TIMEOUT,
         maxRetries = FETCH_CONFIG.MAX_RETRIES,

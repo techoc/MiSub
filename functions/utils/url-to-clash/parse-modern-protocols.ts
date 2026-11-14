@@ -182,7 +182,7 @@ export function parseTuicUrl(url) {
 
         // ALPN
         if (params.get('alpn')) {
-            proxy.alpn = params.get('alpn').split(',')!;
+            proxy.alpn = params.get('alpn')!.split(',');
         }
 
         // Skip cert verify
@@ -433,7 +433,13 @@ export function parseSnellUrl(url) {
 
         if (!psk) psk = params.get('psk') || params.get('password') || '';
 
-        const proxy: Record<string, any> = { name: name || `Snell-${server}`, type: 'snell', server, port, psk };
+        const proxy: Record<string, any> = {
+            name: name || `Snell-${server}`,
+            type: 'snell',
+            server,
+            port,
+            psk,
+        };
         const version = params.get('version');
         if (version) proxy.version = parseInt(version);
         const reuse = params.get('reuse');
@@ -505,7 +511,7 @@ export function parseAnytlsUrl(url) {
             proxy.sni = sni;
         }
 
-        if (params.get('alpn')) proxy.alpn = params.get('alpn').split(',')!;
+        if (params.get('alpn')) proxy.alpn = params.get('alpn')!.split(',');
         if (params.get('insecure') === '1' || params.get('allowInsecure') === '1')
             proxy['skip-cert-verify'] = true;
         const pinnedPeerCertSha256 =

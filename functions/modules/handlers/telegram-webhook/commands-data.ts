@@ -43,7 +43,7 @@ export async function handleImportCommand(chatId, userId, args, env) {
         }
 
         const input = args.join(' ').trim();
-        let nodeUrls = [];
+        let nodeUrls: any[] = [];
 
         // 判断是订阅链接还是 Base64
         if (input.startsWith('http://') || input.startsWith('https://')) {
@@ -74,7 +74,11 @@ export async function handleImportCommand(chatId, userId, args, env) {
                     nodeUrls = extractNodeUrls(content);
                 }
             } catch (fetchError) {
-                await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${(fetchError as Error).message}`, env);
+                await sendTelegramMessage(
+                    chatId,
+                    `❌ 获取订阅失败: ${(fetchError as Error).message}`,
+                    env
+                );
                 return;
             }
         } else {
@@ -123,7 +127,11 @@ export async function handleImportCommand(chatId, userId, args, env) {
         console.info(`[Telegram Push] User ${userId} imported ${addedNodes.length} nodes`);
     } catch (error) {
         console.error('[Telegram Push] Import command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 导入失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 导入失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
@@ -163,7 +171,10 @@ export async function handleSortCommand(chatId, userId, args, env) {
         switch (sortType) {
             case 'name':
                 sortedIndices.sort((a, b) =>
-                    (userNodes[a].name as Record<string, any>).localeCompare(userNodes[b].name, 'zh-CN')
+                    (userNodes[a].name as Record<string, any>).localeCompare(
+                        userNodes[b].name,
+                        'zh-CN'
+                    )
                 );
                 break;
             case 'protocol':
@@ -209,7 +220,11 @@ export async function handleSortCommand(chatId, userId, args, env) {
         );
     } catch (error) {
         console.error('[Telegram Push] Sort command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 排序失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 排序失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
@@ -290,14 +305,24 @@ export async function handleDupCommand(chatId, userId, args, env) {
         }
     } catch (error) {
         console.error('[Telegram Push] Dup command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 去重检测失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 去重检测失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }
 
 /**
  * 处理 /bind 命令 - 绑定默认订阅组
  */
-export async function handleBindCommand(chatId, userId, args, env, requestCache: KvRecord | null = null) {
+export async function handleBindCommand(
+    chatId,
+    userId,
+    args,
+    env,
+    requestCache: KvRecord | null = null
+) {
     try {
         const cache = requestCache || createRequestCache();
         const profiles = await getCachedProfiles(env, cache);
@@ -378,16 +403,26 @@ export async function handleBindCommand(chatId, userId, args, env, requestCache:
         );
     } catch (error) {
         console.error('[Telegram Push] Bind command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 绑定失败: ${escapeHtml((error as Error).message)}`, env, {
-            requestCache,
-        });
+        await sendTelegramMessage(
+            chatId,
+            `❌ 绑定失败: ${escapeHtml((error as Error).message)}`,
+            env,
+            {
+                requestCache,
+            }
+        );
     }
 }
 
 /**
  * 处理 /unbind 命令 - 解除绑定
  */
-export async function handleUnbindCommand(chatId, userId, env, requestCache: KvRecord | null = null) {
+export async function handleUnbindCommand(
+    chatId,
+    userId,
+    env,
+    requestCache: KvRecord | null = null
+) {
     try {
         const cache = requestCache || createRequestCache();
         const settings = await getCachedSettings(env, cache);
@@ -410,6 +445,10 @@ export async function handleUnbindCommand(chatId, userId, env, requestCache: KvR
         );
     } catch (error) {
         console.error('[Telegram Push] Unbind command failed:', error);
-        await sendTelegramMessage(chatId, `❌ 解除绑定失败: ${escapeHtml((error as Error).message)}`, env);
+        await sendTelegramMessage(
+            chatId,
+            `❌ 解除绑定失败: ${escapeHtml((error as Error).message)}`,
+            env
+        );
     }
 }

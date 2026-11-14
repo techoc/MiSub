@@ -278,8 +278,8 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
     // (已在 urlsToClashProxies 中全局处理)
 
     for (const clashProxy of proxies) {
-        const baseName = sanitizeNodeName(clashProxy.name!);
-        clashProxy.name! = getUniqueName(baseName, usedNames);
+        const baseName = sanitizeNodeName(clashProxy!.name);
+        clashProxy!.name = getUniqueName(baseName, usedNames);
 
         const line = buildQxLine(clashProxy);
         if (!line) continue;

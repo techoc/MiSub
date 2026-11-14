@@ -36,7 +36,7 @@ export class D1StorageAdapter {
 
             if (!result) return null;
 
-            return type === 'json' ? JSON.parse(result.data) : result.data;
+            return type === 'json' ? JSON.parse(result.data as string) : result.data;
         } catch (error) {
             // 如果是表不存在的错误，说明 D1 还未初始化或未被使用，直接返回 null
             if ((error as Error).message && (error as Error).message.includes('no such table')) {
@@ -172,14 +172,14 @@ export class D1StorageAdapter {
                 .prepare('SELECT data FROM subscriptions WHERE id = ?')
                 .bind(id)
                 .first();
-            if (result) return JSON.parse(result.data);
+            if (result) return JSON.parse(result.data as string);
 
             const legacyMain = await this.db
                 .prepare('SELECT data FROM subscriptions WHERE id = ?')
                 .bind('main')
                 .first();
             if (!legacyMain) return null;
-            const parsed = JSON.parse(legacyMain.data);
+            const parsed = JSON.parse(legacyMain.data as string);
             return Array.isArray(parsed) ? parsed.find((item) => item.id === id) || null : null;
         } catch (error) {
             console.error(`[D1] Failed to get subscription ${id}:`, error);
@@ -190,7 +190,9 @@ export class D1StorageAdapter {
     async getAllSubscriptions() {
         return readCachedD1Collection(this.db, 'subscriptions', async () => {
             try {
-                const results = await (this.db as Record<string, any>).prepare('SELECT data FROM subscriptions').all();
+                const results = await (this.db as Record<string, any>)
+                    .prepare('SELECT data FROM subscriptions')
+                    .all();
                 if (!Array.isArray(results?.results)) return [];
 
                 const all: any[] = [];
@@ -224,14 +226,14 @@ export class D1StorageAdapter {
                 .prepare('SELECT data FROM profiles WHERE id = ?')
                 .bind(id)
                 .first();
-            if (result) return JSON.parse(result.data);
+            if (result) return JSON.parse(result.data as string);
 
             const legacyMain = await this.db
                 .prepare('SELECT data FROM profiles WHERE id = ?')
                 .bind('main')
                 .first();
             const allProfiles = legacyMain
-                ? JSON.parse(legacyMain.data)
+                ? JSON.parse(legacyMain.data as string)
                 : await this.get(DATA_KEYS.PROFILES);
             return Array.isArray(allProfiles)
                 ? allProfiles.find((item) => item.id === id || item.customId === id) || null
@@ -245,7 +247,9 @@ export class D1StorageAdapter {
     async getAllProfiles() {
         return readCachedD1Collection(this.db, 'profiles', async () => {
             try {
-                const results = await (this.db as Record<string, any>).prepare('SELECT data FROM profiles').all();
+                const results = await (this.db as Record<string, any>)
+                    .prepare('SELECT data FROM profiles')
+                    .all();
                 if (!Array.isArray(results?.results)) return [];
 
                 const all: any[] = [];
@@ -328,7 +332,10 @@ export class D1StorageAdapter {
     }
 
     async deleteProfileById(id) {
-        const result = await (this.db as Record<string, any>).prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
+        const result = await (this.db as Record<string, any>)
+            .prepare('DELETE FROM profiles WHERE id = ?')
+            .bind(id)
+            .run();
         invalidateD1CollectionCache(this.db, 'profiles');
         return Boolean(result?.success);
     }
@@ -350,7 +357,9 @@ export class D1StorageAdapter {
                     .bind(...chunk)
                     .all();
                 if (Array.isArray(results?.results)) {
-                    directHits.push(...results.results.map((row) => JSON.parse(row.data)));
+                    directHits.push(
+                        ...results.results.map((row) => JSON.parse(row.data as string))
+                    );
                 }
             }
             const foundIds = new Set(directHits.map((item) => item?.id).filter(Boolean));
@@ -364,7 +373,7 @@ export class D1StorageAdapter {
                 .first();
             if (!legacyMain) return directHits;
 
-            const parsed = JSON.parse(legacyMain.data);
+            const parsed = JSON.parse(legacyMain.data as string);
             if (!Array.isArray(parsed)) return directHits;
 
             const legacyHits = parsed.filter((item) => missingIds.includes(item.id));

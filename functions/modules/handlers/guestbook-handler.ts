@@ -86,7 +86,7 @@ export async function handleGuestbookGet(env) {
         // 按时间倒序排列
         const publicMessages = messages
             .filter((msg) => msg.isVisible)
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .map((msg) => ({
                 id: msg.id,
                 nickname: msg.nickname,
@@ -176,7 +176,10 @@ export async function handleGuestbookPost(request, env) {
         });
     } catch (e) {
         console.error('[Guestbook Error] Post:', e);
-        return createErrorResponse((e as Record<string, any>).status === 413 ? (e as Error).message : '提交留言失败', e.status || 500);
+        return createErrorResponse(
+            (e as Record<string, any>).status === 413 ? (e as Error).message : '提交留言失败',
+            (e as Record<string, any>).status || 500
+        );
     }
 }
 
@@ -190,7 +193,7 @@ export async function handleGuestbookManageGet(env) {
 
         // 管理端返回所有字段，按时间倒序
         const sortedMessages = messages.sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
         return createJsonResponse({
@@ -260,6 +263,9 @@ export async function handleGuestbookManageAction(request, env) {
         });
     } catch (e) {
         console.error('[Guestbook Manage Error] Action:', e);
-        return createErrorResponse(`操作失败: ${(e as Error).message}`, (e as Record<string, any>).status || 500);
+        return createErrorResponse(
+            `操作失败: ${(e as Error).message}`,
+            (e as Record<string, any>).status || 500
+        );
     }
 }

@@ -86,7 +86,11 @@ export function validatePublicFetchUrl(value) {
     return { ok: true, url };
 }
 
-export async function safeFetchPublicUrl(inputUrl, init: Record<string, any> = {}, options: Record<string, any> = {}) {
+export async function safeFetchPublicUrl(
+    inputUrl,
+    init: Record<string, any> = {},
+    options: Record<string, any> = {}
+) {
     const maxRedirects = options.maxRedirects ?? MAX_SAFE_REDIRECTS;
     const validation = validatePublicFetchUrl(inputUrl);
     if (!validation.ok) {

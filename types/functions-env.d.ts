@@ -48,6 +48,14 @@ declare global {
      * 不要再声明同名 interface——会与该 type alias 冲突。
      */
     type PagesEventContext = EventContext<Env, string, Record<string, unknown>>;
+
+    /**
+     * Node 兼容运行时提供的 Buffer（wrangler nodejs_compat）。
+     * 仅声明本仓库实际用到的形状，避免引入完整 @types/node。
+     */
+    const Buffer: {
+        from(input: any, encoding?: string): { toString(encoding?: string): string };
+    };
 }
 
 export {};

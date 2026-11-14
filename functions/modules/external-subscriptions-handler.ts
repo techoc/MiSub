@@ -106,14 +106,18 @@ export async function inspectRemoteSubscription(env, payload: Record<string, any
     );
     const body = await response.json();
 
-    if ((body as Record<string, any> | undefined)?.success && (body as Record<string, any> | undefined)?.data) {
+    if (
+        (body as Record<string, any> | undefined)?.success &&
+        (body as Record<string, any> | undefined)?.data
+    ) {
         return {
             ok: true,
             requestedUrl,
             effectiveUserAgent,
             fetchProxyUsed: runtime.fetchProxy || '',
             plusAsSpace: runtime.plusAsSpace,
-            nodeCount: Number(((body as Record<string, any>).data as Record<string, any>).count) || 0,
+            nodeCount:
+                Number(((body as Record<string, any>).data as Record<string, any>).count) || 0,
             userInfo: ((body as Record<string, any>).data as Record<string, any>).userInfo || null,
         };
     }

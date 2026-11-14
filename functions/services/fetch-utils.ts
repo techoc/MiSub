@@ -16,7 +16,11 @@ const DEFAULT_RETRY_OPTIONS = {
  * @param {Object} options - 重试选项 (maxRetries, baseDelay, retryableStatus)
  * @returns {Promise<Response>} - 响应对象
  */
-export async function fetchWithRetry(url, init: Record<string, any> = {}, options: Record<string, any> = {}) {
+export async function fetchWithRetry(
+    url,
+    init: Record<string, any> = {},
+    options: Record<string, any> = {}
+) {
     const {
         maxRetries = DEFAULT_RETRY_OPTIONS.MAX_RETRIES,
         baseDelay = DEFAULT_RETRY_OPTIONS.BASE_DELAY,
@@ -149,7 +153,9 @@ export async function collectWithinTimeout(promises, timeoutMs) {
         return []; // 暂时返回空，因为下面逻辑太复杂，我们在替换时直接复用原有逻辑或者改进。
     } else {
         // 全都完成了
-        results = (raceResult as Record<string, any>).filter((r) => r.status === 'fulfilled' && r.value).map((r) => r.value);
+        results = (raceResult as Record<string, any>)
+            .filter((r) => r.status === 'fulfilled' && r.value)
+            .map((r) => r.value);
     }
 
     return results;

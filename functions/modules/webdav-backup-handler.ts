@@ -531,10 +531,10 @@ export async function listWebdavBackupFiles(env) {
         .map((match) => normalizeWebdavHref(config.endpoint, match[1]))
         .filter(Boolean);
     const files = hrefs
-        .filter((href) => href.endsWith('.json')! && href.includes(BACKUP_FILENAME_PREFIX)!)
+        .filter((href) => href!.endsWith('.json') && href!.includes(BACKUP_FILENAME_PREFIX))
         .map((href) => ({
             path: href,
-            name: href.split('/').filter(Boolean).pop()!,
+            name: href!.split('/').filter(Boolean).pop(),
         }))
         .sort((a, b) => String(b.name).localeCompare(String(a.name)));
 
