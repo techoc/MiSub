@@ -13,6 +13,28 @@
     });
 
     const emit = defineEmits(['update:show', 'confirm']);
+
+    /** 预设/规则条目 */
+    interface RuleItem {
+        label: string;
+        pattern: string;
+        icon?: string;
+        type?: string;
+        [key: string]: unknown;
+    }
+
+    /** 预设标签（地区/协议/关键字共用形状） */
+    interface Preset {
+        label: string;
+        pattern: string;
+        icon?: string;
+    }
+
+    /** 规则文本校验错误 */
+    interface RuleError {
+        line: number;
+        message: string;
+    }
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
@@ -23,7 +45,7 @@
     const customKeyword = ref('');
 
     // 预设标签
-    const presetRegions = [
+    const presetRegions: Preset[] = [
         { label: '香港', pattern: '(香港|HK|Hong Kong)', icon: '🇭🇰' },
         { label: '台湾', pattern: '(台湾|TW|Taiwan)', icon: '🇨🇳' },
         { label: '日本', pattern: '(日本|JP|Japan)', icon: '🇯🇵' },
@@ -34,7 +56,7 @@
         { label: '英国', pattern: '(英国|UK|Britain)', icon: '🇬🇧' },
     ];
 
-    const presetProtocols = [
+    const presetProtocols: Preset[] = [
         { label: 'SS', pattern: 'proto:ss' },
         { label: 'VMess', pattern: 'proto:vmess' },
         { label: 'VLESS', pattern: 'proto:vless' },
@@ -42,7 +64,7 @@
         { label: 'Hysteria', pattern: 'proto:hysteria' },
     ];
 
-    const presetKeywords = [
+    const presetKeywords: Preset[] = [
         { label: '官网', pattern: '官网' },
         { label: '过期', pattern: '过期' },
         { label: '剩余', pattern: '(剩余|流量)' },
@@ -54,8 +76,8 @@
     ];
 
     // 规则池：分别管理保留规则和剔除规则
-    const keepRules = ref<any[]>([]);
-    const excludeRules = ref<any[]>([]);
+    const keepRules = ref<RuleItem[]>([]);
+    const excludeRules = ref<RuleItem[]>([]);
 
     // 活跃规则列表（根据当前 tab 切换）
     const currentRulePool = computed(() => {
@@ -68,20 +90,18 @@
     });
 
     // 检查标签在当前激活模式中是否已选中
-    const isSelected = (pattern: any) => {
-        return currentRulePool.value.some(
-            (rule) => (rule as Record<string, any>).pattern === pattern
-        );
+    const isSelected = (pattern: string) => {
+        return currentRulePool.value.some((rule) => rule.pattern === pattern);
     };
 
     // 检查标签在另一个模式中是否已选中
-    const isOtherSelected = (pattern: any) => {
+    const isOtherSelected = (pattern: string) => {
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
-        return otherPool.some((rule) => (rule as Record<string, any>).pattern === pattern);
+        return otherPool.some((rule) => rule.pattern === pattern);
     };
 
     // 辅助函数：根据 pattern 转换为规范规则对象
-    const createRuleItem = (tag: any, type: any) => {
+    const createRuleItem = (tag: Preset, type: string): RuleItem => {
         const normalizedPattern =
             type === 'protocol' && !String(tag.pattern).toLowerCase().startsWith('proto:')
                 ? `proto:${String(tag.pattern).toLowerCase()}`
@@ -94,20 +114,16 @@
     };
 
     // 切换标签选择
-    const toggleTag = (tag: any, type: any) => {
+    const toggleTag = (tag: Preset, type: string) => {
         const pool = currentRulePool.value;
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
 
-        const index = pool.findIndex(
-            (rule) => (rule as Record<string, any>).pattern === tag.pattern
-        );
+        const index = pool.findIndex((rule) => rule.pattern === tag.pattern);
         if (index !== -1) {
             pool.splice(index, 1);
         } else {
             // 如果已在另一个规则池中，将其从另一个池移除，避免同一标签同时存在
-            const otherIdx = otherPool.findIndex(
-                (rule) => (rule as Record<string, any>).pattern === tag.pattern
-            );
+            const otherIdx = otherPool.findIndex((rule) => rule.pattern === tag.pattern);
             if (otherIdx !== -1) {
                 otherPool.splice(otherIdx, 1);
             }
@@ -123,11 +139,7 @@
 
         const pool = currentRulePool.value;
         if (
-            pool.some(
-                (rule) =>
-                    (rule as Record<string, any>).pattern === keyword ||
-                    (rule as Record<string, any>).label === keyword
-            )
+            pool.some((rule) => rule.pattern === keyword || rule.label === keyword)
         ) {
             showToast(t('subscriptions.duplicateKeyword'), 'warning');
             return;
@@ -136,9 +148,7 @@
         // 如果在另一个池中存在，先移除
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
         const otherIdx = otherPool.findIndex(
-            (rule) =>
-                (rule as Record<string, any>).pattern === keyword ||
-                (rule as Record<string, any>).label === keyword
+            (rule) => rule.pattern === keyword || rule.label === keyword
         );
         if (otherIdx !== -1) {
             otherPool.splice(otherIdx, 1);
@@ -154,17 +164,17 @@
     };
 
     // 移除规则
-    const removeKeepRule = (index: any) => {
+    const removeKeepRule = (index: number) => {
         keepRules.value.splice(index, 1);
         syncToText();
     };
 
-    const removeExcludeRule = (index: any) => {
+    const removeExcludeRule = (index: number) => {
         excludeRules.value.splice(index, 1);
         syncToText();
     };
 
-    const removeRule = (index: any, targetPool = null) => {
+    const removeRule = (index: number, targetPool: string | null = null) => {
         if (targetPool === 'keep') {
             removeKeepRule(index);
         } else if (targetPool === 'exclude') {
@@ -179,8 +189,8 @@
     const syncToText = () => {
         if (!props.editingSubscription) return;
 
-        const exPatterns = excludeRules.value.map((r) => (r as Record<string, any>).pattern);
-        const kpPatterns = keepRules.value.map((r) => (r as Record<string, any>).pattern);
+        const exPatterns = excludeRules.value.map((r) => r.pattern);
+        const kpPatterns = keepRules.value.map((r) => r.pattern);
 
         if (exPatterns.length === 0 && kpPatterns.length === 0) {
             props.editingSubscription.exclude = '';
@@ -205,7 +215,7 @@
         ].join('\n');
     };
 
-    const resolvePreset = (pattern: any) => {
+    const resolvePreset = (pattern: string): RuleItem => {
         const protocolPreset = presetProtocols.find(
             (p) => p.pattern.toLowerCase() === pattern.toLowerCase()
         );
@@ -216,9 +226,9 @@
         const allPresets = [...presetRegions, ...presetProtocols, ...presetKeywords];
         const preset = allPresets.find((p) => p.pattern === pattern);
         if (preset) {
-            const type = presetRegions.includes(preset as any)
+            const type = presetRegions.includes(preset)
                 ? 'region'
-                : presetProtocols.includes(preset as any)
+                : presetProtocols.includes(preset)
                   ? 'protocol'
                   : 'keyword';
             return { ...preset, type };
@@ -240,21 +250,21 @@
             return;
         }
 
-        const text = props.editingSubscription.exclude;
+        const text = String(props.editingSubscription.exclude || '');
         const lines = text
             .split('\n')
-            .map((l: any) => l.trim())
+            .map((l) => l.trim())
             .filter(Boolean);
 
         if (lines.length === 0) return;
 
-        const dividerIndex = lines.findIndex((line: any) => line === '---');
+        const dividerIndex = lines.findIndex((line) => line === '---');
         const hasDivider = dividerIndex !== -1;
 
-        const rawExcludePatterns: any[] = [];
-        const rawKeepPatterns: any[] = [];
+        const rawExcludePatterns: string[] = [];
+        const rawKeepPatterns: string[] = [];
 
-        lines.forEach((line: any, index: any) => {
+        lines.forEach((line, index) => {
             if (line === '---') return;
 
             if (hasDivider) {
@@ -307,39 +317,39 @@
     );
 
     // === 高级模式相关（保留原有逻辑） ===
-    const excludeRuleTextarea = ref<any>(null);
-    const excludeRuleHighlight = ref<any>(null);
+    const excludeRuleTextarea = ref<HTMLElement | null>(null);
+    const excludeRuleHighlight = ref<HTMLElement | null>(null);
 
     const excludeRuleLines = computed(() => {
-        const text = props.editingSubscription?.exclude ?? '';
+        const text = String(props.editingSubscription?.exclude ?? '');
         const lines = text.split('\n');
         return lines.length ? lines : [''];
     });
 
     const excludeRuleState = computed(() => {
-        const text = props.editingSubscription?.exclude ?? '';
+        const text = String(props.editingSubscription?.exclude ?? '');
         const rawLines = text.split('\n');
-        const lines = rawLines.map((line: any) => line.trim());
-        const hasContent = lines.some((line: any) => line);
-        const dividerIndex = lines.findIndex((line: any) => line === '---');
+        const lines = rawLines.map((line) => line.trim());
+        const hasContent = lines.some((line) => line);
+        const dividerIndex = lines.findIndex((line) => line === '---');
         const hasDivider = dividerIndex !== -1;
-        const hasKeepPrefix = lines.some((line: any) => line.toLowerCase().startsWith('keep:'));
+        const hasKeepPrefix = lines.some((line) => line.toLowerCase().startsWith('keep:'));
 
         let tagKey = 'unset';
         if (hasContent) {
             const hasExclude = lines.some(
-                (l: any) => l && l !== '---' && !l.toLowerCase().startsWith('keep:')
+                (l) => l && l !== '---' && !l.toLowerCase().startsWith('keep:')
             );
             const hasKeep =
-                lines.some((l: any) => l && l.toLowerCase().startsWith('keep:')) ||
-                (hasDivider && lines.slice(dividerIndex + 1).some((l: any) => l));
+                lines.some((l) => l && l.toLowerCase().startsWith('keep:')) ||
+                (hasDivider && lines.slice(dividerIndex + 1).some((l) => l));
 
             if (hasDivider || (hasExclude && hasKeep)) tagKey = 'mixed';
             else if (hasKeep) tagKey = 'keepOnly';
             else tagKey = 'exclude';
         }
 
-        const tagClassMap = {
+        const tagClassMap: Record<string, string> = {
             unset: 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300',
             exclude: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
             keepOnly:
@@ -347,8 +357,8 @@
             mixed: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-200',
         };
 
-        const errors: any[] = [];
-        rawLines.forEach((rawLine: any, index: any) => {
+        const errors: RuleError[] = [];
+        rawLines.forEach((rawLine, index) => {
             let line = rawLine.trim();
             if (!line) return;
             if (line === '---') return;
@@ -365,7 +375,7 @@
                 const protocols = line
                     .substring('proto:'.length)
                     .split(',')
-                    .map((p: any) => p.trim())
+                    .map((p) => p.trim())
                     .filter(Boolean);
                 if (protocols.length === 0) {
                     errors.push({ line: index + 1, message: t('subscriptions.protoEmptyError') });
@@ -383,7 +393,7 @@
         return {
             tagKey,
             tag: t(`subscriptions.ruleTag.${tagKey}`),
-            tagClass: (tagClassMap as Record<string, any>)[tagKey] || tagClassMap.unset,
+            tagClass: tagClassMap[tagKey] || tagClassMap.unset,
             errors,
             errorsText: errors
                 .map((item) =>
@@ -399,12 +409,8 @@
 
     const syncExcludeRuleScroll = () => {
         if (!excludeRuleTextarea.value || !excludeRuleHighlight.value) return;
-        (excludeRuleHighlight.value as Record<string, any>).scrollTop = (
-            excludeRuleTextarea.value as Record<string, any>
-        ).scrollTop;
-        (excludeRuleHighlight.value as Record<string, any>).scrollLeft = (
-            excludeRuleTextarea.value as Record<string, any>
-        ).scrollLeft;
+        excludeRuleHighlight.value.scrollTop = excludeRuleTextarea.value.scrollTop;
+        excludeRuleHighlight.value.scrollLeft = excludeRuleTextarea.value.scrollLeft;
     };
 
     const handleConfirm = () => {
