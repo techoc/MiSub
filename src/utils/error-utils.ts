@@ -53,7 +53,7 @@ export async function handleApiResponseError(response, context = 'API Request') 
  */
 export function createUserError(message, userMessage) {
     const error = new Error(message);
-    error.userMessage = userMessage || message;
+    (error as Record<string, any>).userMessage = userMessage || message;
     return error;
 }
 

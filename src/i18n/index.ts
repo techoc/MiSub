@@ -75,7 +75,7 @@ export function normalizeLocale(locale) {
     return DEFAULT_LOCALE;
 }
 
-export function detectInitialLocale(browserLanguages = []) {
+export function detectInitialLocale(browserLanguages: any[] = []) {
     const stored = readStoredLocale();
     if (supportedCodes.has(stored)) return stored;
 
@@ -101,12 +101,12 @@ function lookupMessage(locale, key) {
     }, runtimeMessages.value[locale]);
 }
 
-function interpolate(template, params = {}) {
+function interpolate(template, params: Record<string, any> = {}) {
     if (typeof template !== 'string') return template;
     return template.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
 }
 
-export function createI18n(options = {}) {
+export function createI18n(options: Record<string, any> = {}) {
     const locale = ref(normalizeLocale(options.initialLocale || detectInitialLocale()));
     // 初始语言若非默认语言（例如浏览器语言/存储偏好是 en-US），立刻开始加载其语言包
     ensureLocaleMessages(locale.value);
@@ -147,7 +147,7 @@ export function createI18n(options = {}) {
 
 export const i18n = createI18n();
 
-export function t(key, params = {}, forcedLocale) {
+export function t(key, params: Record<string, any> = {}, forcedLocale) {
     return i18n.t(key, params, forcedLocale);
 }
 

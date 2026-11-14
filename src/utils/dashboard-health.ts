@@ -2,7 +2,7 @@ import { getSubscriptionTrafficState } from './dashboard-deeplink.ts';
 
 const DEFAULT_NOW = () => Date.now();
 
-function getTokenState(settings = {}) {
+function getTokenState(settings: Record<string, any> = {}) {
     const token = settings.mytoken;
     if (!token) return 'missing';
     if (token === 'auto') return 'auto';
@@ -45,8 +45,8 @@ export function getDashboardHealthItems({
     settings = {},
     totalNodesCount = null,
     now = DEFAULT_NOW(),
-} = {}) {
-    const items = [];
+}: Record<string, any> = {}) {
+    const items: any[] = [];
     const enabledSubscriptions = subscriptions.filter((sub) => sub.enabled);
     const disabledSubscriptions = subscriptions.filter((sub) => !sub.enabled);
     const activeProfiles = profiles.filter((profile) => profile.enabled !== false);

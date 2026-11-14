@@ -128,6 +128,6 @@ export function resolveProfileFocus(focus) {
  * Count how many subscriptions match a filter — used for the "filtered" hint
  * the list shows so a deep-linked user understands why the list is short.
  */
-export function countSubscriptionsByStatus(subscriptions = [], filter) {
+export function countSubscriptionsByStatus(subscriptions: any[] = [], filter) {
     return subscriptions.filter((sub) => matchesSubscriptionStatus(sub, filter)).length;
 }

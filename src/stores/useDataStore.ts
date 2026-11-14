@@ -35,8 +35,8 @@ export const useDataStore = defineStore('data', () => {
     const isDirty = computed(() => editorStore.isDirty);
 
     // --- Getters ---
-    const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => sub.enabled));
-    const activeProfiles = computed(() => profiles.value.filter((profile) => profile.enabled));
+    const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => (sub as Record<string, any>).enabled));
+    const activeProfiles = computed(() => profiles.value.filter((profile) => (profile as Record<string, any>).enabled));
 
     // --- Internal: Snapshot for rollback/diffing ---
     let lastSavedData = {
@@ -204,7 +204,7 @@ export const useDataStore = defineStore('data', () => {
      * @returns {Promise<boolean>} 成功时为 true；失败时**抛出**（沿用既有约定，
      *          调用方自行 catch，静默模式下尤其需要）
      */
-    async function saveSettings(newSettings, options = {}) {
+    async function saveSettings(newSettings, options: Record<string, any> = {}) {
         const { silent = false, preferencesOnly = false } = options;
         editorStore.setLoading(true);
         try {
@@ -304,14 +304,14 @@ export const useDataStore = defineStore('data', () => {
     }
 
     function removeSubscription(id) {
-        const index = subscriptions.value.findIndex((s) => s.id === id);
+        const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
         if (index !== -1) {
             subscriptions.value.splice(index, 1);
         }
     }
 
     function updateSubscription(id, updates) {
-        const index = subscriptions.value.findIndex((s) => s.id === id);
+        const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
         if (index !== -1) {
             subscriptions.value[index] = { ...subscriptions.value[index], ...updates };
             markDirty();
@@ -327,10 +327,10 @@ export const useDataStore = defineStore('data', () => {
     }
 
     function removeProfile(id) {
-        const index = profiles.value.findIndex((p) => p.id === id || p.customId === id);
+        const index = profiles.value.findIndex((p) => (p as Record<string, any>).id === id || (p as Record<string, any>).customId === id);
         if (index !== -1) {
             const removed = profiles.value.splice(index, 1)[0];
-            removeProfileFromProfiles([removed.id, removed.customId].filter(Boolean));
+            removeProfileFromProfiles([(removed as Record<string, any>).id, (removed as Record<string, any>).customId].filter(Boolean));
         }
     }
 
@@ -340,10 +340,10 @@ export const useDataStore = defineStore('data', () => {
 
         let modified = false;
         profiles.value.forEach((profile) => {
-            if (Array.isArray(profile.subProfiles) && profile.subProfiles.length > 0) {
-                const originalLength = profile.subProfiles.length;
-                profile.subProfiles = profile.subProfiles.filter((id) => !idsToRemove.has(id));
-                if (profile.subProfiles.length !== originalLength) {
+            if (Array.isArray((profile as Record<string, any>).subProfiles) && (profile as Record<string, any>).subProfiles.length > 0) {
+                const originalLength = (profile as Record<string, any>).subProfiles.length;
+                (profile as Record<string, any>).subProfiles = (profile as Record<string, any>).subProfiles.filter((id) => !idsToRemove.has(id));
+                if ((profile as Record<string, any>).subProfiles.length !== originalLength) {
                     modified = true;
                 }
             }
@@ -360,10 +360,10 @@ export const useDataStore = defineStore('data', () => {
 
         let modified = false;
         profiles.value.forEach((profile) => {
-            if (Array.isArray(profile.manualNodes) && profile.manualNodes.length > 0) {
-                const originalLength = profile.manualNodes.length;
-                profile.manualNodes = profile.manualNodes.filter((id) => !idsToRemove.has(id));
-                if (profile.manualNodes.length !== originalLength) {
+            if (Array.isArray((profile as Record<string, any>).manualNodes) && (profile as Record<string, any>).manualNodes.length > 0) {
+                const originalLength = (profile as Record<string, any>).manualNodes.length;
+                (profile as Record<string, any>).manualNodes = (profile as Record<string, any>).manualNodes.filter((id) => !idsToRemove.has(id));
+                if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
                     modified = true;
                 }
             }
@@ -383,10 +383,10 @@ export const useDataStore = defineStore('data', () => {
 
         let modified = false;
         profiles.value.forEach((profile) => {
-            if (Array.isArray(profile.subscriptions) && profile.subscriptions.length > 0) {
-                const originalLength = profile.subscriptions.length;
-                profile.subscriptions = profile.subscriptions.filter((id) => !idsToRemove.has(id));
-                if (profile.subscriptions.length !== originalLength) {
+            if (Array.isArray((profile as Record<string, any>).subscriptions) && (profile as Record<string, any>).subscriptions.length > 0) {
+                const originalLength = (profile as Record<string, any>).subscriptions.length;
+                (profile as Record<string, any>).subscriptions = (profile as Record<string, any>).subscriptions.filter((id) => !idsToRemove.has(id));
+                if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
                     modified = true;
                 }
             }
@@ -408,15 +408,15 @@ export const useDataStore = defineStore('data', () => {
         if (!profiles.value || profiles.value.length === 0) return;
 
         // 收集所有当前存在的订阅和手动节点 ID
-        const validIds = new Set(subscriptions.value.map((item) => item.id));
+        const validIds = new Set(subscriptions.value.map((item) => (item as Record<string, any>).id));
 
         let modified = false;
         profiles.value.forEach((profile) => {
             // 1. 处理手动节点引用
-            if (Array.isArray(profile.manualNodes) && profile.manualNodes.length > 0) {
-                const originalLength = profile.manualNodes.length;
+            if (Array.isArray((profile as Record<string, any>).manualNodes) && (profile as Record<string, any>).manualNodes.length > 0) {
+                const originalLength = (profile as Record<string, any>).manualNodes.length;
                 const seenIds = new Set();
-                profile.manualNodes = profile.manualNodes.filter((id) => {
+                (profile as Record<string, any>).manualNodes = (profile as Record<string, any>).manualNodes.filter((id) => {
                     // ID 必须存在且未被重复记录
                     if (validIds.has(id) && !seenIds.has(id)) {
                         seenIds.add(id);
@@ -424,23 +424,23 @@ export const useDataStore = defineStore('data', () => {
                     }
                     return false;
                 });
-                if (profile.manualNodes.length !== originalLength) {
+                if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
                     modified = true;
                 }
             }
 
             // 2. 处理机场订阅引用
-            if (Array.isArray(profile.subscriptions) && profile.subscriptions.length > 0) {
-                const originalLength = profile.subscriptions.length;
+            if (Array.isArray((profile as Record<string, any>).subscriptions) && (profile as Record<string, any>).subscriptions.length > 0) {
+                const originalLength = (profile as Record<string, any>).subscriptions.length;
                 const seenIds = new Set();
-                profile.subscriptions = profile.subscriptions.filter((id) => {
+                (profile as Record<string, any>).subscriptions = (profile as Record<string, any>).subscriptions.filter((id) => {
                     if (validIds.has(id) && !seenIds.has(id)) {
                         seenIds.add(id);
                         return true;
                     }
                     return false;
                 });
-                if (profile.subscriptions.length !== originalLength) {
+                if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
                     modified = true;
                 }
             }

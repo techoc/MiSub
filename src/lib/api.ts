@@ -142,7 +142,7 @@ export async function fetchNodeCount(subUrl, fetchProxy = '', plusAsSpace = fals
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
 
-        const payload = { url: subUrl };
+        const payload : Record<string, any> = { url: subUrl };
         if (fetchProxy) {
             payload.fetchProxy = fetchProxy;
         }

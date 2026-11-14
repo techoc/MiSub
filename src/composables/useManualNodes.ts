@@ -58,7 +58,7 @@ export function useManualNodes(markDirty) {
         return filteredManualNodes.value.slice(start, end);
     });
 
-    const enabledManualNodes = computed(() => manualNodes.value.filter((n) => n.enabled));
+    const enabledManualNodes = computed(() => manualNodes.value.filter((n) => (n as Record<string, any>).enabled));
 
     function changeManualNodesPage(page) {
         let p = parseInt(page);
@@ -78,11 +78,11 @@ export function useManualNodes(markDirty) {
         const normalizedGroupName = normalizeManualNodeGroupName(groupName);
         const idsSet = new Set(nodeIds);
         const updates = manualNodes.value
-            .filter((n) => idsSet.has(n.id))
+            .filter((n) => idsSet.has((n as Record<string, any>).id))
             .map((n) => {
                 // Only update if changed after normalization
-                if (normalizeManualNodeGroupName(n.group) === normalizedGroupName) return null;
-                return { id: n.id, updates: { ...n, group: normalizedGroupName } };
+                if (normalizeManualNodeGroupName((n as Record<string, any>).group) === normalizedGroupName) return null;
+                return { id: (n as Record<string, any>).id, updates: { ...n, group: normalizedGroupName } };
             })
             .filter((u) => u);
 
@@ -156,7 +156,7 @@ export function useManualNodes(markDirty) {
 
     function deleteAllNodes() {
         // Only remove proper manual nodes (not subscriptions)
-        const idsToRemove = manualNodes.value.map((n) => n.id);
+        const idsToRemove = manualNodes.value.map((n) => (n as Record<string, any>).id);
 
         // 如果没有节点，提示并返回
         if (idsToRemove.length === 0) {
@@ -239,7 +239,7 @@ export function useManualNodes(markDirty) {
     function sortNodesByLatency() {
         const results = pingResults.value || {};
         const hasAnyLatency = Object.values(results).some(
-            (item) => item && item.status === 'ok' && Number.isFinite(item.latency)
+            (item) => item && (item as { status?: number }).status === 'ok' && Number.isFinite((item as Record<string, any>).latency)
         );
         if (!hasAnyLatency) return false;
 
@@ -254,11 +254,11 @@ export function useManualNodes(markDirty) {
             const lb = latencyOf(b);
             if (la !== lb) return la - lb;
             // 延迟相同（或都未测出）时保持名称稳定排序
-            return (a.name || '').localeCompare(b.name || '', 'zh-CN');
+            return ((a as Error).name || '').localeCompare((b as Error).name || '', 'zh-CN');
         });
 
         const otherItems = (allSubscriptions.value || []).filter(
-            (item) => !nodes.some((n) => n.id === item.id)
+            (item) => !nodes.some((n) => (n as Record<string, any>).id === (item as Record<string, any>).id)
         );
         dataStore.overwriteSubscriptions([...nodes, ...otherItems]);
 
@@ -280,14 +280,14 @@ export function useManualNodes(markDirty) {
         const orderedManualNodes =
             newOrderIds.size > 0 && newOrderIds.size < currentManualNodes.length
                 ? currentManualNodes.map((node) => {
-                      if (!newOrderIds.has(node.id)) return node;
+                      if (!newOrderIds.has((node as Record<string, any>).id)) return node;
                       return reorderedVisibleNodes.shift();
                   })
                 : reorderedVisibleNodes;
 
         // 1. Get all Subscriptions (to preserve them)
         const currentSubscriptions = (allSubscriptions.value || []).filter(
-            (item) => item.url && /^https?:\/\//.test(item.url)
+            (item) => (item as Record<string, any>).url && /^https?:\/\//.test((item as Record<string, any>).url)
         );
 
         // 2. Combine Existing Subscriptions + New Ordered Manual Nodes
@@ -317,10 +317,10 @@ export function useManualNodes(markDirty) {
             return;
 
         const nodesInGroup = manualNodes.value.filter(
-            (n) => normalizeManualNodeGroupName(n.group) === normalizedOldName
+            (n) => normalizeManualNodeGroupName((n as Record<string, any>).group) === normalizedOldName
         );
         nodesInGroup.forEach((node) => {
-            dataStore.updateSubscription(node.id, { ...node, group: normalizedNewName });
+            dataStore.updateSubscription((node as Record<string, any>).id, { ...node, group: normalizedNewName });
         });
 
         // 同步更新自定义分组顺序
@@ -340,12 +340,12 @@ export function useManualNodes(markDirty) {
         if (!normalizedGroupName) return;
         // Ungroup nodes (move to default)
         const nodesInGroup = manualNodes.value.filter(
-            (n) => normalizeManualNodeGroupName(n.group) === normalizedGroupName
+            (n) => normalizeManualNodeGroupName((n as Record<string, any>).group) === normalizedGroupName
         );
         nodesInGroup.forEach((node) => {
             // Creating a copy logic is safe here as updateSubscription handles it
             const { group, ...rest } = node;
-            dataStore.updateSubscription(node.id, { ...rest, group: '' }); // Set to empty string or remove property
+            dataStore.updateSubscription((node as Record<string, any>).id, { ...rest, group: '' }); // Set to empty string or remove property
         });
 
         // 从自定义分组顺序中移除
@@ -370,10 +370,10 @@ export function useManualNodes(markDirty) {
 
     async function pingNodeId(nodeId) {
         if (pingingNodes.value.has(nodeId)) return;
-        const node = manualNodes.value.find((n) => n.id === nodeId);
+        const node = manualNodes.value.find((n) => (n as Record<string, any>).id === nodeId);
         if (!node) return;
 
-        const { host, port } = extractHostAndPort(node.url);
+        const { host, port } = extractHostAndPort((node as Record<string, any>).url);
         if (!host || !port) {
             pingResults.value[nodeId] = {
                 status: 'error',
@@ -402,7 +402,7 @@ export function useManualNodes(markDirty) {
 
     // 批量并发测试所有开启的手动节点
     async function pingAllNodes() {
-        const nodesToTest = enabledManualNodes.value.map((n) => n.id);
+        const nodesToTest = enabledManualNodes.value.map((n) => (n as Record<string, any>).id);
         if (nodesToTest.length === 0) return;
 
         showToast(t('manualNodes.pingStarted', { count: nodesToTest.length }), 'info');

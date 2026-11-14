@@ -15,7 +15,7 @@ export function normalizeManualNodeGroupName(groupName) {
     return typeof groupName === 'string' ? groupName.trim() : '';
 }
 
-export function collectManualNodeGroups(nodes, customOrder = []) {
+export function collectManualNodeGroups(nodes, customOrder: any[] = []) {
     const groups = new Set();
     nodes.forEach((node) => {
         const group = normalizeManualNodeGroupName(node.group);
@@ -28,7 +28,7 @@ export function collectManualNodeGroups(nodes, customOrder = []) {
 
     // 如果有自定义顺序，按自定义顺序排列，然后追加新出现的分组
     if (customOrder && customOrder.length > 0) {
-        const orderedGroups = [];
+        const orderedGroups: any[] = [];
         const remaining = new Set(allGroups);
 
         // 先按自定义顺序添加

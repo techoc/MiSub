@@ -43,13 +43,13 @@ export function useNodeForms({ addNode, updateNode }) {
     const handleUrlInput = (event) => {
         if (!editingNode.value) return;
         const newUrl = event.target.value;
-        if (newUrl && !editingNode.value.name) {
-            editingNode.value.name = extractNodeName(newUrl);
+        if (newUrl && !(editingNode.value as Error).name) {
+            (editingNode.value as Error).name = extractNodeName(newUrl);
         }
     };
 
     const handleSave = () => {
-        if (!editingNode.value || !editingNode.value.url) {
+        if (!editingNode.value || !(editingNode.value as Record<string, any>).url) {
             showToast(t('manualNodes.urlRequired'), 'error');
             return;
         }

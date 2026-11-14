@@ -61,7 +61,7 @@ export function validatePasswordStrength(password) {
     }
 
     let score = 0;
-    const suggestions = [];
+    const suggestions: any[] = [];
 
     // 长度检查
     if (password.length >= 8) {
@@ -122,7 +122,7 @@ export function validateForm(formData, rules) {
 
     for (const [field, fieldRules] of Object.entries(rules)) {
         const value = formData[field];
-        const fieldErrors = [];
+        const fieldErrors: any[] = [];
 
         // 必填验证
         if (fieldRules.required && (!value || value.toString().trim() === '')) {

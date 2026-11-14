@@ -66,7 +66,7 @@ export function assertFileSize(file) {
  */
 export async function readFilesAsText(files) {
     const list = Array.from(files || []);
-    const chunks = [];
+    const chunks: any[] = [];
     let byteSize = 0;
 
     for (const file of list) {

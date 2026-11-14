@@ -41,7 +41,7 @@ function safeOrigin(url, fallbackOrigin) {
  * @param {string} [origin] 本站 origin（默认取 window.location.origin）
  * @returns {boolean} true 表示应当作为应用错误处理
  */
-export function isAppScriptError(info = {}, origin) {
+export function isAppScriptError(info: Record<string, any> = {}, origin) {
     const base = resolveOrigin(origin);
     const filename = String(info.filename || '').trim();
 

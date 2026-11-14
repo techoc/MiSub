@@ -2,7 +2,7 @@ import { generateNodeId } from '../id.ts';
 import { base64Encode } from './common/base64.ts';
 
 export function parseLoonConfig(content) {
-    const nodes = [];
+    const nodes: any[] = [];
     const lines = content.split('\n');
 
     for (const rawLine of lines) {
@@ -71,7 +71,7 @@ function parseLoonVmess(line) {
     if (protocol.toLowerCase() !== 'vmess' || !server || !port || !uuid) return null;
     const options = parseExtraParams(extra);
 
-    const config = {
+    const config : Record<string, any> = {
         v: '2',
         ps: parsed.name,
         add: server,
@@ -121,7 +121,7 @@ function parseLoonTrojan(line) {
     const [protocol, server, port, password, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'trojan' || !server || !port || !password) return null;
     const options = parseExtraParams(extra);
-    const urlParams = [];
+    const urlParams: any[] = [];
     if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
     if (options.get('transport') === 'ws') urlParams.push('type=ws');
     if (options.get('path')) urlParams.push(`path=${encodeURIComponent(options.get('path'))}`);
@@ -144,7 +144,7 @@ function parseLoonVless(line) {
     const [protocol, server, port, uuid, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'vless' || !server || !port || !uuid) return null;
     const options = parseExtraParams(extra);
-    const urlParams = [];
+    const urlParams: any[] = [];
     if (options.get('transport'))
         urlParams.push(`type=${encodeURIComponent(options.get('transport'))}`);
     if (options.get('path')) urlParams.push(`path=${encodeURIComponent(options.get('path'))}`);
@@ -203,7 +203,7 @@ function parseLoonHysteria2(line) {
     const [protocol, server, port, password, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'hysteria2' || !server || !port || !password) return null;
     const options = parseExtraParams(extra);
-    const urlParams = [];
+    const urlParams: any[] = [];
     if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
     if (options.get('skip-cert-verify') === 'true') urlParams.push('insecure=1');
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
@@ -226,7 +226,7 @@ function parseLoonTuic(line) {
     const auth = options.get('password')
         ? `${encodeURIComponent(tokenOrUuid)}:${encodeURIComponent(options.get('password'))}`
         : encodeURIComponent(tokenOrUuid);
-    const urlParams = [];
+    const urlParams: any[] = [];
     if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
     const query = urlParams.length ? `?${urlParams.join('&')}` : '';
     return {
@@ -245,7 +245,7 @@ function parseLoonWireGuard(line) {
     const [protocol, server, port, privateKey, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'wireguard' || !server || !port || !privateKey) return null;
     const options = parseExtraParams(extra);
-    const urlParams = [];
+    const urlParams: any[] = [];
     if (options.get('public-key'))
         urlParams.push(`publickey=${encodeURIComponent(options.get('public-key'))}`);
     if (options.get('self-ip'))
@@ -286,7 +286,7 @@ function parseLoonAnyTLS(line) {
     const [protocol, server, port, password, ...extra] = parsed.params;
     if (protocol.toLowerCase() !== 'anytls' || !server || !port || !password) return null;
     const options = parseExtraParams(extra);
-    const urlParams = [];
+    const urlParams: any[] = [];
     if (options.get('sni')) urlParams.push(`sni=${encodeURIComponent(options.get('sni'))}`);
     if (options.get('alpn')) urlParams.push(`alpn=${encodeURIComponent(options.get('alpn'))}`);
     if (options.get('skip-cert-verify') === 'true') urlParams.push('allowInsecure=1');

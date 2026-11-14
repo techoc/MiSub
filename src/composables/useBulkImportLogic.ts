@@ -68,7 +68,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
 
         // 获取已存在的所有 URL，用于去重
         const existingUrls = new Set(
-            (dataStore.subscriptions || []).map((s) => s.url).filter(Boolean)
+            (dataStore.subscriptions || []).map((s) => (s as Record<string, any>).url).filter(Boolean)
         );
 
         // 先尝试解析 Surge 格式（name = protocol, server, port, ...）
@@ -78,8 +78,8 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
             .split('\n')
             .map((line) => line.trim())
             .filter(Boolean);
-        const validSubs = [];
-        const validNodes = [];
+        const validSubs: any[] = [];
+        const validNodes: any[] = [];
 
         // 如果成功解析出 Surge 节点，使用解析结果
         if (surgeNodes && surgeNodes.length > 0) {

@@ -5,7 +5,7 @@ import { base64Encode } from './common/base64.ts';
  * 解析Surge配置
  */
 export function parseSurgeConfig(content) {
-    const nodes = [];
+    const nodes: any[] = [];
     const lines = content.split('\n');
 
     for (let i = 0; i < lines.length; i++) {
@@ -89,7 +89,7 @@ function parseSurgeAnytls(line) {
         if (!server || !port) return null;
 
         let password = '';
-        const urlParams = [];
+        const urlParams: any[] = [];
 
         options.forEach((opt) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
@@ -225,8 +225,8 @@ function parseSurgeSS(line) {
         const userinfo = base64Encode(`${method}:${password}`);
         return {
             id: generateNodeId(),
-            name: name.trim().replace(/"/g, ''),
-            url: `ss://${userinfo}@${server}:${port}#${encodeURIComponent(name.trim().replace(/"/g, ''))}`,
+            name: (name as Record<string, any>).trim().replace(/"/g, ''),
+            url: `ss://${userinfo}@${server}:${port}#${encodeURIComponent((name as Record<string, any>).trim().replace(/"/g, ''))}`,
             enabled: true,
             protocol: 'ss',
             source: 'surge',
@@ -267,8 +267,8 @@ function parseSurgeTrojan(line) {
 
         return {
             id: generateNodeId(),
-            name: name.trim().replace(/"/g, ''),
-            url: `trojan://${encodeURIComponent(password)}@${server}:${port}#${encodeURIComponent(name.trim().replace(/"/g, ''))}`,
+            name: (name as Record<string, any>).trim().replace(/"/g, ''),
+            url: `trojan://${encodeURIComponent(password)}@${server}:${port}#${encodeURIComponent((name as Record<string, any>).trim().replace(/"/g, ''))}`,
             enabled: true,
             protocol: 'trojan',
             source: 'surge',
@@ -297,8 +297,8 @@ function parseSurgeHTTP(line) {
 
         return {
             id: generateNodeId(),
-            name: name.trim().replace(/"/g, ''),
-            url: `${urlProtocol}://${server}:${port}#${encodeURIComponent(name.trim().replace(/"/g, ''))}`,
+            name: (name as Record<string, any>).trim().replace(/"/g, ''),
+            url: `${urlProtocol}://${server}:${port}#${encodeURIComponent((name as Record<string, any>).trim().replace(/"/g, ''))}`,
             enabled: true,
             protocol: protocol,
             source: 'surge',
@@ -372,7 +372,7 @@ function parseSurgeSnell(line) {
         if (!proxy.psk) return null;
 
         // 构建 Snell URL
-        const urlParams = [];
+        const urlParams: any[] = [];
         if (proxy.version) urlParams.push(`version=${proxy.version}`);
         if (proxy.reuse !== undefined) urlParams.push(`reuse=${proxy.reuse}`);
         if (proxy.tfo !== undefined) urlParams.push(`tfo=${proxy.tfo}`);
@@ -421,7 +421,7 @@ function parseSurgeHysteria2(line) {
         if (!server || !port) return null;
 
         let password = '';
-        const urlParams = [];
+        const urlParams: any[] = [];
 
         options.forEach((opt) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
@@ -475,7 +475,7 @@ function parseSurgeTUIC(line) {
         if (protocol.toLowerCase() !== 'tuic' || !server || !port) return null;
 
         let token = '';
-        const urlParams = [];
+        const urlParams: any[] = [];
 
         options.forEach((opt) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
@@ -588,7 +588,7 @@ function parseSurgeWireGuard(line) {
 
         if (!server || !port) return null;
 
-        const urlParams = [];
+        const urlParams: any[] = [];
         let privateKey = '';
         options.forEach((opt) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);

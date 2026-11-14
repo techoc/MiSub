@@ -24,13 +24,13 @@ export const useVersionStore = defineStore('version', () => {
 
     // --- Getters ---
     const hasUpdate = computed(() => {
-        if (!latestRelease.value?.tag_name) return false;
-        return compareVersions(latestRelease.value.tag_name, currentVersion.value) > 0;
+        if (!(latestRelease.value as Record<string, any> | undefined)?.tag_name) return false;
+        return compareVersions((latestRelease.value as Record<string, any>).tag_name, currentVersion.value) > 0;
     });
 
     const isUpToDate = computed(() => {
-        if (!latestRelease.value?.tag_name) return true;
-        return compareVersions(latestRelease.value.tag_name, currentVersion.value) === 0;
+        if (!(latestRelease.value as Record<string, any> | undefined)?.tag_name) return true;
+        return compareVersions((latestRelease.value as Record<string, any>).tag_name, currentVersion.value) === 0;
     });
 
     // --- Helpers ---
@@ -93,10 +93,10 @@ export const useVersionStore = defineStore('version', () => {
     }
 
     function suppressUpdateModal() {
-        if (latestRelease.value?.tag_name) {
+        if ((latestRelease.value as Record<string, any> | undefined)?.tag_name) {
             // 写失败时必须告知用户：否则下次启动更新提示又会冒出来。
             const persisted = writeRawPreference(
-                getDismissKey(latestRelease.value.tag_name),
+                getDismissKey((latestRelease.value as Record<string, any>).tag_name),
                 'true'
             );
             if (!persisted) useToastStore().showToast(t('errors.preferenceNotSaved'), 'error');

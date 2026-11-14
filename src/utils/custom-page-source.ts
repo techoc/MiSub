@@ -89,7 +89,7 @@ function normalizeUrl(value) {
 }
 
 function wrapBodyContent(body) {
-    const attrs = [];
+    const attrs: string[] = [];
     const classes = ['custom-page-document', 'custom-page-html', 'custom-page-body'];
 
     Array.from(body.attributes).forEach((attr) => {

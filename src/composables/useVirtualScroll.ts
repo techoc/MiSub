@@ -6,19 +6,19 @@ export function useVirtualScroll({ items, itemHeight = 52, containerHeight = 400
 
     const updateScrollTop = () => {
         if (containerRef.value) {
-            scrollTop.value = containerRef.value.scrollTop;
+            scrollTop.value = (containerRef.value as Record<string, any>).scrollTop;
         }
     };
 
     onMounted(() => {
         if (containerRef.value) {
-            containerRef.value.addEventListener('scroll', updateScrollTop, { passive: true });
+            (containerRef.value as Record<string, any>).addEventListener('scroll', updateScrollTop, { passive: true });
         }
     });
 
     onUnmounted(() => {
         if (containerRef.value) {
-            containerRef.value.removeEventListener('scroll', updateScrollTop);
+            (containerRef.value as Record<string, any>).removeEventListener('scroll', updateScrollTop);
         }
     });
 

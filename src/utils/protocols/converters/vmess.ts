@@ -12,7 +12,7 @@ export function convertVmessToUrl(proxy) {
             return null;
         }
 
-        const config = {
+        const config : Record<string, any> = {
             v: '2',
             ps: proxy.name || proxy['server-name'] || 'VMess',
             add: proxy.server,

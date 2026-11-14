@@ -39,7 +39,7 @@ const parseJson = async (response) => {
     }
 };
 
-export async function request(url, options = {}) {
+export async function request(url, options: Record<string, any> = {}) {
     const { headers, body, ...rest } = options;
     const response = await fetch(url, {
         credentials: 'include',

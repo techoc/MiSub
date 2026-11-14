@@ -13,7 +13,7 @@ function isEqual(a, b) {
  * @param {Array} current - The current array
  * @returns {Object} { added: [], updated: [], removed: [] } or null if no difference
  */
-export function calculateDiff(original = [], current = []) {
+export function calculateDiff(original: any[] = [], current: any[] = []) {
     const added = [];
     const updated = [];
     const removedIdSet = new Set(original.map((item) => item.id));

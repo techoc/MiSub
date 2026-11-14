@@ -5,7 +5,7 @@ import { base64Encode } from './common/base64.ts';
  * 解析Quantumult X配置
  */
 export function parseQuantumultXConfig(content) {
-    const nodes = [];
+    const nodes: any[] = [];
     const lines = content.split('\n');
 
     for (const line of lines) {
@@ -125,7 +125,7 @@ function parseQuantumultXVmess(line) {
 
         // 解析额外参数
         extra.forEach((param) => {
-            const [key, ...rest] = param.split('=');
+            const [key, ...rest] = (param as Record<string, any>).split('=');
             const value = rest.join('=').trim();
             if (key && value) {
                 switch (key.toLowerCase()) {
@@ -308,9 +308,9 @@ function parseQuantumultXVless(line) {
         }
         if (!name || !server || !port || !uuid) return null;
 
-        const urlParams = [];
+        const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = param.split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
             if (!key || !value) return;
             switch (key.toLowerCase()) {
                 case 'transport':
@@ -390,9 +390,9 @@ function parseQuantumultXHysteria2(line) {
         }
         if (!name || !server || !port || !password) return null;
 
-        const urlParams = [];
+        const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = param.split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
             if (!key || !value) return;
             if (
                 key.toLowerCase() === 'sni' ||
@@ -456,9 +456,9 @@ function parseQuantumultXTuic(line) {
         const auth = password
             ? `${encodeURIComponent(uuid.trim())}:${encodeURIComponent(password.trim())}`
             : encodeURIComponent(uuid.trim());
-        const urlParams = [];
+        const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = param.split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
             if (!key || !value) return;
             if (key.toLowerCase() === 'sni' || key.toLowerCase() === 'peer')
                 urlParams.push(`sni=${encodeURIComponent(value)}`);
@@ -488,7 +488,7 @@ function parseQuantumultXAnyTLS(line) {
         if (equalIndex === -1) return null;
         const config = line.slice(equalIndex + 1);
         const rawParams = config.split(',').map((p) => p.trim());
-        const params = [];
+        const params: any[] = [];
         for (const param of rawParams) {
             if (
                 /^[A-Za-z][A-Za-z0-9_-]*=/.test(param) ||
@@ -525,9 +525,9 @@ function parseQuantumultXAnyTLS(line) {
         if (!name || !server || !port) return null;
 
         let password = '';
-        const urlParams = [];
+        const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = param.split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
             if (!key || !value) return;
             switch (key.toLowerCase()) {
                 case 'password':

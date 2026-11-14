@@ -23,7 +23,7 @@ export function setConfirmHost(mounted) {
     }
 }
 
-export function confirmAction(options = {}) {
+export function confirmAction(options: Record<string, any> = {}) {
     if (!hostMounted) {
         const accepted =
             typeof window !== 'undefined' && typeof window.confirm === 'function'
@@ -34,7 +34,7 @@ export function confirmAction(options = {}) {
 
     return new Promise((resolve) => {
         if (pending.value) {
-            pending.value.resolve(false);
+            (pending.value as Record<string, any>).resolve(false);
         }
         pending.value = {
             title: options.title || '',
@@ -55,6 +55,6 @@ export function settleConfirm(result) {
     const current = pending.value;
     pending.value = null;
     if (current) {
-        current.resolve(result);
+        (current as Record<string, any>).resolve(result);
     }
 }

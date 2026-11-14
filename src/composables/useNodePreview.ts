@@ -61,12 +61,12 @@ export function useNodePreview(props) {
 
         // 协议过滤
         if (protocolFilter.value && protocolFilter.value !== 'all') {
-            result = result.filter((node) => node.protocol === protocolFilter.value);
+            result = result.filter((node) => (node as Record<string, any>).protocol === protocolFilter.value);
         }
 
         // 地区过滤
         if (regionFilter.value && regionFilter.value !== 'all') {
-            result = result.filter((node) => node.region === regionFilter.value);
+            result = result.filter((node) => (node as Record<string, any>).region === regionFilter.value);
         }
 
         // 搜索过滤
@@ -74,9 +74,9 @@ export function useNodePreview(props) {
             const query = searchQuery.value.toLowerCase().trim();
             result = result.filter(
                 (node) =>
-                    node.name.toLowerCase().includes(query) ||
-                    node.protocol.toLowerCase().includes(query) ||
-                    node.region.toLowerCase().includes(query)
+                    (node as Error).name.toLowerCase().includes(query) ||
+                    (node as Record<string, any>).protocol.toLowerCase().includes(query) ||
+                    (node as Record<string, any>).region.toLowerCase().includes(query)
             );
         }
 
@@ -109,7 +109,7 @@ export function useNodePreview(props) {
         error.value = '';
 
         try {
-            const requestData = {
+            const requestData : Record<string, any> = {
                 userAgent: 'MiSub-Node-Preview/1.0',
             };
 
@@ -152,7 +152,7 @@ export function useNodePreview(props) {
                 } catch (testErr) {
                     error.value = t('nodePreview.authFailed');
                 }
-            } else if (isNetworkErrorMessage(err?.message)) {
+            } else if (isNetworkErrorMessage((err as Error | undefined)?.message)) {
                 error.value = t('nodePreview.networkFailed');
             } else {
                 error.value = err.message || t('nodePreview.loadFailed');

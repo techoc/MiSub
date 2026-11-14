@@ -129,8 +129,8 @@ export function buildDedupPlan(nodes) {
         bucket.set(key, list);
     }
 
-    const removeNodes = [];
-    const keepNodes = [];
+    const removeNodes: any[] = [];
+    const keepNodes: any[] = [];
 
     for (const list of bucket.values()) {
         if (list.length === 1) {

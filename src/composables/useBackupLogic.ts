@@ -61,13 +61,13 @@ export function useBackupLogic() {
         input.type = 'file';
         input.accept = 'application/json';
         input.onchange = (event) => {
-            const file = event.target.files[0];
+            const file = (event.target as Record<string, any>).files[0];
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const data = JSON.parse(e.target.result);
+                    const data = JSON.parse(e.target!.result);
                     const scope = data?.scope || 'dataOnly';
                     const scopeLabel =
                         scope === 'dataAndSettings'

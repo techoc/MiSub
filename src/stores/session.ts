@@ -47,7 +47,7 @@ export const useSessionStore = defineStore('session', () => {
 
         // Update public config
         if (pConfigResult.success) {
-            publicConfig.value = pConfigResult.data;
+            publicConfig.value = (pConfigResult as Record<string, any>).data;
             hasLoadedPublicConfig.value = true;
         } else if (!hasLoadedPublicConfig.value) {
             // Fail closed on the first load; preserve a known-good config on later retries.
@@ -58,14 +58,14 @@ export const useSessionStore = defineStore('session', () => {
         }
 
         if (dataResult.success) {
-            initialData.value = dataResult.data;
-            if (dataResult.data.config) {
-                subscriptionConfig.value = dataResult.data.config;
+            initialData.value = (dataResult as Record<string, any>).data;
+            if ((dataResult as Record<string, any>).data.config) {
+                subscriptionConfig.value = (dataResult as Record<string, any>).data.config;
             }
 
             // 直接注入数据到 dataStore，避免 Dashboard 重复请求
             const dataStore = useDataStore();
-            dataStore.hydrateFromData(dataResult.data);
+            dataStore.hydrateFromData((dataResult as Record<string, any>).data);
 
             sessionState.value = 'loggedIn';
         } else {
@@ -90,7 +90,7 @@ export const useSessionStore = defineStore('session', () => {
     async function login(password) {
         const result = await apiLogin(password);
         if (result.success) {
-            securityWarning.value = result.data?.securityWarning || null;
+            securityWarning.value = (result as Record<string, any>).data?.securityWarning || null;
             const authenticated = await handleLoginSuccess();
             if (!authenticated) {
                 throw new Error(t('settings.sessionCheckFailed'));

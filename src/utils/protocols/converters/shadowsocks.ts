@@ -38,7 +38,7 @@ export function convertShadowsocksToUrl(proxy) {
             // 插件选项
             if (proxy['plugin-opts']) {
                 const opts = proxy['plugin-opts'];
-                const pluginOpts = [];
+                const pluginOpts: any[] = [];
 
                 if (proxy.plugin === 'obfs' || proxy.plugin === 'obfs-local') {
                     if (opts.mode) pluginOpts.push(`obfs=${opts.mode}`);
@@ -106,7 +106,7 @@ export function convertShadowsocksRToUrl(proxy) {
         ].join(':');
 
         // 可选参数
-        const params = [];
+        const params: string[] = [];
         params.push(`remarks=${remarks64}`);
 
         if (proxy['obfs-param']) {

@@ -41,7 +41,7 @@ function normalizeId(id) {
 export function normalizeDismissedHealthItemIds(value) {
     if (!Array.isArray(value)) return [];
     const seen = new Set();
-    const result = [];
+    const result: string[] = [];
     for (const entry of value) {
         const id = normalizeId(entry);
         if (!id || seen.has(id)) continue;

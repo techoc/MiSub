@@ -51,7 +51,7 @@ if (typeof window !== 'undefined') {
             filename: event.filename,
             lineno: event.lineno,
             colno: event.colno,
-            tagName: event.target?.tagName,
+            tagName: (event.target as Record<string, any> | undefined)?.tagName,
         });
     });
 
@@ -104,7 +104,7 @@ if (typeof window !== 'undefined') {
         'error',
         (event) => {
             if (event.target !== window) {
-                const resourceUrl = event.target.src || event.target.href || '';
+                const resourceUrl = (event.target as Record<string, any>).src || (event.target as Record<string, any>).href || '';
 
                 // 忽略第三方资源加载错误（如 Cloudflare Analytics、广告等）
                 const isThirdParty = resourceUrl && !isSameOriginResource(resourceUrl);
@@ -117,7 +117,7 @@ if (typeof window !== 'undefined') {
                 }
 
                 // 忽略 LINK 标签的加载错误 (通常是 modulepreload 失败，不影响主应用运行)
-                if (event.target.tagName === 'LINK') {
+                if ((event.target as Record<string, any>).tagName === 'LINK') {
                     console.warn(
                         '[Resource Load] Ignoring LINK tag error (likely modulepreload):',
                         resourceUrl
@@ -163,7 +163,7 @@ if (typeof window !== 'undefined') {
                         new Error(`Resource load failed: ${resourceUrl}`),
                         'Resource Load Error',
                         {
-                            tagName: event.target.tagName,
+                            tagName: (event.target as Record<string, any>).tagName,
                             src: resourceUrl,
                         }
                     );

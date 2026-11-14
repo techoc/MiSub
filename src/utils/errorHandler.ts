@@ -12,8 +12,8 @@ let monitoringEndpoint = null;
 let monitoringHeaders = null;
 
 function resolveMonitoringEndpoint() {
-    if (typeof window !== 'undefined' && window.__MISUB_ERROR_REPORT_URL__) {
-        return window.__MISUB_ERROR_REPORT_URL__;
+    if (typeof window !== 'undefined' && (window as Record<string, any>).__MISUB_ERROR_REPORT_URL__) {
+        return (window as Record<string, any>).__MISUB_ERROR_REPORT_URL__;
     }
     if (typeof import.meta !== 'undefined' && import.meta.env) {
         return import.meta.env.VITE_ERROR_REPORT_URL || null;
@@ -38,9 +38,9 @@ export function configureErrorMonitoring({ endpoint, headers } = {}) {
 
 class ErrorHandler {
     constructor() {
-        this.errorCounts = new Map();
-        this.lastErrors = new Map();
-        this.errorResetTime = 60000; // 1 分钟
+        (this as Record<string, any>).errorCounts = new Map();
+        (this as Record<string, any>).lastErrors = new Map();
+        (this as Record<string, any>).errorResetTime = 60000; // 1 分钟
     }
 
     /**
@@ -62,7 +62,7 @@ class ErrorHandler {
             stack: error.stack,
             context,
             additionalData,
-            count: this.errorCounts.get(errorKey),
+            count: (this as Record<string, any>).errorCounts.get(errorKey),
             key: errorKey,
         };
 
@@ -73,7 +73,7 @@ class ErrorHandler {
         });
 
         // 保存最近的错误
-        this.lastErrors.set(errorKey, {
+        (this as Record<string, any>).lastErrors.set(errorKey, {
             ...errorInfo,
             timestamp: Date.now(),
         });
@@ -111,8 +111,8 @@ class ErrorHandler {
      * @param {string} errorKey - 错误键
      */
     updateErrorCount(errorKey) {
-        const current = this.errorCounts.get(errorKey) || 0;
-        this.errorCounts.set(errorKey, current + 1);
+        const current = (this as Record<string, any>).errorCounts.get(errorKey) || 0;
+        (this as Record<string, any>).errorCounts.set(errorKey, current + 1);
     }
 
     /**
@@ -120,10 +120,10 @@ class ErrorHandler {
      */
     cleanupOldErrors() {
         const now = Date.now();
-        for (const [key, error] of this.lastErrors.entries()) {
-            if (now - error.timestamp > this.errorResetTime) {
-                this.errorCounts.delete(key);
-                this.lastErrors.delete(key);
+        for (const [key, error] of (this as Record<string, any>).lastErrors.entries()) {
+            if (now - error.timestamp > (this as Record<string, any>).errorResetTime) {
+                (this as Record<string, any>).errorCounts.delete(key);
+                (this as Record<string, any>).lastErrors.delete(key);
             }
         }
     }
@@ -134,7 +134,7 @@ class ErrorHandler {
      * @returns {boolean} 是否显示通知
      */
     shouldShowUserNotification(errorKey) {
-        const count = this.errorCounts.get(errorKey) || 0;
+        const count = (this as Record<string, any>).errorCounts.get(errorKey) || 0;
 
         // 第一次错误或错误次数是 5 的倍数时显示
         return count === 1 || count % 5 === 0;
@@ -159,7 +159,7 @@ class ErrorHandler {
      * @param {Object} errorInfo - 错误信息
      */
     showUserNotification(errorInfo) {
-        const handler = toastHandler || (typeof window !== 'undefined' ? window.showToast : null);
+        const handler = toastHandler || (typeof window !== 'undefined' ? (window as Record<string, any>).showToast : null);
         if (!handler) return;
 
         let message = this.getUserFriendlyMessage(errorInfo);
@@ -281,12 +281,12 @@ class ErrorHandler {
      */
     getErrorStats() {
         return {
-            totalErrors: Array.from(this.errorCounts.values()).reduce(
+            totalErrors: Array.from((this as Record<string, any>).errorCounts.values()).reduce(
                 (sum, count) => sum + count,
                 0
             ),
-            uniqueErrors: this.errorCounts.size,
-            recentErrors: Array.from(this.lastErrors.values()),
+            uniqueErrors: (this as Record<string, any>).errorCounts.size,
+            recentErrors: Array.from((this as Record<string, any>).lastErrors.values()),
         };
     }
 
@@ -294,8 +294,8 @@ class ErrorHandler {
      * 重置错误统计
      */
     reset() {
-        this.errorCounts.clear();
-        this.lastErrors.clear();
+        (this as Record<string, any>).errorCounts.clear();
+        (this as Record<string, any>).lastErrors.clear();
     }
 }
 
@@ -312,5 +312,5 @@ export const getErrorStats = () => {
 };
 
 if (typeof window !== 'undefined') {
-    window.errorHandler = globalErrorHandler;
+    (window as Record<string, any>).errorHandler = globalErrorHandler;
 }

@@ -56,11 +56,11 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
     };
 
     const handleSave = () => {
-        if (!editingSubscription.value || !editingSubscription.value.url) {
+        if (!editingSubscription.value || !(editingSubscription.value as Record<string, any>).url) {
             showToast(t('subscriptions.urlRequired'), 'error');
             return;
         }
-        if (!/^https?:\/\//i.test(editingSubscription.value.url)) {
+        if (!/^https?:\/\//i.test((editingSubscription.value as Record<string, any>).url)) {
             showToast(t('subscriptions.invalidUrl'), 'error');
             return;
         }

@@ -26,7 +26,7 @@ function normalizeExternalApiConfig(value) {
     };
 }
 
-function normalizeSettingsObject(source = {}) {
+function normalizeSettingsObject(source: Record<string, any> = {}) {
     const merged = { ...DEFAULT_SETTINGS, ...source };
     merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
     const generatorOptions =
@@ -127,14 +127,14 @@ export function useSettingsLogic() {
         try {
             const result = await fetchSettings();
             if (result.success) {
-                const incoming = result.data && typeof result.data === 'object' ? result.data : {};
+                const incoming = (result as Record<string, any>).data && typeof (result as Record<string, any>).data === 'object' ? (result as Record<string, any>).data : {};
                 settings.value = normalizeSettingsObject(incoming);
 
-                if (settings.value.disguise) {
+                if ((settings.value as Record<string, any>).disguise) {
                     disguiseConfig.value = {
-                        enabled: settings.value.disguise.enabled ?? false,
-                        pageType: settings.value.disguise.pageType ?? 'default',
-                        redirectUrl: settings.value.disguise.redirectUrl ?? '',
+                        enabled: (settings.value as Record<string, any>).disguise.enabled ?? false,
+                        pageType: (settings.value as Record<string, any>).disguise.pageType ?? 'default',
+                        redirectUrl: (settings.value as Record<string, any>).disguise.redirectUrl ?? '',
                     };
                 }
 
@@ -147,7 +147,7 @@ export function useSettingsLogic() {
                     setLocale(settings.value.defaultLocale);
                 }
             } else {
-                showToast(t('settings.loadFailedWithMessage', { message: result.error }), 'error');
+                showToast(t('settings.loadFailedWithMessage', { message: (result as Record<string, any>).error }), 'error');
                 settings.value = normalizeSettingsObject(DEFAULT_SETTINGS);
             }
         } catch (error) {
@@ -176,7 +176,7 @@ export function useSettingsLogic() {
             if (!settings.value.storageType) settings.value.storageType = 'kv';
             settings.value.externalApi = normalizeExternalApiConfig(settings.value.externalApi);
 
-            const settingsToSave = {
+            const settingsToSave : Record<string, any> = {
                 ...settings.value,
                 externalApi: normalizeExternalApiConfig(settings.value.externalApi),
                 disguise: disguiseConfig.value,
@@ -196,8 +196,8 @@ export function useSettingsLogic() {
                 clearReloadTimer();
                 restartCountdown.value = 3;
                 reloadTimer = setInterval(() => {
-                    restartCountdown.value -= 1;
-                    if (restartCountdown.value <= 0) {
+                    restartCountdown.value! -= 1;
+                    if (restartCountdown.value! <= 0) {
                         clearReloadTimer();
                         window.location.reload();
                     }

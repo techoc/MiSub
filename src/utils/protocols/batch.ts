@@ -9,7 +9,7 @@ export function batchConvertClashProxies(proxies) {
         return [];
     }
 
-    const results = [];
+    const results: any[] = [];
     for (const proxy of proxies) {
         const url = convertClashProxyToUrl(proxy);
         if (url && validateGeneratedUrl(url)) {
