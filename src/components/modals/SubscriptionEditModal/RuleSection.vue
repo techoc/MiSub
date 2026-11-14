@@ -1,8 +1,17 @@
 <script setup lang="ts">
     import { computed } from 'vue';
+    import type { PropType } from 'vue';
     import { useI18n } from '../../../i18n/index.ts';
 
     const { t } = useI18n();
+
+    /** 规则/预设标签条目 */
+    interface RuleItem {
+        label: string;
+        pattern: string;
+        icon?: string;
+        type?: string;
+    }
 
     const props = defineProps({
         editingSubscription: {
@@ -26,27 +35,27 @@
             default: '',
         },
         selectedRules: {
-            type: Array,
+            type: Array as PropType<RuleItem[]>,
             default: () => [],
         },
         keepRules: {
-            type: Array,
+            type: Array as PropType<RuleItem[]>,
             default: () => [],
         },
         excludeRules: {
-            type: Array,
+            type: Array as PropType<RuleItem[]>,
             default: () => [],
         },
         presetRegions: {
-            type: Array,
+            type: Array as PropType<RuleItem[]>,
             default: () => [],
         },
         presetProtocols: {
-            type: Array,
+            type: Array as PropType<RuleItem[]>,
             default: () => [],
         },
         presetKeywords: {
-            type: Array,
+            type: Array as PropType<RuleItem[]>,
             default: () => [],
         },
         excludeRuleState: {
@@ -54,39 +63,39 @@
             required: true,
         },
         toggleTag: {
-            type: Function as any,
+            type: Function as PropType<(tag: RuleItem, type: string) => void>,
             required: true,
         },
         isSelected: {
-            type: Function as any,
+            type: Function as PropType<(pattern: string) => boolean>,
             required: true,
         },
         isOtherSelected: {
-            type: Function as any,
+            type: Function as PropType<(pattern: string) => boolean>,
             default: () => false,
         },
         addCustomKeyword: {
-            type: Function as any,
+            type: Function as PropType<() => void>,
             required: true,
         },
         removeRule: {
-            type: Function as any,
+            type: Function as PropType<(index: number, mode: string) => void>,
             required: true,
         },
         removeKeepRule: {
-            type: Function as any,
+            type: Function as PropType<(index: number) => void>,
             default: null,
         },
         removeExcludeRule: {
-            type: Function as any,
+            type: Function as PropType<(index: number) => void>,
             default: null,
         },
         switchToAdvanced: {
-            type: Function as any,
+            type: Function as PropType<() => void>,
             required: true,
         },
         switchToVisual: {
-            type: Function as any,
+            type: Function as PropType<() => void>,
             required: true,
         },
     });
@@ -103,19 +112,19 @@
         set: (val) => emit('update:customKeyword', val),
     });
 
-    const effectiveKeepRules = computed(() => {
+    const effectiveKeepRules = computed<RuleItem[]>(() => {
         if (props.keepRules && props.keepRules.length > 0) return props.keepRules;
         if (props.ruleMode === 'keep') return props.selectedRules;
         return [];
     });
 
-    const effectiveExcludeRules = computed<any[]>(() => {
+    const effectiveExcludeRules = computed<RuleItem[]>(() => {
         if (props.excludeRules && props.excludeRules.length > 0) return props.excludeRules;
         if (props.ruleMode === 'exclude') return props.selectedRules;
         return [];
     });
 
-    const handleRemoveKeep = (index: any) => {
+    const handleRemoveKeep = (index: number) => {
         if (props.removeKeepRule) {
             props.removeKeepRule(index);
         } else {
@@ -123,7 +132,7 @@
         }
     };
 
-    const handleRemoveExclude = (index: any) => {
+    const handleRemoveExclude = (index: number) => {
         if (props.removeExcludeRule) {
             props.removeExcludeRule(index);
         } else {
@@ -250,22 +259,22 @@
                         <div class="flex flex-wrap gap-1.5">
                             <button
                                 v-for="tag in presetRegions"
-                                :key="(tag as Record<string, any>).pattern"
+                                :key="tag.pattern"
                                 type="button"
                                 @click="toggleTag(tag, 'region')"
-                                :aria-pressed="isSelected((tag as Record<string, any>).pattern)"
+                                :aria-pressed="isSelected(tag.pattern)"
                                 :class="[
                                     'px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md transition-all !min-h-0 !min-w-0 cursor-pointer',
-                                    isSelected((tag as Record<string, any>).pattern)
+                                    isSelected(tag.pattern)
                                         ? ruleModeModel === 'keep'
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 ring-1 ring-emerald-400 dark:ring-emerald-600'
                                             : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-amber-400 dark:ring-amber-600'
-                                        : isOtherSelected((tag as Record<string, any>).pattern)
+                                        : isOtherSelected(tag.pattern)
                                           ? 'bg-gray-50 text-gray-500 dark:bg-gray-800/80 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100'
                                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
                                 ]"
                             >
-                                {{ (tag as Record<string, any>).icon }} {{ ((((tag as Record<string, any>).label as any) as any) as any) }}
+                                {{ tag.icon }} {{ tag.label }}
                             </button>
                         </div>
                     </div>
@@ -278,22 +287,22 @@
                         <div class="flex flex-wrap gap-1.5">
                             <button
                                 v-for="tag in presetProtocols"
-                                :key="(tag as Record<string, any>).pattern"
+                                :key="tag.pattern"
                                 type="button"
                                 @click="toggleTag(tag, 'protocol')"
-                                :aria-pressed="isSelected((tag as Record<string, any>).pattern)"
+                                :aria-pressed="isSelected(tag.pattern)"
                                 :class="[
                                     'px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md transition-all !min-h-0 !min-w-0 cursor-pointer',
-                                    isSelected((tag as Record<string, any>).pattern)
+                                    isSelected(tag.pattern)
                                         ? ruleModeModel === 'keep'
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 ring-1 ring-emerald-400 dark:ring-emerald-600'
                                             : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-amber-400 dark:ring-amber-600'
-                                        : isOtherSelected((tag as Record<string, any>).pattern)
+                                        : isOtherSelected(tag.pattern)
                                           ? 'bg-gray-50 text-gray-500 dark:bg-gray-800/80 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100'
                                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
                                 ]"
                             >
-                                {{ (tag as Record<string, any>).label }}
+                                {{ tag.label }}
                             </button>
                         </div>
                     </div>
@@ -306,22 +315,22 @@
                         <div class="flex flex-wrap gap-1.5">
                             <button
                                 v-for="tag in presetKeywords"
-                                :key="(tag as Record<string, any>).pattern"
+                                :key="tag.pattern"
                                 type="button"
                                 @click="toggleTag(tag, 'keyword')"
-                                :aria-pressed="isSelected((tag as Record<string, any>).pattern)"
+                                :aria-pressed="isSelected(tag.pattern)"
                                 :class="[
                                     'px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md transition-all !min-h-0 !min-w-0 cursor-pointer',
-                                    isSelected((tag as Record<string, any>).pattern)
+                                    isSelected(tag.pattern)
                                         ? ruleModeModel === 'keep'
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 ring-1 ring-emerald-400 dark:ring-emerald-600'
                                             : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-amber-400 dark:ring-amber-600'
-                                        : isOtherSelected((tag as Record<string, any>).pattern)
+                                        : isOtherSelected(tag.pattern)
                                           ? 'bg-gray-50 text-gray-500 dark:bg-gray-800/80 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100'
                                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
                                 ]"
                             >
-                                {{ (tag as Record<string, any>).label }}
+                                {{ tag.label }}
                             </button>
                         </div>
                     </div>
@@ -372,7 +381,7 @@
                                     :key="'keep-' + index"
                                     class="inline-flex items-center gap-1 px-2.5 py-1 text-xs sm:text-sm font-medium misub-radius-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 !min-h-0 !min-w-0"
                                 >
-                                    {{ (rule as Record<string, any>).icon ? (rule as Record<string, any>).icon + ' ' : '' }}{{ ((((rule as Record<string, any>).label as any) as any) as any) }}
+                                    {{ rule.icon ? rule.icon + ' ' : '' }}{{ rule.label }}
                                     <button
                                         type="button"
                                         @click="handleRemoveKeep(index)"
