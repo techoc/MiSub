@@ -32,7 +32,7 @@ function nextSortIndex(items: any) {
     );
 }
 
-async function loadManualNodes(storageAdapter: any) {
+async function loadManualNodes(storageAdapter: any): Promise<any[]> {
     const all = await storageAdapter.getAllSubscriptions();
     return sortBySortIndex(all.filter(isManualNode));
 }

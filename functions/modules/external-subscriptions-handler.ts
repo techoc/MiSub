@@ -230,7 +230,7 @@ export async function handleExternalSubscriptionsRequest(
     env: Env,
     selector: string | KvRecord | null = null
 ) {
-    const storageAdapter = await getExternalStorageAdapter(env);
+    const storageAdapter = await getExternalStorageAdapter<ExternalSubscriptionStorage>(env);
     const url = new URL(request.url);
     const action = typeof selector === 'object' && selector ? selector.action || null : null;
     const id = typeof selector === 'object' && selector ? selector.id || null : selector;
