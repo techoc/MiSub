@@ -4,6 +4,33 @@
     import { ref, computed, watch } from 'vue';
     import { useI18n } from '../../i18n/index.ts';
 
+    /** 过滤器选项 */
+    interface FilterOption {
+        value: string;
+        label: string;
+    }
+
+    /** 范围型过滤器取值 */
+    type FilterRange = { min?: unknown; max?: unknown } | { start?: unknown; end?: unknown };
+
+    /** 过滤器取值（文本/数值/布尔/多选/范围对象） */
+    type FilterValue = string | number | boolean | string[] | FilterRange | null | undefined;
+
+    /** 过滤器定义 */
+    interface FilterDefinition {
+        key: string;
+        type?: string;
+        label?: string;
+        placeholder?: string;
+        defaultValue?: FilterValue;
+        options?: FilterOption[];
+        disabled?: boolean;
+        min?: number;
+        max?: number;
+        step?: number;
+        checkboxLabel?: string;
+    }
+
     const props = defineProps({
         filters: {
             type: Array,
@@ -48,21 +75,26 @@
     const { t } = useI18n();
 
     const isCollapsed = ref(props.collapsed);
-    const localValues = ref<any>({ ...props.values });
+    const localValues = ref<Record<string, FilterValue>>({ ...props.values });
+
+    // 过滤器列表（统一类型，模板内不再逐个 cast）
+    const filterList = computed<FilterDefinition[]>(
+        () => (props.filters || []) as FilterDefinition[]
+    );
 
     // 计算网格列数
     const gridColumns = computed(() => {
-        const columnMap = {
+        const columnMap: Record<number, string> = {
             1: 'grid-cols-1',
             2: 'grid-cols-1 md:grid-cols-2',
             3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
             4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
         };
-        return (columnMap as Record<string, any>)[props.columns] || columnMap[3];
+        return columnMap[props.columns] || columnMap[3];
     });
 
     // 计算过滤器值
-    const filterValue = computed(() => (filter: any) => {
+    const filterValue = computed(() => (filter: FilterDefinition): FilterValue => {
         return localValues.value[filter.key] ?? filter.defaultValue ?? '';
     });
 
@@ -93,7 +125,7 @@
     });
 
     // 处理过滤器值变化
-    const handleFilterChange = (filter: any, value: any) => {
+    const handleFilterChange = (filter: FilterDefinition, value: FilterValue) => {
         localValues.value[filter.key] = value;
 
         // 特殊处理：对于数值范围和日期范围，需要格式化
@@ -110,11 +142,15 @@
         }
     };
 
+    // 生成自定义过滤器的 change 回调
+    const makeChangeHandler = (filter: FilterDefinition) => (value: FilterValue) =>
+        handleFilterChange(filter, value);
+
     // 重置过滤器
     const resetFilters = () => {
-        const defaultValues = {};
-        props.filters.forEach((filter: any) => {
-            (defaultValues as Record<string, any>)[(filter as Record<string, any>).key] = (((filter.defaultValue as any) as any) as any) ?? (((((filter as Record<string, any>).type as any) as any) as any) === 'select' ? '' : '');
+        const defaultValues: Record<string, FilterValue> = {};
+        filterList.value.forEach((filter) => {
+            defaultValues[filter.key] = filter.defaultValue ?? '';
         });
         localValues.value = defaultValues;
 
@@ -134,27 +170,32 @@
     };
 
     // 获取过滤器的显示值
-    const getDisplayValue = (filter: any) => {
+    const getDisplayValue = (filter: FilterDefinition): FilterValue => {
         const value = filterValue.value(filter);
 
         if (filter.type === 'select' && filter.options) {
-            const option = filter.options.find((opt: any) => opt.value === value);
+            const option = filter.options.find((opt) => opt.value === value);
             return option ? option.label : value;
         }
 
-        if (filter.type === 'daterange' && value) {
-            return `${value.start} - ${value.end}`;
+        if (filter.type === 'daterange' && value && typeof value === 'object' && 'start' in value) {
+            return `${String(value.start)} - ${String(value.end)}`;
         }
 
-        if (filter.type === 'number-range' && value) {
-            return `${value.min} - ${value.max}`;
+        if (
+            filter.type === 'number-range' &&
+            value &&
+            typeof value === 'object' &&
+            'min' in value
+        ) {
+            return `${String(value.min)} - ${String(value.max)}`;
         }
 
         return value;
     };
 
     // 渲染不同类型的过滤器
-    const renderFilter = (filter: any) => {
+    const renderFilter = (filter: FilterDefinition): Record<string, unknown> => {
         const value = filterValue.value(filter);
 
         switch (filter.type) {
@@ -165,7 +206,8 @@
                     type: 'text',
                     placeholder: filter.placeholder,
                     value,
-                    onInput: (e: any) => handleFilterChange(filter, e.target.value),
+                    onInput: (e: Event) =>
+                        handleFilterChange(filter, (e.target as HTMLInputElement).value),
                 };
 
             case 'number':
@@ -174,14 +216,16 @@
                     type: 'number',
                     placeholder: filter.placeholder,
                     value,
-                    onInput: (e: any) => handleFilterChange(filter, Number(e.target.value)),
+                    onInput: (e: Event) =>
+                        handleFilterChange(filter, Number((e.target as HTMLInputElement).value)),
                 };
 
             case 'select':
                 return {
                     tag: 'select',
                     value,
-                    onChange: (e: any) => handleFilterChange(filter, e.target.value),
+                    onChange: (e: Event) =>
+                        handleFilterChange(filter, (e.target as HTMLSelectElement).value),
                 };
 
             case 'multiselect':
@@ -189,10 +233,10 @@
                     tag: 'select',
                     multiple: true,
                     value: Array.isArray(value) ? value : [],
-                    onChange: (e: any) => {
+                    onChange: (e: Event) => {
                         const selected = Array.from(
-                            e.target.selectedOptions,
-                            (option) => (option as Record<string, any>).value
+                            (e.target as HTMLSelectElement).selectedOptions,
+                            (option) => option.value
                         );
                         handleFilterChange(filter, selected);
                     },
@@ -215,7 +259,8 @@
                     tag: 'input',
                     type: 'checkbox',
                     checked: Boolean(value),
-                    onChange: (e: any) => handleFilterChange(filter, e.target.checked),
+                    onChange: (e: Event) =>
+                        handleFilterChange(filter, (e.target as HTMLInputElement).checked),
                 };
 
             default:
@@ -223,7 +268,8 @@
                     tag: 'input',
                     type: 'text',
                     value,
-                    onInput: (e: any) => handleFilterChange(filter, e.target.value),
+                    onInput: (e: Event) =>
+                        handleFilterChange(filter, (e.target as HTMLInputElement).value),
                 };
         }
     };
@@ -317,55 +363,70 @@
                 v-show="!isCollapsed"
                 :class="['gap-4', inline ? 'flex flex-wrap' : `grid ${gridColumns}`]"
             >
-                <div v-for="filter in filters" :key="(filter as Record<string, any>).key" class="filter-item">
+                <div v-for="filter in filterList" :key="filter.key" class="filter-item">
                     <!-- 标签 -->
                     <label
-                        v-if="(filter as Record<string, any>).label"
+                        v-if="filter.label"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
-                        {{ (filter as Record<string, any>).label }}
+                        {{ filter.label }}
                     </label>
 
                     <!-- 输入控件 -->
                     <div class="filter-input">
                         <!-- 文本输入 -->
                         <input
-                            v-if="(filter as Record<string, any>).type === 'text' || ((((filter as Record<string, any>).type as any) as any) as any) === 'search'"
-                            :type="(filter as Record<string, any>).type === 'search' ? 'search' : 'text'"
-                            :placeholder="(filter as Record<string, any>).placeholder"
+                            v-if="filter.type === 'text' || filter.type === 'search'"
+                            :type="filter.type === 'search' ? 'search' : 'text'"
+                            :placeholder="filter.placeholder"
                             :value="filterValue(filter)"
-                            :disabled="loading || (filter as Record<string, any>).disabled"
+                            :disabled="loading || filter.disabled"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
-                            @input="handleFilterChange(filter, ($event.target as HTMLInputElement).value)"
-                            :aria-label="(filter as Record<string, any>).label || ((((filter as Record<string, any>).placeholder as any) as any) as any)"
+                            @input="
+                                handleFilterChange(
+                                    filter,
+                                    ($event.target as HTMLInputElement).value
+                                )
+                            "
+                            :aria-label="filter.label || filter.placeholder"
                         />
 
                         <!-- 数字输入 -->
                         <input
-                            v-else-if="(filter as Record<string, any>).type === 'number'"
+                            v-else-if="filter.type === 'number'"
                             type="number"
-                            :placeholder="(filter as Record<string, any>).placeholder"
+                            :placeholder="filter.placeholder"
                             :value="filterValue(filter)"
-                            :disabled="loading || (filter as Record<string, any>).disabled"
-                            :min="(filter as Record<string, any>).min"
-                            :max="(filter as Record<string, any>).max"
-                            :step="(filter as Record<string, any>).step"
+                            :disabled="loading || filter.disabled"
+                            :min="filter.min"
+                            :max="filter.max"
+                            :step="filter.step"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
-                            @input="handleFilterChange(filter, Number(($event.target as HTMLInputElement).value))"
-                            :aria-label="(filter as Record<string, any>).label || ((((filter as Record<string, any>).placeholder as any) as any) as any)"
+                            @input="
+                                handleFilterChange(
+                                    filter,
+                                    Number(($event.target as HTMLInputElement).value)
+                                )
+                            "
+                            :aria-label="filter.label || filter.placeholder"
                         />
 
                         <!-- 选择器 -->
                         <select
-                            v-else-if="(filter as Record<string, any>).type === 'select'"
+                            v-else-if="filter.type === 'select'"
                             :value="filterValue(filter)"
-                            :disabled="loading || (filter as Record<string, any>).disabled"
+                            :disabled="loading || filter.disabled"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
-                            @change="handleFilterChange(filter, ($event.target as HTMLInputElement).value)"
+                            @change="
+                                handleFilterChange(
+                                    filter,
+                                    ($event.target as HTMLInputElement).value
+                                )
+                            "
                         >
-                            <option value="">{{ (filter as Record<string, any>).placeholder || t('common.choose') }}</option>
+                            <option value="">{{ filter.placeholder || t('common.choose') }}</option>
                             <option
-                                v-for="option in (filter as Record<string, any>).options"
+                                v-for="option in filter.options"
                                 :key="option.value"
                                 :value="option.value"
                             >
@@ -375,10 +436,10 @@
 
                         <!-- 多选器 -->
                         <select
-                            v-else-if="(filter as Record<string, any>).type === 'multiselect'"
+                            v-else-if="filter.type === 'multiselect'"
                             multiple
                             :value="Array.isArray(filterValue(filter)) ? filterValue(filter) : []"
-                            :disabled="loading || (filter as Record<string, any>).disabled"
+                            :disabled="loading || filter.disabled"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                             @change="
                                 handleFilterChange(
@@ -391,7 +452,7 @@
                             "
                         >
                             <option
-                                v-for="option in (filter as Record<string, any>).options"
+                                v-for="option in filter.options"
                                 :key="option.value"
                                 :value="option.value"
                             >
@@ -401,28 +462,33 @@
 
                         <!-- 复选框 -->
                         <label
-                            v-else-if="(filter as Record<string, any>).type === 'checkbox'"
+                            v-else-if="filter.type === 'checkbox'"
                             class="flex items-center space-x-2 cursor-pointer"
                         >
                             <input
                                 type="checkbox"
                                 :checked="Boolean(filterValue(filter))"
-                                :disabled="loading || (filter as Record<string, any>).disabled"
+                                :disabled="loading || filter.disabled"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
-                                @change="handleFilterChange(filter, ($event.target as HTMLInputElement).checked)"
+                                @change="
+                                    handleFilterChange(
+                                        filter,
+                                        ($event.target as HTMLInputElement).checked
+                                    )
+                                "
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">{{
-                                (filter as Record<string, any>).checkboxLabel
+                                filter.checkboxLabel
                             }}</span>
                         </label>
 
                         <!-- 自定义过滤器 -->
                         <slot
                             v-else
-                            :name="`filter-${(filter as Record<string, any>).key}`"
+                            :name="`filter-${filter.key}`"
                             :filter="filter"
                             :value="filterValue(filter)"
-                            :onChange="(value: any) => handleFilterChange(filter, value)"
+                            :onChange="makeChangeHandler(filter)"
                         />
                     </div>
                 </div>
