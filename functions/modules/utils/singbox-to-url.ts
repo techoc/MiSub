@@ -8,12 +8,15 @@
  * 返回链接数组；无法识别的出站跳过。
  */
 
-function toArray(value: any) {
+/** sing-box 出站/配置记录 */
+type SingboxRecord = Record<string, unknown>;
+
+function toArray(value: unknown): unknown[] {
     if (value === undefined || value === null) return [];
     return Array.isArray(value) ? value : [value];
 }
 
-function b64url(input: any) {
+function b64url(input: unknown): string {
     const str = typeof input === 'string' ? input : JSON.stringify(input);
     return btoa(unescape(encodeURIComponent(str)))
         .replace(/\+/g, '-')
@@ -21,14 +24,14 @@ function b64url(input: any) {
         .replace(/=+$/, '');
 }
 
-function tlsParams(outbound: any) {
-    const tls = outbound.tls || {};
-    const params: any[] = [];
+function tlsParams(outbound: SingboxRecord): Array<[string, unknown]> {
+    const tls = (outbound.tls || {}) as SingboxRecord;
+    const params: Array<[string, unknown]> = [];
     if (tls.enabled) {
         if (tls.server_name) params.push(['sni', tls.server_name]);
         if (tls.insecure) params.push(['allowInsecure', '1']);
         if (tls.alpn) params.push(['alpn', toArray(tls.alpn).join(',')]);
-        const reality = tls.reality || {};
+        const reality = (tls.reality || {}) as SingboxRecord;
         if (reality.enabled) {
             params.push(['security', 'reality']);
             if (reality.public_key) params.push(['pbk', reality.public_key]);
@@ -38,7 +41,7 @@ function tlsParams(outbound: any) {
         }
     }
     if (outbound.flow) params.push(['flow', outbound.flow]);
-    const transport = outbound.transport || {};
+    const transport = (outbound.transport || {}) as SingboxRecord;
     if (transport.type && transport.type !== 'tcp') {
         params.push(['type', transport.type]);
         if (transport.path) params.push(['path', transport.path]);
@@ -48,10 +51,10 @@ function tlsParams(outbound: any) {
     return params;
 }
 
-function buildQuery(params: any) {
+function buildQuery(params: Array<[string, unknown]>): string {
     const search = new URLSearchParams();
     for (const [key, value] of params) {
-        if (value !== undefined && value !== null && value !== '') search.set(key, value);
+        if (value !== undefined && value !== null && value !== '') search.set(key, String(value));
     }
     const qs = search.toString();
     return qs ? `?${qs}` : '';
@@ -61,48 +64,51 @@ function buildQuery(params: any) {
  * @param {object} ob sing-box outbound 对象
  * @returns {string|null} 节点链接，或 null（不支持）
  */
-export function singboxOutboundToUrl(ob: any) {
+export function singboxOutboundToUrl(ob: unknown): string | null {
     if (!ob || typeof ob !== 'object') return null;
-    const type = String(ob.type || '').toLowerCase();
-    const server = ob.server;
-    const port = ob.server_port ?? ob.port;
-    const name = ob.tag || '';
+    const record = ob as SingboxRecord;
+    const type = String(record.type || '').toLowerCase();
+    const server = record.server;
+    const port = record.server_port ?? record.port;
+    const name = String(record.tag || '');
     if (!server || !port) return null;
 
     const hash = name ? `#${encodeURIComponent(name)}` : '';
 
     switch (type) {
         case 'vless': {
-            const params = tlsParams(ob);
-            if (ob.encryption) params.push(['encryption', ob.encryption]);
+            const params = tlsParams(record);
+            if (record.encryption) params.push(['encryption', record.encryption]);
             else params.push(['encryption', 'none']);
-            return `vless://${ob.uuid}@${server}:${port}${buildQuery(params)}${hash}`;
+            return `vless://${record.uuid}@${server}:${port}${buildQuery(params)}${hash}`;
         }
         case 'vmess': {
+            const transport = (record.transport || {}) as SingboxRecord;
+            const tls = (record.tls || {}) as SingboxRecord;
             const obj = {
                 v: '2',
                 ps: name,
                 add: server,
                 port: String(port),
-                id: ob.uuid,
-                aid: String(ob.alter_id ?? 0),
-                scy: ob.security || 'auto',
-                net: (ob.transport && ob.transport.type) || 'tcp',
+                id: record.uuid,
+                aid: String(record.alter_id ?? 0),
+                scy: record.security || 'auto',
+                net: transport.type || 'tcp',
                 type: 'none',
-                host: (ob.transport && ob.transport.host) || '',
-                path: (ob.transport && ob.transport.path) || '',
-                tls: ob.tls && ob.tls.enabled ? 'tls' : '',
-                sni: (ob.tls && ob.tls.server_name) || '',
+                host: transport.host || '',
+                path: transport.path || '',
+                tls: tls.enabled ? 'tls' : '',
+                sni: tls.server_name || '',
             };
             return `vmess://${b64url(JSON.stringify(obj))}`;
         }
         case 'trojan': {
-            const params = tlsParams(ob);
-            return `trojan://${encodeURIComponent(ob.password || '')}@${server}:${port}${buildQuery(params)}${hash}`;
+            const params = tlsParams(record);
+            return `trojan://${encodeURIComponent(String(record.password || ''))}@${server}:${port}${buildQuery(params)}${hash}`;
         }
         case 'shadowsocks': {
-            const method = ob.method || 'aes-256-gcm';
-            const pwd = ob.password || '';
+            const method = record.method || 'aes-256-gcm';
+            const pwd = record.password || '';
             const userinfo = btoa(unescape(encodeURIComponent(`${method}:${pwd}`))).replace(
                 /=+$/,
                 ''
@@ -111,22 +117,24 @@ export function singboxOutboundToUrl(ob: any) {
         }
         case 'hysteria2':
         case 'hy2': {
-            const params = tlsParams(ob);
-            if (ob.obfs && ob.obfs.type) {
-                params.push(['obfs', ob.obfs.type]);
-                if (ob.obfs.password) params.push(['obfs-password', ob.obfs.password]);
+            const params = tlsParams(record);
+            const obfs = (record.obfs || {}) as SingboxRecord;
+            if (obfs.type) {
+                params.push(['obfs', obfs.type]);
+                if (obfs.password) params.push(['obfs-password', obfs.password]);
             }
-            return `hysteria2://${encodeURIComponent(ob.password || '')}@${server}:${port}${buildQuery(params)}${hash}`;
+            return `hysteria2://${encodeURIComponent(String(record.password || ''))}@${server}:${port}${buildQuery(params)}${hash}`;
         }
         case 'tuic': {
-            const params = tlsParams(ob);
-            if (ob.congestion_control) params.push(['congestion_control', ob.congestion_control]);
-            const auth = `${ob.uuid || ''}:${ob.password || ''}`;
+            const params = tlsParams(record);
+            if (record.congestion_control)
+                params.push(['congestion_control', record.congestion_control]);
+            const auth = `${record.uuid || ''}:${record.password || ''}`;
             return `tuic://${auth}@${server}:${port}${buildQuery(params)}${hash}`;
         }
         case 'anytls': {
-            const params = tlsParams(ob);
-            return `anytls://${encodeURIComponent(ob.password || '')}@${server}:${port}${buildQuery(params)}${hash}`;
+            const params = tlsParams(record);
+            return `anytls://${encodeURIComponent(String(record.password || ''))}@${server}:${port}${buildQuery(params)}${hash}`;
         }
         default:
             return null;
@@ -138,8 +146,10 @@ export function singboxOutboundToUrl(ob: any) {
  * @param {object} config 解析后的 sing-box 配置
  * @returns {string[]}
  */
-export function extractSingboxNodes(config: any) {
+export function extractSingboxNodes(config: unknown): string[] {
     if (!config || typeof config !== 'object') return [];
-    const outbounds = toArray(config.outbounds);
-    return outbounds.map(singboxOutboundToUrl).filter(Boolean);
+    const outbounds = toArray((config as SingboxRecord).outbounds);
+    return outbounds
+        .map(singboxOutboundToUrl)
+        .filter((url): url is string => typeof url === 'string');
 }
