@@ -71,12 +71,27 @@
 
     const { t } = useI18n();
 
+    /** 列表项（key 由 itemKey 指定） */
+    interface DragItem {
+        [key: string]: unknown;
+    }
+
+    /** 拖拽状态 */
+    interface DragState {
+        isDragging: boolean;
+        startIndex: number;
+        endIndex: number;
+    }
+
     const resolvedEmptyText = computed(() => props.emptyText || t('common.noData'));
 
-    const listRef = ref<any>(null);
+    // 列表项视图（props.items 为 unknown[]，统一收窄后再供模板/脚本使用）
+    const dragItems = computed<DragItem[]>(() => (props.items || []) as DragItem[]);
+
+    const listRef = ref<HTMLElement | null>(null);
     const draggedIndex = ref(-1);
     const draggedOverIndex = ref(-1);
-    const dragState = ref<any>({
+    const dragState = ref<DragState>({
         isDragging: false,
         startIndex: -1,
         endIndex: -1,
@@ -89,7 +104,7 @@
     }));
 
     // 计算拖拽动画样式
-    const itemStyle = (index: any) => {
+    const itemStyle = (index: number): Record<string, string | number> => {
         if (!props.animation || !dragState.value.isDragging) return {};
 
         // 简单的拖拽预览动画
@@ -104,7 +119,10 @@
     };
 
     // 计算项目的类名
-    const itemClasses = (index: any, item: any) => [
+    const itemClasses = (
+        index: number,
+        item: DragItem
+    ): Array<string | Record<string, boolean>> => [
         'drag-drop-item',
         {
             'cursor-move': props.draggable && !props.disabled,
@@ -117,7 +135,7 @@
     ];
 
     // 处理拖拽开始
-    const handleDragStart = (event: any, index: any, item: any) => {
+    const handleDragStart = (event: DragEvent, index: number, item: DragItem) => {
         if (!props.draggable || props.disabled) {
             event.preventDefault();
             return;
@@ -130,24 +148,29 @@
             endIndex: index,
         };
 
-        // 设置拖拽数据
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/html', event.target.outerHTML);
-        event.dataTransfer.setData('text/plain', JSON.stringify(item));
+        const dataTransfer = event.dataTransfer;
+        const target = event.target as HTMLElement | null;
 
-        // 设置自定义拖拽图片
-        if (event.dataTransfer.setDragImage) {
-            const dragImage = event.target.cloneNode(true);
-            dragImage.style.opacity = '0.8';
-            dragImage.style.transform = 'rotate(5deg)';
-            event.dataTransfer.setDragImage(dragImage, event.offsetX, event.offsetY);
+        // 设置拖拽数据
+        if (dataTransfer) {
+            dataTransfer.effectAllowed = 'move';
+            if (target) dataTransfer.setData('text/html', target.outerHTML);
+            dataTransfer.setData('text/plain', JSON.stringify(item));
+
+            // 设置自定义拖拽图片
+            if (target && dataTransfer.setDragImage) {
+                const dragImage = target.cloneNode(true) as HTMLElement;
+                dragImage.style.opacity = '0.8';
+                dragImage.style.transform = 'rotate(5deg)';
+                dataTransfer.setDragImage(dragImage, event.offsetX, event.offsetY);
+            }
         }
 
         emit('dragStart', { event, index, item });
     };
 
     // 处理拖拽结束
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEvent) => {
         draggedIndex.value = -1;
         draggedOverIndex.value = -1;
 
@@ -156,7 +179,7 @@
 
             // 如果位置发生变化，触发重排序事件
             if (dragState.value.startIndex !== dragState.value.endIndex) {
-                const reorderedItems = [...props.items];
+                const reorderedItems = [...dragItems.value];
                 const [movedItem] = reorderedItems.splice(dragState.value.startIndex, 1);
                 reorderedItems.splice(dragState.value.endIndex, 0, movedItem);
 
@@ -178,17 +201,17 @@
     };
 
     // 处理拖拽悬停
-    const handleDragOver = (event: any, index: any) => {
+    const handleDragOver = (event: DragEvent, index: number) => {
         if (!props.draggable || props.disabled) return;
 
         event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
 
         draggedOverIndex.value = index;
     };
 
     // 处理拖拽进入
-    const handleDragEnter = (event: any, index: any) => {
+    const handleDragEnter = (event: DragEvent, index: number) => {
         if (!props.draggable || props.disabled) return;
 
         event.preventDefault();
@@ -201,9 +224,11 @@
     };
 
     // 处理拖拽离开
-    const handleDragLeave = (event: any) => {
+    const handleDragLeave = (event: DragEvent) => {
         // 防止频繁触发
-        const rect = event.currentTarget.getBoundingClientRect();
+        const target = event.currentTarget as HTMLElement | null;
+        if (!target) return;
+        const rect = target.getBoundingClientRect();
         const x = event.clientX;
         const y = event.clientY;
 
@@ -213,7 +238,7 @@
     };
 
     // 处理放置
-    const handleDrop = (event: any, index: any) => {
+    const handleDrop = (event: DragEvent, index: number) => {
         if (!props.draggable || props.disabled) return;
 
         event.preventDefault();
@@ -228,30 +253,50 @@
     };
 
     // 处理项目点击
-    const handleItemClick = (item: any, index: any) => {
+    const handleItemClick = (item: DragItem, index: number) => {
         if (props.disabled) return;
         emit('itemClick', { item, index });
     };
 
     // 添加项目
-    const addItem = (item: any) => {
+    const addItem = (item: DragItem) => {
         if (props.disabled) return;
 
-        const newItems = [...props.items, item];
+        const newItems = [...dragItems.value, item];
         emit('update:items', newItems);
         emit('itemAdd', { item, items: newItems });
     };
 
     // 移除项目
-    const removeItem = (index: any) => {
-        if (props.disabled || index < 0 || index >= props.items.length) return;
+    const removeItem = (index: number) => {
+        if (props.disabled || index < 0 || index >= dragItems.value.length) return;
 
-        const newItems = props.items.filter((_, i) => i !== index);
-        const removedItem = props.items[index];
+        const newItems = dragItems.value.filter((_, i) => i !== index);
+        const removedItem = dragItems.value[index];
 
         emit('update:items', newItems);
         emit('itemRemove', { item: removedItem, index, items: newItems });
     };
+
+    /** 列表项 key（模板 :key 用，缺省回退到索引） */
+    const itemKeyValue = (item: DragItem, index: number): string | number => {
+        const key = item[props.itemKey];
+        if (typeof key === 'string' && key) return key;
+        if (typeof key === 'number' && key) return key;
+        return index;
+    };
+
+    /** 列表项标题（无插槽时的默认展示） */
+    const itemName = (item: DragItem, index: number): string => {
+        const { name, title } = item;
+        if (typeof name === 'string' && name) return name;
+        if (typeof title === 'string' && title) return title;
+        return t('common.itemName', { index: index + 1 });
+    };
+
+    /** 列表项描述（无插槽时的默认展示） */
+    const itemDescription = (item: DragItem): string =>
+        typeof item.description === 'string' ? item.description : '';
 
     // 暴露方法给父组件
     defineExpose({
@@ -316,8 +361,8 @@
             <!-- 列表项目 -->
             <div v-else class="drag-drop-items" :class="{ 'is-dragging': dragState.isDragging }">
                 <div
-                    v-for="(item, index) in items"
-                    :key="((((item as Record<string, any>)[itemKey] as any) as any) as any) || index"
+                    v-for="(item, index) in dragItems"
+                    :key="itemKeyValue(item, index)"
                     :class="itemClasses(index, item)"
                     :style="itemStyle(index)"
                     class="drag-drop-item-wrapper"
@@ -354,17 +399,13 @@
                                         <h4
                                             class="text-sm font-medium text-gray-900 dark:text-white"
                                         >
-                                            {{
-                                                (item as Error).name ||
-                                                (item as Record<string, any>).title ||
-                                                t('common.itemName', { index: index + 1 })
-                                            }}
+                                            {{ itemName(item, index) }}
                                         </h4>
                                         <p
-                                            v-if="(item as Record<string, any>).description"
+                                            v-if="itemDescription(item)"
                                             class="text-xs text-gray-500 dark:text-gray-400"
                                         >
-                                            {{ (item as Record<string, any>).description }}
+                                            {{ itemDescription(item) }}
                                         </p>
                                     </div>
                                 </div>
