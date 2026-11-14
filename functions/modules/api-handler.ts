@@ -3,7 +3,7 @@
  * 处理各种API请求
  */
 
-import type { KvRecord, MisubSettings, ProfileItem } from '../../types/models.ts';
+import type { KvRecord, MisubSettings, ProfileItem, SubscriptionItem } from '../../types/models.ts';
 import { StorageFactory, SettingsCache, STORAGE_TYPES } from '../storage-adapter.ts';
 import {
     getCookieSecret,
@@ -125,11 +125,7 @@ function isSimpleArrayDiff(diff: unknown): boolean {
     return ['added', 'updated', 'removed'].every((key) => Array.isArray(record[key] || []));
 }
 
-async function applyRowLevelDiff(
-    storageAdapter: ApiStorageAdapter,
-    type: string,
-    diff: unknown
-) {
+async function applyRowLevelDiff(storageAdapter: ApiStorageAdapter, type: string, diff: unknown) {
     const isProfile = type === 'profiles';
     const putItem = isProfile
         ? storageAdapter.putProfile?.bind(storageAdapter)
@@ -456,13 +452,15 @@ export async function handleMisubsSave(request: Request, env: Env) {
                 const notificationPromises = finalMisubs
                     .filter((sub) => sub?.enabled && sub.url && sub.url.startsWith('http'))
                     .map((sub: KvRecord) =>
-                        checkAndNotify(sub, settings, env).catch((notifyError) => {
-                            console.warn(
-                                '[API] Notification failed for subscription:',
-                                sub?.name || sub?.url,
-                                notifyError
-                            );
-                        })
+                        checkAndNotify(sub as unknown as SubscriptionItem, settings, env).catch(
+                            (notifyError) => {
+                                console.warn(
+                                    '[API] Notification failed for subscription:',
+                                    sub?.name || sub?.url,
+                                    notifyError
+                                );
+                            }
+                        )
                     );
 
                 // 并行处理通知，但不等待完成
@@ -666,8 +664,7 @@ export async function handleSettingsSave(request: Request, env: Env) {
         }
 
         const storageAdapter = await getStorageAdapter(env);
-        const oldSettings =
-            ((await storageAdapter.get(KV_KEY_SETTINGS)) as MisubSettings) || {};
+        const oldSettings = ((await storageAdapter.get(KV_KEY_SETTINGS)) as MisubSettings) || {};
         if (newSettings.webdavBackup && oldSettings.webdavBackup) {
             const incomingPassword = newSettings.webdavBackup.password;
             if (incomingPassword === '' || incomingPassword == null) {

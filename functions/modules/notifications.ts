@@ -12,18 +12,49 @@ import {
     sendEnhancedTgNotification as sendCoreEnhancedTg,
     tgEscape as coreTgEscape,
 } from '../services/notification-service.ts';
+import type {
+    KvRecord,
+    MisubSettings,
+    SubscriptionItem,
+    SubscriptionUserInfo,
+} from '../../types/models.ts';
+
+/** cron 用到的存储适配器最小面 */
+interface CronStorageAdapter {
+    get(key: string): Promise<unknown>;
+    put(key: string, value: unknown): Promise<unknown>;
+    getAllSubscriptions?(): Promise<KvRecord[]>;
+    putAllSubscriptions?(subscriptions: KvRecord[]): Promise<unknown>;
+}
+
+/** 单个订阅的更新结果 */
+interface SubscriptionUpdateResult {
+    name: string;
+    success: boolean;
+    traffic?: boolean;
+    nodes?: boolean;
+    error?: string;
+}
+
+/** 节点数量变化记录 */
+interface NodeCountChange {
+    name: string;
+    previous: number;
+    current: number;
+    diff: number;
+}
 
 /**
  * 转义 Telegram HTML 特殊字符
  */
-export function tgEscape(text: any) {
+export function tgEscape(text: unknown): string {
     return coreTgEscape(text);
 }
 
 /**
  * 发送Telegram基础通知 (兼容旧调用)
  */
-export async function sendTgNotification(settings: any, message: any) {
+export async function sendTgNotification(settings: MisubSettings, message: string) {
     return sendCoreTg(settings, message);
 }
 
@@ -31,27 +62,32 @@ export async function sendTgNotification(settings: any, message: any) {
  * 增强版TG通知 (兼容旧调用)
  */
 export async function sendEnhancedTgNotification(
-    settings: any,
-    type: any,
-    clientIp: any,
+    settings: MisubSettings,
+    type: string,
+    clientIp: string,
     additionalData = ''
 ) {
     return sendCoreEnhancedTg(settings, type, clientIp, additionalData);
 }
 
-async function loadSubscriptionsForCron(storageAdapter: any) {
+async function loadSubscriptionsForCron(
+    storageAdapter: CronStorageAdapter
+): Promise<SubscriptionItem[]> {
     if (typeof storageAdapter.getAllSubscriptions === 'function') {
         const subscriptions = await storageAdapter.getAllSubscriptions();
         if (Array.isArray(subscriptions)) {
-            return subscriptions;
+            return subscriptions as SubscriptionItem[];
         }
     }
 
     const subscriptions = await storageAdapter.get(KV_KEY_SUBS);
-    return Array.isArray(subscriptions) ? subscriptions : [];
+    return Array.isArray(subscriptions) ? (subscriptions as SubscriptionItem[]) : [];
 }
 
-async function persistSubscriptionsForCron(storageAdapter: any, subscriptions: any) {
+async function persistSubscriptionsForCron(
+    storageAdapter: CronStorageAdapter,
+    subscriptions: SubscriptionItem[]
+) {
     if (typeof storageAdapter.putAllSubscriptions === 'function') {
         await storageAdapter.putAllSubscriptions(subscriptions);
         return;
@@ -63,7 +99,7 @@ async function persistSubscriptionsForCron(storageAdapter: any, subscriptions: a
 /**
  * 检查并发送订阅到期和流量预警通知
  */
-export async function checkAndNotify(sub: any, settings: any, env: any) {
+export async function checkAndNotify(sub: SubscriptionItem, settings: MisubSettings, env: Env) {
     if (!sub?.enabled || !sub.userInfo) return;
 
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -92,9 +128,9 @@ export async function checkAndNotify(sub: any, settings: any, env: any) {
 
     // 2. 检查流量使用
     const { upload, download, total } = sub.userInfo;
-    if (total > 0) {
-        const used = upload + download;
-        const usagePercent = Math.round((used / total) * 100);
+    if (Number(total || 0) > 0) {
+        const used = Number(upload || 0) + Number(download || 0);
+        const usagePercent = Math.round((used / Number(total || 0)) * 100);
 
         if (usagePercent >= (settings.NotifyThresholdPercent || 90)) {
             if (!sub.lastNotifiedTraffic || now - sub.lastNotifiedTraffic > ONE_DAY_MS) {
@@ -102,7 +138,7 @@ export async function checkAndNotify(sub: any, settings: any, env: any) {
 
 <b>订阅名称:</b> <code>${tgEscape(sub.name || '未命名')}</code>
 <b>状态:</b> <code>已使用 ${usagePercent}%</code>
-<b>详情:</b> <code>${tgEscape(formatBytes(used))} / ${tgEscape(formatBytes(total))}</code>`;
+<b>详情:</b> <code>${tgEscape(formatBytes(used))} / ${tgEscape(formatBytes(total || 0))}</code>`;
 
                 const sent = await sendCoreTg(settings, message);
                 if (sent) {
@@ -116,7 +152,7 @@ export async function checkAndNotify(sub: any, settings: any, env: any) {
 /**
  * 处理定时任务的通知更新（并行处理版本）
  */
-export async function handleCronTrigger(env: any) {
+export async function handleCronTrigger(env: Env) {
     const { StorageFactory } = await import('../storage-adapter.ts');
 
     const storageAdapter = await StorageFactory.createAdapter(
@@ -124,10 +160,14 @@ export async function handleCronTrigger(env: any) {
         await StorageFactory.getStorageType(env)
     );
     const originalSubs = await loadSubscriptionsForCron(storageAdapter);
-    const allSubs = structuredClone(originalSubs);
-    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || DEFAULT_SETTINGS;
+    const allSubs: SubscriptionItem[] = structuredClone(originalSubs);
+    const settings: MisubSettings =
+        ((await storageAdapter.get(KV_KEY_SETTINGS)) as MisubSettings) ||
+        (DEFAULT_SETTINGS as MisubSettings);
 
-    const httpSubscriptions = allSubs.filter((sub) => sub.url.startsWith('http') && sub.enabled);
+    const httpSubscriptions = allSubs.filter(
+        (sub) => String(sub.url || '').startsWith('http') && sub.enabled
+    );
 
     console.info(`[Cron] Starting parallel update for ${httpSubscriptions.length} subscriptions`);
     const startTime = Date.now();
@@ -140,30 +180,33 @@ export async function handleCronTrigger(env: any) {
     let changesMade = false;
     let updatedCount = 0;
     let failedCount = 0;
-    const failedSubscriptions: any[] = [];
+    const failedSubscriptions: Array<{ name: string; error?: string }> = [];
 
-    async function processSubscription(sub: any) {
+    async function processSubscription(sub: SubscriptionItem): Promise<SubscriptionUpdateResult> {
         try {
-            const fetchWithTimeout = (url: any, options: any) => {
+            const fetchWithTimeout = (
+                url: string,
+                options: RequestInit & { cf?: Record<string, unknown> }
+            ): Promise<Response> => {
                 const { cf, ...requestInit } = options;
                 const fetchCall = cf
                     ? fetch(new Request(url, requestInit), { cf })
                     : fetch(new Request(url, requestInit));
                 return Promise.race([
                     fetchCall,
-                    new Promise((_, reject) =>
+                    new Promise<never>((_, reject) =>
                         setTimeout(() => reject(new Error('Timeout')), TIMEOUT)
                     ),
                 ]);
             };
 
             const [trafficResult, nodeCountResult] = await Promise.allSettled([
-                fetchWithTimeout(sub.url, {
+                fetchWithTimeout(String(sub.url || ''), {
                     headers: { 'User-Agent': 'clash-verge/v2.4.3' },
                     redirect: 'follow',
                     cf: { insecureSkipVerify: true },
                 }),
-                fetchWithTimeout(sub.url, {
+                fetchWithTimeout(String(sub.url || ''), {
                     headers: { 'User-Agent': SYSTEM_CONSTANTS.FETCHER_USER_AGENT },
                     redirect: 'follow',
                     cf: { insecureSkipVerify: true },
@@ -173,21 +216,13 @@ export async function handleCronTrigger(env: any) {
             let hasTrafficUpdate = false;
             let hasNodeCountUpdate = false;
 
-            if (
-                trafficResult.status === 'fulfilled' &&
-                (trafficResult as Record<string, any>).value.ok
-            ) {
-                const userInfoHeader = (trafficResult as Record<string, any>).value.headers.get(
-                    'subscription-userinfo'
-                );
+            if (trafficResult.status === 'fulfilled' && trafficResult.value.ok) {
+                const userInfoHeader = trafficResult.value.headers.get('subscription-userinfo');
                 if (userInfoHeader) {
-                    const info = {};
-                    userInfoHeader.split(';').forEach((part: any) => {
+                    const info: SubscriptionUserInfo = {};
+                    userInfoHeader.split(';').forEach((part) => {
                         const [key, value] = part.trim().split('=');
-                        if (key && value)
-                            (info as Record<string, any>)[key] = /^\d+$/.test(value)
-                                ? Number(value)
-                                : value;
+                        if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
                     });
                     const originalSub = allSubs.find((s) => s.id === sub.id);
                     if (originalSub) {
@@ -198,11 +233,8 @@ export async function handleCronTrigger(env: any) {
                 }
             }
 
-            if (
-                nodeCountResult.status === 'fulfilled' &&
-                (nodeCountResult as Record<string, any>).value.ok
-            ) {
-                const text = await (nodeCountResult as Record<string, any>).value.text();
+            if (nodeCountResult.status === 'fulfilled' && nodeCountResult.value.ok) {
+                const text = await nodeCountResult.value.text();
                 let decoded = '';
                 try {
                     decoded = atob(text.replace(/\s/g, ''));
@@ -251,11 +283,15 @@ export async function handleCronTrigger(env: any) {
         }
     }
 
-    async function runWithConcurrency(items: any, concurrency: any, fn: any) {
-        const results: any[] = [];
-        const executing = new Set();
+    async function runWithConcurrency<T, R>(
+        items: T[],
+        concurrency: number,
+        fn: (item: T) => Promise<R>
+    ): Promise<R[]> {
+        const results: Promise<R>[] = [];
+        const executing = new Set<Promise<R>>();
         for (const item of items) {
-            const promise = fn(item).then((result: any) => {
+            const promise: Promise<R> = fn(item).then((result) => {
                 executing.delete(promise);
                 return result;
             });
@@ -299,7 +335,7 @@ export async function handleCronTrigger(env: any) {
 
     console.info(`[Cron] Completed in ${duration}ms:`, summary.summary);
 
-    const nodeCountChanges: any[] = [];
+    const nodeCountChanges: NodeCountChange[] = [];
     for (const sub of allSubs) {
         if (sub.nodeCountChange) {
             nodeCountChanges.push({
@@ -351,10 +387,9 @@ export async function handleCronTrigger(env: any) {
         if (failedSubscriptions.length > 0) {
             updateMessage += `\n❌ <b>失败详情:</b>\n`;
             failedSubscriptions.slice(0, 5).forEach((f) => {
+                const errorText = f.error || '';
                 const errorShort =
-                    (f.error as Record<string, any>).length > 30
-                        ? f.error.substring(0, 30) + '...'
-                        : f.error;
+                    errorText.length > 30 ? errorText.substring(0, 30) + '...' : errorText;
                 updateMessage += `• ${tgEscape(f.name)}: <code>${tgEscape(errorShort)}</code>\n`;
             });
         }
