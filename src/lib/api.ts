@@ -221,7 +221,7 @@ export async function fetchNodeCount(
     }
 }
 
-export async function fetchSettings() {
+export async function fetchSettings(): Promise<ApiResult> {
     try {
         const data = await api.get(`/api/settings?t=${Date.now()}`);
         return { success: true, data };

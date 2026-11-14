@@ -7,44 +7,70 @@ import { t, setLocale } from '../i18n/index.ts';
 import { confirmAction } from './useConfirm.ts';
 import { normalizeDnsMode } from '../../functions/modules/subscription/safe-dns.ts';
 
-function normalizeExternalApiConfig(value: any) {
-    const defaults = DEFAULT_SETTINGS.externalApi;
-    const externalApi = value && typeof value === 'object' ? value : {};
-    const tokens = Array.isArray(externalApi.tokens)
-        ? externalApi.tokens
-              .map((item: any, index: any) => ({
-                  name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
-                  token: String(item?.token || '').trim(),
-              }))
-              .filter((item: any) => item.token || item.name)
-        : [];
-
-    return {
-        ...defaults,
-        ...externalApi,
-        tokens: tokens.length > 0 ? tokens : defaults.tokens.map((item) => ({ ...item })),
-    };
+/** 外部 API token 条目 */
+interface ExternalApiToken {
+    name: string;
+    token: string;
 }
 
-function normalizeSettingsObject(source: Record<string, any> = {}) {
-    const merged = { ...DEFAULT_SETTINGS, ...source };
+/** 伪装页配置 */
+interface DisguiseConfig {
+    enabled: boolean;
+    pageType: string;
+    redirectUrl: string;
+}
+
+/** 设置状态：默认设置字段 + 后端可能返回的额外字段 */
+type SettingsState = typeof DEFAULT_SETTINGS & Record<string, unknown>;
+
+/** 仅接受普通对象，其余归一为空记录 */
+function toPlainObject(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
+}
+
+function normalizeExternalApiConfig(value: unknown) {
+    const defaults = DEFAULT_SETTINGS.externalApi;
+    const externalApi: Record<string, unknown> =
+        value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+    const tokens: ExternalApiToken[] = Array.isArray(externalApi.tokens)
+        ? externalApi.tokens
+              .map((item: unknown, index: number) => {
+                  const entry = (item || {}) as { name?: unknown; token?: unknown };
+                  const fallbackName = `token-${index + 1}`;
+                  return {
+                      name: String(entry.name || fallbackName).trim() || fallbackName,
+                      token: String(entry.token || '').trim(),
+                  };
+              })
+              .filter((item) => item.token || item.name)
+        : [];
+
+    const normalized: typeof DEFAULT_SETTINGS.externalApi = {
+        ...defaults,
+        ...(externalApi as Partial<typeof DEFAULT_SETTINGS.externalApi>),
+        tokens: tokens.length > 0 ? tokens : defaults.tokens.map((item) => ({ ...item })),
+    };
+    return normalized;
+}
+
+function normalizeSettingsObject(source: Record<string, unknown> = {}): SettingsState {
+    const merged: SettingsState = {
+        ...DEFAULT_SETTINGS,
+        ...(source as Partial<typeof DEFAULT_SETTINGS>),
+    };
     merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
-    const generatorOptions =
-        source.generatorOptions &&
-        typeof source.generatorOptions === 'object' &&
-        !Array.isArray(source.generatorOptions)
-            ? source.generatorOptions
+    const generatorOptions: Partial<typeof DEFAULT_SETTINGS.generatorOptions> =
+        source.generatorOptions && typeof source.generatorOptions === 'object'
+            ? (source.generatorOptions as Partial<typeof DEFAULT_SETTINGS.generatorOptions>)
             : {};
-    const dns =
-        generatorOptions.dns &&
-        typeof generatorOptions.dns === 'object' &&
-        !Array.isArray(generatorOptions.dns)
+    const dns: Partial<typeof DEFAULT_SETTINGS.generatorOptions.dns> =
+        generatorOptions.dns && typeof generatorOptions.dns === 'object'
             ? generatorOptions.dns
             : {};
-    const singbox =
-        generatorOptions.singbox &&
-        typeof generatorOptions.singbox === 'object' &&
-        !Array.isArray(generatorOptions.singbox)
+    const singbox: Partial<typeof DEFAULT_SETTINGS.generatorOptions.singbox> =
+        generatorOptions.singbox && typeof generatorOptions.singbox === 'object'
             ? generatorOptions.singbox
             : {};
     merged.generatorOptions = {
@@ -78,8 +104,8 @@ export function useSettingsLogic() {
     const isLoading = ref(false);
     const isSaving = ref(false);
     const showMigrationModal = ref(false);
-    const restartCountdown = ref<any>(null);
-    let reloadTimer: any = null;
+    const restartCountdown = ref<number | undefined>(undefined);
+    let reloadTimer: ReturnType<typeof setInterval> | null = null;
 
     const clearReloadTimer = () => {
         if (reloadTimer !== null) {
@@ -93,7 +119,7 @@ export function useSettingsLogic() {
     }
 
     // 嵌套配置对象
-    const disguiseConfig = ref({
+    const disguiseConfig = ref<DisguiseConfig>({
         enabled: false,
         pageType: 'default',
         redirectUrl: '',
@@ -110,11 +136,8 @@ export function useSettingsLogic() {
             'ChatID',
         ];
         for (const key of fieldsCheck) {
-            if (
-                (settings.value as Record<string, any>)[key] &&
-                /\s/.test((settings.value as Record<string, any>)[key])
-            )
-                return true;
+            const value = settings.value[key];
+            if (typeof value === 'string' && value && /\s/.test(value)) return true;
         }
         return false;
     });
@@ -131,20 +154,18 @@ export function useSettingsLogic() {
         try {
             const result = await fetchSettings();
             if (result.success) {
-                const incoming =
-                    (result as Record<string, any>).data &&
-                    typeof (result as Record<string, any>).data === 'object'
-                        ? (result as Record<string, any>).data
+                const incoming: Record<string, unknown> =
+                    result.data && typeof result.data === 'object'
+                        ? (result.data as Record<string, unknown>)
                         : {};
                 settings.value = normalizeSettingsObject(incoming);
 
-                if ((settings.value as Record<string, any>).disguise) {
+                const disguise = settings.value.disguise as Partial<DisguiseConfig> | undefined;
+                if (disguise) {
                     disguiseConfig.value = {
-                        enabled: (settings.value as Record<string, any>).disguise.enabled ?? false,
-                        pageType:
-                            (settings.value as Record<string, any>).disguise.pageType ?? 'default',
-                        redirectUrl:
-                            (settings.value as Record<string, any>).disguise.redirectUrl ?? '',
+                        enabled: disguise.enabled ?? false,
+                        pageType: disguise.pageType ?? 'default',
+                        redirectUrl: disguise.redirectUrl ?? '',
                     };
                 }
 
@@ -159,7 +180,7 @@ export function useSettingsLogic() {
             } else {
                 showToast(
                     t('settings.loadFailedWithMessage', {
-                        message: (result as Record<string, any>).error,
+                        message: result.error,
                     }),
                     'error'
                 );
@@ -191,7 +212,7 @@ export function useSettingsLogic() {
             if (!settings.value.storageType) settings.value.storageType = 'kv';
             settings.value.externalApi = normalizeExternalApiConfig(settings.value.externalApi);
 
-            const settingsToSave: Record<string, any> = {
+            const settingsToSave: Record<string, unknown> = {
                 ...settings.value,
                 externalApi: normalizeExternalApiConfig(settings.value.externalApi),
                 disguise: disguiseConfig.value,
