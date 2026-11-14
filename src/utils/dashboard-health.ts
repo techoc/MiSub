@@ -1,22 +1,64 @@
 import { getSubscriptionTrafficState } from './dashboard-deeplink.ts';
 
+/** 健康检查输入的最小订阅形状 */
+export interface HealthSubscription {
+    enabled?: boolean;
+    lastError?: unknown;
+    nodeCount?: number | string;
+    userInfo?: {
+        total?: number | string;
+        upload?: number | string;
+        download?: number | string;
+        expire?: number | string;
+    } | null;
+    [key: string]: unknown;
+}
+
+export interface HealthProfile {
+    enabled?: boolean;
+    [key: string]: unknown;
+}
+
+/** 一条「待处理事项」 */
+export interface HealthItem {
+    id: string;
+    tone?: 'danger' | 'warning' | 'info' | string;
+    titleKey?: string;
+    titleParams?: Record<string, unknown>;
+    descriptionKey?: string;
+    actionLabelKey?: string;
+    actionRoute?: string;
+    actionQuery?: Record<string, string>;
+    secondaryActionLabelKey?: string;
+    action?: string;
+    count?: number;
+}
+
+/** resolveHealthItemCopy 的返回形状（在 HealthItem 上补出显示文案） */
+export interface HealthItemCopy extends HealthItem {
+    title?: string;
+    description?: string;
+    actionLabel?: string;
+    secondaryActionLabel?: string;
+}
+
 const DEFAULT_NOW = () => Date.now();
 
-function getTokenState(settings: Record<string, any> = {}) {
+function getTokenState(settings: { mytoken?: unknown } = {}) {
     const token = settings.mytoken;
     if (!token) return 'missing';
     if (token === 'auto') return 'auto';
     return 'stable';
 }
 
-function getTrafficState(sub: any, now: any) {
+function getTrafficState(sub: HealthSubscription, now: number) {
     return getSubscriptionTrafficState(sub, now);
 }
 
 export function shouldShowFullGuide({
     subscriptions = [],
     profiles = [],
-}: { subscriptions?: any[]; profiles?: any[] } = {}) {
+}: { subscriptions?: unknown[]; profiles?: unknown[] } = {}) {
     return subscriptions.length === 0 || profiles.length === 0;
 }
 
@@ -48,21 +90,27 @@ export function getDashboardHealthItems({
     settings = {},
     totalNodesCount = null,
     now = DEFAULT_NOW(),
-}: Record<string, any> = {}) {
-    const items: any[] = [];
-    const enabledSubscriptions = subscriptions.filter((sub: any) => sub.enabled);
-    const disabledSubscriptions = subscriptions.filter((sub: any) => !sub.enabled);
-    const activeProfiles = profiles.filter((profile: any) => profile.enabled !== false);
+}: {
+    subscriptions?: HealthSubscription[];
+    profiles?: HealthProfile[];
+    settings?: { mytoken?: unknown };
+    totalNodesCount?: number | null;
+    now?: number;
+} = {}) {
+    const items: HealthItem[] = [];
+    const enabledSubscriptions = subscriptions.filter((sub) => sub.enabled);
+    const disabledSubscriptions = subscriptions.filter((sub) => !sub.enabled);
+    const activeProfiles = profiles.filter((profile) => profile.enabled !== false);
     const tokenState = getTokenState(settings);
     const resolvedTotalNodes =
         totalNodesCount ??
-        subscriptions.reduce((sum: any, sub: any) => sum + Number(sub.nodeCount || 0), 0);
-    const errorSubscriptions = subscriptions.filter((sub: any) => Boolean(sub.lastError));
+        subscriptions.reduce((sum, sub) => sum + Number(sub.nodeCount || 0), 0);
+    const errorSubscriptions = subscriptions.filter((sub) => Boolean(sub.lastError));
     const expiredSubscriptions = subscriptions.filter(
-        (sub: any) => getTrafficState(sub, now) === 'expired'
+        (sub) => getTrafficState(sub, now) === 'expired'
     );
     const lowTrafficSubscriptions = subscriptions.filter(
-        (sub: any) => getTrafficState(sub, now) === 'low'
+        (sub) => getTrafficState(sub, now) === 'low'
     );
 
     if (subscriptions.length === 0) {
@@ -209,13 +257,16 @@ export function getDashboardHealthItems({
  * Falls back to the raw key when a translation is missing, which keeps
  * incomplete locales from rendering blank cards.
  */
-export function resolveHealthItemCopy(item: any, t: any) {
+export function resolveHealthItemCopy(
+    item: HealthItem,
+    t: (key: string, params?: Record<string, unknown>) => unknown
+): HealthItemCopy {
     if (!item || typeof t !== 'function') return item;
 
-    const translate = (key: any, params?: Record<string, any>) => {
+    const translate = (key: string | undefined, params?: Record<string, unknown>) => {
         if (!key) return '';
         const value = t(key, params);
-        return value === undefined || value === null ? '' : value;
+        return value === undefined || value === null ? '' : String(value);
     };
 
     return {

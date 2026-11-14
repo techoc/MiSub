@@ -404,7 +404,7 @@
                                 :key="item.id"
                                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[var(--misub-radius-md)] border p-3"
                                 :class="
-                                    (healthToneClasses as Record<string, any>)[item.tone] ||
+                                    (healthToneClasses as Record<string, any>)[item.tone ?? 'info'] ||
                                     healthToneClasses.info
                                 "
                             >
@@ -412,7 +412,7 @@
                                     <span
                                         class="mt-2 h-2 w-2 shrink-0 rounded-full"
                                         :class="
-                                            (healthDotClasses as Record<string, any>)[item.tone] ||
+                                            (healthDotClasses as Record<string, any>)[item.tone ?? 'info'] ||
                                             healthDotClasses.info
                                         "
                                     ></span>

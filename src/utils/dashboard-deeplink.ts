@@ -11,6 +11,22 @@
  */
 
 /**
+ * 深链/筛选函数接受的订阅最小形状（列表里是任意来源的订阅对象）。
+ */
+export interface StatusSubscription {
+    enabled?: boolean;
+    lastError?: unknown;
+    nodeCount?: number | string;
+    userInfo?: {
+        total?: number | string;
+        upload?: number | string;
+        download?: number | string;
+        expire?: number | string;
+    } | null;
+    [key: string]: unknown;
+}
+
+/**
  * Subscription status filters keyed by the `?status=` value emitted from the
  * dashboard. Mirrors the ids in `getDashboardHealthItems`.
  */
@@ -28,12 +44,12 @@ export const SUBSCRIPTION_STATUS_FILTERS = {
  * Returns `null` when the value is absent or unrecognised, so callers can fall
  * back to their default (unfiltered) behaviour.
  */
-export function resolveSubscriptionStatusFilter(status: any) {
+export function resolveSubscriptionStatusFilter(status: unknown) {
     if (typeof status !== 'string') return null;
     const key = status.trim().toLowerCase();
     if (!key) return null;
     return Object.prototype.hasOwnProperty.call(SUBSCRIPTION_STATUS_FILTERS, key)
-        ? (SUBSCRIPTION_STATUS_FILTERS as Record<string, any>)[key]
+        ? (SUBSCRIPTION_STATUS_FILTERS as Record<string, string>)[key]
         : null;
 }
 
@@ -43,7 +59,11 @@ export function resolveSubscriptionStatusFilter(status: any) {
  *
  * `now` is injectable so time-dependent filters stay deterministic in tests.
  */
-export function matchesSubscriptionStatus(sub: any, filter: any, now = Date.now()) {
+export function matchesSubscriptionStatus(
+    sub: StatusSubscription | null | undefined,
+    filter: string | null | undefined,
+    now = Date.now()
+) {
     if (!filter || filter === 'all') return true;
     if (!sub) return false;
 
@@ -67,7 +87,10 @@ export function matchesSubscriptionStatus(sub: any, filter: any, now = Date.now(
  * Mirrors the traffic classification used by `dashboard-health.js` so the
  * dashboard badge and the filtered list agree on what "expired"/"low" means.
  */
-export function getSubscriptionTrafficState(sub: any, now = Date.now()) {
+export function getSubscriptionTrafficState(
+    sub: StatusSubscription | null | undefined,
+    now = Date.now()
+) {
     const info = sub?.userInfo;
     if (!sub?.enabled || !info) return null;
 
@@ -97,21 +120,21 @@ export const SETTINGS_FOCUS_ANCHORS = {
     profiletoken: 'setting-profileToken',
 };
 
-function normalizeFocusKey(focus: any) {
+function normalizeFocusKey(focus: unknown) {
     if (typeof focus !== 'string') return '';
     return focus.trim().toLowerCase();
 }
 
-export function resolveSettingsFocusTab(focus: any) {
+export function resolveSettingsFocusTab(focus: unknown) {
     const key = normalizeFocusKey(focus);
     if (!key) return null;
-    return (SETTINGS_FOCUS_TABS as Record<string, any>)[key] || null;
+    return (SETTINGS_FOCUS_TABS as Record<string, string>)[key] || null;
 }
 
-export function resolveSettingsFocusAnchor(focus: any) {
+export function resolveSettingsFocusAnchor(focus: unknown) {
     const key = normalizeFocusKey(focus);
     if (!key) return null;
-    return (SETTINGS_FOCUS_ANCHORS as Record<string, any>)[key] || null;
+    return (SETTINGS_FOCUS_ANCHORS as Record<string, string>)[key] || null;
 }
 
 /**
@@ -119,7 +142,7 @@ export function resolveSettingsFocusAnchor(focus: any) {
  * section", which this project expresses by switching the subscriptions page
  * into its profile view.
  */
-export function resolveProfileFocus(focus: any) {
+export function resolveProfileFocus(focus: unknown) {
     if (typeof focus !== 'string') return null;
     return focus.trim().toLowerCase() === 'profiles' ? 'profiles' : null;
 }
@@ -128,6 +151,9 @@ export function resolveProfileFocus(focus: any) {
  * Count how many subscriptions match a filter — used for the "filtered" hint
  * the list shows so a deep-linked user understands why the list is short.
  */
-export function countSubscriptionsByStatus(subscriptions: any[] = [], filter: any) {
+export function countSubscriptionsByStatus(
+    subscriptions: StatusSubscription[] = [],
+    filter: string | null | undefined
+) {
     return subscriptions.filter((sub) => matchesSubscriptionStatus(sub, filter)).length;
 }

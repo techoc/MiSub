@@ -1,4 +1,4 @@
-export function parseCustomPageSource(content: any, css = '') {
+export function parseCustomPageSource(content: unknown, css = '') {
     const rawContent = typeof content === 'string' ? content : '';
     const rawCss = typeof css === 'string' ? css : '';
 
@@ -45,7 +45,7 @@ export function parseCustomPageSource(content: any, css = '') {
         .filter(Boolean)
         .map(normalizeUrl);
 
-    const linkImports: any[] = [];
+    const linkImports: string[] = [];
 
     const scriptNodes = Array.from(doc.querySelectorAll('script'));
     const scripts = scriptNodes.map((node) => ({
@@ -82,17 +82,17 @@ export function parseCustomPageSource(content: any, css = '') {
     };
 }
 
-function normalizeUrl(value: any) {
+function normalizeUrl(value: unknown) {
     return String(value || '')
         .trim()
         .replace(/^http:\/\//i, 'https://');
 }
 
-function wrapBodyContent(body: any) {
+function wrapBodyContent(body: Element) {
     const attrs: string[] = [];
     const classes = ['custom-page-document', 'custom-page-html', 'custom-page-body'];
 
-    Array.from(body.attributes).forEach((attr: any) => {
+    Array.from(body.attributes).forEach((attr: Attr) => {
         if (attr.name === 'class') {
             classes.push(...String(attr.value).split(/\s+/).filter(Boolean));
             return;
@@ -103,7 +103,7 @@ function wrapBodyContent(body: any) {
     return `<div class="${Array.from(new Set(classes)).join(' ')}" ${attrs.join(' ')}>${body.innerHTML}</div>`;
 }
 
-function normalizeDocumentCss(cssText: any) {
+function normalizeDocumentCss(cssText: string) {
     if (!cssText.trim()) return '';
 
     return cssText
@@ -112,7 +112,7 @@ function normalizeDocumentCss(cssText: any) {
         .replace(/(^|[\s,{>+~])body(?=($|[\s.#:[,{>+~]))/gm, '$1.custom-page-body');
 }
 
-function escapeHtmlAttribute(value: any) {
+function escapeHtmlAttribute(value: unknown) {
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
