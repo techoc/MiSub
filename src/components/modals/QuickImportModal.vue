@@ -13,8 +13,17 @@
     const emit = defineEmits(['close']);
     const { t } = useI18n();
 
+    /** 一键导入客户端条目 */
+    interface QuickImportClient {
+        id: string;
+        name?: string;
+        icon?: string;
+        platforms?: string[];
+        [key: string]: unknown;
+    }
+
     // 设备检测
-    const detectedPlatform = ref<any>(null);
+    const detectedPlatform = ref<string | null>(null);
 
     const detectPlatform = () => {
         const ua = navigator.userAgent;
@@ -30,7 +39,7 @@
     // URL Scheme 映射表（内置）
     // 桌面端 Clash/Mihomo 系客户端在导入订阅时会直接拉取这里的 url。
     // 明确带上 target=clash，避免客户端/中间层使用通用 target 名称时拿到原始 Base64 节点列表。
-    const urlSchemeMap = {
+    const urlSchemeMap: Record<string, string> = {
         'clash-verge-rev': 'clash://install-config?url={url_clash}&name={name}',
         'clash-party': 'mihomo://install-config?url={url_clash}&name={name}',
         clashbox: 'clash://install-config?url={url_clash}&name={name}',
@@ -59,7 +68,7 @@
     };
 
     // 生成深度链接
-    const withQueryParam = (url: any, key: any, value: any) => {
+    const withQueryParam = (url: string, key: string, value: string) => {
         try {
             const parsed = new URL(url);
             if (!parsed.searchParams.has(key)) {
@@ -72,10 +81,10 @@
         }
     };
 
-    const generateDeepLink = (client: any) => {
+    const generateDeepLink = (client: QuickImportClient): string | null => {
         const subUrl = getSubscriptionUrl();
         const clashSubUrl = withQueryParam(subUrl, 'target', 'clash');
-        const scheme = (urlSchemeMap as Record<string, any>)[client.id];
+        const scheme = urlSchemeMap[client.id];
 
         if (!scheme) return null;
 
@@ -91,38 +100,34 @@
     };
 
     // 过滤支持一键导入的客户端
-    const supportedClients = computed(() => {
+    const supportedClients = computed<QuickImportClient[]>(() => {
         if (!props.clients) return [];
-        return props.clients.filter(
-            (client) => (urlSchemeMap as Record<string, any>)[(client as Record<string, any>).id]
-        );
+        return (props.clients as QuickImportClient[]).filter((client) => urlSchemeMap[client.id]);
     });
 
     // 按平台分组并排序
-    const groupedClients = computed<any[]>(() => {
+    const groupedClients = computed<QuickImportClient[]>(() => {
         const platform = detectedPlatform.value;
         const clients = supportedClients.value;
 
         if (!platform) return clients;
 
         // 将当前平台的客户端置顶
-        const platformClients = clients.filter((c) =>
-            (c as Record<string, any>).platforms?.includes(platform)
-        );
-        const otherClients = clients.filter(
-            (c) => !(c as Record<string, any>).platforms?.includes(platform)
-        );
+        const platformClients = clients.filter((c) => c.platforms?.includes(platform));
+        const otherClients = clients.filter((c) => !c.platforms?.includes(platform));
 
         return [...platformClients, ...otherClients];
     });
 
     // 判断客户端是否为{{ t('quickImport.recommended') }}（当前平台）
-    const isRecommended = (client: any) => {
-        return detectedPlatform.value && client.platforms?.includes(detectedPlatform.value);
+    const isRecommended = (client: QuickImportClient) => {
+        return Boolean(
+            detectedPlatform.value && client.platforms?.includes(detectedPlatform.value)
+        );
     };
 
     // 处理客户端点击
-    const handleClientClick = (client: any) => {
+    const handleClientClick = (client: QuickImportClient) => {
         const deepLink = generateDeepLink(client);
         if (deepLink) {
             window.location.href = deepLink;
@@ -130,8 +135,8 @@
     };
 
     // 获取平台标签
-    const getPlatformLabel = (platform: any) => {
-        const map = {
+    const getPlatformLabel = (platform: string) => {
+        const map: Record<string, string> = {
             ios: 'iOS',
             android: 'Android',
             windows: 'Windows',
@@ -139,7 +144,7 @@
             linux: 'Linux',
             HarmonyOS: 'HarmonyOS',
         };
-        return (map as Record<string, any>)[platform] || platform;
+        return map[platform] || platform;
     };
 
     const closeModal = () => {
