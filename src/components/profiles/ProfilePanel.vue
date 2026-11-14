@@ -5,6 +5,7 @@
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useI18n } from '../../i18n/index.ts';
+    import type { ProfileItem } from '../../../types/models.ts';
 
     const { t } = useI18n();
 
@@ -50,54 +51,54 @@
         set: (value) => emit('updateSearch', value),
     });
 
-    const visibleCount = computed(() => props.filteredCount ?? props.profiles!.length);
+    // 订阅组列表视图（props 为 unknown[]，统一收窄）
+    const profileList = computed<ProfileItem[]>(() => (props.profiles || []) as ProfileItem[]);
 
-    const displayProfiles = computed<any[]>(() => {
+    const visibleCount = computed(() => props.filteredCount ?? profileList.value.length);
+
+    const displayProfiles = computed<ProfileItem[]>(() => {
         if (props.isSorting) {
-            return props.profiles || [];
+            return profileList.value;
         }
 
-        if (props.paginatedProfiles && props.paginatedProfiles.length > 0) {
-            return props.paginatedProfiles;
+        const paginated = (props.paginatedProfiles || []) as ProfileItem[];
+        if (paginated.length > 0) {
+            return paginated;
         }
 
         if (props.totalPages !== undefined) {
-            return props.paginatedProfiles || [];
+            return paginated;
         }
-        return props.profiles || [];
+        return profileList.value;
     });
 
-    const handleEdit = (profileId: any) => emit('edit', profileId);
-    const handleDelete = (profileId: any) => emit('delete', profileId);
-    const handleToggle = (event: any) => emit('toggle', event);
-    const handleOpenCopy = (profileId: any) => emit('openCopy', profileId);
-    const handlePreview = (profileId: any) => emit('preview', profileId);
+    const handleEdit = (profileId: string) => emit('edit', profileId);
+    const handleDelete = (profileId: string) => emit('delete', profileId);
+    const handleToggle = (profile: ProfileItem) => emit('toggle', profile);
+    const handleOpenCopy = (profileId: string) => emit('openCopy', profileId);
+    const handlePreview = (profileId: string) => emit('preview', profileId);
     const handleAdd = () => emit('add');
-    const handleChangePage = (page: any) => emit('changePage', page);
+    const handleChangePage = (page: number) => emit('changePage', page);
     const handleDeleteAll = () => emit('deleteAll');
     const handleToggleSort = () => emit('toggle-sort');
 
-    const handleQRCode = (profileId: any) => emit('qrcode', profileId);
+    const handleQRCode = (profileId: string) => emit('qrcode', profileId);
 
     // 始终基于真实 profile id 排序，避免分页视图把页内索引用到全量列表上。
-    const handleMoveUp = (profileId: any) => {
-        const index = props.profiles!.findIndex(
-            (profile: any) =>
-                (profile as Record<string, any>).id === profileId ||
-                (profile.customId as any as any as any) === profileId
+    const handleMoveUp = (profileId: string) => {
+        const index = profileList.value.findIndex(
+            (profile) => profile.id === profileId || profile.customId === profileId
         );
         if (index > 0) {
             emit('reorder', profileId, 'up');
         }
     };
 
-    const handleMoveDown = (profileId: any) => {
-        const index = props.profiles!.findIndex(
-            (profile: any) =>
-                (profile as Record<string, any>).id === profileId ||
-                (profile.customId as any as any as any) === profileId
+    const handleMoveDown = (profileId: string) => {
+        const index = profileList.value.findIndex(
+            (profile) => profile.id === profileId || profile.customId === profileId
         );
-        if (index !== -1 && index < props.profiles!.length - 1) {
+        if (index !== -1 && index < profileList.value.length - 1) {
             emit('reorder', profileId, 'down');
         }
     };
