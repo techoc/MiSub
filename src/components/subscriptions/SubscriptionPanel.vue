@@ -15,6 +15,14 @@
         getAirportIdentityName,
         createAirportGroupId,
     } from '../../utils/airport-identity.ts';
+    import type { SubscriptionItem } from '../../../types/models.ts';
+
+    /** 按站点聚合后的折叠组 */
+    interface SubscriptionGroup {
+        key: string;
+        host: string;
+        items: SubscriptionItem[];
+    }
 
     const { layoutMode } = useUIStore();
     const { t } = useI18n();
@@ -37,7 +45,7 @@
 
     const groupNameInput = ref('');
     const selectedAirportGroup = ref('');
-    const editingSubscriptionIds = ref<any[]>([]);
+    const editingSubscriptionIds = ref<string[]>([]);
     const showAirportIdentityEditor = ref(false);
     const emit = defineEmits([
         'add',
@@ -81,13 +89,13 @@
         set: (val) => emit('reorder', val),
     });
 
-    const handleDelete = (id: any) => emit('delete', id);
-    const handleEdit = (id: any) => emit('edit', id);
-    const handleUpdate = (id: any) => emit('updateNodeCount', id);
-    const handlePreview = (id: any) => emit('preview', id);
-    const handleQRCode = (id: any) => emit('qrcode', id);
+    const handleDelete = (id: string) => emit('delete', id);
+    const handleEdit = (id: string) => emit('edit', id);
+    const handleUpdate = (id: string) => emit('updateNodeCount', id);
+    const handlePreview = (id: string) => emit('preview', id);
+    const handleQRCode = (id: string) => emit('qrcode', id);
     const handleAdd = () => emit('add');
-    const handleChangePage = (page: any) => emit('changePage', page);
+    const handleChangePage = (page: number) => emit('changePage', page);
     const handleToggleSort = () => emit('toggleSort');
     const handleSortEnd = () => emit('markDirty');
     const handleDeleteAll = () => emit('deleteAll');
@@ -99,18 +107,18 @@
     const availableAirportGroups = computed(() => {
         const groups = new Map();
         props.subscriptions.forEach((item) => {
-            const identity = (item as Record<string, any>).airportIdentity;
+            const identity = (item as SubscriptionItem).airportIdentity;
             if (identity?.groupId && identity?.name) groups.set(identity.groupId, identity.name);
         });
         return [...groups].map(([groupId, name]) => ({ groupId, name }));
     });
-    const handleResetGroup = (group: any) =>
+    const handleResetGroup = (group: SubscriptionGroup) =>
         emit(
             'reset-group',
-            group.items.map((it: any) => it.id)
+            group.items.map((it) => it.id)
         );
     const openAirportIdentityEditor = (
-        ids = props.subscriptions.map((item) => (item as Record<string, any>).id)
+        ids = props.subscriptions.map((item) => (item as SubscriptionItem).id)
     ) => {
         groupNameInput.value = '';
         selectedAirportGroup.value = '';
@@ -120,7 +128,7 @@
     const saveAirportIdentity = () => {
         const name = groupNameInput.value.trim();
         const existing = props.subscriptions
-            .map((item) => (item as Record<string, any>).airportIdentity)
+            .map((item) => (item as SubscriptionItem).airportIdentity)
             .find((identity) => identity?.groupId === selectedAirportGroup.value);
         if (!selectedAirportGroup.value && !name) return;
         const groupId = selectedAirportGroup.value || createAirportGroupId();
@@ -130,32 +138,32 @@
         });
         showAirportIdentityEditor.value = false;
     };
-    const handleSplitAirportGroup = (group: any) => {
+    const handleSplitAirportGroup = (group: SubscriptionGroup) => {
         // 禁止后续域名启发式再次合并：每个订阅获得独立身份，但保留可识别的显示名。
-        group.items.forEach((item: any) => {
+        group.items.forEach((item) => {
             emit('split-airport-group', [item.id], {
                 groupId: createAirportGroupId(),
                 name: item.airportIdentity?.name || groupDetectedName(group),
             });
         });
     };
-    const handleConfirmDetectedName = (group: any) => {
+    const handleConfirmDetectedName = (group: SubscriptionGroup) => {
         const name = groupDetectedName(group);
         if (!name) return;
         const retainedGroupId = group.items
-            .map((item: any) => item.airportIdentity?.groupId)
+            .map((item) => item.airportIdentity?.groupId)
             .find(Boolean);
         emit(
             'rename-group',
-            group.items.map((item: any) => item.id),
+            group.items.map((item) => item.id),
             name,
             retainedGroupId || createAirportGroupId()
         );
         setTimeout(refreshNameMemory, 0);
     };
 
-    const handleApplyDetectedName = (subscription: any, name: any) => {
-        emit('applyDetectedName', subscription?.id, name);
+    const handleApplyDetectedName = (subscription: unknown, name: string) => {
+        emit('applyDetectedName', (subscription as SubscriptionItem | null)?.id, name);
         // 父组件同步写入命名记忆，放到下一个 tick 刷新折叠标题
         setTimeout(refreshNameMemory, 0);
     };
@@ -168,7 +176,7 @@
      *   3. 组域名原文
      * 始终返回非空（除非组本身无 host），保证按钮可用。
      */
-    const prettifyHost = (host: any) => {
+    const prettifyHost = (host: unknown) => {
         const raw = String(host || '').trim();
         if (!raw) return '';
         // 先去掉 sub1/api/dy11 之类的子域前缀，拿到机场主域名
@@ -186,9 +194,9 @@
         return base.charAt(0).toUpperCase() + base.slice(1);
     };
 
-    const groupDetectedName = (group: any) => {
+    const groupDetectedName = (group: SubscriptionGroup | null | undefined) => {
         const hit = (group?.items || []).find(
-            (item: any) => typeof item?.detectedName === 'string' && item.detectedName.trim()
+            (item) => typeof item?.detectedName === 'string' && item.detectedName.trim()
         );
         if (hit) return hit.detectedName.trim();
         if (group?.host) return prettifyHost(group.host);
@@ -205,7 +213,7 @@
     // 使「重命名整组 / 应用识别名」后折叠标题立即更新。
     const nameMemoryVersion = ref(0);
 
-    const groupDisplayName = (group: any) => {
+    const groupDisplayName = (group: SubscriptionGroup) => {
         // 依赖 version，改名后自动重算
         void nameMemoryVersion.value;
         const confirmed = (group?.items || []).map(getAirportIdentityName).find(Boolean);
@@ -229,15 +237,15 @@
     // === 按站点自动折叠 ===
     // 同一家机场常有多个订阅链接（域名相同、路径 token 不同），逐个平铺会很乱。
     // 这里按 URL 的域名自动聚合，同一站点的订阅源折叠为一组，可展开查看。
-    const collapsedGroups = ref(new Set());
-    const knownGroupKeys = ref(new Set());
+    const collapsedGroups = ref(new Set<string>());
+    const knownGroupKeys = ref(new Set<string>());
 
     /**
      * 从 URL 提取稳定的分组身份。
      * 普通域名按推断出的机场根域聚合（子域、路径 token 不影响）；
      * 在公共托管平台上不能将 tenants 合并到平台根域，保留其 tenant 主机名。
      */
-    const siteKeyOf = (sub: any) => {
+    const siteKeyOf = (sub: SubscriptionItem) => {
         const inferredKey = getAirportIdentityKey(sub);
         return inferredKey.startsWith('identity:')
             ? inferredKey
@@ -248,10 +256,10 @@
      * 始终按完整筛选结果分组，避免分页把同一机场的订阅拆散到不同页；
      * 页面切换由分组列表分页，而非先分页订阅再尝试分组。
      */
-    const groupedSubscriptions = computed(() => {
-        const list = props.subscriptions || [];
+    const groupedSubscriptions = computed<SubscriptionGroup[]>(() => {
+        const list = (props.subscriptions || []) as SubscriptionItem[];
         const order: string[] = [];
-        const map = new Map();
+        const map = new Map<string, SubscriptionItem[]>();
 
         list.forEach((sub) => {
             const key = siteKeyOf(sub) || '';
@@ -259,13 +267,13 @@
                 map.set(key, []);
                 order.push(key);
             }
-            map.get(key).push(sub);
+            map.get(key)!.push(sub);
         });
 
         return order.map((key) => ({
             key: key || '__other__',
             host: key,
-            items: map.get(key),
+            items: map.get(key) || [],
         }));
     });
 
@@ -276,15 +284,13 @@
 
     const pageSubscriptionIds = computed(
         () =>
-            new Set(
-                (props.paginatedSubscriptions || []).map((sub) => (sub as Record<string, any>).id)
-            )
+            new Set((props.paginatedSubscriptions || []).map((sub) => (sub as SubscriptionItem).id))
     );
 
     /** 当前分页命中组内任一条时显示组；组本身完整呈现但按首条排序锚定。 */
     const visibleCollapsibleGroups = computed(() =>
         collapsibleGroups.value.filter((group) =>
-            group.items.some((item: any) => pageSubscriptionIds.value.has(item.id))
+            group.items.some((item) => pageSubscriptionIds.value.has(item.id))
         )
     );
 
@@ -295,14 +301,14 @@
             .flatMap((g) => g.items)
     );
 
-    const toggleGroup = (key: any) => {
+    const toggleGroup = (key: string) => {
         const next = new Set(collapsedGroups.value);
         if (next.has(key)) next.delete(key);
         else next.add(key);
         collapsedGroups.value = next;
     };
 
-    const isGroupCollapsed = (key: any) => collapsedGroups.value.has(key);
+    const isGroupCollapsed = (key: string) => collapsedGroups.value.has(key);
 
     // 仅对新出现的分组应用默认折叠；过滤/分页更新时保留用户手动展开状态。
     // 已消失分组的状态保留在本组件生命周期内，避免搜索/分页切换后忘记用户选择。
