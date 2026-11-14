@@ -4,27 +4,43 @@
 
 import { toRegionZh } from './shared.ts';
 
-export function makeDedupKey(record: any, cfg: any) {
+import type { KvRecord } from '../../../types/models.ts';
+
+/** 去重配置 */
+interface DedupConfig {
+    dedup?: { includeProtocol?: boolean };
+}
+
+export function makeDedupKey(record: KvRecord, cfg: DedupConfig): string {
     const server = String(record.server || '')
         .trim()
         .toLowerCase();
     const port = String(record.port || '').trim();
     if (!server || !port) return '';
     const base = `${server}:${port}`;
-    return cfg.dedup.includeProtocol ? `${record.protocol}|${base}` : base;
+    return cfg.dedup?.includeProtocol ? `${record.protocol}|${base}` : base;
 }
 
-export function choosePreferred(existing: any, candidate: any, protocolOrder: any) {
+export function choosePreferred(
+    existing: KvRecord | null | undefined,
+    candidate: KvRecord,
+    protocolOrder?: string[]
+): KvRecord {
     if (!existing) return candidate;
     if (!protocolOrder?.length) return existing;
-    const rank = (p: any) => {
+    const rank = (p: unknown) => {
         const idx = protocolOrder.indexOf(String(p || '').toLowerCase());
         return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
     };
     return rank(candidate.protocol) < rank(existing.protocol) ? candidate : existing;
 }
 
-function applyModifier(key: any, value: any, modifier: any, record: any) {
+function applyModifier(
+    key: string,
+    value: unknown,
+    modifier: string,
+    record?: KvRecord | null
+): string {
     const val = value == null ? '' : String(value);
     switch (modifier) {
         case 'UPPER':
@@ -48,10 +64,14 @@ function applyModifier(key: any, value: any, modifier: any, record: any) {
     }
 }
 
-export function renderTemplate(template: any, vars: any, record: any) {
+export function renderTemplate(
+    template: unknown,
+    vars: Record<string, unknown>,
+    record?: KvRecord | null
+): string {
     return String(template || '')
-        .replace(/\{([a-zA-Z0-9_]+)(?::([a-zA-Z0-9]+))?\}/g, (_, key, modifier) => {
-            let v;
+        .replace(/\{([a-zA-Z0-9_]+)(?::([a-zA-Z0-9]+))?\}/g, (_, key: string, modifier: string) => {
+            let v: unknown;
 
             // 优先处理内置变量
             if (Object.prototype.hasOwnProperty.call(vars, key)) {
@@ -72,11 +92,11 @@ export function renderTemplate(template: any, vars: any, record: any) {
         .trim();
 }
 
-export function padIndex(n: any, width: any) {
+export function padIndex(n: number | string, width: number): string {
     return width > 0 ? String(n).padStart(width, '0') : String(n);
 }
 
-export function getIndexGroupKey(record: any, scope: any) {
+export function getIndexGroupKey(record: KvRecord, scope: unknown): string {
     switch (scope) {
         case 'region':
             return `r:${record.region}`;
