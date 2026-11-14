@@ -2,6 +2,8 @@
  * D1 存储适配器（facade 拆分：原 storage-adapter.js 的 D1StorageAdapter）。
  */
 
+import type { KvRecord } from '../../types/models.ts';
+
 import {
     DATA_KEYS,
     STORAGE_TYPES,
@@ -10,6 +12,13 @@ import {
     invalidateD1CollectionCache,
     readCachedD1Collection,
 } from './shared.ts';
+
+/** _parseKey 的解析结果 */
+interface ParsedD1Key {
+    table: string;
+    queryField: string;
+    queryValue: string;
+}
 
 /**
  * D1 存储适配器
@@ -23,7 +32,7 @@ export class D1StorageAdapter {
         this.type = STORAGE_TYPES.D1;
     }
 
-    async get(key: any, type = 'json') {
+    async get(key: string, type = 'json') {
         try {
             // 根据 key 确定查询的表和字段
             const { table, queryField, queryValue } = this._parseKey(key);
@@ -48,7 +57,7 @@ export class D1StorageAdapter {
         }
     }
 
-    async put(key: any, value: any) {
+    async put(key: string, value: unknown) {
         try {
             const { table, queryField, queryValue } = this._parseKey(key);
             const data = typeof value === 'string' ? value : JSON.stringify(value);
@@ -87,7 +96,7 @@ export class D1StorageAdapter {
         }
     }
 
-    async delete(key: any) {
+    async delete(key: string) {
         try {
             const { table, queryField, queryValue } = this._parseKey(key);
 
@@ -106,7 +115,7 @@ export class D1StorageAdapter {
         }
     }
 
-    async list(prefix: any) {
+    async list(prefix: string) {
         try {
             // D1 中的 list 操作需要根据前缀查询相应的表
             const tables = [
@@ -114,7 +123,7 @@ export class D1StorageAdapter {
                 { name: 'profiles', keyField: 'id' },
                 { name: 'settings', keyField: 'key' },
             ];
-            const keys: any[] = [];
+            const keys: Array<{ name: string }> = [];
             const effectivePrefix = prefix || '';
             const matchesKnownKey =
                 DATA_KEYS.SUBSCRIPTIONS.startsWith(effectivePrefix) ||
@@ -138,21 +147,22 @@ export class D1StorageAdapter {
                 if (table.name === 'profiles' && !shouldQueryProfiles) continue;
                 if (table.name === 'settings' && !shouldQuerySettings) continue;
 
-                let results;
-                if (table.name === 'settings' && effectivePrefix) {
-                    results = await this.db
-                        .prepare(
-                            `SELECT ${table.keyField} FROM ${table.name} WHERE ${table.keyField} LIKE ?`
-                        )
-                        .bind(`${effectivePrefix}%`)
-                        .all();
-                } else {
-                    results = await this.db
-                        .prepare(`SELECT ${table.keyField} FROM ${table.name}`)
-                        .all();
-                }
+                const rawRows =
+                    table.name === 'settings' && effectivePrefix
+                        ? await this.db
+                              .prepare(
+                                  `SELECT ${table.keyField} FROM ${table.name} WHERE ${table.keyField} LIKE ?`
+                              )
+                              .bind(`${effectivePrefix}%`)
+                              .all()
+                        : await this.db
+                              .prepare(`SELECT ${table.keyField} FROM ${table.name}`)
+                              .all();
+                const rows: Array<Record<string, unknown>> = Array.isArray(rawRows?.results)
+                    ? (rawRows.results as Array<Record<string, unknown>>)
+                    : [];
 
-                results.results.forEach((row) => {
+                rows.forEach((row) => {
                     const key = this._buildKey(table.name, row[table.keyField]);
                     if (key.startsWith(effectivePrefix)) {
                         keys.push({ name: key });
@@ -167,7 +177,7 @@ export class D1StorageAdapter {
         }
     }
 
-    async getSubscriptionById(id: any) {
+    async getSubscriptionById(id: string) {
         try {
             const result = await this.db
                 .prepare('SELECT data FROM subscriptions WHERE id = ?')
@@ -191,14 +201,12 @@ export class D1StorageAdapter {
     async getAllSubscriptions() {
         return readCachedD1Collection(this.db, 'subscriptions', async () => {
             try {
-                const results = await (this.db as Record<string, any>)
-                    .prepare('SELECT data FROM subscriptions')
-                    .all();
+                const results = await this.db.prepare('SELECT data FROM subscriptions').all();
                 if (!Array.isArray(results?.results)) return [];
 
-                const all: any[] = [];
-                results.results.forEach((row: any) => {
-                    const parsed = JSON.parse(row.data);
+                const all: KvRecord[] = [];
+                results.results.forEach((row) => {
+                    const parsed = JSON.parse(row.data as string);
                     if (Array.isArray(parsed)) {
                         all.push(...parsed);
                     } else if (parsed) {
@@ -206,7 +214,7 @@ export class D1StorageAdapter {
                     }
                 });
 
-                const deduped = new Map();
+                const deduped = new Map<string, KvRecord>();
                 all.forEach((item) => {
                     if (item?.id) deduped.set(item.id, item);
                 });
@@ -221,7 +229,7 @@ export class D1StorageAdapter {
         });
     }
 
-    async getProfileById(id: any) {
+    async getProfileById(id: string) {
         try {
             const result = await this.db
                 .prepare('SELECT data FROM profiles WHERE id = ?')
@@ -248,14 +256,12 @@ export class D1StorageAdapter {
     async getAllProfiles() {
         return readCachedD1Collection(this.db, 'profiles', async () => {
             try {
-                const results = await (this.db as Record<string, any>)
-                    .prepare('SELECT data FROM profiles')
-                    .all();
+                const results = await this.db.prepare('SELECT data FROM profiles').all();
                 if (!Array.isArray(results?.results)) return [];
 
-                const all: any[] = [];
-                results.results.forEach((row: any) => {
-                    const parsed = JSON.parse(row.data);
+                const all: KvRecord[] = [];
+                results.results.forEach((row) => {
+                    const parsed = JSON.parse(row.data as string);
                     if (Array.isArray(parsed)) {
                         all.push(...parsed);
                     } else if (parsed) {
@@ -263,7 +269,7 @@ export class D1StorageAdapter {
                     }
                 });
 
-                const deduped = new Map();
+                const deduped = new Map<string, KvRecord>();
                 all.forEach((item) => {
                     if (item?.id) deduped.set(item.id, item);
                 });
@@ -278,7 +284,7 @@ export class D1StorageAdapter {
         });
     }
 
-    async updateSubscriptionById(id: any, updater: any) {
+    async updateSubscriptionById(id: string, updater: (current: KvRecord) => KvRecord) {
         const existing = await this.getSubscriptionById(id);
         if (!existing) return null;
         const updated = updater({ ...existing });
@@ -295,7 +301,7 @@ export class D1StorageAdapter {
         return updated;
     }
 
-    async putSubscription(item: any) {
+    async putSubscription(item: KvRecord) {
         await this.db
             .prepare(
                 `
@@ -309,7 +315,7 @@ export class D1StorageAdapter {
         return item;
     }
 
-    async deleteSubscriptionById(id: any) {
+    async deleteSubscriptionById(id: string) {
         const result = await this.db
             .prepare('DELETE FROM subscriptions WHERE id = ?')
             .bind(id)
@@ -318,7 +324,7 @@ export class D1StorageAdapter {
         return Boolean(result?.success);
     }
 
-    async putProfile(item: any) {
+    async putProfile(item: KvRecord) {
         await this.db
             .prepare(
                 `
@@ -332,16 +338,13 @@ export class D1StorageAdapter {
         return item;
     }
 
-    async deleteProfileById(id: any) {
-        const result = await (this.db as Record<string, any>)
-            .prepare('DELETE FROM profiles WHERE id = ?')
-            .bind(id)
-            .run();
+    async deleteProfileById(id: string) {
+        const result = await this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
         invalidateD1CollectionCache(this.db, 'profiles');
         return Boolean(result?.success);
     }
 
-    async getSubscriptionsByIds(ids: any[] = []) {
+    async getSubscriptionsByIds(ids: string[] = []) {
         if (!Array.isArray(ids) || ids.length === 0) return [];
         // D1 单条 SQL 绑定变量上限为 100，超过会报
         // "too many SQL variables" 而整条查询失败。
@@ -349,7 +352,7 @@ export class D1StorageAdapter {
         const CHUNK_SIZE = 90;
         const uniqueIds = Array.from(new Set(ids));
         try {
-            const directHits: any[] = [];
+            const directHits: KvRecord[] = [];
             for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
                 const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
                 const placeholders = chunk.map(() => '?').join(',');
@@ -385,23 +388,23 @@ export class D1StorageAdapter {
         }
     }
 
-    async putAllSubscriptions(items: any) {
+    async putAllSubscriptions(items: unknown) {
         if (!Array.isArray(items)) return false;
         // 使用并行 Promise 提高效率
-        await Promise.all(items.map((item) => this.putSubscription(item)));
+        await Promise.all((items as KvRecord[]).map((item) => this.putSubscription(item)));
         return true;
     }
 
-    async putAllProfiles(items: any) {
+    async putAllProfiles(items: unknown) {
         if (!Array.isArray(items)) return false;
-        await Promise.all(items.map((item) => this.putProfile(item)));
+        await Promise.all((items as KvRecord[]).map((item) => this.putProfile(item)));
         return true;
     }
 
     /**
      * 解析 key，确定对应的表、查询字段和查询值
      */
-    _parseKey(key: any) {
+    _parseKey(key: string): ParsedD1Key {
         if (key === DATA_KEYS.SUBSCRIPTIONS) {
             return { table: 'subscriptions', queryField: 'id', queryValue: 'main' };
         } else if (key === DATA_KEYS.PROFILES) {
@@ -435,7 +438,7 @@ export class D1StorageAdapter {
     /**
      * 构建 key
      */
-    _buildKey(table: any, keyValue: any) {
+    _buildKey(table: string, keyValue: unknown): string {
         if (table === 'subscriptions' && keyValue === 'main') {
             return DATA_KEYS.SUBSCRIPTIONS;
         } else if (table === 'profiles' && keyValue === 'main') {
@@ -443,7 +446,7 @@ export class D1StorageAdapter {
         } else if (table === 'settings' && keyValue === 'main') {
             return DATA_KEYS.SETTINGS;
         } else {
-            return keyValue;
+            return String(keyValue);
         }
     }
 }
