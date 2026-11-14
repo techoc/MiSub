@@ -3,7 +3,7 @@ import { MANUAL_NODE_COUNTRY_ALIAS_MAP } from '@/constants/manualNodeCountryAlia
 
 const SEARCH_NODES_PER_PAGE = 24;
 
-export function useManualNodeSearchPagination(options) {
+export function useManualNodeSearchPagination(options: any) {
     const {
         manualNodes,
         paginatedManualNodes,
@@ -36,7 +36,7 @@ export function useManualNodeSearchPagination(options) {
 
         const searchQuery = localSearchTerm.value.toLowerCase().trim();
 
-        return manualNodes.value.filter((node) => {
+        return manualNodes.value.filter((node: any) => {
             if (!node.name) return false;
 
             const nodeName = node.name.toLowerCase();
@@ -44,8 +44,9 @@ export function useManualNodeSearchPagination(options) {
                 return true;
             }
 
-            const alternativeTerms = MANUAL_NODE_COUNTRY_ALIAS_MAP[searchQuery] || [];
-            return alternativeTerms.some((term) => nodeName.includes(term.toLowerCase()));
+            const alternativeTerms =
+                (MANUAL_NODE_COUNTRY_ALIAS_MAP as Record<string, any>)[searchQuery] || [];
+            return alternativeTerms.some((term: any) => nodeName.includes(term.toLowerCase()));
         });
     });
 
@@ -64,7 +65,7 @@ export function useManualNodeSearchPagination(options) {
         return filteredNodes.value.slice(start, end);
     });
 
-    function handlePageChange(page) {
+    function handlePageChange(page: any) {
         const parsed = parseInt(page, 10);
         if (Number.isNaN(parsed)) return;
 

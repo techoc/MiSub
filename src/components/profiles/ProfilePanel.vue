@@ -67,20 +67,20 @@
         return props.profiles || [];
     });
 
-    const handleEdit = (profileId) => emit('edit', profileId);
-    const handleDelete = (profileId) => emit('delete', profileId);
-    const handleToggle = (event) => emit('toggle', event);
-    const handleOpenCopy = (profileId) => emit('openCopy', profileId);
-    const handlePreview = (profileId) => emit('preview', profileId);
+    const handleEdit = (profileId: any) => emit('edit', profileId);
+    const handleDelete = (profileId: any) => emit('delete', profileId);
+    const handleToggle = (event: any) => emit('toggle', event);
+    const handleOpenCopy = (profileId: any) => emit('openCopy', profileId);
+    const handlePreview = (profileId: any) => emit('preview', profileId);
     const handleAdd = () => emit('add');
-    const handleChangePage = (page) => emit('changePage', page);
+    const handleChangePage = (page: any) => emit('changePage', page);
     const handleDeleteAll = () => emit('deleteAll');
     const handleToggleSort = () => emit('toggle-sort');
 
-    const handleQRCode = (profileId) => emit('qrcode', profileId);
+    const handleQRCode = (profileId: any) => emit('qrcode', profileId);
 
     // 始终基于真实 profile id 排序，避免分页视图把页内索引用到全量列表上。
-    const handleMoveUp = (profileId) => {
+    const handleMoveUp = (profileId: any) => {
         const index = props.profiles!.findIndex(
             (profile: any) =>
                 (profile as Record<string, any>).id === profileId ||
@@ -91,7 +91,7 @@
         }
     };
 
-    const handleMoveDown = (profileId) => {
+    const handleMoveDown = (profileId: any) => {
         const index = props.profiles!.findIndex(
             (profile: any) =>
                 (profile as Record<string, any>).id === profileId ||

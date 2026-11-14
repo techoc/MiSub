@@ -45,12 +45,12 @@ const DEFAULT_WEBDAV_CONFIG = {
     lastBackupFile: '',
 };
 
-function cloneJson(value) {
+function cloneJson(value: any) {
     // structuredClone：Workers 原生支持，比 JSON 往返更快且保序保类型
     return value == null ? value : structuredClone(value);
 }
 
-function normalizeScope(scope) {
+function normalizeScope(scope: any) {
     return scope === BACKUP_SCOPES.DATA_AND_SETTINGS
         ? BACKUP_SCOPES.DATA_AND_SETTINGS
         : BACKUP_SCOPES.DATA_ONLY;
@@ -84,7 +84,7 @@ export function sanitizeSettingsForRestore(settings: Record<string, any> = {}) {
     return sanitizeRuntimeSecrets(settings);
 }
 
-async function getStorage(env) {
+async function getStorage(env: any) {
     const storageType = await StorageFactory.getStorageType(env);
     return {
         storageType,
@@ -92,14 +92,14 @@ async function getStorage(env) {
     };
 }
 
-async function readBusinessData(storageAdapter) {
+async function readBusinessData(storageAdapter: any) {
     const [subscriptions, profiles, ruleTemplates] = await Promise.all([
         typeof storageAdapter.getAllSubscriptions === 'function'
             ? storageAdapter.getAllSubscriptions()
-            : storageAdapter.get(KV_KEY_SUBS).then((value) => value || []),
+            : storageAdapter.get(KV_KEY_SUBS).then((value: any) => value || []),
         typeof storageAdapter.getAllProfiles === 'function'
             ? storageAdapter.getAllProfiles()
-            : storageAdapter.get(KV_KEY_PROFILES).then((value) => value || []),
+            : storageAdapter.get(KV_KEY_PROFILES).then((value: any) => value || []),
         listRuleTemplates(storageAdapter).catch(() => []),
     ]);
 
@@ -110,7 +110,7 @@ async function readBusinessData(storageAdapter) {
     };
 }
 
-export async function buildBackupPayload(env, options: Record<string, any> = {}) {
+export async function buildBackupPayload(env: any, options: Record<string, any> = {}) {
     const { storageAdapter, storageType } = await getStorage(env);
     const settings =
         (await storageAdapter.get(KV_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
@@ -143,7 +143,7 @@ export async function buildBackupPayload(env, options: Record<string, any> = {})
     return payload;
 }
 
-export function normalizeBackupPayload(raw) {
+export function normalizeBackupPayload(raw: any) {
     if (!raw || typeof raw !== 'object') {
         throw new Error('无效的备份文件格式');
     }
@@ -189,7 +189,7 @@ export function normalizeBackupPayload(raw) {
     throw new Error('无效的备份文件格式');
 }
 
-async function syncCollection(storageAdapter, type, items) {
+async function syncCollection(storageAdapter: any, type: any, items: any) {
     const finalItems = Array.isArray(items) ? items : [];
     const isProfiles = type === 'profiles';
     const key = isProfiles ? KV_KEY_PROFILES : KV_KEY_SUBS;
@@ -234,7 +234,7 @@ async function syncCollection(storageAdapter, type, items) {
     await storageAdapter.put(key, finalItems);
 }
 
-async function createPreRestoreSnapshot(env, storageAdapter, scope) {
+async function createPreRestoreSnapshot(env: any, storageAdapter: any, scope: any) {
     const snapshot = await buildBackupPayload(env, {
         scope:
             scope === BACKUP_SCOPES.DATA_AND_SETTINGS
@@ -246,7 +246,11 @@ async function createPreRestoreSnapshot(env, storageAdapter, scope) {
     return snapshot;
 }
 
-export async function restoreBackupPayload(env, rawPayload, options: Record<string, any> = {}) {
+export async function restoreBackupPayload(
+    env: any,
+    rawPayload: any,
+    options: Record<string, any> = {}
+) {
     const payload = normalizeBackupPayload(rawPayload);
     const scope = normalizeScope(options.scope || payload.scope);
     const { storageAdapter } = await getStorage(env);
@@ -286,7 +290,7 @@ export async function restoreBackupPayload(env, rawPayload, options: Record<stri
     };
 }
 
-function joinWebdavPath(base, path) {
+function joinWebdavPath(base: any, path: any) {
     const trimmedBase = String(base || '').replace(/\/+$/, '');
     const parts = String(path || '')
         .split('/')
@@ -295,7 +299,7 @@ function joinWebdavPath(base, path) {
     return [trimmedBase, ...parts].join('/');
 }
 
-function decodeWebdavPathSegment(segment) {
+function decodeWebdavPathSegment(segment: any) {
     try {
         return decodeURIComponent(segment);
     } catch {
@@ -303,7 +307,7 @@ function decodeWebdavPathSegment(segment) {
     }
 }
 
-function normalizeWebdavHref(endpoint, href) {
+function normalizeWebdavHref(endpoint: any, href: any) {
     const endpointUrl = new URL(endpoint);
     const hrefUrl = new URL(String(href || '').replace(/&amp;/gi, '&'), `${endpointUrl.origin}/`);
 
@@ -320,7 +324,7 @@ function normalizeWebdavHref(endpoint, href) {
     return decodedParts.length ? `/${decodedParts.join('/')}` : '/';
 }
 
-function toBasicAuth(username, password) {
+function toBasicAuth(username: any, password: any) {
     const raw = `${username || ''}:${password || ''}`;
     if (typeof btoa === 'function') {
         return btoa(unescape(encodeURIComponent(raw)));
@@ -328,7 +332,7 @@ function toBasicAuth(username, password) {
     return Buffer.from(raw, 'utf8').toString('base64');
 }
 
-function assertSafeWebdavConfig(config) {
+function assertSafeWebdavConfig(config: any) {
     if (!config.endpoint || !/^https:\/\//i.test(config.endpoint)) {
         throw new Error('WebDAV 地址必须使用 https://');
     }
@@ -337,7 +341,7 @@ function assertSafeWebdavConfig(config) {
     }
 }
 
-async function webdavFetch(config, path, init: Record<string, any> = {}) {
+async function webdavFetch(config: any, path: any, init: Record<string, any> = {}) {
     assertSafeWebdavConfig(config);
     const headers = new Headers(init.headers || {});
     headers.set('Authorization', `Basic ${toBasicAuth(config.username, config.password)}`);
@@ -345,7 +349,7 @@ async function webdavFetch(config, path, init: Record<string, any> = {}) {
     return fetch(url, { ...init, headers });
 }
 
-async function ensureRemoteDirectory(config) {
+async function ensureRemoteDirectory(config: any) {
     const parts = String(config.remotePath || '/MiSub')
         .split('/')
         .filter(Boolean);
@@ -372,7 +376,7 @@ export function formatBackupFilename(
     return safeTemplate.replace(/\{datetime\}/g, datetime).replace(/\{date\}/g, date);
 }
 
-async function updateBackupStatus(env, patch) {
+async function updateBackupStatus(env: any, patch: any) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const webdavBackup = { ...normalizeWebdavConfig(settings), ...patch };
@@ -381,7 +385,7 @@ async function updateBackupStatus(env, patch) {
     return webdavBackup;
 }
 
-export async function performWebdavBackup(env, options: Record<string, any> = {}) {
+export async function performWebdavBackup(env: any, options: Record<string, any> = {}) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -431,7 +435,7 @@ export async function performWebdavBackup(env, options: Record<string, any> = {}
     }
 }
 
-export async function handleWebdavBackupStatus(env) {
+export async function handleWebdavBackupStatus(env: any) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -439,7 +443,7 @@ export async function handleWebdavBackupStatus(env) {
     return createJsonResponse({ success: true, data: safeConfig });
 }
 
-export async function handleWebdavBackupTest(request, env) {
+export async function handleWebdavBackupTest(request: any, env: any) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const { storageAdapter } = await getStorage(env);
@@ -463,7 +467,7 @@ export async function handleWebdavBackupTest(request, env) {
     }
 }
 
-export async function handleManualWebdavBackup(request, env) {
+export async function handleManualWebdavBackup(request: any, env: any) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large).catch((e) => {
@@ -480,7 +484,7 @@ export async function handleManualWebdavBackup(request, env) {
     }
 }
 
-export async function handleBackupExport(request, env) {
+export async function handleBackupExport(request: any, env: any) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large).catch((e) => {
@@ -500,7 +504,7 @@ export async function handleBackupExport(request, env) {
     }
 }
 
-export async function handleBackupRestore(request, env) {
+export async function handleBackupRestore(request: any, env: any) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
@@ -515,7 +519,7 @@ export async function handleBackupRestore(request, env) {
     }
 }
 
-export async function listWebdavBackupFiles(env) {
+export async function listWebdavBackupFiles(env: any) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -541,7 +545,7 @@ export async function listWebdavBackupFiles(env) {
     return files;
 }
 
-export async function handleWebdavBackupList(request, env) {
+export async function handleWebdavBackupList(request: any, env: any) {
     if (request.method !== 'GET') return createErrorResponse('Method Not Allowed', 405);
     try {
         const files = await listWebdavBackupFiles(env);
@@ -554,7 +558,7 @@ export async function handleWebdavBackupList(request, env) {
     }
 }
 
-export async function fetchWebdavBackupFile(env, filePath) {
+export async function fetchWebdavBackupFile(env: any, filePath: any) {
     const { storageAdapter } = await getStorage(env);
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     const config = normalizeWebdavConfig(settings);
@@ -563,7 +567,7 @@ export async function fetchWebdavBackupFile(env, filePath) {
     return response.json();
 }
 
-export async function handleWebdavRestore(request, env) {
+export async function handleWebdavRestore(request: any, env: any) {
     if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);

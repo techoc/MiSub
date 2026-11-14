@@ -17,13 +17,13 @@ import { normalizeGeneratorOptions } from './generator-options.ts';
 
 const ICON_REPO = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
 
-function cleanControlChars(str) {
+function cleanControlChars(str: any) {
     if (typeof str !== 'string') return str;
     // eslint-disable-next-line no-control-regex
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
-function sanitizeNodeName(name) {
+function sanitizeNodeName(name: any) {
     if (!name) return 'Untitled';
     let safe = cleanControlChars(name);
     // QuanX lines are comma-separated and uses = for key-value.
@@ -33,12 +33,12 @@ function sanitizeNodeName(name) {
     return safe || 'Untitled';
 }
 
-function qxQuote(value) {
+function qxQuote(value: any) {
     if (value === undefined || value === null) return '';
     return encodeURIComponent(String(value));
 }
 
-function getIconByNodeName(name) {
+function getIconByNodeName(name: any) {
     if (/港|HK|Hong Kong/i.test(name)) return `${ICON_REPO}/Hong_Kong.png`;
     if (/台|TW|Taiwan/i.test(name)) return `${ICON_REPO}/Taiwan.png`;
     if (/日|JP|Japan/i.test(name)) return `${ICON_REPO}/Japan.png`;
@@ -52,13 +52,13 @@ function getIconByNodeName(name) {
     return null;
 }
 
-function appendQxTlsParams(extraParts, proxy) {
+function appendQxTlsParams(extraParts: any, proxy: any) {
     if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
         extraParts.push('tls-verification=false');
     }
 }
 
-function normalizeQxVmessMethod(method) {
+function normalizeQxVmessMethod(method: any) {
     const normalized = String(method || '')
         .trim()
         .toLowerCase();
@@ -66,7 +66,7 @@ function normalizeQxVmessMethod(method) {
     return normalized;
 }
 
-function buildQxLine(proxy) {
+function buildQxLine(proxy: any) {
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const name = sanitizeNodeName(proxy.name);
@@ -250,7 +250,7 @@ function buildQxLine(proxy) {
     return null;
 }
 
-export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any> = {}) {
+export function generateBuiltinQuanxConfig(nodeList: any, options: Record<string, any> = {}) {
     const {
         managedConfigUrl = '',
         interval = 86400,
@@ -264,8 +264,8 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'));
+        .map((line: any) => line.trim())
+        .filter((line: any) => line && !line.startsWith('#'));
 
     const proxyLines: string[] = [];
     const proxiesWithMetadata: any[] = [];
@@ -311,7 +311,7 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
     sections.push(`[server_local]\n${proxyLines.join('\n')}`);
 
     const levelKey = (ruleLevel || 'std').toUpperCase();
-    const policyFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+    const policyFactory = (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
     let abstractGroups = policyFactory(proxiesWithMetadata, options);
     abstractGroups = pruneProxyGroups(abstractGroups, proxiesWithMetadata);
 
@@ -335,8 +335,8 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
         '🇬🇧 英国节点': `${ICON_REPO}/United_Kingdom.png`,
     };
 
-    const groupLines = abstractGroups.map((group) => {
-        const normalizePolicyMember = (member) => {
+    const groupLines = abstractGroups.map((group: any) => {
+        const normalizePolicyMember = (member: any) => {
             const upper = String(member || '').toUpperCase();
             if (upper === 'DIRECT') return 'direct';
             if (upper === 'REJECT') return 'reject';
@@ -350,7 +350,9 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
         if (group.type === 'relay') type = 'static';
 
         const proxies = group.proxies.map(normalizePolicyMember).join(', ');
-        const icon = groupIcons[group.name] ? `, img-url=${groupIcons[group.name]}` : '';
+        const icon = (groupIcons as Record<string, any>)[group.name]
+            ? `, img-url=${(groupIcons as Record<string, any>)[group.name]}`
+            : '';
         const extra = type === 'url-latency-benchmark' ? ', check-interval=300, tolerance=50' : '';
         return `${type}=${group.name}, ${proxies}${extra}${icon}`;
     });
@@ -359,11 +361,11 @@ export function generateBuiltinQuanxConfig(nodeList, options: Record<string, any
 
     const rawRules = getBuiltinRules(levelKey, 'quanx');
     const remoteRules = rawRules
-        .filter((r) => r.startsWith('filter_remote'))
-        .map((r) => r.replace(/^filter_remote,\s*/i, ''));
+        .filter((r: any) => r.startsWith('filter_remote'))
+        .map((r: any) => r.replace(/^filter_remote,\s*/i, ''));
     const localRules = rawRules
-        .filter((r) => !r.startsWith('filter_remote'))
-        .map((rule) =>
+        .filter((r: any) => !r.startsWith('filter_remote'))
+        .map((rule: any) =>
             rule
                 .replace(/^HOST-SUFFIX/i, 'host-suffix')
                 .replace(/^HOST-KEYWORD/i, 'host-keyword')

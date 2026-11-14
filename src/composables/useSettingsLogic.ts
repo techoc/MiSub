@@ -7,16 +7,16 @@ import { t, setLocale } from '../i18n/index.ts';
 import { confirmAction } from './useConfirm.ts';
 import { normalizeDnsMode } from '../../functions/modules/subscription/safe-dns.ts';
 
-function normalizeExternalApiConfig(value) {
+function normalizeExternalApiConfig(value: any) {
     const defaults = DEFAULT_SETTINGS.externalApi;
     const externalApi = value && typeof value === 'object' ? value : {};
     const tokens = Array.isArray(externalApi.tokens)
         ? externalApi.tokens
-              .map((item, index) => ({
+              .map((item: any, index: any) => ({
                   name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
                   token: String(item?.token || '').trim(),
               }))
-              .filter((item) => item.token || item.name)
+              .filter((item: any) => item.token || item.name)
         : [];
 
     return {
@@ -110,7 +110,11 @@ export function useSettingsLogic() {
             'ChatID',
         ];
         for (const key of fieldsCheck) {
-            if (settings.value[key] && /\s/.test(settings.value[key])) return true;
+            if (
+                (settings.value as Record<string, any>)[key] &&
+                /\s/.test((settings.value as Record<string, any>)[key])
+            )
+                return true;
         }
         return false;
     });

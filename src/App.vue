@@ -220,7 +220,7 @@
         }
     };
 
-    const handleLegacyD1MigrationClose = (value) => {
+    const handleLegacyD1MigrationClose = (value: any) => {
         showLegacyD1MigrationModal.value = value;
         if (!value && pendingVersionModal.value) {
             versionStore.openModal();

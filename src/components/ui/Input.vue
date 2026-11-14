@@ -55,7 +55,7 @@
 
     const emit = defineEmits(['update:modelValue']);
 
-    const updateValue = (event) => {
+    const updateValue = (event: any) => {
         emit('update:modelValue', event.target.value);
     };
 
@@ -81,7 +81,7 @@
         },
     };
 
-    const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
+    const currentSize = computed(() => (sizeMap as Record<string, any>)[props.size] || sizeMap.md);
 </script>
 
 <template>

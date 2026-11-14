@@ -29,7 +29,7 @@ function createId() {
     return `rule-template-${Date.now().toString(36)}-${random}`;
 }
 
-function hasIniShape(content) {
+function hasIniShape(content: any) {
     return /\[(custom|proxy\s*group|rule|ruleset|proxy)\]/i.test(content);
 }
 
@@ -76,18 +76,18 @@ export function normalizeCustomRuleTemplates(input: any[] = []) {
     return normalized;
 }
 
-async function getStorageAdapter(env) {
+async function getStorageAdapter(env: any) {
     if (env?.__TEST_STORAGE_ADAPTER) return env.__TEST_STORAGE_ADAPTER;
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }
 
-export async function listRuleTemplates(storageAdapter) {
+export async function listRuleTemplates(storageAdapter: any) {
     const raw = await storageAdapter.get(KV_KEY_RULE_TEMPLATES);
     return normalizeCustomRuleTemplates(Array.isArray(raw) ? raw : []);
 }
 
-export async function resolveRuleTemplateSource(storageAdapter, templateSource) {
+export async function resolveRuleTemplateSource(storageAdapter: any, templateSource: any) {
     if (!templateSource || templateSource.kind !== 'custom') return null;
     const templateId = sanitizeId(templateSource.value);
     if (!templateId) return null;
@@ -103,7 +103,7 @@ export async function resolveRuleTemplateSource(storageAdapter, templateSource) 
     };
 }
 
-export async function handleRuleTemplatesRequest(request, env) {
+export async function handleRuleTemplatesRequest(request: any, env: any) {
     try {
         const storageAdapter = await getStorageAdapter(env);
 

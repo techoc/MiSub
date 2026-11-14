@@ -40,11 +40,11 @@ import type { KvRecord } from '../../../../types/models.ts';
  * 处理命令
  */
 export async function handleCommand(
-    chatId,
-    text,
-    userId,
-    env,
-    request,
+    chatId: any,
+    text: any,
+    userId: any,
+    env: any,
+    request: any,
     requestCache: KvRecord | null = null
 ) {
     const parts = text.split(/\s+/);

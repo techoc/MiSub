@@ -27,22 +27,24 @@ function generateId(prefix = 'sub') {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function nextSortIndex(items) {
-    return items.reduce((max, item) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1;
+function nextSortIndex(items: any) {
+    return (
+        items.reduce((max: any, item: any) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1
+    );
 }
 
-async function loadRemoteSubscriptions(storageAdapter) {
+async function loadRemoteSubscriptions(storageAdapter: any) {
     const all = await storageAdapter.getAllSubscriptions();
     return sortBySortIndex(all.filter(isRemoteSubscription));
 }
 
-async function getSubscriptionById(storageAdapter, id) {
+async function getSubscriptionById(storageAdapter: any, id: any) {
     const item = await storageAdapter.getSubscriptionById(id);
     if (!item || !isRemoteSubscription(item)) return null;
     return item;
 }
 
-async function removeSubscriptionIdFromProfiles(storageAdapter, id) {
+async function removeSubscriptionIdFromProfiles(storageAdapter: any, id: any) {
     const profiles = await storageAdapter.getAllProfiles();
     const affected: any[] = [];
     for (const profile of profiles) {
@@ -50,7 +52,7 @@ async function removeSubscriptionIdFromProfiles(storageAdapter, id) {
         if (!subscriptions.includes(id)) continue;
         const updated = {
             ...profile,
-            subscriptions: subscriptions.filter((item) => item !== id),
+            subscriptions: subscriptions.filter((item: any) => item !== id),
             updatedAt: nowIso(),
         };
         await storageAdapter.putProfile(updated);
@@ -59,7 +61,7 @@ async function removeSubscriptionIdFromProfiles(storageAdapter, id) {
     return affected;
 }
 
-function createNodeCountRequest(body) {
+function createNodeCountRequest(body: any) {
     return new Request('https://misub.internal/api/node_count', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +77,7 @@ function normalizeSubscriptionRuntimeFields(item: Record<string, any> = {}) {
     };
 }
 
-export async function inspectRemoteSubscription(env, payload: Record<string, any> = {}) {
+export async function inspectRemoteSubscription(env: any, payload: Record<string, any> = {}) {
     const requestedUrl = String(payload.url || '').trim();
     if (!requestedUrl)
         return {
@@ -136,7 +138,7 @@ export async function inspectRemoteSubscription(env, payload: Record<string, any
     };
 }
 
-async function persistSubscriptionRefresh(storageAdapter, current, inspection) {
+async function persistSubscriptionRefresh(storageAdapter: any, current: any, inspection: any) {
     const timestamp = nowIso();
     const updated = {
         ...current,
@@ -151,8 +153,8 @@ async function persistSubscriptionRefresh(storageAdapter, current, inspection) {
 }
 
 export async function handleExternalSubscriptionsRequest(
-    request,
-    env,
+    request: any,
+    env: any,
     selector: string | KvRecord | null = null
 ) {
     const storageAdapter = await getExternalStorageAdapter(env);

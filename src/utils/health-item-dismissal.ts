@@ -25,7 +25,7 @@ export const LEGACY_DISMISSED_HEALTH_ITEMS_KEY = 'misub:dismissedHealthItems';
 export const MAX_DISMISSED_HEALTH_ITEMS = 100;
 
 /** 单个 id 规范化：非字符串或空白一律视为无效 */
-function normalizeId(id) {
+function normalizeId(id: any) {
     if (typeof id !== 'string') return '';
     return id.trim();
 }
@@ -38,7 +38,7 @@ function normalizeId(id) {
  * @param {unknown} value
  * @returns {string[]} 规范化后的新数组
  */
-export function normalizeDismissedHealthItemIds(value) {
+export function normalizeDismissedHealthItemIds(value: any) {
     if (!Array.isArray(value)) return [];
     const seen = new Set();
     const result: string[] = [];
@@ -56,7 +56,7 @@ export function normalizeDismissedHealthItemIds(value) {
  * @param {string[]} ids 已忽略的 id 列表
  * @param {string} id
  */
-export function isHealthItemDismissed(ids, id) {
+export function isHealthItemDismissed(ids: any, id: any) {
     const key = normalizeId(id);
     if (!key) return false;
     return normalizeDismissedHealthItemIds(ids).includes(key);
@@ -71,7 +71,7 @@ export function isHealthItemDismissed(ids, id) {
  * @returns {string[]} 规范化后的新数组（无变化时是内容等价的新数组，
  *          调用方若要判断「有没有真的变化」，用 isHealthItemDismissed 先判）
  */
-export function addDismissedHealthItem(ids, id) {
+export function addDismissedHealthItem(ids: any, id: any) {
     const current = normalizeDismissedHealthItemIds(ids);
     const key = normalizeId(id);
     if (!key || current.includes(key)) return current;
@@ -84,7 +84,7 @@ export function addDismissedHealthItem(ids, id) {
  * @param {string[]} ids 已忽略的 id 列表
  * @returns {Array} 保留的条目
  */
-export function filterDismissedHealthItems(items, ids) {
+export function filterDismissedHealthItems(items: any, ids: any) {
     if (!Array.isArray(items)) return [];
     const dismissed = new Set(normalizeDismissedHealthItemIds(ids));
     return items.filter((item) => !dismissed.has(item?.id));

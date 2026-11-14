@@ -23,7 +23,7 @@ const TG_MAX_FILE_BYTES = 5 * 1024 * 1024;
  * @param {Object} config  机器人配置（需含 bot_token）
  * @returns {Promise<{text: string, fileName: string}>}
  */
-async function downloadTelegramFile(message, config) {
+async function downloadTelegramFile(message: any, config: any) {
     const doc =
         message?.document || (message?.photo ? message.photo[message.photo.length - 1] : null);
     if (!doc) return { text: '', fileName: '' };
@@ -83,11 +83,11 @@ async function downloadTelegramFile(message, config) {
  * @param {Object|null} requestCache
  */
 export async function handleFileInput(
-    chatId,
-    message,
-    userId,
-    config,
-    env,
+    chatId: any,
+    message: any,
+    userId: any,
+    config: any,
+    env: any,
     requestCache: KvRecord | null = null
 ) {
     try {

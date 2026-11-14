@@ -89,7 +89,7 @@
     // 计算样式
     const modalClasses = computed(() => [
         'relative transform overflow-hidden rounded-[var(--misub-radius-lg)] bg-white dark:bg-[var(--surface-panel-dark)] text-left shadow-xl border border-gray-200 dark:border-white/10 transition-opacity duration-150',
-        sizeClasses[props.size] || sizeClasses.medium,
+        (sizeClasses as Record<string, any>)[props.size] || sizeClasses.medium,
         props.maxWidth ? `max-w-[${props.maxWidth}]` : '',
     ]);
 
@@ -156,7 +156,7 @@
     };
 
     // 键盘事件处理
-    const handleKeydown = (event) => {
+    const handleKeydown = (event: any) => {
         if (!props.show) return;
 
         switch (event.key) {

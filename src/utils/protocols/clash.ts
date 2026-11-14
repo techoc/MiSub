@@ -12,7 +12,7 @@ import { convertWireguardToUrl } from './converters/wireguard.ts';
 /**
  * 转换Clash代理配置为标准URL
  */
-export function convertClashProxyToUrl(proxy) {
+export function convertClashProxyToUrl(proxy: any) {
     if (!proxy || typeof proxy !== 'object' || !proxy.type) {
         return null;
     }

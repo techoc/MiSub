@@ -119,11 +119,11 @@
     // Track which operator is expanded
     const expandedIndex = ref(props.modelValue.length > 0 ? props.modelValue.length - 1 : null);
 
-    const toggleExpand = (index) => {
+    const toggleExpand = (index: any) => {
         expandedIndex.value = expandedIndex.value === index ? null : index;
     };
 
-    const addOperator = (type) => {
+    const addOperator = (type: any) => {
         const newOp = {
             id: Math.random().toString(36).substring(2, 11),
             type,
@@ -136,7 +136,7 @@
         expandedIndex.value = newList.length - 1;
     };
 
-    const getInitialParams = (type) => {
+    const getInitialParams = (type: any) => {
         switch (type) {
             case 'filter':
                 return {
@@ -180,14 +180,14 @@
         }
     };
 
-    const removeOperator = (index) => {
+    const removeOperator = (index: any) => {
         const newList: any[] = [...props.modelValue];
         newList.splice(index, 1);
         emit('update:modelValue', newList);
         if (expandedIndex.value === index) expandedIndex.value = null;
     };
 
-    const moveOperator = (event, index, direction) => {
+    const moveOperator = (event: any, index: any, direction: any) => {
         event.stopPropagation();
         const newList: any[] = [...props.modelValue];
         const newIndex = index + direction;
@@ -198,17 +198,17 @@
         else if (expandedIndex.value === newIndex) expandedIndex.value = index;
     };
 
-    const toggleOperator = (event, index) => {
+    const toggleOperator = (event: any, index: any) => {
         event.stopPropagation();
         const newList: any[] = [...props.modelValue];
         newList[index] = { ...newList[index], enabled: !(((newList[index].enabled as any) as any) as any) };
         emit('update:modelValue', newList);
     };
 
-    const operatorLabel = (type) => t(`operators.${type}`);
+    const operatorLabel = (type: any) => t(`operators.${type}`);
     const operatorTypes = ['filter', 'rename', 'script', 'sort', 'dedup'];
 
-    const getOperatorIcon = (type) => {
+    const getOperatorIcon = (type: any) => {
         switch (type) {
             case 'filter':
                 return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>';
@@ -223,7 +223,7 @@
         }
     };
 
-    const updateOperatorParams = (index, params) => {
+    const updateOperatorParams = (index: any, params: any) => {
         const newList: any[] = [...props.modelValue];
         newList[index] = { ...newList[index], params };
         emit('update:modelValue', newList);

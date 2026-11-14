@@ -5,7 +5,7 @@
 
 import { base64Decode, extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 
-export function normalizeSsPluginOption(key, value) {
+export function normalizeSsPluginOption(key: any, value: any) {
     if (key === 'mux') {
         if (value === '1' || value === 'true') return true;
         if (value === '0' || value === 'false') return false;
@@ -13,7 +13,7 @@ export function normalizeSsPluginOption(key, value) {
     return value;
 }
 
-export function parseSsPlugin(pluginStr) {
+export function parseSsPlugin(pluginStr: any) {
     if (!pluginStr) return null;
     // 插件参数内部通常用分号分隔
     const parts = pluginStr.split(';');
@@ -25,7 +25,7 @@ export function parseSsPlugin(pluginStr) {
         const eqIndex = item.indexOf('=');
         if (eqIndex === -1) {
             // 布尔值标识位，例如 "tls"
-            opts[item] = true;
+            (opts as Record<string, any>)[item] = true;
         } else {
             const key = item.substring(0, eqIndex);
             let val = item.substring(eqIndex + 1);
@@ -38,7 +38,7 @@ export function parseSsPlugin(pluginStr) {
             // 尝试处理布尔值字符串
             if (val === 'true') val = true;
             if (val === 'false') val = false;
-            opts[key] = normalizeSsPluginOption(key, val);
+            (opts as Record<string, any>)[key] = normalizeSsPluginOption(key, val);
         }
     }
     return { name, opts };
@@ -49,7 +49,7 @@ export function parseSsPlugin(pluginStr) {
  * @param {string} url - Shadowsocks URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSsUrl(url) {
+export function parseSsUrl(url: any) {
     try {
         // ss://base64(method:password)@server:port#name
         // 或 ss://base64(method:password@server:port)#name
@@ -177,7 +177,7 @@ export function parseSsUrl(url) {
  * @param {string} url - Hysteria2 URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSsrUrl(url) {
+export function parseSsrUrl(url: any) {
     try {
         const b64 = url.substring(6);
         const decoded = base64Decode(b64);
@@ -235,7 +235,7 @@ export function parseSsrUrl(url) {
  * @param {string} url - SSD URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSsdUrl(url) {
+export function parseSsdUrl(url: any) {
     try {
         const b64 = url.substring(6);
         const decoded = base64Decode(b64);

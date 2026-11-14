@@ -54,7 +54,7 @@
             outline:
                 'bg-transparent hover:bg-primary-50 dark:hover:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40 dark:border-primary-400/40',
         };
-        return variants[props.variant];
+        return (variants as Record<string, any>)[props.variant];
     });
 
     const sizeClasses = computed(() => {
@@ -64,17 +64,17 @@
                 md: 'p-2',
                 lg: 'p-3',
             };
-            return sizes[props.size];
+            return (sizes as Record<string, any>)[props.size];
         }
         const sizes = {
             sm: 'px-3 py-1.5 text-xs gap-1.5',
             md: 'px-4 py-2 text-sm gap-2',
             lg: 'px-6 py-2.5 text-base gap-2',
         };
-        return sizes[props.size];
+        return (sizes as Record<string, any>)[props.size];
     });
 
-    const handleClick = (event) => {
+    const handleClick = (event: any) => {
         if (!props.disabled && !props.loading) {
             emit('click', event);
         }

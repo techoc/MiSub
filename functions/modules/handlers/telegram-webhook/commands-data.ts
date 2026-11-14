@@ -24,7 +24,7 @@ import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 处理 /import 命令 - 导入节点
  */
-export async function handleImportCommand(chatId, userId, args, env) {
+export async function handleImportCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         if (args.length === 0) {
             await sendTelegramMessage(
@@ -138,7 +138,7 @@ export async function handleImportCommand(chatId, userId, args, env) {
 /**
  * 处理 /sort 命令 - 节点排序
  */
-export async function handleSortCommand(chatId, userId, args, env) {
+export async function handleSortCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         const sortType = args[0]?.toLowerCase() || '';
 
@@ -215,7 +215,7 @@ export async function handleSortCommand(chatId, userId, args, env) {
         const sortNames = { name: '名称', protocol: '协议', time: '时间', status: '状态' };
         await sendTelegramMessage(
             chatId,
-            `✅ <b>排序完成</b>\n\n已按${sortNames[sortType]}排序 ${userNodes.length} 个节点`,
+            `✅ <b>排序完成</b>\n\n已按${(sortNames as Record<string, any>)[sortType]}排序 ${userNodes.length} 个节点`,
             env
         );
     } catch (error) {
@@ -231,7 +231,7 @@ export async function handleSortCommand(chatId, userId, args, env) {
 /**
  * 处理 /dup 命令 - 去重检测
  */
-export async function handleDupCommand(chatId, userId, args, env) {
+export async function handleDupCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         const action = args[0]?.toLowerCase() || '';
 
@@ -247,7 +247,7 @@ export async function handleDupCommand(chatId, userId, args, env) {
         const urlMap = new Map();
         const duplicates: any[] = [];
 
-        userNodes.forEach((node, idx) => {
+        userNodes.forEach((node: any, idx: any) => {
             const url = node.url;
             if (urlMap.has(url)) {
                 duplicates.push({ idx, node, originalIdx: urlMap.get(url) });
@@ -317,10 +317,10 @@ export async function handleDupCommand(chatId, userId, args, env) {
  * 处理 /bind 命令 - 绑定默认订阅组
  */
 export async function handleBindCommand(
-    chatId,
-    userId,
-    args,
-    env,
+    chatId: any,
+    userId: any,
+    args: any,
+    env: any,
     requestCache: KvRecord | null = null
 ) {
     try {
@@ -343,21 +343,21 @@ export async function handleBindCommand(
 
             const currentProfileId = getUserBoundProfileId(config, userId);
             if (currentProfileId) {
-                const current = profiles.find((p) => p.id === currentProfileId);
+                const current = profiles.find((p: any) => p.id === currentProfileId);
                 message += current ? `<b>${current.name}</b>` : '(已失效)';
             } else {
                 message += '无';
             }
 
             message += '\n\n可用订阅组:\n';
-            profiles.forEach((p, i) => {
+            profiles.forEach((p: any, i: any) => {
                 const isCurrent = p.id === currentProfileId;
                 message += `${isCurrent ? '✅' : ''} ${i + 1}. ${p.name}\n`;
             });
             message += '\n用法: /bind [序号]';
 
             // 生成快捷按钮
-            const buttons = profiles.slice(0, 6).map((p, i) => ({
+            const buttons = profiles.slice(0, 6).map((p: any, i: any) => ({
                 text: `${i + 1}. ${p.name.substring(0, 8)}`,
                 callback_data: `bind_profile_${p.id}`,
             }));
@@ -418,9 +418,9 @@ export async function handleBindCommand(
  * 处理 /unbind 命令 - 解除绑定
  */
 export async function handleUnbindCommand(
-    chatId,
-    userId,
-    env,
+    chatId: any,
+    userId: any,
+    env: any,
     requestCache: KvRecord | null = null
 ) {
     try {

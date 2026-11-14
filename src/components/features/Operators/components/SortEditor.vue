@@ -22,7 +22,7 @@
         set: (val) => emit('update:modelValue', val),
     });
 
-    const updateKeys = (updater) => {
+    const updateKeys = (updater: any) => {
         const currentKeys = Array.isArray(params.value.keys) ? params.value.keys : [];
         params.value = {
             ...params.value,
@@ -31,18 +31,18 @@
     };
 
     const addKey = () => {
-        updateKeys((keys) => [...keys, { key: 'name', order: 'asc', customOrder: [] }]);
+        updateKeys((keys: any) => [...keys, { key: 'name', order: 'asc', customOrder: [] }]);
     };
 
-    const removeKey = (index) => {
-        updateKeys((keys) => {
+    const removeKey = (index: any) => {
+        updateKeys((keys: any) => {
             keys.splice(index, 1);
             return keys;
         });
     };
 
-    const moveKey = (index, dir) => {
-        updateKeys((keys) => {
+    const moveKey = (index: any, dir: any) => {
+        updateKeys((keys: any) => {
             const target = index + dir;
             if (target < 0 || target >= keys.length) return keys;
             [keys[index], keys[target]] = [keys[target], keys[index]];
@@ -50,8 +50,8 @@
         });
     };
 
-    const updateKeyField = (index, field, value) => {
-        updateKeys((keys) => {
+    const updateKeyField = (index: any, field: any, value: any) => {
+        updateKeys((keys: any) => {
             const current = keys[index];
             if (!current) return keys;
             let next = { ...current, [field]: value };
@@ -88,29 +88,29 @@
         });
     };
 
-    const getRegionEmoji = (region) => {
+    const getRegionEmoji = (region: any) => {
         if (!region) return '🌐';
-        return REGION_EMOJI[region] || '🌍';
+        return (REGION_EMOJI as Record<string, any>)[region] || '🌍';
     };
 
-    const getTagsList = (item) => {
-        return (item.customOrder || []).map((val) => ({ id: val, name: val }));
+    const getTagsList = (item: any) => {
+        return (item.customOrder || []).map((val: any) => ({ id: val, name: val }));
     };
 
-    const handleDragEnd = (idx, newOrder) => {
-        updateKeys((keys) => {
+    const handleDragEnd = (idx: any, newOrder: any) => {
+        updateKeys((keys: any) => {
             const current = keys[idx];
             if (!current) return keys;
             keys[idx] = {
                 ...current,
-                customOrder: newOrder.map((item) => item.name),
+                customOrder: newOrder.map((item: any) => item.name),
             };
             return keys;
         });
     };
 
-    const resetToDefaultOrder = (idx, keyType) => {
-        updateKeys((keys) => {
+    const resetToDefaultOrder = (idx: any, keyType: any) => {
+        updateKeys((keys: any) => {
             const current = keys[idx];
             if (!current) return keys;
             const defaults =
@@ -154,9 +154,9 @@
         法国: 'France',
         加拿大: 'Canada',
     };
-    const displayTagName = (item, name) =>
+    const displayTagName = (item: any, name: any) =>
         item.key === 'region'
-            ? `${getRegionEmoji(name)} ${t('operators.regionLabel', { region: regionLabels[name] || name })}`
+            ? `${getRegionEmoji(name)} ${t('operators.regionLabel', { region: (regionLabels as Record<string, any>)[name] || name })}`
             : name;
 </script>
 
@@ -299,7 +299,7 @@
                     <!-- Drag and Drop Tags List -->
                     <draggable
                         :model-value="getTagsList(item)"
-                        @update:model-value="(newOrder) => handleDragEnd(idx, newOrder)"
+                        @update:model-value="(newOrder: any) => handleDragEnd(idx, newOrder)"
                         item-key="id"
                         animation="200"
                         class="flex flex-wrap gap-1.5"

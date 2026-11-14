@@ -10,7 +10,7 @@ import { matchesDslCondition, renderDslTemplate } from './expression-dsl.ts';
 /**
  * 辅助函数：将规则模式规范化为正则表达式数组
  */
-function normalizeRules(rules) {
+function normalizeRules(rules: any) {
     if (!rules) return [];
     if (!Array.isArray(rules)) {
         if (typeof rules === 'string')
@@ -40,7 +40,7 @@ function normalizeRules(rules) {
 /**
  * Filter Operator
  */
-function opFilter(nodes, params) {
+function opFilter(nodes: any, params: any) {
     if (!params) return nodes;
     const { include, exclude, protocols, regions } = params;
     let result = [...nodes];
@@ -82,7 +82,7 @@ function opFilter(nodes, params) {
         }
     }
     if (protocols?.enabled && Array.isArray(protocols.values)) {
-        const allowed = new Set(protocols.values.map((p) => p.toLowerCase()));
+        const allowed = new Set(protocols.values.map((p: any) => p.toLowerCase()));
         result = result.filter((r) => allowed.has(r.protocol.toLowerCase()));
     }
     if (regions?.enabled && Array.isArray(regions.values)) {
@@ -97,7 +97,7 @@ function opFilter(nodes, params) {
 /**
  * Rename Operator
  */
-function opRename(nodes, params) {
+function opRename(nodes: any, params: any) {
     if (!params) return nodes;
     const { regex, template } = params;
     let result = [...nodes];
@@ -192,7 +192,7 @@ function opRename(nodes, params) {
 /**
  * Script Operator (The heart of Sub-Store)
  */
-async function opScript(nodes, params: Record<string, any> = {}, context) {
+async function opScript(nodes: any, params: Record<string, any> = {}, context: any) {
     const dsl = Array.isArray(params.dsl) ? params.dsl : params.action ? [params] : [];
 
     if (!dsl.length) {
@@ -202,12 +202,12 @@ async function opScript(nodes, params: Record<string, any> = {}, context) {
         return nodes;
     }
 
-    let result = nodes.map((r) => NodeUtils.ensureRegionInfo(r, true));
+    let result = nodes.map((r: any) => NodeUtils.ensureRegionInfo(r, true));
 
     for (const step of dsl) {
         const action = String(step?.action || '').toLowerCase();
         if (action === 'filter') {
-            result = result.filter((node, index) =>
+            result = result.filter((node: any, index: any) =>
                 matchesDslCondition({ ...node, index: index + 1 }, step)
             );
             continue;
@@ -215,7 +215,7 @@ async function opScript(nodes, params: Record<string, any> = {}, context) {
         if (action === 'rename') {
             const template = step.template || step.expression;
             if (!template) continue;
-            result = result.map((node, index) => {
+            result = result.map((node: any, index: any) => {
                 const nextName =
                     renderDslTemplate(template, {
                         ...node,
@@ -241,7 +241,11 @@ async function opScript(nodes, params: Record<string, any> = {}, context) {
 /**
  * Main Entry Point for Operator Chain
  */
-export async function runOperatorChain(nodeUrls, operators, context: Record<string, any> = {}) {
+export async function runOperatorChain(
+    nodeUrls: any,
+    operators: any,
+    context: Record<string, any> = {}
+) {
     if (!Array.isArray(operators) || operators.length === 0) {
         return nodeUrls;
     }
@@ -294,7 +298,7 @@ export async function runOperatorChain(nodeUrls, operators, context: Record<stri
             case 'sort':
                 if (params && Array.isArray(params.keys)) {
                     const needsRegion = params.keys.some(
-                        (k) => k.key === 'region' || k.key === 'regionZh'
+                        (k: any) => k.key === 'region' || k.key === 'regionZh'
                     );
                     if (needsRegion) {
                         records = records.map((r) => NodeUtils.ensureRegionInfo(r, true));

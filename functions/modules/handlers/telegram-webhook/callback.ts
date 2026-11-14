@@ -44,9 +44,9 @@ import type { KvRecord } from '../../../../types/models.ts';
  * 处理 Callback Query（按钮回调）
  */
 export async function handleCallbackQuery(
-    callbackQuery,
-    env,
-    request,
+    callbackQuery: any,
+    env: any,
+    request: any,
     requestCache: KvRecord | null = null
 ) {
     const chatId = callbackQuery.message.chat.id;
@@ -398,7 +398,7 @@ export async function handleCallbackQuery(
                     const node = targetList[idx];
                     const boundProfileId = getUserBoundProfileId(config, userId);
                     const boundProfile = boundProfileId
-                        ? profiles.find((p) => p.id === boundProfileId)
+                        ? profiles.find((p: any) => p.id === boundProfileId)
                         : null;
 
                     // Note: Manual nodes use 'id', subscriptions might not have 'id' in the same way or logic might differ.
@@ -491,7 +491,7 @@ export async function handleCallbackQuery(
                     const boundProfileId = getUserBoundProfileId(config, userId);
                     if (idx >= 0 && idx < userNodes.length && boundProfileId) {
                         const node = userNodes[idx];
-                        const profile = profiles.find((p) => p.id === boundProfileId);
+                        const profile = profiles.find((p: any) => p.id === boundProfileId);
                         if (profile) {
                             profile.manualNodes = profile.manualNodes || [];
                             if (!profile.manualNodes.includes(node.id)) {
@@ -530,10 +530,10 @@ export async function handleCallbackQuery(
                     const boundProfileId = getUserBoundProfileId(config, userId);
                     if (idx >= 0 && idx < userNodes.length && boundProfileId) {
                         const node = userNodes[idx];
-                        const profile = profiles.find((p) => p.id === boundProfileId);
+                        const profile = profiles.find((p: any) => p.id === boundProfileId);
                         if (profile && profile.manualNodes) {
                             profile.manualNodes = profile.manualNodes.filter(
-                                (id) => id !== node.id
+                                (id: any) => id !== node.id
                             );
                             await storageAdapter.putAllProfiles(profiles);
                             await answerCallbackQuery(
@@ -567,7 +567,7 @@ export async function handleCallbackQuery(
                     const boundProfileId = getUserBoundProfileId(config, userId);
                     if (idx >= 0 && idx < subs.length && boundProfileId) {
                         const sub = subs[idx];
-                        const profile = profiles.find((p) => p.id === boundProfileId);
+                        const profile = profiles.find((p: any) => p.id === boundProfileId);
                         if (profile) {
                             profile.subscriptions = profile.subscriptions || [];
                             if (!profile.subscriptions.includes(sub.id)) {
@@ -605,10 +605,10 @@ export async function handleCallbackQuery(
                     const boundProfileId = getUserBoundProfileId(config, userId);
                     if (idx >= 0 && idx < subs.length && boundProfileId) {
                         const sub = subs[idx];
-                        const profile = profiles.find((p) => p.id === boundProfileId);
+                        const profile = profiles.find((p: any) => p.id === boundProfileId);
                         if (profile && profile.subscriptions) {
                             profile.subscriptions = profile.subscriptions.filter(
-                                (id) => id !== sub.id
+                                (id: any) => id !== sub.id
                             );
                             await storageAdapter.putAllProfiles(profiles);
                             await answerCallbackQuery(
@@ -677,7 +677,7 @@ export async function handleCallbackQuery(
                             // Match by ID if possible, or some unique property.
                             // Subscription objects usually have IDs.
                             const subToUpdate = originalSubs.find(
-                                (s) => s.id === (targetItem as Record<string, any>).id
+                                (s: any) => s.id === (targetItem as Record<string, any>).id
                             );
 
                             if (subToUpdate) {
@@ -786,7 +786,9 @@ export async function handleCallbackQuery(
                             // Create separate handleDeleteSub logic or direct DB manipulation safely
                             const storageAdapter = await getStorageAdapter(env);
                             const originalSubs = await storageAdapter.getAllSubscriptions();
-                            const realIdx = originalSubs.findIndex((s) => s.id === targetItem.id);
+                            const realIdx = originalSubs.findIndex(
+                                (s: any) => s.id === targetItem.id
+                            );
 
                             if (realIdx !== -1) {
                                 const deletedName = originalSubs[realIdx].name;
@@ -869,7 +871,7 @@ export async function handleCallbackQuery(
                     const settings = await getCachedSettings(env, cache);
                     const config = settings.telegram_push_config || {};
 
-                    const targetProfile = profiles.find((p) => p.id === profileId);
+                    const targetProfile = profiles.find((p: any) => p.id === profileId);
                     if (targetProfile) {
                         setUserBoundProfileId(config, userId, profileId);
                         config.auto_bind = true;

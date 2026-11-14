@@ -6,7 +6,7 @@ import { normalizeGeneratorOptions } from '../generator-options.ts';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.ts';
 import { stripPolicyMembersForAutoGroup, withPolicyFallbacks } from '../policy-fallbacks.ts';
 
-function mapGroupType(type) {
+function mapGroupType(type: any) {
     const normalized = String(type || '')
         .trim()
         .toLowerCase();
@@ -27,13 +27,13 @@ const CLASH_BUILTIN_POLICIES = new Set(['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS
  * 规则策略必须指向真实渲染出的组/节点或内置策略；
  * 渲染时被丢弃的组（空成员 fail-closed 等）不能留下悬空规则。
  */
-function isRenderableRulePolicy(policy, groupNames, proxyNames) {
+function isRenderableRulePolicy(policy: any, groupNames: any, proxyNames: any) {
     const value = String(policy || '').trim();
     if (!value) return false;
     return CLASH_BUILTIN_POLICIES.has(value) || groupNames.has(value) || proxyNames.has(value);
 }
 
-function filterAutoSelectMembers(group) {
+function filterAutoSelectMembers(group: any) {
     const type = mapGroupType(group.type);
     if (!['url-test', 'fallback', 'load-balance'].includes(type)) {
         return Array.isArray(group.members) ? group.members.filter(Boolean) : [];
@@ -84,7 +84,7 @@ const ACL4SSR_ROOT_LIST_ONLY_FILES = new Set([
     'unban',
 ]);
 
-function toClashRuleProviderUrl(sourceUrl) {
+function toClashRuleProviderUrl(sourceUrl: any) {
     if (!/^https?:\/\//i.test(String(sourceUrl || ''))) return sourceUrl;
 
     try {
@@ -147,7 +147,7 @@ function toClashRuleProviderUrl(sourceUrl) {
     }
 }
 
-function isMrsProviderUrl(providerUrl) {
+function isMrsProviderUrl(providerUrl: any) {
     try {
         return /\.mrs$/i.test(new URL(providerUrl).pathname);
     } catch {
@@ -155,7 +155,7 @@ function isMrsProviderUrl(providerUrl) {
     }
 }
 
-function getRuleProviderBehavior(providerUrl) {
+function getRuleProviderBehavior(providerUrl: any) {
     try {
         const pathname = new URL(providerUrl).pathname;
         // Mihomo 的 mrs 仅支持 domain / ipcidr，配 classical 会在运行期报
@@ -175,14 +175,14 @@ function getRuleProviderBehavior(providerUrl) {
     return 'classical';
 }
 
-function appendRuleExtras(rule, rendered) {
+function appendRuleExtras(rule: any, rendered: any) {
     // 保留模板作者声明的规则尾参（如 GEOIP 的 no-resolve——Aethersailor 模板全部携带，
     // 丢掉会让 GEOIP 命中前触发 DNS 解析，语义与性能都偏离原意）。
     const extras = Array.isArray(rule.extras) ? rule.extras.filter(Boolean) : [];
     return extras.length > 0 ? `${rendered},${extras.join(',')}` : rendered;
 }
 
-function mapRule(rule, ruleProviderMap) {
+function mapRule(rule: any, ruleProviderMap: any) {
     const type = String(rule.type || '').toUpperCase();
     if (!type) return null;
     if (type === 'MATCH' || type === 'FINAL') return `MATCH,${rule.policy}`;
@@ -196,7 +196,7 @@ function mapRule(rule, ruleProviderMap) {
     return appendRuleExtras(rule, `${type},${rule.value},${rule.policy}`);
 }
 
-export function renderClashFromTemplateModel(model, options: Record<string, any> = {}) {
+export function renderClashFromTemplateModel(model: any, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
@@ -239,7 +239,7 @@ export function renderClashFromTemplateModel(model, options: Record<string, any>
         ruleProviderMap.set(providerUrl, providerName);
         const usesTextList = /\.(list|txt)$/i.test(providerUrl);
         const usesMrs = isMrsProviderUrl(providerUrl);
-        ruleProviders[providerName] = {
+        (ruleProviders as Record<string, any>)[providerName] = {
             type: 'http',
             behavior: getRuleProviderBehavior(providerUrl),
             url: providerUrl,

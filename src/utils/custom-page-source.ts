@@ -1,4 +1,4 @@
-export function parseCustomPageSource(content, css = '') {
+export function parseCustomPageSource(content: any, css = '') {
     const rawContent = typeof content === 'string' ? content : '';
     const rawCss = typeof css === 'string' ? css : '';
 
@@ -45,7 +45,7 @@ export function parseCustomPageSource(content, css = '') {
         .filter(Boolean)
         .map(normalizeUrl);
 
-    const linkImports = [];
+    const linkImports: any[] = [];
 
     const scriptNodes = Array.from(doc.querySelectorAll('script'));
     const scripts = scriptNodes.map((node) => ({
@@ -82,13 +82,13 @@ export function parseCustomPageSource(content, css = '') {
     };
 }
 
-function normalizeUrl(value) {
+function normalizeUrl(value: any) {
     return String(value || '')
         .trim()
         .replace(/^http:\/\//i, 'https://');
 }
 
-function wrapBodyContent(body) {
+function wrapBodyContent(body: any) {
     const attrs: string[] = [];
     const classes = ['custom-page-document', 'custom-page-html', 'custom-page-body'];
 
@@ -103,7 +103,7 @@ function wrapBodyContent(body) {
     return `<div class="${Array.from(new Set(classes)).join(' ')}" ${attrs.join(' ')}>${body.innerHTML}</div>`;
 }
 
-function normalizeDocumentCss(cssText) {
+function normalizeDocumentCss(cssText: any) {
     if (!cssText.trim()) return '';
 
     return cssText
@@ -112,7 +112,7 @@ function normalizeDocumentCss(cssText) {
         .replace(/(^|[\s,{>+~])body(?=($|[\s.#:[,{>+~]))/gm, '$1.custom-page-body');
 }
 
-function escapeHtmlAttribute(value) {
+function escapeHtmlAttribute(value: any) {
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')

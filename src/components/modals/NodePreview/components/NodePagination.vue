@@ -61,7 +61,7 @@
         return pages;
     });
 
-    const goToPage = (page) => {
+    const goToPage = (page: any) => {
         if (page < 1 || page > props.totalPages) return;
         emit('go-to-page', page);
     };

@@ -1,4 +1,4 @@
-export function renderTransformTemplate(templateText, context: Record<string, any> = {}) {
+export function renderTransformTemplate(templateText: any, context: Record<string, any> = {}) {
     if (typeof templateText !== 'string' || templateText.trim() === '') return templateText;
 
     const replacements = {

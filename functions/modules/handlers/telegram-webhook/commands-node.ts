@@ -14,7 +14,7 @@ import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 处理 /delete 命令
  */
-export async function handleDeleteCommand(chatId, userId, args, env) {
+export async function handleDeleteCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         const target = parseTargetArgs(args);
 
@@ -51,7 +51,7 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
             }
         } else if (target.type === 'id') {
             for (const id of target.values!) {
-                const foundIdx = allSubscriptions.findIndex((s) => s.id === id);
+                const foundIdx = allSubscriptions.findIndex((s: any) => s.id === id);
                 if (foundIdx !== -1 && indexMapping.includes(foundIdx)) {
                     indicesToDelete.push(foundIdx);
                 }
@@ -88,12 +88,12 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
                 let profilesUpdated = false;
                 const idsToRemove = new Set(deletedIds);
 
-                profiles.forEach((profile) => {
+                profiles.forEach((profile: any) => {
                     // 清理 manualNodes
                     if (Array.isArray(profile.manualNodes)) {
                         const prevLen = profile.manualNodes.length;
                         profile.manualNodes = profile.manualNodes.filter(
-                            (id) => !idsToRemove.has(id)
+                            (id: any) => !idsToRemove.has(id)
                         );
                         if (profile.manualNodes.length !== prevLen) profilesUpdated = true;
                     }
@@ -101,7 +101,7 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
                     if (Array.isArray(profile.subscriptions)) {
                         const prevLen = profile.subscriptions.length;
                         profile.subscriptions = profile.subscriptions.filter(
-                            (id) => !idsToRemove.has(id)
+                            (id: any) => !idsToRemove.has(id)
                         );
                         if (profile.subscriptions.length !== prevLen) profilesUpdated = true;
                     }
@@ -136,21 +136,27 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
 /**
  * 处理 /enable 命令
  */
-export async function handleEnableCommand(chatId, userId, args, env) {
+export async function handleEnableCommand(chatId: any, userId: any, args: any, env: any) {
     await handleToggleCommand(chatId, userId, args, env, true);
 }
 
 /**
  * 处理 /disable 命令
  */
-export async function handleDisableCommand(chatId, userId, args, env) {
+export async function handleDisableCommand(chatId: any, userId: any, args: any, env: any) {
     await handleToggleCommand(chatId, userId, args, env, false);
 }
 
 /**
  * 切换节点启用状态
  */
-export async function handleToggleCommand(chatId, userId, args, env, enable) {
+export async function handleToggleCommand(
+    chatId: any,
+    userId: any,
+    args: any,
+    env: any,
+    enable: any
+) {
     try {
         const target = parseTargetArgs(args);
         const action = enable ? '启用' : '禁用';
@@ -223,7 +229,7 @@ export async function handleToggleCommand(chatId, userId, args, env, enable) {
 /**
  * 处理 /search 命令
  */
-export async function handleSearchCommand(chatId, userId, args, env) {
+export async function handleSearchCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         const keyword = args.join(' ').trim();
 
@@ -280,10 +286,10 @@ export async function handleSearchCommand(chatId, userId, args, env) {
  * 处理 /sub 命令 - 获取订阅链接
  */
 export async function handleSubCommand(
-    chatId,
-    args,
-    env,
-    request,
+    chatId: any,
+    args: any,
+    env: any,
+    request: any,
     requestCache: KvRecord | null = null
 ) {
     try {
@@ -292,7 +298,7 @@ export async function handleSubCommand(
         const settings = await getCachedSettings(env, cache);
 
         // 获取公开的订阅组
-        const publicProfiles = profiles.filter((p) => p.isPublic);
+        const publicProfiles = profiles.filter((p: any) => p.isPublic);
 
         if (publicProfiles.length === 0) {
             await sendTelegramMessage(
@@ -318,7 +324,7 @@ export async function handleSubCommand(
             // 查找指定订阅组
             const targetName = args.join(' ').trim().toLowerCase();
             const profile = publicProfiles.find(
-                (p) =>
+                (p: any) =>
                     p.name.toLowerCase().includes(targetName) || p.id.toLowerCase() === targetName
             );
 
@@ -345,7 +351,7 @@ export async function handleSubCommand(
             // 列出所有公开订阅组
             let message = `🔗 <b>订阅组列表</b>\n\n`;
 
-            publicProfiles.forEach((profile, i) => {
+            publicProfiles.forEach((profile: any, i: any) => {
                 message += `<b>${i + 1}. ${profile.name}</b>\n`;
                 if (baseUrl) {
                     message += `<code>${baseUrl}/sub/${profile.id}</code>\n\n`;
@@ -375,14 +381,18 @@ export async function handleSubCommand(
 /**
  * 处理订阅获取 - 简化版（用于快捷菜单，不需要 request）
  */
-export async function handleSubCommandSimple(chatId, env, requestCache: KvRecord | null = null) {
+export async function handleSubCommandSimple(
+    chatId: any,
+    env: any,
+    requestCache: KvRecord | null = null
+) {
     try {
         const cache = requestCache || createRequestCache();
         const profiles = await getCachedProfiles(env, cache);
         const settings = await getCachedSettings(env, cache);
 
         // 获取公开的订阅组
-        const publicProfiles = profiles.filter((p) => p.isPublic);
+        const publicProfiles = profiles.filter((p: any) => p.isPublic);
 
         if (publicProfiles.length === 0) {
             await sendTelegramMessage(
@@ -398,7 +408,7 @@ export async function handleSubCommandSimple(chatId, env, requestCache: KvRecord
 
         let message = '🔗 <b>订阅组列表</b>\n\n';
 
-        publicProfiles.forEach((profile, i) => {
+        publicProfiles.forEach((profile: any, i: any) => {
             message += `<b>${i + 1}. ${profile.name}</b>\n`;
             message += `ID: <code>${profile.id}</code>\n`;
             if (customDomain) {
@@ -425,7 +435,7 @@ export async function handleSubCommandSimple(chatId, env, requestCache: KvRecord
 /**
  * 处理 /rename 命令
  */
-export async function handleRenameCommand(chatId, userId, args, env) {
+export async function handleRenameCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         if (args.length < 2) {
             await sendTelegramMessage(
@@ -487,7 +497,7 @@ export async function handleRenameCommand(chatId, userId, args, env) {
 /**
  * 处理 /info 命令 - 节点详情
  */
-export async function handleInfoCommand(chatId, userId, args, env) {
+export async function handleInfoCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         if (args.length === 0) {
             await sendTelegramMessage(
@@ -573,7 +583,7 @@ export async function handleInfoCommand(chatId, userId, args, env) {
 /**
  * 处理 /copy 命令 - 复制节点链接
  */
-export async function handleCopyCommand(chatId, userId, args, env) {
+export async function handleCopyCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         const target = parseTargetArgs(args);
 
@@ -641,7 +651,7 @@ export async function handleCopyCommand(chatId, userId, args, env) {
 /**
  * 处理 /export 命令 - 导出节点
  */
-export async function handleExportCommand(chatId, userId, args, env) {
+export async function handleExportCommand(chatId: any, userId: any, args: any, env: any) {
     try {
         const userNodes = await getUserNodes(userId, env);
 

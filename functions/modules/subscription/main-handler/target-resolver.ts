@@ -34,7 +34,7 @@ export async function resolveSubscriptionTargets({
     userAgentHeader,
     shouldSkipLogging,
     storageAdapter,
-}) {
+}: any) {
     let targetMisubs;
     let subName = config.FileName;
     let isProfileExpired = false; // Moved declaration here
@@ -45,7 +45,7 @@ export async function resolveSubscriptionTargets({
     let shouldSkipCertificateVerify = false;
     let shouldEnableUdp = true;
 
-    const initEngineFlags = (targetProf) => {
+    const initEngineFlags = (targetProf: any) => {
         const profileSub = targetProf?.subconverter || {};
         const globalSub = config.subconverter || {};
         const effectiveEngine = resolveEffectiveEngine({
@@ -74,7 +74,8 @@ export async function resolveSubscriptionTargets({
             };
         }
         currentProfile = allProfiles.find(
-            (p) => (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
+            (p: any) =>
+                (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
         );
         initEngineFlags(currentProfile);
         const profile = currentProfile;
@@ -103,7 +104,7 @@ export async function resolveSubscriptionTargets({
                 targetMisubs = [];
                 const relatedIds = [
                     ...(Array.isArray(profile.subscriptions)
-                        ? (profile.subscriptions as Record<string, any>).map((item) =>
+                        ? (profile.subscriptions as Record<string, any>).map((item: any) =>
                               typeof item === 'object' ? item.id : item
                           )
                         : []),
@@ -115,7 +116,7 @@ export async function resolveSubscriptionTargets({
                               Array.from(new Set(relatedIds))
                           )
                         : allMisubs;
-                const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
+                const misubMap = new Map(relatedSubs.map((item: any) => [item.id, item]));
 
                 // 1. Add subscriptions in order defined by profile
                 const profileSubIds = profile.subscriptions || [];
@@ -182,7 +183,7 @@ export async function resolveSubscriptionTargets({
                                 new Set([profile.id, profile.customId].filter(Boolean))
                             );
                             if (subResult.success && Array.isArray(subResult.nodes)) {
-                                (subResult.nodes as Record<string, any>).forEach((node) => {
+                                (subResult.nodes as Record<string, any>).forEach((node: any) => {
                                     targetMisubs.push({
                                         id: `nested-${subProfileId}-${node.url}`,
                                         name: node.name,
@@ -247,7 +248,7 @@ export async function resolveSubscriptionTargets({
                     new Response('Not Found', { status: 404 }),
             };
         }
-        targetMisubs = allMisubs.filter((s) => s.enabled);
+        targetMisubs = allMisubs.filter((s: any) => s.enabled);
         initEngineFlags(null);
     }
 

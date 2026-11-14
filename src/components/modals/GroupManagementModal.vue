@@ -44,7 +44,7 @@
         emit('close');
     };
 
-    const startEdit = (index) => {
+    const startEdit = (index: any) => {
         editingGroupIndex.value = index;
         editingGroupName.value = localGroups.value[index].name;
     };
@@ -70,7 +70,7 @@
         cancelEdit();
     };
 
-    const handleDelete = async (groupName) => {
+    const handleDelete = async (groupName: any) => {
         const confirmed = await confirmAction({
             message: t('subscriptions.deleteGroupConfirm', { name: groupName }),
             variant: 'danger',

@@ -15,16 +15,16 @@ import {
 } from '../builtin-rules-provider.ts';
 import { stripPolicyMembersForAutoGroup, withPolicyFallbacks } from '../policy-fallbacks.ts';
 
-function sanitizeTag(value) {
+function sanitizeTag(value: any) {
     return String(value || '').trim() || 'Untitled';
 }
 
-function parsePort(port) {
+function parsePort(port: any) {
     const num = Number.parseInt(String(port), 10);
     return Number.isFinite(num) ? num : undefined;
 }
 
-function buildOutbound(proxy) {
+function buildOutbound(proxy: any) {
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const type = String(proxy.type || '').toLowerCase();
@@ -266,7 +266,7 @@ function buildOutbound(proxy) {
     return null;
 }
 
-function mapGroupType(type) {
+function mapGroupType(type: any) {
     const normalized = String(type || '').toLowerCase();
     if (normalized === 'select') return 'selector';
     if (normalized === 'url-test') return 'urltest';
@@ -274,8 +274,8 @@ function mapGroupType(type) {
     return 'selector';
 }
 
-function buildGroupOutbounds(groups) {
-    return groups.map((group) => {
+function buildGroupOutbounds(groups: any) {
+    return groups.map((group: any) => {
         const mappedType = mapGroupType(group.type);
         const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
         // urltest 剥离内置策略成员；纯 REJECT/DIRECT 存根组（剥后为空）原样保留，
@@ -308,13 +308,13 @@ const SINGBOX_BUILTIN_OUTBOUNDS = new Set(['DIRECT', 'REJECT', 'REJECT-DROP', 'P
  * 规则出口必须指向真实渲染出的组/节点或内置策略；
  * 渲染时被丢弃的组（空成员 fail-closed 等）不能留下悬空规则或 route.final。
  */
-function isRenderableRuleOutbound(policy, groupTags, proxyTags) {
+function isRenderableRuleOutbound(policy: any, groupTags: any, proxyTags: any) {
     const value = String(policy || '').trim();
     if (!value) return false;
     return SINGBOX_BUILTIN_OUTBOUNDS.has(value) || groupTags.has(value) || proxyTags.has(value);
 }
 
-function mapRuleToSingbox(rule) {
+function mapRuleToSingbox(rule: any) {
     const type = String(rule.type || '').toLowerCase();
     if (type === 'rule-set') {
         return {
@@ -356,7 +356,7 @@ function mapRuleToSingbox(rule) {
     return null;
 }
 
-function detectRuleSetFormat(url) {
+function detectRuleSetFormat(url: any) {
     const raw = String(url || '')
         .trim()
         .toLowerCase();
@@ -364,13 +364,13 @@ function detectRuleSetFormat(url) {
     return raw.endsWith('.srs') ? 'binary' : 'source';
 }
 
-function buildRuleSets(rules, dnsDetour = DNS_PROXY_GROUP) {
+function buildRuleSets(rules: any, dnsDetour = DNS_PROXY_GROUP) {
     const remoteRuleSets = rules
         .filter(
-            (rule) =>
+            (rule: any) =>
                 String(rule.type || '').toLowerCase() === 'rule-set' && rule.source === 'remote'
         )
-        .map((rule) => ({
+        .map((rule: any) => ({
             tag: sanitizeTag(`${rule.policy}_${rule.value}`),
             type: 'remote',
             format: detectRuleSetFormat(rule.value),
@@ -382,7 +382,7 @@ function buildRuleSets(rules, dnsDetour = DNS_PROXY_GROUP) {
     const implicitRuleSets: any[] = [];
     const seen = new Set();
 
-    rules.forEach((rule) => {
+    rules.forEach((rule: any) => {
         const type = String(rule.type || '').toLowerCase();
         if (type === 'geoip' || type === 'geosite') {
             const value = String(rule.value || 'cn').toLowerCase();
@@ -411,7 +411,7 @@ function buildRuleSets(rules, dnsDetour = DNS_PROXY_GROUP) {
     return [...remoteRuleSets, ...implicitRuleSets];
 }
 
-export function renderSingboxFromTemplateModel(model, options: Record<string, any> = {}) {
+export function renderSingboxFromTemplateModel(model: any, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions
@@ -430,9 +430,9 @@ export function renderSingboxFromTemplateModel(model, options: Record<string, an
     // 不再剥离），因此任何组都不会为空——sing-box 对空 outbounds 的 urltest/selector
     // 直接解析失败
     const groupOutbounds = buildGroupOutbounds(normalizedModel.groups).filter(
-        (outbound) => (outbound.outbounds || []).length > 0
+        (outbound: any) => (outbound.outbounds || []).length > 0
     );
-    const renderedGroupTags = new Set(groupOutbounds.map((outbound) => outbound.tag));
+    const renderedGroupTags = new Set(groupOutbounds.map((outbound: any) => outbound.tag));
     const renderedProxyTags = new Set(proxyOutbounds.map((outbound) => outbound!.tag));
     // DNS 出口 detour 只能引用真实渲染出来的组；组已不再因空成员被丢弃，
     // 降级只剩两种来源：injectDnsExitGroup=false 显式关闭，或 explicit DNS
@@ -469,7 +469,7 @@ export function renderSingboxFromTemplateModel(model, options: Record<string, an
             .filter(Boolean),
     ];
     const defaultOutbound =
-        groupOutbounds.find((outbound) => outbound.tag !== DNS_PROXY_GROUP)?.tag || 'DIRECT';
+        groupOutbounds.find((outbound: any) => outbound.tag !== DNS_PROXY_GROUP)?.tag || 'DIRECT';
     const dnsConfig = buildSingboxDnsConfig(normalizedModel.settings?.customDnsOverride, {
         mode: normalizedModel.settings?.dnsMode,
         proxyGroup: dnsDetour,

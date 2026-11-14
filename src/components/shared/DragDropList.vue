@@ -89,7 +89,7 @@
     }));
 
     // 计算拖拽动画样式
-    const itemStyle = (index) => {
+    const itemStyle = (index: any) => {
         if (!props.animation || !dragState.value.isDragging) return {};
 
         // 简单的拖拽预览动画
@@ -104,7 +104,7 @@
     };
 
     // 计算项目的类名
-    const itemClasses = (index, item) => [
+    const itemClasses = (index: any, item: any) => [
         'drag-drop-item',
         {
             'cursor-move': props.draggable && !props.disabled,
@@ -117,7 +117,7 @@
     ];
 
     // 处理拖拽开始
-    const handleDragStart = (event, index, item) => {
+    const handleDragStart = (event: any, index: any, item: any) => {
         if (!props.draggable || props.disabled) {
             event.preventDefault();
             return;
@@ -147,7 +147,7 @@
     };
 
     // 处理拖拽结束
-    const handleDragEnd = (event) => {
+    const handleDragEnd = (event: any) => {
         draggedIndex.value = -1;
         draggedOverIndex.value = -1;
 
@@ -178,7 +178,7 @@
     };
 
     // 处理拖拽悬停
-    const handleDragOver = (event, index) => {
+    const handleDragOver = (event: any, index: any) => {
         if (!props.draggable || props.disabled) return;
 
         event.preventDefault();
@@ -188,7 +188,7 @@
     };
 
     // 处理拖拽进入
-    const handleDragEnter = (event, index) => {
+    const handleDragEnter = (event: any, index: any) => {
         if (!props.draggable || props.disabled) return;
 
         event.preventDefault();
@@ -201,7 +201,7 @@
     };
 
     // 处理拖拽离开
-    const handleDragLeave = (event) => {
+    const handleDragLeave = (event: any) => {
         // 防止频繁触发
         const rect = event.currentTarget.getBoundingClientRect();
         const x = event.clientX;
@@ -213,7 +213,7 @@
     };
 
     // 处理放置
-    const handleDrop = (event, index) => {
+    const handleDrop = (event: any, index: any) => {
         if (!props.draggable || props.disabled) return;
 
         event.preventDefault();
@@ -228,13 +228,13 @@
     };
 
     // 处理项目点击
-    const handleItemClick = (item, index) => {
+    const handleItemClick = (item: any, index: any) => {
         if (props.disabled) return;
         emit('itemClick', { item, index });
     };
 
     // 添加项目
-    const addItem = (item) => {
+    const addItem = (item: any) => {
         if (props.disabled) return;
 
         const newItems = [...props.items, item];
@@ -243,7 +243,7 @@
     };
 
     // 移除项目
-    const removeItem = (index) => {
+    const removeItem = (index: any) => {
         if (props.disabled || index < 0 || index >= props.items.length) return;
 
         const newItems = props.items.filter((_, i) => i !== index);

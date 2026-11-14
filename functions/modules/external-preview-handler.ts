@@ -10,20 +10,20 @@ import {
     toExternalProfile,
 } from './external-api-mappers.ts';
 
-export async function handleExternalPreviewRequest(_request, env, profileId) {
+export async function handleExternalPreviewRequest(_request: any, env: any, profileId: any) {
     const storageAdapter = await getExternalStorageAdapter(env);
     const profile = await storageAdapter.getProfileById(profileId);
     if (!profile) return createExternalError('profile_not_found', 'Profile not found', 404);
 
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
-    const byId = new Map(allSubscriptions.map((item) => [item.id, item]));
+    const byId = new Map(allSubscriptions.map((item: any) => [item.id, item]));
     const subscriptionIds = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
     const manualNodeIds = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
 
     const remoteSources = subscriptionIds
-        .map((id) => byId.get(id))
-        .filter((item) => item && isRemoteSubscription(item))
-        .map((item) => ({
+        .map((id: any) => byId.get(id))
+        .filter((item: any) => item && isRemoteSubscription(item))
+        .map((item: any) => ({
             id: item.id,
             type: 'subscription',
             name: item.name || '',
@@ -31,9 +31,9 @@ export async function handleExternalPreviewRequest(_request, env, profileId) {
         }));
 
     const manualSources = manualNodeIds
-        .map((id) => byId.get(id))
-        .filter((item) => item && isManualNode(item))
-        .map((item) => ({
+        .map((id: any) => byId.get(id))
+        .filter((item: any) => item && isManualNode(item))
+        .map((item: any) => ({
             id: item.id,
             type: 'manual_node',
             name: item.name || '',
@@ -43,8 +43,9 @@ export async function handleExternalPreviewRequest(_request, env, profileId) {
         }));
 
     const byProtocol = {};
-    manualSources.forEach((item) => {
-        byProtocol[item.protocol] = (byProtocol[item.protocol] || 0) + 1;
+    manualSources.forEach((item: any) => {
+        (byProtocol as Record<string, any>)[item.protocol] =
+            ((byProtocol as Record<string, any>)[item.protocol] || 0) + 1;
     });
 
     return createExternalSuccess({

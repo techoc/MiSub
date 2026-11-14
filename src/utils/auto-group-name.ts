@@ -10,14 +10,14 @@
  */
 
 /** 两位补零 */
-const pad = (n) => String(n).padStart(2, '0');
+const pad = (n: any) => String(n).padStart(2, '0');
 
 /**
  * 根据文件名生成分组名。
  * @param {string} fileName 例如「nodes.txt」「我的节点.json」
  * @returns {string} 例如「导入 nodes」
  */
-export function groupNameFromFile(fileName) {
+export function groupNameFromFile(fileName: any) {
     const base = String(fileName || '')
         .replace(/\.[a-z0-9]+$/i, '')
         .trim();

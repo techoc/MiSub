@@ -12,13 +12,13 @@
     const emit = defineEmits(['update:modelValue']);
     const { t } = useI18n();
 
-    const updateParam = (key, value) => {
+    const updateParam = (key: any, value: any) => {
         const newParams = { ...props.modelValue };
         newParams[key] = { ...newParams[key], ...value };
         emit('update:modelValue', newParams);
     };
 
-    const updateTemplate = (updates) => {
+    const updateTemplate = (updates: any) => {
         const current = props.modelValue.template || { enabled: false, template: '', offset: 1 };
         updateParam('template', { ...current, ...updates });
     };
@@ -29,7 +29,7 @@
         updateParam('regex', current);
     };
 
-    const normalizeRuleFlags = (index) => {
+    const normalizeRuleFlags = (index: any) => {
         const current = { ...(props.modelValue.regex || { rules: [] }) };
         current.rules = [...(current.rules || [])];
         const rule = current.rules[index];
@@ -38,7 +38,7 @@
         updateParam('regex', current);
     };
 
-    const removeRule = (index) => {
+    const removeRule = (index: any) => {
         const current = { ...(props.modelValue.regex || { rules: [] }) };
         current.rules = [...current.rules];
         current.rules.splice(index, 1);
@@ -56,7 +56,7 @@
         { nameKey: 'operators.templatePresetName', template: '{name}' },
     ];
 
-    const applyPresetTemplate = (tpl) => {
+    const applyPresetTemplate = (tpl: any) => {
         updateTemplate({ enabled: true, template: tpl });
     };
 
@@ -74,9 +74,9 @@
         },
     ];
 
-    const statusLabel = (enabled) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
+    const statusLabel = (enabled: any) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
 
-    const applyPresetRegex = (rule) => {
+    const applyPresetRegex = (rule: any) => {
         const current = { ...(props.modelValue.regex || { enabled: true, rules: [] }) };
         current.enabled = true;
         current.rules = [...(current.rules || []), { ...rule, flags: 'gi' }];

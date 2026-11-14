@@ -1,5 +1,5 @@
 import type { KvRecord } from '../../../types/models.ts';
-const toBoolean = (value, fallback = false) => {
+const toBoolean = (value: any, fallback = false) => {
     if (typeof value === 'string') {
         const normalized = value.trim().toLowerCase();
         if (normalized === 'true' || normalized === '1') return true;
@@ -74,7 +74,7 @@ const SEARCH_PARAM_OPTIONS: Array<[string, (options: any, value: boolean) => voi
     ['tun-strict-route', (options, value) => (options.singbox.tunStrictRoute = value)],
 ];
 
-function parseBooleanParam(value) {
+function parseBooleanParam(value: any) {
     const normalized = String(value || '')
         .trim()
         .toLowerCase();
@@ -99,7 +99,7 @@ export function resolveGeneratorOptions(
     return options;
 }
 
-export function applyDnsGeneratorOptions(dnsConfig, options: Record<string, any> = {}) {
+export function applyDnsGeneratorOptions(dnsConfig: any, options: Record<string, any> = {}) {
     const normalized = normalizeGeneratorOptions({ dns: options });
     dnsConfig.enable = normalized.dns.enable;
     dnsConfig.ipv6 = normalized.dns.ipv6;

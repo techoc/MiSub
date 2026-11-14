@@ -24,7 +24,7 @@ export const NODE_PROTOCOL_REGEX =
  * 尝试解析 Surge 或 Quantumult X 格式的节点字符串
  * 转换为 Clash proxy 对象
  */
-function parseSurgeOrQxLine(line) {
+function parseSurgeOrQxLine(line: any) {
     if (!line || line.startsWith('#') || line.startsWith(';')) return null;
 
     // Surge 格式: "name = protocol, server, port, key=value, ..."
@@ -40,7 +40,7 @@ function parseSurgeOrQxLine(line) {
         };
         const extraParams = match[5];
         if (extraParams) {
-            const parts = extraParams.split(',').map((p) => p.trim());
+            const parts = extraParams.split(',').map((p: any) => p.trim());
             let positionalIndex = 0;
             for (const p of parts) {
                 if (!p) continue;
@@ -124,7 +124,7 @@ function parseSurgeOrQxLine(line) {
         };
         const extraParams = match[4];
         if (extraParams) {
-            const parts = extraParams.split(',').map((p) => p.trim());
+            const parts = extraParams.split(',').map((p: any) => p.trim());
             for (const p of parts) {
                 if (!p) continue;
                 const kv = p.split('=');
@@ -190,7 +190,7 @@ function parseSurgeOrQxLine(line) {
  * 从文本中提取所有有效的节点URL
  * 支持：Clash YAML, Base64, 纯文本列表, Surge/QX 参数文本
  */
-export function extractValidNodes(text) {
+export function extractValidNodes(text: any) {
     if (!text || typeof text !== 'string') return [];
 
     let nodes: any[] = [];
@@ -306,7 +306,7 @@ const SUPPORTED_SS_CIPHERS = [
 /**
  * 验证 UUID 格式
  */
-function isValidUUID(uuid) {
+function isValidUUID(uuid: any) {
     if (!uuid || typeof uuid !== 'string') return false;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
@@ -315,7 +315,7 @@ function isValidUUID(uuid) {
 /**
  * 解析节点列表 (用于预览和计数)
  */
-export function parseNodeList(content, options: Record<string, any> = {}) {
+export function parseNodeList(content: any, options: Record<string, any> = {}) {
     const validNodes = extractValidNodes(content);
 
     return validNodes
@@ -537,15 +537,19 @@ export function parseNodeList(content, options: Record<string, any> = {}) {
 /**
  * 统计节点协议类型分布
  */
-export function calculateProtocolStats(nodes) {
+export function calculateProtocolStats(nodes: any) {
     const stats = {};
     const total = nodes.length;
-    nodes.forEach((node) => {
+    nodes.forEach((node: any) => {
         const protocol = node.protocol || 'unknown';
-        stats[protocol] = (stats[protocol] || 0) + 1;
+        (stats as Record<string, any>)[protocol] =
+            ((stats as Record<string, any>)[protocol] || 0) + 1;
     });
     for (const [protocol, count] of Object.entries(stats) as [string, number][]) {
-        stats[protocol] = { count, percentage: Math.round((count / total) * 100) };
+        (stats as Record<string, any>)[protocol] = {
+            count,
+            percentage: Math.round((count / total) * 100),
+        };
     }
     return stats;
 }
@@ -553,15 +557,18 @@ export function calculateProtocolStats(nodes) {
 /**
  * 统计节点地区分布
  */
-export function calculateRegionStats(nodes) {
+export function calculateRegionStats(nodes: any) {
     const stats = {};
     const total = nodes.length;
-    nodes.forEach((node) => {
+    nodes.forEach((node: any) => {
         const region = extractNodeRegion(node.name || '');
-        stats[region] = (stats[region] || 0) + 1;
+        (stats as Record<string, any>)[region] = ((stats as Record<string, any>)[region] || 0) + 1;
     });
     for (const [region, count] of Object.entries(stats) as [string, number][]) {
-        stats[region] = { count, percentage: Math.round((count / (total as number)) * 100) };
+        (stats as Record<string, any>)[region] = {
+            count,
+            percentage: Math.round((count / (total as number)) * 100),
+        };
     }
     return stats;
 }
@@ -569,7 +576,7 @@ export function calculateRegionStats(nodes) {
 /**
  * 去除重复节点
  */
-export function removeDuplicateNodes(nodes) {
+export function removeDuplicateNodes(nodes: any) {
     if (!Array.isArray(nodes)) return [];
     const seen = new Set();
     return nodes.filter((node) => {
@@ -583,7 +590,7 @@ export function removeDuplicateNodes(nodes) {
 /**
  * 格式化节点数量显示
  */
-export function formatNodeCount(count) {
+export function formatNodeCount(count: any) {
     if (typeof count !== 'number' || count < 0) return '0 个节点';
     return `${count} 个节点`;
 }
@@ -593,7 +600,7 @@ export function formatNodeCount(count) {
  * @param {string} url - Snell URL
  * @returns {Object|null} Clash 代理对象或 null
  */
-export function parseSnellUrl(url) {
+export function parseSnellUrl(url: any) {
     try {
         const urlObj = new URL(url);
 
@@ -654,7 +661,7 @@ export function parseSnellUrl(url) {
  * @param {string} url - Snell URL
  * @returns {Object} 验证结果 {valid, error?, details?, proxy?}
  */
-export function validateSnellNode(url) {
+export function validateSnellNode(url: any) {
     try {
         if (!url || typeof url !== 'string') {
             return { valid: false, error: '无效的 URL 格式' };

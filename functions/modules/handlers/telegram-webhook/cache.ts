@@ -12,7 +12,7 @@ import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 获取存储适配器实例
  */
-export async function getStorageAdapter(env) {
+export async function getStorageAdapter(env: any) {
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }
@@ -27,35 +27,35 @@ export function createRequestCache() {
     };
 }
 
-export async function getCachedStorageAdapter(env, cache) {
+export async function getCachedStorageAdapter(env: any, cache: any) {
     if (!cache.storageAdapter) {
         cache.storageAdapter = await getStorageAdapter(env);
     }
     return cache.storageAdapter;
 }
 
-export async function getCachedSettings(env, cache) {
+export async function getCachedSettings(env: any, cache: any) {
     if (cache.settings !== undefined) return cache.settings;
     const storageAdapter = await getCachedStorageAdapter(env, cache);
     cache.settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
     return cache.settings;
 }
 
-export async function getCachedSubscriptions(env, cache) {
+export async function getCachedSubscriptions(env: any, cache: any) {
     if (cache.subscriptions !== undefined) return cache.subscriptions;
     const storageAdapter = await getCachedStorageAdapter(env, cache);
     cache.subscriptions = await storageAdapter.getAllSubscriptions();
     return cache.subscriptions;
 }
 
-export async function getCachedProfiles(env, cache) {
+export async function getCachedProfiles(env: any, cache: any) {
     if (cache.profiles !== undefined) return cache.profiles;
     const storageAdapter = await getCachedStorageAdapter(env, cache);
     cache.profiles = await storageAdapter.getAllProfiles();
     return cache.profiles;
 }
 
-export async function persistCachedSettings(env, cache) {
+export async function persistCachedSettings(env: any, cache: any) {
     if (cache.settings === undefined) return;
     const storageAdapter = await getCachedStorageAdapter(env, cache);
     await storageAdapter.put(KV_KEY_SETTINGS, cache.settings);
@@ -64,7 +64,7 @@ export async function persistCachedSettings(env, cache) {
 /**
  * 获取 Telegram Bot 推送配置
  */
-export async function getTelegramPushConfig(env, cache: KvRecord | null = null) {
+export async function getTelegramPushConfig(env: any, cache: KvRecord | null = null) {
     let settings;
     if (cache) {
         settings = await getCachedSettings(env, cache);
@@ -81,7 +81,7 @@ export async function getTelegramPushConfig(env, cache: KvRecord | null = null) 
         enabled: config.enabled ?? true,
         bot_token: config.bot_token || env.TELEGRAM_PUSH_BOT_TOKEN,
         webhook_secret: config.webhook_secret || env.TELEGRAM_PUSH_WEBHOOK_SECRET,
-        allowed_user_ids: allowedUserIds.map((id) => id?.toString().trim()).filter(Boolean),
+        allowed_user_ids: allowedUserIds.map((id: any) => id?.toString().trim()).filter(Boolean),
         allow_all_users: config.allow_all_users === true,
         rate_limit: config.rate_limit || {
             max_per_minute: 1000,

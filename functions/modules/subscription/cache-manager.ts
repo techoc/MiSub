@@ -8,7 +8,7 @@ import {
 const refreshDebounce = new Map();
 const DEBOUNCE_TIME = 10000;
 
-function countCachedNodes(cachedData) {
+function countCachedNodes(cachedData: any) {
     const declaredCount = Number(cachedData?.nodeCount);
     if (Number.isFinite(declaredCount)) return declaredCount;
     return String(cachedData?.nodes || '')
@@ -16,18 +16,18 @@ function countCachedNodes(cachedData) {
         .filter((line) => line.trim()).length;
 }
 
-function hasUsableCachedNodes(cachedData) {
+function hasUsableCachedNodes(cachedData: any) {
     return Boolean(String(cachedData?.nodes || '').trim()) && countCachedNodes(cachedData) > 0;
 }
 
-function isCacheFarBelowExpected(cachedData, expectedNodeCount) {
+function isCacheFarBelowExpected(cachedData: any, expectedNodeCount: any) {
     const expected = Number(expectedNodeCount);
     if (!Number.isFinite(expected) || expected < 10) return false;
     const cached = countCachedNodes(cachedData);
     return cached / expected < 0.3;
 }
 
-function populateCachedStats(context, cachedNodeCount, targetMisubsCount) {
+function populateCachedStats(context: any, cachedNodeCount: any, targetMisubsCount: any) {
     if (!context) return;
     context.generationStats = {
         totalNodes: cachedNodeCount,
@@ -46,7 +46,7 @@ export async function resolveNodeListWithCache({
     context,
     targetMisubsCount,
     expectedNodeCount = 0,
-}) {
+}: any) {
     const { data: cachedData, status: cacheStatus } = forceRefresh
         ? { data: null, status: 'miss' }
         : await getCache(storageAdapter, cacheKey);
@@ -87,7 +87,7 @@ export async function resolveNodeListWithCache({
         combinedNodeList = await refreshNodes(false);
         cacheHeaders = createCacheHeaders(
             'MISS',
-            combinedNodeList.split('\n').filter((line) => line.trim()).length
+            combinedNodeList.split('\n').filter((line: any) => line.trim()).length
         );
     }
 

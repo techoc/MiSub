@@ -47,7 +47,7 @@
     });
 
     // 检查某个候选 profile 是否会导致循环依赖
-    const isCycleCandidate = (profileId) => {
+    const isCycleCandidate = (profileId: any) => {
         return wouldCreateCycle(props.targetProfileId, profileId, props.allProfiles);
     };
 

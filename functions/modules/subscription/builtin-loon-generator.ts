@@ -25,7 +25,7 @@ import { normalizeGeneratorOptions } from './generator-options.ts';
 /**
  * 清理控制字符
  */
-function cleanControlChars(str) {
+function cleanControlChars(str: any) {
     if (typeof str !== 'string') return str;
     // eslint-disable-next-line no-control-regex -- 目的本身就是清除控制字符，正则必须包含控制字符范围
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
@@ -34,7 +34,7 @@ function cleanControlChars(str) {
 /**
  * 安全化节点名称
  */
-function sanitizeNodeName(name) {
+function sanitizeNodeName(name: any) {
     if (!name) return 'Untitled';
     let safe = cleanControlChars(name);
     // 移除或替换可能破坏 INI 解析的字符
@@ -46,7 +46,7 @@ function sanitizeNodeName(name) {
 /**
  * 参数值加引号（如果包含特殊字符）
  */
-function loonQuote(value) {
+function loonQuote(value: any) {
     if (value === undefined || value === null) return '';
     const strValue = String(value);
     // 如果包含逗号、空格、等号、引号，则需要加双引号并转义内部引号
@@ -60,7 +60,7 @@ function loonQuote(value) {
 /**
  * 根据节点名称获取对应的图标 URL
  */
-function getIconByNodeName(name) {
+function getIconByNodeName(name: any) {
     const iconRepo = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
     if (/港|HK|Hong Kong/i.test(name)) return `${iconRepo}/Hong_Kong.png`;
     if (/台|TW|Taiwan/i.test(name)) return `${iconRepo}/Taiwan.png`;
@@ -78,7 +78,7 @@ function getIconByNodeName(name) {
 /**
  * 将 Clash 代理对象转换为 Loon [Proxy] 行
  */
-function clashProxyToLoonResult(proxy) {
+function clashProxyToLoonResult(proxy: any) {
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const name = sanitizeNodeName(proxy.name);
@@ -268,7 +268,7 @@ function clashProxyToLoonResult(proxy) {
     return parts.join(', ');
 }
 
-function appendTlsParams(parts, proxy) {
+function appendTlsParams(parts: any, proxy: any) {
     if (proxy.sni || proxy.servername) {
         parts.push(`sni=${loonQuote(proxy.sni || proxy.servername)}`);
     }
@@ -288,7 +288,7 @@ function appendTlsParams(parts, proxy) {
  * 生成内置 Loon 配置
  */
 
-export function generateBuiltinLoonConfig(nodeList, options: Record<string, any> = {}) {
+export function generateBuiltinLoonConfig(nodeList: any, options: Record<string, any> = {}) {
     const {
         managedConfigUrl = '',
         interval = 86400,
@@ -302,8 +302,8 @@ export function generateBuiltinLoonConfig(nodeList, options: Record<string, any>
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'));
+        .map((line: any) => line.trim())
+        .filter((line: any) => line && !line.startsWith('#'));
 
     const proxyLines: string[] = [];
     const proxyNames: any[] = [];
@@ -348,18 +348,18 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
     sections.push(`[Proxy]\nDIRECT = direct\n${proxyLines.join('\n')}`);
 
     const levelKey = (ruleLevel || 'std').toUpperCase();
-    const policyFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+    const policyFactory = (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
     let abstractGroups = policyFactory(proxiesWithMetadata, options);
     if (levelKey === 'RELAY') {
-        abstractGroups = abstractGroups.map((group) =>
+        abstractGroups = abstractGroups.map((group: any) =>
             group.name === '🔗 链式代理'
                 ? { ...group, type: 'relay', proxies: ['入口节点', '落地节点'] }
                 : group
         );
-        if (!abstractGroups.some((group) => group.name === '落地节点')) {
+        if (!abstractGroups.some((group: any) => group.name === '落地节点')) {
             const proxyNames = proxiesWithMetadata.map((proxy) => proxy.name);
             abstractGroups.splice(
-                abstractGroups.findIndex((group) => group.name === '入口节点') + 1,
+                abstractGroups.findIndex((group: any) => group.name === '入口节点') + 1,
                 0,
                 {
                     name: '落地节点',
@@ -392,13 +392,15 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
         '🇬🇧 英国节点': `${iconRepo}/United_Kingdom.png`,
     };
 
-    const proxyGroupLines = abstractGroups.map((group) => {
+    const proxyGroupLines = abstractGroups.map((group: any) => {
         let type = group.type === 'url-test' ? 'url-test' : 'select';
         if (group.type === 'fallback') type = 'fallback';
         if (group.type === 'relay') type = 'relay';
 
         const proxies = group.proxies.join(', ');
-        const icon = groupIcons[group.name] ? `, icon=${groupIcons[group.name]}` : '';
+        const icon = (groupIcons as Record<string, any>)[group.name]
+            ? `, icon=${(groupIcons as Record<string, any>)[group.name]}`
+            : '';
         const extra =
             type === 'url-test' || type === 'fallback'
                 ? `, url=http://www.gstatic.com/generate_204, interval=300, tolerance=50`

@@ -7,7 +7,7 @@
 
 export const VIRTUAL_INFO_NODE_PASSWORD = '00000000-0000-0000-0000-000000000000';
 
-export function isVirtualInfoProxy(proxy) {
+export function isVirtualInfoProxy(proxy: any) {
     if (!proxy || typeof proxy !== 'object') return false;
 
     const type = String(proxy.type || '').toLowerCase();
@@ -31,7 +31,7 @@ export function isVirtualInfoProxy(proxy) {
  * @param {string} url - 节点 URL
  * @returns {URLSearchParams} 查询参数对象
  */
-export function parseQueryParams(url) {
+export function parseQueryParams(url: any) {
     const queryIndex = url.indexOf('?');
     if (queryIndex === -1) return new URLSearchParams();
 
@@ -49,7 +49,7 @@ export function parseQueryParams(url) {
  * @param {string} url - 节点 URL
  * @returns {string} 节点名称
  */
-export function extractName(url) {
+export function extractName(url: any) {
     const hashIndex = url.lastIndexOf('#');
     if (hashIndex === -1) return '';
     try {
@@ -62,7 +62,7 @@ export function extractName(url) {
 /**
  * Base64 解码支持 (处理 URL Safe)
  */
-export function base64Decode(str) {
+export function base64Decode(str: any) {
     try {
         let normalized = str.replace(/-/g, '+').replace(/_/g, '/');
         while (normalized.length % 4) normalized += '=';
@@ -82,7 +82,7 @@ export function base64Decode(str) {
  * @param {string} hostPort - host:port 字符串
  * @returns {{server: string, port: number}}
  */
-export function parseHostPort(hostPort) {
+export function parseHostPort(hostPort: any) {
     // 处理 IPv6: [::1]:port
     if (hostPort.startsWith('[')) {
         const closeBracket = hostPort.indexOf(']');

@@ -2,7 +2,7 @@
  * WireGuard配置转换为URL
  * 采用标准格式，支持 reserved、preshared-key、IPv6
  */
-export function convertWireguardToUrl(proxy) {
+export function convertWireguardToUrl(proxy: any) {
     try {
         if (!proxy.server || !proxy.port || !proxy['private-key']) {
             return null;

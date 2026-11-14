@@ -150,7 +150,7 @@
         }
     };
 
-    const copyLink = async (profile) => {
+    const copyLink = async (profile: any) => {
         const token = (config.value as Record<string, any>).profileToken || 'profiles';
         const identifier = profile.customId || profile.id;
         const link = `${window.location.origin}/${token}/${identifier}`;
@@ -211,7 +211,7 @@
         });
     };
 
-    const getPlatformLabel = (p) => {
+    const getPlatformLabel = (p: any) => {
         const map = {
             windows: 'Windows',
             macos: 'macOS',
@@ -219,10 +219,10 @@
             android: 'Android',
             ios: 'iOS',
         };
-        return map[p] || p;
+        return (map as Record<string, any>)[p] || p;
     };
 
-    const getClientVersionLabel = (client) => {
+    const getClientVersionLabel = (client: any) => {
         if (client.version) return client.version;
         if (!client.repo && client.platforms?.includes('ios'))
             return t('publicProfiles.appStoreVersion');
@@ -233,13 +233,13 @@
     const previewProfileId = ref<any>(null);
     const previewProfileName = ref('');
 
-    const handlePreview = (profile) => {
+    const handlePreview = (profile: any) => {
         previewProfileId.value = profile.id;
         previewProfileName.value = profile.name;
         showPreviewModal.value = true;
     };
 
-    const handleQuickImport = (profile) => {
+    const handleQuickImport = (profile: any) => {
         selectedProfileForImport.value = profile;
         showQuickImportModal.value = true;
     };
@@ -248,12 +248,12 @@
     const expandedQRCards = ref(new Set());
     const qrCanvasRefs = ref<any>({});
 
-    const registerQrCanvas = (profileId, canvas) => {
+    const registerQrCanvas = (profileId: any, canvas: any) => {
         if (!canvas) return;
         qrCanvasRefs.value[profileId] = canvas;
     };
 
-    const toggleQRCode = async (profile) => {
+    const toggleQRCode = async (profile: any) => {
         const profileId = profile.id;
         if (expandedQRCards.value.has(profileId)) {
             expandedQRCards.value.delete(profileId);
@@ -280,9 +280,9 @@
         }
     };
 
-    const isQRExpanded = (profileId) => expandedQRCards.value.has(profileId);
+    const isQRExpanded = (profileId: any) => expandedQRCards.value.has(profileId);
 
-    const downloadQRCode = (profile) => {
+    const downloadQRCode = (profile: any) => {
         const canvas = qrCanvasRefs.value[profile.id];
         if (!canvas) return;
         const url = canvas.toDataURL('image/png');
@@ -293,7 +293,7 @@
         showToast(t('publicProfiles.qrDownloaded'), 'success');
     };
 
-    const getPlatformStyle = (p) => {
+    const getPlatformStyle = (p: any) => {
         const map = {
             windows:
                 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30',
@@ -305,7 +305,9 @@
                 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30',
             ios: 'bg-gray-800 text-white dark:bg-white dark:text-gray-900 border border-gray-700 dark:border-gray-200',
         };
-        return map[p] || 'bg-gray-100 text-gray-800 border border-gray-200';
+        return (
+            (map as Record<string, any>)[p] || 'bg-gray-100 text-gray-800 border border-gray-200'
+        );
     };
 
     const ICONS = {

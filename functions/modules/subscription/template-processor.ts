@@ -7,25 +7,25 @@ import { withPolicyFallbacks } from './policy-fallbacks.ts';
  * 解析并扩展策略组中的正则过滤器
  * @param {Object} model - 统一模板模型
  */
-function resolveGroupFilters(model) {
-    const proxyNames = model.proxies.map((p) => p.name || p.tag).filter(Boolean);
+function resolveGroupFilters(model: any) {
+    const proxyNames = model.proxies.map((p: any) => p.name || p.tag).filter(Boolean);
     if (proxyNames.length === 0) return;
 
-    model.groups.forEach((group) => {
+    model.groups.forEach((group: any) => {
         if (!Array.isArray(group.filters) || group.filters.length === 0) return;
 
         group.members = group.members || [];
         const currentMembers = new Set(group.members);
 
-        group.filters.forEach((filter) => {
+        group.filters.forEach((filter: any) => {
             if (filter === '.*') {
-                proxyNames.forEach((name) => currentMembers.add(name));
+                proxyNames.forEach((name: any) => currentMembers.add(name));
                 return;
             }
 
             try {
                 const regex = new RegExp(filter, 'i');
-                proxyNames.forEach((name) => {
+                proxyNames.forEach((name: any) => {
                     if (regex.test(name)) {
                         currentMembers.add(name);
                     }
@@ -43,27 +43,27 @@ function resolveGroupFilters(model) {
  * 递归修剪所有成员为空的策略组，并清理相关引用
  * @param {Object} model - 统一模板模型
  */
-function pruneEmptyGroups(model) {
+function pruneEmptyGroups(model: any) {
     let changed = true;
     while (changed) {
         changed = false;
         const emptyGroupNames = new Set(
             model.groups
-                .filter((g) => !Array.isArray(g.members) || g.members.length === 0)
-                .map((g) => g.name)
+                .filter((g: any) => !Array.isArray(g.members) || g.members.length === 0)
+                .map((g: any) => g.name)
         );
 
         if (emptyGroupNames.size === 0) break;
 
         // 1. 移除空组本身
         const initialCount = model.groups.length;
-        model.groups = model.groups.filter((g) => !emptyGroupNames.has(g.name));
+        model.groups = model.groups.filter((g: any) => !emptyGroupNames.has(g.name));
         if (model.groups.length !== initialCount) changed = true;
 
         // 2. 从其它组的成员列表中移除对空组的引用
-        model.groups.forEach((group) => {
+        model.groups.forEach((group: any) => {
             if (Array.isArray(group.members)) {
-                const newMembers = group.members.filter((m) => !emptyGroupNames.has(m));
+                const newMembers = group.members.filter((m: any) => !emptyGroupNames.has(m));
                 if (newMembers.length !== group.members.length) {
                     group.members = newMembers;
                     changed = true;
@@ -73,7 +73,7 @@ function pruneEmptyGroups(model) {
 
         // 3. 从规则列表中移除指向空组的规则
         const initialRuleCount = model.rules.length;
-        model.rules = model.rules.filter((rule) => !emptyGroupNames.has(rule.policy));
+        model.rules = model.rules.filter((rule: any) => !emptyGroupNames.has(rule.policy));
         if (model.rules.length !== initialRuleCount) changed = true;
     }
 }
@@ -86,29 +86,29 @@ function normalizeGroupSemanticName(name = '') {
         .toLowerCase();
 }
 
-function hasEquivalentRegionGroup(model, region) {
+function hasEquivalentRegionGroup(model: any, region: any) {
     const regionTags = new Set(region.tags || []);
     const normalizedRegionName = normalizeGroupSemanticName(region.name);
 
-    return model.groups.some((group) => {
+    return model.groups.some((group: any) => {
         const normalizedGroupName = normalizeGroupSemanticName(group.name);
         if (normalizedGroupName === normalizedRegionName) return true;
 
         const members = Array.isArray(group.members) ? group.members : [];
         if (members.length === 0) return false;
 
-        const overlapCount = members.filter((member) => regionTags.has(member)).length;
+        const overlapCount = members.filter((member: any) => regionTags.has(member)).length;
         return (
             overlapCount > 0 && overlapCount === members.length && overlapCount === regionTags.size
         );
     });
 }
 
-function dedupeGroupsByName(model) {
+function dedupeGroupsByName(model: any) {
     const mergedGroups: any[] = [];
     const seen = new Map();
 
-    model.groups.forEach((group) => {
+    model.groups.forEach((group: any) => {
         const name = String(group.name || '').trim();
         if (!name) return;
 
@@ -156,12 +156,12 @@ function dedupeGroupsByName(model) {
  * 展开魔法占位符（如 <%regionStrategyChain%>）
  * @param {Object} model - 统一模板模型
  */
-function expandMagicPlaceholders(model) {
+function expandMagicPlaceholders(model: any) {
     const regionNames = Array.from(
         new Set(
             model.groups
-                .filter((g) => g.type === 'url-test' && !g.name.includes('自动'))
-                .map((g) => g.name)
+                .filter((g: any) => g.type === 'url-test' && !g.name.includes('自动'))
+                .map((g: any) => g.name)
         )
     );
 
@@ -169,16 +169,16 @@ function expandMagicPlaceholders(model) {
     const protocolNames = Array.from(
         new Set(
             model.groups
-                .filter((g) => g.name.includes('节点') && !regionNames.includes(g.name))
-                .map((g) => g.name)
+                .filter((g: any) => g.name.includes('节点') && !regionNames.includes(g.name))
+                .map((g: any) => g.name)
         )
     );
 
-    model.groups.forEach((group) => {
+    model.groups.forEach((group: any) => {
         if (!Array.isArray(group.members)) return;
 
         const newMembers: any[] = [];
-        group.members.forEach((member) => {
+        group.members.forEach((member: any) => {
             if (member === '<%regionStrategyChain%>') {
                 newMembers.push(...regionNames);
             } else if (member === '<%protocolStrategyChain%>') {
@@ -195,24 +195,24 @@ function expandMagicPlaceholders(model) {
  * 清理策略组中指向空组或不存在节点的无效引用
  * @param {Object} model - 统一模板模型
  */
-function pruneInvalidMembers(model) {
+function pruneInvalidMembers(model: any) {
     const validTargetNames = new Set([
-        ...model.proxies.map((p) => p.name || p.tag),
-        ...model.groups.map((g) => g.name),
+        ...model.proxies.map((p: any) => p.name || p.tag),
+        ...model.groups.map((g: any) => g.name),
         'DIRECT',
         'REJECT',
     ]);
 
-    model.groups.forEach((group) => {
+    model.groups.forEach((group: any) => {
         if (Array.isArray(group.members)) {
-            group.members = group.members.filter((m) => validTargetNames.has(m));
+            group.members = group.members.filter((m: any) => validTargetNames.has(m));
         }
     });
 }
 
-function ensureDnsProxyGroup(model) {
-    if (model.groups.some((group) => group.name === DNS_PROXY_GROUP)) return;
-    const proxyNames = model.proxies.map((proxy) => proxy.name || proxy.tag).filter(Boolean);
+function ensureDnsProxyGroup(model: any) {
+    if (model.groups.some((group: any) => group.name === DNS_PROXY_GROUP)) return;
+    const proxyNames = model.proxies.map((proxy: any) => proxy.name || proxy.tag).filter(Boolean);
     model.groups.push({
         name: DNS_PROXY_GROUP,
         type: 'url-test',
@@ -226,14 +226,14 @@ function ensureDnsProxyGroup(model) {
     });
 }
 
-function isAiGroupName(name) {
+function isAiGroupName(name: any) {
     const value = String(name || '');
     return /人工智能|智能\s*ai|(?:^|[^a-z])(ai|claude|openai|gemini|grok|mistral|deepseek|perplexity|copilot)(?=$|[^a-z])/i.test(
         value
     );
 }
 
-function proxyOnlyMembers(members) {
+function proxyOnlyMembers(members: any) {
     return Array.from(
         new Set(
             (Array.isArray(members) ? members : []).filter(
@@ -244,14 +244,15 @@ function proxyOnlyMembers(members) {
     );
 }
 
-function ensureAiPolicy(model) {
-    const aiGroups = model.groups.filter((group) => isAiGroupName(group.name));
+function ensureAiPolicy(model: any) {
+    const aiGroups = model.groups.filter((group: any) => isAiGroupName(group.name));
     const mainGroup = model.groups.find(
-        (group) => !isAiGroupName(group.name) && /选择|proxy|default|global|main/i.test(group.name)
+        (group: any) =>
+            !isAiGroupName(group.name) && /选择|proxy|default|global|main/i.test(group.name)
     );
     const fallbackMembers = proxyOnlyMembers(mainGroup?.members);
     const preferredMembers = proxyOnlyMembers(aiGroups[0]?.members);
-    const nodeMembers = model.proxies.map((proxy) => proxy.name || proxy.tag).filter(Boolean);
+    const nodeMembers = model.proxies.map((proxy: any) => proxy.name || proxy.tag).filter(Boolean);
     const aiMembers = Array.from(
         new Set([
             ...(preferredMembers.length > 0 ? preferredMembers : fallbackMembers),
@@ -260,12 +261,12 @@ function ensureAiPolicy(model) {
     );
     const nodeCandidates = aiMembers.length > 0 ? aiMembers : ['REJECT'];
 
-    aiGroups.forEach((group) => {
+    aiGroups.forEach((group: any) => {
         group.members = proxyOnlyMembers(group.members);
         if (group.members.length === 0) group.members = ['REJECT'];
     });
 
-    const existingNames = new Set(model.groups.map((group) => group.name));
+    const existingNames = new Set(model.groups.map((group: any) => group.name));
     if (!existingNames.has('🤖 AI 自动')) {
         model.groups.push({
             name: '🤖 AI 自动',
@@ -309,7 +310,7 @@ function ensureAiPolicy(model) {
     });
 
     const existingRules = new Set(
-        model.rules.map((rule) => `${rule.type}|${rule.value}|${rule.policy}`)
+        model.rules.map((rule: any) => `${rule.type}|${rule.value}|${rule.policy}`)
     );
     const aiRules: any[] = [];
     AI_SERVICE_RULES.forEach((service) =>
@@ -328,7 +329,7 @@ function ensureAiPolicy(model) {
     // 保留模板作者已有的精确规则优先级；新服务规则只补缺失项。
     // 插入位置在 MATCH/FINAL 兜底规则之前：mihomo/sing-box 按顺序匹配规则，
     // 追加到兜底之后的规则永远不可达（死规则）。
-    const finalRuleIndex = model.rules.findIndex((rule) => {
+    const finalRuleIndex = model.rules.findIndex((rule: any) => {
         const type = String(rule.type || '').toLowerCase();
         return type === 'match' || type === 'final';
     });
@@ -345,7 +346,7 @@ function ensureAiPolicy(model) {
  * @param {Object} model - 统一模板模型
  * @param {Object} [options] - 注入开关：injectAiPolicy / injectDnsExitGroup（默认均开启）
  */
-export function applySmartModelOptimizations(model, options: Record<string, any> = {}) {
+export function applySmartModelOptimizations(model: any, options: Record<string, any> = {}) {
     const { ruleLevel } = model.meta || {};
     const normalizedLevel = (ruleLevel || '').toLowerCase();
     const isCustomOrNone = !normalizedLevel || normalizedLevel === 'none';
@@ -383,11 +384,11 @@ export function applySmartModelOptimizations(model, options: Record<string, any>
         // 3. 准备获取所有节点的名称，用于后续注入
         // 占位信息节点（trojan://127.0.0.1）不参与地区分组：OpenClash 会剔除占位节点，
         // 若地区组成员全部为占位节点，剔除后策略组变空会导致配置解析失败
-        const proxyNames = model.proxies.map((p) => p.name || p.tag).filter(Boolean);
+        const proxyNames = model.proxies.map((p: any) => p.name || p.tag).filter(Boolean);
         if (proxyNames.length > 0) {
             const nodeEntries = model.proxies
-                .filter((proxy) => !isPlaceholderInfoNode(proxy))
-                .map((proxy) => ({ tag: proxy.name || proxy.tag }));
+                .filter((proxy: any) => !isPlaceholderInfoNode(proxy))
+                .map((proxy: any) => ({ tag: proxy.name || proxy.tag }));
             const regions = groupNodeLinesByRegion(nodeEntries);
 
             // 注入地区自动选优组
@@ -412,7 +413,7 @@ export function applySmartModelOptimizations(model, options: Record<string, any>
 
     // 6. 只有在非精简模式下才执行主选择器兜底注入
     if (normalizedLevel !== 'none' && normalizedLevel !== 'base' && normalizedLevel) {
-        const mainGroupCandidates = model.groups.filter((g) =>
+        const mainGroupCandidates = model.groups.filter((g: any) =>
             /选择|Proxy|Default|Global|Main|select/i.test(g.name)
         );
         if (mainGroupCandidates.length > 0) {
@@ -421,11 +422,11 @@ export function applySmartModelOptimizations(model, options: Record<string, any>
             if (targetGroup.members.length === 0) {
                 const availableGroups = model.groups
                     .filter(
-                        (g) =>
+                        (g: any) =>
                             g.name !== targetGroup.name &&
                             (g.type === 'url-test' || g.type === 'fallback')
                     )
-                    .map((g) => g.name);
+                    .map((g: any) => g.name);
                 targetGroup.members.push(...availableGroups);
             }
         }
@@ -437,7 +438,7 @@ export function applySmartModelOptimizations(model, options: Record<string, any>
     // 指令兜底：所有组统一补 REJECT/DIRECT——成员只有 REJECT/DIRECT 的存根组
     // （如零节点的 🌐 DNS 出口）原样保留，任何组都不会再因成员为空被 pruneEmptyGroups
     // 整组丢弃或引发级联删除，下游渲染产物不再出现悬空引用。
-    model.groups.forEach((group) => {
+    model.groups.forEach((group: any) => {
         if (Array.isArray(group.members)) {
             group.members = withPolicyFallbacks(group.members, group.type);
         }

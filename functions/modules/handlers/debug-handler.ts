@@ -30,7 +30,7 @@ import {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleDebugSubscriptionRequest(request, env) {
+export async function handleDebugSubscriptionRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -81,11 +81,11 @@ export async function handleDebugSubscriptionRequest(request, env) {
                     (nodeResult.subscriptions as Record<string, any> | undefined)?.length || 0,
                 successfulSubscriptions:
                     (nodeResult.subscriptions as Record<string, any> | undefined)?.filter(
-                        (s) => s.success
+                        (s: any) => s.success
                     ).length || 0,
                 failedSubscriptions:
                     (nodeResult.subscriptions as Record<string, any> | undefined)?.filter(
-                        (s) => !s.success
+                        (s: any) => !s.success
                     ).length || 0,
             },
             nodeInfo: {
@@ -94,7 +94,7 @@ export async function handleDebugSubscriptionRequest(request, env) {
                 regions: nodeResult.stats?.regions || {},
             },
             detailedSubscriptions:
-                (nodeResult.subscriptions as Record<string, any> | undefined)?.map((sub) => ({
+                (nodeResult.subscriptions as Record<string, any> | undefined)?.map((sub: any) => ({
                     name: sub.subscriptionName,
                     url: redactUrl(sub.url),
                     success: sub.success,
@@ -104,7 +104,7 @@ export async function handleDebugSubscriptionRequest(request, env) {
                     protocols: sub.success ? calculateProtocolStats(sub.nodes || []) : {},
                     regions: sub.success ? calculateRegionStats(sub.nodes || []) : {},
                 })) || [],
-            sampleNodes: (nodeResult.nodes || []).slice(0, 5).map((node) => ({
+            sampleNodes: (nodeResult.nodes || []).slice(0, 5).map((node: any) => ({
                 name: node.name,
                 protocol: node.protocol,
                 region: node.region,
@@ -133,7 +133,7 @@ export async function handleDebugSubscriptionRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSystemInfoRequest(request, env) {
+export async function handleSystemInfoRequest(request: any, env: any) {
     if (request.method !== 'GET') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -152,8 +152,8 @@ export async function handleSystemInfoRequest(request, env) {
                 : storageAdapter.get('misub_profiles_v1').then((res) => res || []),
         ]);
 
-        const activeSubscriptions = allSubscriptions.filter((sub) => sub.enabled).length;
-        const activeProfiles = allProfiles.filter((profile) => profile.enabled).length;
+        const activeSubscriptions = allSubscriptions.filter((sub: any) => sub.enabled).length;
+        const activeProfiles = allProfiles.filter((profile: any) => profile.enabled).length;
 
         const systemInfo = {
             environment: {
@@ -202,7 +202,7 @@ export async function handleSystemInfoRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleStorageTestRequest(request, env) {
+export async function handleStorageTestRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -279,7 +279,7 @@ export async function handleStorageTestRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleExportDataRequest(request, env) {
+export async function handleExportDataRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -345,7 +345,7 @@ export async function handleExportDataRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePreviewContentRequest(request, env) {
+export async function handlePreviewContentRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -368,7 +368,7 @@ export async function handlePreviewContentRequest(request, env) {
             return createErrorResponse(urlValidation.error, 400);
         }
 
-        const response = await safeFetchPublicUrl(urlValidation.url.toString(), {
+        const response = await safeFetchPublicUrl(urlValidation.url!.toString(), {
             headers: { 'User-Agent': userAgent },
         });
 
@@ -449,7 +449,7 @@ export async function handlePreviewContentRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleTestNotificationRequest(request, env) {
+export async function handleTestNotificationRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }

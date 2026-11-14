@@ -8,25 +8,25 @@
  * @param {string} text - 待转义的文本
  * @returns {string} - 转义后的文本
  */
-export function tgEscape(text) {
+export function tgEscape(text: any) {
     if (typeof text !== 'string') return String(text || '');
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function splitIpCnLocation(value) {
+function splitIpCnLocation(value: any) {
     return String(value || '')
         .trim()
         .split(/\s+/)
         .filter(Boolean);
 }
 
-function isLikelyCarrier(value) {
+function isLikelyCarrier(value: any) {
     return /(?:移动|联通|电信|電信|广电|廣電|铁通|鐵通|教育网|教育網|宽带|寬帶|通信|通訊|网络|網絡|中华电信|中華電信|台湾大哥大|台灣大哥大|远传|遠傳|台湾之星|台灣之星|亚太电信|亞太電信)$/i.test(
         String(value || '').trim()
     );
 }
 
-function parseIpCnHtml(html) {
+function parseIpCnHtml(html: any) {
     const text = String(html || '');
     const description = text
         .match(
@@ -75,8 +75,8 @@ function parseIpCnHtml(html) {
 const IP_GEOLOCATION_PROVIDERS = [
     {
         name: 'ip.cn',
-        supports: (ip) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(ip),
-        buildUrl: (ip) => `https://ip.cn/ip/${encodeURIComponent(ip)}.html`,
+        supports: (ip: any) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(ip),
+        buildUrl: (ip: any) => `https://ip.cn/ip/${encodeURIComponent(ip)}.html`,
         requestInit: {
             redirect: 'manual',
             headers: {
@@ -86,13 +86,13 @@ const IP_GEOLOCATION_PROVIDERS = [
                 Referer: 'https://ip.cn/',
             },
         },
-        read: (response) => response.text(),
+        read: (response: any) => response.text(),
         parse: parseIpCnHtml,
     },
     {
         name: 'ipwho.is',
-        buildUrl: (ip) => `https://ipwho.is/${encodeURIComponent(ip)}`,
-        parse: (data) =>
+        buildUrl: (ip: any) => `https://ipwho.is/${encodeURIComponent(ip)}`,
+        parse: (data: any) =>
             data?.success
                 ? {
                       country: data.country,
@@ -104,8 +104,8 @@ const IP_GEOLOCATION_PROVIDERS = [
     },
     {
         name: 'ipapi.co',
-        buildUrl: (ip) => `https://ipapi.co/${encodeURIComponent(ip)}/json/`,
-        parse: (data) =>
+        buildUrl: (ip: any) => `https://ipapi.co/${encodeURIComponent(ip)}/json/`,
+        parse: (data: any) =>
             data?.error
                 ? null
                 : {
@@ -117,8 +117,8 @@ const IP_GEOLOCATION_PROVIDERS = [
     },
     {
         name: 'ipinfo.io',
-        buildUrl: (ip) => `https://ipinfo.io/${encodeURIComponent(ip)}/json`,
-        parse: (data) =>
+        buildUrl: (ip: any) => `https://ipinfo.io/${encodeURIComponent(ip)}/json`,
+        parse: (data: any) =>
             data?.bogon || data?.error
                 ? null
                 : {
@@ -130,7 +130,7 @@ const IP_GEOLOCATION_PROVIDERS = [
     },
 ];
 
-function hasGeolocationValue(info) {
+function hasGeolocationValue(info: any) {
     return (
         info &&
         Object.values(info).some(
@@ -147,7 +147,7 @@ function mergeMissingGeolocationValues(current: any = {}, incoming: any = {}) {
     return merged;
 }
 
-async function fetchIpGeolocation(clientIp) {
+async function fetchIpGeolocation(clientIp: any) {
     if (
         !clientIp ||
         clientIp === 'N/A' ||
@@ -185,7 +185,7 @@ async function fetchIpGeolocation(clientIp) {
  * @param {string} message - 消息内容 (支持部分 HTML 标签: <b>, <i>, <code>, <a>)
  * @returns {Promise<boolean>} - 是否发送成功
  */
-export async function sendTgNotification(settings, message) {
+export async function sendTgNotification(settings: any, message: any) {
     if (!settings.BotToken || !settings.ChatID) {
         return false;
     }
@@ -229,7 +229,12 @@ export async function sendTgNotification(settings, message) {
  * @param {string} additionalData - 额外数据 (支持 HTML)
  * @returns {Promise<boolean>} - 是否发送成功
  */
-export async function sendEnhancedTgNotification(settings, type, clientIp, additionalData = '') {
+export async function sendEnhancedTgNotification(
+    settings: any,
+    type: any,
+    clientIp: any,
+    additionalData = ''
+) {
     if (!settings.BotToken || !settings.ChatID) {
         return false;
     }
@@ -294,7 +299,7 @@ ${additionalData}
 /**
  * 调试发送Telegram通知（返回详细错误信息）
  */
-export async function debugTgNotification(settings, message) {
+export async function debugTgNotification(settings: any, message: any) {
     if (!settings.BotToken || !settings.ChatID) {
         return { success: false, error: 'BotToken or ChatID not configured' };
     }

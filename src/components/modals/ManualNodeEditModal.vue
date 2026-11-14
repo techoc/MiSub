@@ -44,7 +44,7 @@
         (fileInputRef.value as Record<string, any> | undefined)?.click();
     };
 
-    const onFilePicked = async (event) => {
+    const onFilePicked = async (event: any) => {
         const files = event.target.files;
         event.target.value = '';
         if (!files || !files.length || !props.editingNode) return;
@@ -81,7 +81,7 @@
     const urlFocused = ref(false);
 
     // 协议检测
-    const getProtocol = (url) => {
+    const getProtocol = (url: any) => {
         if (!url) return null;
         const lowerUrl = url.toLowerCase().trim();
         if (lowerUrl.startsWith('anytls://')) return { name: 'AnyTLS', color: 'slate' };
@@ -105,7 +105,7 @@
     };
 
     // 从链接提取节点名称
-    const extractNodeName = (url) => {
+    const extractNodeName = (url: any) => {
         if (!url) return null;
         try {
             // VMess 特殊处理
@@ -130,9 +130,9 @@
         if (!props.editingNode?.url) return [];
         const lines = props.editingNode.url
             .split('\n')
-            .map((l) => l.trim())
+            .map((l: any) => l.trim())
             .filter(Boolean);
-        return lines.map((line, index) => {
+        return lines.map((line: any, index: any) => {
             const protocol = getProtocol(line);
             const name = extractNodeName(line) || `${t('common.node')} ${index + 1}`;
             return { line, protocol, name, index };
@@ -434,7 +434,9 @@
                         >
                             <span
                                 class="text-xs font-bold"
-                                :class="protocolColorMap[singleProtocol.color]"
+                                :class="
+                                    (protocolColorMap as Record<string, any>)[singleProtocol.color]
+                                "
                             >
                                 {{ singleProtocol.name }}
                             </span>
@@ -517,7 +519,9 @@
                             <span
                                 v-if="node.protocol"
                                 class="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
-                                :class="protocolColorMap[node.protocol.color]"
+                                :class="
+                                    (protocolColorMap as Record<string, any>)[node.protocol.color]
+                                "
                             >
                                 {{ node.protocol.name }}
                             </span>

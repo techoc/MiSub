@@ -140,8 +140,9 @@
         const groups = {};
         assets.value.forEach((item) => {
             const group = item.group || t('transformSelector.otherGroup');
-            if (!groups[group]) groups[group] = [];
-            groups[group].push(item);
+            if (!(groups as Record<string, any>)[group])
+                (groups as Record<string, any>)[group] = [];
+            (groups as Record<string, any>)[group].push(item);
         });
         return groups;
     });
@@ -211,7 +212,7 @@
         { immediate: true }
     );
 
-    const handleSelectChange = (e) => {
+    const handleSelectChange = (e: any) => {
         if (props.forceCustom) return;
 
         const val = e.target.value;
@@ -228,7 +229,7 @@
         emit('update:modelValue', val);
     };
 
-    const handleCustomInput = (e) => {
+    const handleCustomInput = (e: any) => {
         emit('update:modelValue', e.target.value);
     };
 

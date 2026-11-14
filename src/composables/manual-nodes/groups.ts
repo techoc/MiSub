@@ -11,13 +11,13 @@
  */
 export const DEFAULT_GROUP_KEY = '默认';
 
-export function normalizeManualNodeGroupName(groupName) {
+export function normalizeManualNodeGroupName(groupName: any) {
     return typeof groupName === 'string' ? groupName.trim() : '';
 }
 
-export function collectManualNodeGroups(nodes, customOrder: any[] = []) {
+export function collectManualNodeGroups(nodes: any, customOrder: any[] = []) {
     const groups = new Set();
-    nodes.forEach((node) => {
+    nodes.forEach((node: any) => {
         const group = normalizeManualNodeGroupName(node.group);
         if (group) {
             groups.add(group);
@@ -53,26 +53,26 @@ export function collectManualNodeGroups(nodes, customOrder: any[] = []) {
     return allGroups;
 }
 
-export function buildGroupedManualNodes(nodesToDisplay, manualNodeGroups) {
+export function buildGroupedManualNodes(nodesToDisplay: any, manualNodeGroups: any) {
     const groups = {};
     // Initialize groups
-    manualNodeGroups.forEach((group) => {
-        groups[group] = [];
+    manualNodeGroups.forEach((group: any) => {
+        (groups as Record<string, any>)[group] = [];
     });
-    groups[DEFAULT_GROUP_KEY] = []; // Default group for ungrouped nodes
+    (groups as Record<string, any>)[DEFAULT_GROUP_KEY] = []; // Default group for ungrouped nodes
 
-    nodesToDisplay.forEach((node) => {
+    nodesToDisplay.forEach((node: any) => {
         const groupName = normalizeManualNodeGroupName(node.group) || DEFAULT_GROUP_KEY;
-        if (!groups[groupName]) {
-            groups[groupName] = [];
+        if (!(groups as Record<string, any>)[groupName]) {
+            (groups as Record<string, any>)[groupName] = [];
         }
-        groups[groupName].push(node);
+        (groups as Record<string, any>)[groupName].push(node);
     });
 
     const result = {};
     Object.keys(groups).forEach((key) => {
-        if (groups[key].length > 0) {
-            result[key] = groups[key];
+        if ((groups as Record<string, any>)[key].length > 0) {
+            (result as Record<string, any>)[key] = (groups as Record<string, any>)[key];
         }
     });
 

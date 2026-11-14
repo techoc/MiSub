@@ -28,12 +28,12 @@ export const SUBSCRIPTION_STATUS_FILTERS = {
  * Returns `null` when the value is absent or unrecognised, so callers can fall
  * back to their default (unfiltered) behaviour.
  */
-export function resolveSubscriptionStatusFilter(status) {
+export function resolveSubscriptionStatusFilter(status: any) {
     if (typeof status !== 'string') return null;
     const key = status.trim().toLowerCase();
     if (!key) return null;
     return Object.prototype.hasOwnProperty.call(SUBSCRIPTION_STATUS_FILTERS, key)
-        ? SUBSCRIPTION_STATUS_FILTERS[key]
+        ? (SUBSCRIPTION_STATUS_FILTERS as Record<string, any>)[key]
         : null;
 }
 
@@ -43,7 +43,7 @@ export function resolveSubscriptionStatusFilter(status) {
  *
  * `now` is injectable so time-dependent filters stay deterministic in tests.
  */
-export function matchesSubscriptionStatus(sub, filter, now = Date.now()) {
+export function matchesSubscriptionStatus(sub: any, filter: any, now = Date.now()) {
     if (!filter || filter === 'all') return true;
     if (!sub) return false;
 
@@ -67,7 +67,7 @@ export function matchesSubscriptionStatus(sub, filter, now = Date.now()) {
  * Mirrors the traffic classification used by `dashboard-health.js` so the
  * dashboard badge and the filtered list agree on what "expired"/"low" means.
  */
-export function getSubscriptionTrafficState(sub, now = Date.now()) {
+export function getSubscriptionTrafficState(sub: any, now = Date.now()) {
     const info = sub?.userInfo;
     if (!sub?.enabled || !info) return null;
 
@@ -97,21 +97,21 @@ export const SETTINGS_FOCUS_ANCHORS = {
     profiletoken: 'setting-profileToken',
 };
 
-function normalizeFocusKey(focus) {
+function normalizeFocusKey(focus: any) {
     if (typeof focus !== 'string') return '';
     return focus.trim().toLowerCase();
 }
 
-export function resolveSettingsFocusTab(focus) {
+export function resolveSettingsFocusTab(focus: any) {
     const key = normalizeFocusKey(focus);
     if (!key) return null;
-    return SETTINGS_FOCUS_TABS[key] || null;
+    return (SETTINGS_FOCUS_TABS as Record<string, any>)[key] || null;
 }
 
-export function resolveSettingsFocusAnchor(focus) {
+export function resolveSettingsFocusAnchor(focus: any) {
     const key = normalizeFocusKey(focus);
     if (!key) return null;
-    return SETTINGS_FOCUS_ANCHORS[key] || null;
+    return (SETTINGS_FOCUS_ANCHORS as Record<string, any>)[key] || null;
 }
 
 /**
@@ -119,7 +119,7 @@ export function resolveSettingsFocusAnchor(focus) {
  * section", which this project expresses by switching the subscriptions page
  * into its profile view.
  */
-export function resolveProfileFocus(focus) {
+export function resolveProfileFocus(focus: any) {
     if (typeof focus !== 'string') return null;
     return focus.trim().toLowerCase() === 'profiles' ? 'profiles' : null;
 }
@@ -128,6 +128,6 @@ export function resolveProfileFocus(focus) {
  * Count how many subscriptions match a filter — used for the "filtered" hint
  * the list shows so a deep-linked user understands why the list is short.
  */
-export function countSubscriptionsByStatus(subscriptions: any[] = [], filter) {
+export function countSubscriptionsByStatus(subscriptions: any[] = [], filter: any) {
     return subscriptions.filter((sub) => matchesSubscriptionStatus(sub, filter)).length;
 }

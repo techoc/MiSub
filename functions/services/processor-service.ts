@@ -24,7 +24,7 @@ import { normalizeGeneratorOptions } from '../modules/subscription/generator-opt
 import { applyMihomoChainProxyToClashConfig } from '../modules/subscription/mihomo-chain-proxy.ts';
 
 import type { KvRecord } from '../../types/models.ts';
-function getTemplateExtension(templateUrl) {
+function getTemplateExtension(templateUrl: any) {
     const raw = typeof templateUrl === 'string' ? templateUrl.trim() : '';
     if (!raw) return '';
 
@@ -37,21 +37,24 @@ function getTemplateExtension(templateUrl) {
     }
 }
 
-export function isIniTemplateSource(templateSource, builtinTemplateEntry: KvRecord | null = null) {
+export function isIniTemplateSource(
+    templateSource: any,
+    builtinTemplateEntry: KvRecord | null = null
+) {
     if (builtinTemplateEntry?.format === 'ini') return true;
     if (templateSource?.kind === 'custom') return true;
     return getTemplateExtension(templateSource?.value) === 'ini';
 }
 
-function stripInternalProxyFields(proxy) {
+function stripInternalProxyFields(proxy: any) {
     if (!proxy || typeof proxy !== 'object') return proxy;
     const { metadata, ...publicProxy } = proxy;
     return publicProxy;
 }
 
-function deduplicateProxyNames(proxies) {
+function deduplicateProxyNames(proxies: any) {
     const seen = new Map();
-    proxies.forEach((proxy) => {
+    proxies.forEach((proxy: any) => {
         if (!proxy?.name) return;
         const originalName = proxy.name;
         const count = seen.get(originalName) || 0;
@@ -62,7 +65,7 @@ function deduplicateProxyNames(proxies) {
     });
 }
 
-export function isClashYamlProfileTemplate(templateText) {
+export function isClashYamlProfileTemplate(templateText: any) {
     if (typeof templateText !== 'string' || templateText.trim() === '') return false;
 
     try {
@@ -71,7 +74,7 @@ export function isClashYamlProfileTemplate(templateText) {
             parsed &&
             typeof parsed === 'object' &&
             !Array.isArray(parsed) &&
-            Array.isArray(parsed['proxy-groups']) &&
+            Array.isArray((parsed as Record<string, any>)['proxy-groups']) &&
             Array.isArray((parsed as Record<string, any>).rules)
         );
     } catch {
@@ -88,7 +91,7 @@ export function isClashYamlProfileTemplate(templateText) {
  *   landing-group: 🔗 链式落地
  *   clone-prefix: "🔗 链式落地|"
  */
-function normalizeYamlChainConfigs(config) {
+function normalizeYamlChainConfigs(config: any) {
     const rawDeclaration = config['x-misub-chain-proxy'];
     delete config['x-misub-chain-proxy'];
 
@@ -114,8 +117,8 @@ function normalizeYamlChainConfigs(config) {
 }
 
 export function renderClashYamlProfileTemplate(
-    templateText,
-    nodeList,
+    templateText: any,
+    nodeList: any,
     options: Record<string, any> = {}
 ) {
     const config = yaml.load(templateText);
@@ -171,7 +174,7 @@ export class ProcessorService {
      * @param {Object} config
      * @param {Object} params
      */
-    static async processNodes(context, config, params) {
+    static async processNodes(context: any, config: any, params: any) {
         const {
             userAgent,
             targetMisubs,
@@ -200,7 +203,7 @@ export class ProcessorService {
      * Render the combined node list into the final format
      * @param {Object} options
      */
-    static async renderOutput(options) {
+    static async renderOutput(options: any) {
         const {
             targetFormat,
             combinedNodeList,
@@ -317,7 +320,7 @@ export class ProcessorService {
                     builtinOptions
                 );
                 contentType = 'application/x-yaml; charset=utf-8';
-                headers['X-MiSub-Template-Mode'] = 'clash-yaml-profile';
+                (headers as Record<string, any>)['X-MiSub-Template-Mode'] = 'clash-yaml-profile';
             }
         }
 

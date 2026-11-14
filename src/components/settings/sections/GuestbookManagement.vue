@@ -74,7 +74,7 @@
         });
     });
 
-    const handleAction = async (action, id, payload = {}) => {
+    const handleAction = async (action: any, id: any, payload = {}) => {
         try {
             const data = await api.post('/api/guestbook/manage', { action, id, ...payload });
 
@@ -107,7 +107,7 @@
         }
     };
 
-    const startReply = (msg) => {
+    const startReply = (msg: any) => {
         replyingId.value = msg.id;
         replyContent.value = msg.reply || '';
     };
@@ -117,17 +117,17 @@
         replyContent.value = '';
     };
 
-    const submitReply = (id) => {
+    const submitReply = (id: any) => {
         if (!replyContent.value.trim()) return;
         handleAction('reply', id, { replyContent: replyContent.value });
     };
 
-    const formatDate = (isoString) => {
+    const formatDate = (isoString: any) => {
         if (!isoString) return '-';
         return new Date(isoString).toLocaleString();
     };
 
-    const getStatusBadgeClass = (status) => {
+    const getStatusBadgeClass = (status: any) => {
         switch (status) {
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
@@ -140,7 +140,7 @@
         }
     };
 
-    const getStatusLabel = (status) => {
+    const getStatusLabel = (status: any) => {
         switch (status) {
             case 'pending':
                 return t('settings.guestbookPending');
@@ -153,7 +153,7 @@
         }
     };
 
-    const getTypeLabel = (type) => {
+    const getTypeLabel = (type: any) => {
         switch (type) {
             case 'bug':
                 return t('settings.guestbookBug');

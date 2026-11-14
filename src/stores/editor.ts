@@ -14,11 +14,11 @@ export const useEditorStore = defineStore('editor', () => {
         isDirty.value = false;
     }
 
-    function setLoading(loading) {
+    function setLoading(loading: any) {
         isLoading.value = loading;
     }
 
-    function setLastUpdated(date) {
+    function setLastUpdated(date: any) {
         lastUpdated.value = date;
     }
 

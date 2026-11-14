@@ -17,9 +17,9 @@ import type { KvRecord } from '../../../../types/models.ts';
  * 先选分组再看列表比直接翻页友好得多。
  */
 export async function handleGroupSelect(
-    chatId,
-    userId,
-    env,
+    chatId: any,
+    userId: any,
+    env: any,
     messageId: KvRecord | null = null,
     type = 'node',
     requestCache: Record<string, any> | null = null
@@ -90,9 +90,9 @@ export async function handleGroupSelect(
  * 对应网站的「批量分组」功能。
  */
 export async function handleGroupManage(
-    chatId,
-    userId,
-    env,
+    chatId: any,
+    userId: any,
+    env: any,
     messageId: KvRecord | null = null,
     type = 'node',
     requestCache: Record<string, any> | null = null
@@ -149,12 +149,12 @@ export async function handleGroupManage(
  * 单个分组的操作面板（重命名 / 删除 / 查看）。
  */
 export async function handleGroupActions(
-    chatId,
-    userId,
-    env,
-    messageId,
-    type,
-    groupName,
+    chatId: any,
+    userId: any,
+    env: any,
+    messageId: any,
+    type: any,
+    groupName: any,
     requestCache: Record<string, any> | null = null
 ) {
     const cache = requestCache || createRequestCache();
@@ -200,11 +200,11 @@ export async function handleGroupActions(
  * @param {string} op rename | clear | delete
  */
 export async function applyGroupOperation(
-    chatId,
-    userId,
-    env,
-    type,
-    groupName,
+    chatId: any,
+    userId: any,
+    env: any,
+    type: any,
+    groupName: any,
     op = 'rename',
     newName: KvRecord | null = null,
     requestCache: Record<string, any> | null = null
@@ -214,7 +214,7 @@ export async function applyGroupOperation(
     const allSubscriptions = await getCachedSubscriptions(env, cache);
 
     let changed = 0;
-    allSubscriptions.forEach((sub) => {
+    allSubscriptions.forEach((sub: any) => {
         if ((sub.group || '').trim() !== groupName) return;
         // 订阅源与节点都按 type 筛选
         const isSub = /^https?:\/\//i.test(sub.url || '');
@@ -227,7 +227,7 @@ export async function applyGroupOperation(
 
     if (op === 'delete') {
         // 删除分组：把成员移除（这里语义同「删除该组内所有项」）
-        const remaining = allSubscriptions.filter((sub) => {
+        const remaining = allSubscriptions.filter((sub: any) => {
             const isSub = /^https?:\/\//i.test(sub.url || '');
             const sameType = type === 'sub' ? isSub : !isSub;
             const sameGroup = (sub.group || '').trim() === groupName;
@@ -253,7 +253,7 @@ export async function applyGroupOperation(
  * 解析目标参数（支持序号、ID、all）
  * @returns {Object} { type: 'index'|'id'|'all'|'range', values: [] }
  */
-export function parseTargetArgs(args) {
+export function parseTargetArgs(args: any) {
     if (!args || args.length === 0) {
         return { type: 'none', values: [] };
     }
@@ -265,7 +265,7 @@ export function parseTargetArgs(args) {
     }
 
     // 支持逗号分隔的多个值
-    const parts = arg.split(/[,，\s]+/).filter((p) => p);
+    const parts = arg.split(/[,，\s]+/).filter((p: any) => p);
     const indices: number[] = [];
     const ids: any[] = [];
 

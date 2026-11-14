@@ -5,7 +5,7 @@ import { useToastStore } from '../stores/toast';
 import { generateProfileId } from '../utils/id.ts';
 import { t } from '../i18n/index.ts';
 
-export function useProfiles(markDirty) {
+export function useProfiles(markDirty: any) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     const { profiles, settings } = storeToRefs(dataStore);
@@ -52,12 +52,12 @@ export function useProfiles(markDirty) {
         profilesCurrentPage.value = 1;
     });
 
-    function changeProfilesPage(page) {
+    function changeProfilesPage(page: any) {
         if (page < 1 || page > profilesTotalPages.value) return;
         profilesCurrentPage.value = page;
     }
 
-    const handleProfileToggle = (updatedProfile) => {
+    const handleProfileToggle = (updatedProfile: any) => {
         const index = profiles.value.findIndex(
             (p) => (p as Record<string, any>).id === updatedProfile.id
         );
@@ -87,7 +87,7 @@ export function useProfiles(markDirty) {
         showProfileModal.value = true;
     };
 
-    const handleEditProfile = (profileId) => {
+    const handleEditProfile = (profileId: any) => {
         const profile = profiles.value.find(
             (p) =>
                 (p as Record<string, any>).id === profileId ||
@@ -112,7 +112,7 @@ export function useProfiles(markDirty) {
         }
     };
 
-    const handleSaveProfile = (profileData) => {
+    const handleSaveProfile = (profileData: any) => {
         if (!profileData || !profileData.name) {
             showToast(t('profiles.nameRequired'), 'error');
             return;
@@ -145,7 +145,7 @@ export function useProfiles(markDirty) {
         showProfileModal.value = false;
     };
 
-    const handleDeleteProfile = (profileId) => {
+    const handleDeleteProfile = (profileId: any) => {
         dataStore.removeProfile(profileId);
         markDirty();
     };
@@ -156,7 +156,7 @@ export function useProfiles(markDirty) {
         showDeleteProfilesModal.value = false;
     };
 
-    const copyProfileLink = (profileId) => {
+    const copyProfileLink = (profileId: any) => {
         const token = settings.value?.profileToken;
         if (!token || token === 'auto' || !token.trim()) {
             showToast(t('profiles.fixedTokenRequired'), 'error');
@@ -208,7 +208,7 @@ export function useProfiles(markDirty) {
     };
 
     // Clash 专用链接复制（带 builtin 转换器参数）
-    const copyClashLink = (profileId) => {
+    const copyClashLink = (profileId: any) => {
         const token = settings.value?.profileToken;
         if (!token || token === 'auto' || !token.trim()) {
             showToast(t('profiles.fixedTokenRequired'), 'error');
@@ -259,18 +259,18 @@ export function useProfiles(markDirty) {
         }
     };
 
-    const cleanupSubscriptions = (subId) => {
+    const cleanupSubscriptions = (subId: any) => {
         profiles.value.forEach((p) => {
             (p as Record<string, any>).subscriptions = (
                 p as Record<string, any>
-            ).subscriptions.filter((id) => id !== subId);
+            ).subscriptions.filter((id: any) => id !== subId);
         });
     };
 
-    const cleanupNodes = (nodeId) => {
+    const cleanupNodes = (nodeId: any) => {
         profiles.value.forEach((p) => {
             (p as Record<string, any>).manualNodes = (p as Record<string, any>).manualNodes.filter(
-                (id) => id !== nodeId
+                (id: any) => id !== nodeId
             );
         });
     };

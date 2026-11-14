@@ -1,6 +1,6 @@
 const isDev = import.meta.env.DEV;
 
-const normalizeBase64 = (input) => {
+const normalizeBase64 = (input: any) => {
     let s = String(input || '')
         .trim()
         .replace(/\s+/g, '');
@@ -19,7 +19,7 @@ const normalizeBase64 = (input) => {
     return s;
 };
 
-const safeBase64Decode = (input) => {
+const safeBase64Decode = (input: any) => {
     try {
         const normalized = normalizeBase64(input);
         const binary = atob(normalized);
@@ -31,14 +31,14 @@ const safeBase64Decode = (input) => {
     }
 };
 
-const buildSortedQuery = (params) => {
+const buildSortedQuery = (params: any) => {
     const items = (Array.from(params.entries()) as [string, string][]).sort(([a], [b]) =>
         a.localeCompare(b)
     );
     return items.length ? `?${items.map(([k, v]) => `${k}=${v}`).join('&')}` : '';
 };
 
-const normalizeUrlForDedup = (url) => {
+const normalizeUrlForDedup = (url: any) => {
     try {
         const raw = String(url || '').trim();
         if (!raw) return '';
@@ -55,7 +55,7 @@ const normalizeUrlForDedup = (url) => {
             const sorted = Object.keys(nodeConfig)
                 .sort()
                 .reduce((obj, key) => {
-                    obj[key] = nodeConfig[key];
+                    (obj as Record<string, any>)[key] = nodeConfig[key];
                     return obj;
                 }, {});
             return `vmess://${JSON.stringify(sorted)}`;
@@ -109,7 +109,7 @@ const normalizeUrlForDedup = (url) => {
     }
 };
 
-const getNodePriorityScore = (node) => {
+const getNodePriorityScore = (node: any) => {
     let score = 0;
     if (node.enabled) score += 8;
     if (node.name && node.name.trim()) score += 4;
@@ -119,8 +119,8 @@ const getNodePriorityScore = (node) => {
     return score;
 };
 
-export function buildDedupPlan(nodes) {
-    const enrichedNodes = nodes.map((node, index) => ({ ...node, __index: index }));
+export function buildDedupPlan(nodes: any) {
+    const enrichedNodes = nodes.map((node: any, index: any) => ({ ...node, __index: index }));
     const bucket = new Map();
 
     for (const node of enrichedNodes) {

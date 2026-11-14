@@ -58,7 +58,7 @@ function normalizeRegionOverrides(overrides: any[] = []) {
  * 若地区组成员全部由占位节点构成，剔除后策略组会变成空 proxies，
  * 导致 mihomo 解析失败（`use` or `proxies` missing）。
  */
-export function isPlaceholderInfoNode(proxy) {
+export function isPlaceholderInfoNode(proxy: any) {
     const server = proxy?.server;
     return server === '127.0.0.1' || server === '::1';
 }
@@ -99,7 +99,10 @@ export function groupNodeLinesByRegion(nodes: any[] = [], options: Record<string
         }
 
         // 4. 构造标准的展示组名
-        const config = REGION_DISPLAY_CONFIG[region] || { flag: '🌍', name: `${region}节点` };
+        const config = (REGION_DISPLAY_CONFIG as Record<string, any>)[region] || {
+            flag: '🌍',
+            name: `${region}节点`,
+        };
         const groupName = `${config.flag} ${config.name}`;
 
         if (!groups.has(groupName)) {
@@ -112,7 +115,7 @@ export function groupNodeLinesByRegion(nodes: any[] = [], options: Record<string
     groups.forEach((matchedNodes, name) => {
         result.push({
             name,
-            tags: matchedNodes.map((item) => item.tag || item.name),
+            tags: matchedNodes.map((item: any) => item.tag || item.name),
             nodes: matchedNodes,
             count: matchedNodes.length,
             selectorTag: `${name} 选择`,

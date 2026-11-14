@@ -15,7 +15,7 @@
  * @param {Array} allProfiles - 订阅组列表
  * @returns {{token: string, profileIdentifier: (string|null)}}
  */
-export function resolveRequestContext(url, config, allProfiles) {
+export function resolveRequestContext(url: any, config: any, allProfiles: any) {
     let token;
     let profileIdentifier = null;
     const pathSegments = url.pathname.split('/').filter(Boolean);

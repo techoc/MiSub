@@ -8,7 +8,7 @@ import { KV_KEY_SUBS, KV_KEY_PROFILES, KV_KEY_SETTINGS, DEFAULT_SETTINGS } from 
 import { fetchSubscriptionNodes } from './node-fetcher.ts';
 import { applyManualNodeName } from '../utils/node-cleaner.ts';
 
-function ensureArray(data) {
+function ensureArray(data: any) {
     if (!data) return [];
     if (Array.isArray(data)) return data;
     if (typeof data === 'string') {
@@ -22,7 +22,7 @@ function ensureArray(data) {
     return [];
 }
 
-function adaptLegacyTransform(config) {
+function adaptLegacyTransform(config: any) {
     if (!config || !config.enabled) return [];
 
     const ops: any[] = [];
@@ -99,10 +99,10 @@ function adaptLegacyTransform(config) {
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleProfileMode(
-    request,
-    env,
-    profileId,
-    userAgent,
+    request: any,
+    env: any,
+    profileId: any,
+    userAgent: any,
     applyTransform = false,
     skipCertVerify = false,
     depth = 0,
@@ -131,7 +131,7 @@ export async function handleProfileMode(
         typeof (storageAdapter as Record<string, any>).getProfileById === 'function'
             ? await (storageAdapter as Record<string, any>).getProfileById(profileId)
             : ((await storageAdapter.get(KV_KEY_PROFILES)) || []).find(
-                  (p) => (p.customId && p.customId === profileId) || p.id === profileId
+                  (p: any) => (p.customId && p.customId === profileId) || p.id === profileId
               );
     const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || DEFAULT_SETTINGS;
 
@@ -141,7 +141,7 @@ export async function handleProfileMode(
 
     const relatedIds = [
         ...(Array.isArray(profile.subscriptions)
-            ? profile.subscriptions.map((item) => (typeof item === 'object' ? item.id : item))
+            ? profile.subscriptions.map((item: any) => (typeof item === 'object' ? item.id : item))
             : []),
         ...(Array.isArray(profile.manualNodes) ? profile.manualNodes : []),
     ].filter(Boolean);
@@ -151,13 +151,13 @@ export async function handleProfileMode(
                   Array.from(new Set(relatedIds))
               )
             : (await storageAdapter.get(KV_KEY_SUBS)) || [];
-    const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
+    const misubMap = new Map(relatedSubs.map((item: any) => [item.id, item]));
 
     const targetMisubs: any[] = [];
-    const profileSubIds = (profile.subscriptions || []).map((item) =>
+    const profileSubIds = (profile.subscriptions || []).map((item: any) =>
         typeof item === 'object' ? item.id : item
     );
-    profileSubIds.forEach((id) => {
+    profileSubIds.forEach((id: any) => {
         const sub = misubMap.get(id);
         if (
             sub &&
@@ -294,7 +294,7 @@ export async function handleProfileMode(
     const presetNodeTransform = profile.nodeTransformPresetId
         ? Array.isArray(settings.nodeTransformPresets)
             ? settings.nodeTransformPresets.find(
-                  (item) => item?.id === profile.nodeTransformPresetId
+                  (item: any) => item?.id === profile.nodeTransformPresetId
               )?.config
             : null
         : null;

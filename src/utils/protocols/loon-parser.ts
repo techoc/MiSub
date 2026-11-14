@@ -1,7 +1,7 @@
 import { generateNodeId } from '../id.ts';
 import { base64Encode } from './common/base64.ts';
 
-export function parseLoonConfig(content) {
+export function parseLoonConfig(content: any) {
     const nodes: any[] = [];
     const lines = content.split('\n');
 
@@ -46,25 +46,25 @@ export function parseLoonConfig(content) {
     return nodes;
 }
 
-function parseNameAndParams(line) {
+function parseNameAndParams(line: any) {
     const equalIndex = line.indexOf('=');
     if (equalIndex === -1) return null;
     const name = line.slice(0, equalIndex).trim();
     const config = line.slice(equalIndex + 1).trim();
-    const params = config.split(',').map((p) => p.trim());
+    const params = config.split(',').map((p: any) => p.trim());
     return { name, params };
 }
 
-function parseExtraParams(extra) {
+function parseExtraParams(extra: any) {
     const map = new Map();
-    extra.forEach((param) => {
-        const [key, value] = param.split('=').map((p) => p.trim());
+    extra.forEach((param: any) => {
+        const [key, value] = param.split('=').map((p: any) => p.trim());
         if (key && value !== undefined) map.set(key.toLowerCase(), value.replace(/^"|"$/g, ''));
     });
     return map;
 }
 
-function parseLoonVmess(line) {
+function parseLoonVmess(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, uuid, ...extra] = parsed.params;
@@ -99,7 +99,7 @@ function parseLoonVmess(line) {
     };
 }
 
-function parseLoonSS(line) {
+function parseLoonSS(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, method, password] = parsed.params;
@@ -115,7 +115,7 @@ function parseLoonSS(line) {
     };
 }
 
-function parseLoonTrojan(line) {
+function parseLoonTrojan(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, password, ...extra] = parsed.params;
@@ -138,7 +138,7 @@ function parseLoonTrojan(line) {
     };
 }
 
-function parseLoonVless(line) {
+function parseLoonVless(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, uuid, ...extra] = parsed.params;
@@ -178,7 +178,7 @@ function parseLoonVless(line) {
     };
 }
 
-function parseLoonHttp(line) {
+function parseLoonHttp(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, username, password] = parsed.params;
@@ -197,7 +197,7 @@ function parseLoonHttp(line) {
     };
 }
 
-function parseLoonHysteria2(line) {
+function parseLoonHysteria2(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, password, ...extra] = parsed.params;
@@ -217,7 +217,7 @@ function parseLoonHysteria2(line) {
     };
 }
 
-function parseLoonTuic(line) {
+function parseLoonTuic(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, tokenOrUuid, ...extra] = parsed.params;
@@ -239,7 +239,7 @@ function parseLoonTuic(line) {
     };
 }
 
-function parseLoonWireGuard(line) {
+function parseLoonWireGuard(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, privateKey, ...extra] = parsed.params;
@@ -265,7 +265,7 @@ function parseLoonWireGuard(line) {
     };
 }
 
-function parseLoonSnell(line) {
+function parseLoonSnell(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, psk] = parsed.params;
@@ -280,7 +280,7 @@ function parseLoonSnell(line) {
     };
 }
 
-function parseLoonAnyTLS(line) {
+function parseLoonAnyTLS(line: any) {
     const parsed = parseNameAndParams(line);
     if (!parsed) return null;
     const [protocol, server, port, password, ...extra] = parsed.params;

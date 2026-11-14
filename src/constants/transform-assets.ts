@@ -270,11 +270,11 @@ export const TRANSFORM_ASSETS = {
     ],
 };
 
-export function getTransformAssetByUrl(url) {
+export function getTransformAssetByUrl(url: any) {
     return TRANSFORM_ASSETS.configs.find((item) => item.url === url) || null;
 }
 
-export function isBuiltinTransformAssetUrl(url) {
+export function isBuiltinTransformAssetUrl(url: any) {
     return typeof url === 'string' && url.startsWith('builtin:');
 }
 
@@ -285,7 +285,7 @@ export function isBuiltinTransformAssetUrl(url) {
  * @param {(key: string) => string} t i18n 翻译函数
  * @returns {object|null} 附带 name / description 的新对象，入参不会被修改
  */
-export function localizeTransformAsset(asset, t) {
+export function localizeTransformAsset(asset: any, t: any) {
     if (!asset) return null;
     return {
         ...asset,
@@ -295,11 +295,11 @@ export function localizeTransformAsset(asset, t) {
 }
 
 /** 解析全部资产。请在 computed 里调用，否则切换语言不会更新。 */
-export function getLocalizedTransformAssets(t) {
+export function getLocalizedTransformAssets(t: any) {
     return TRANSFORM_ASSETS.configs.map((asset) => localizeTransformAsset(asset, t));
 }
 
 /** 按 url 查找并解析。请在 computed 里调用。 */
-export function getLocalizedTransformAssetByUrl(url, t) {
+export function getLocalizedTransformAssetByUrl(url: any, t: any) {
     return localizeTransformAsset(getTransformAssetByUrl(url), t);
 }

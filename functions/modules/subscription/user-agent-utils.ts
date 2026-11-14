@@ -9,7 +9,7 @@
  * @param {string} userAgent
  * @returns {boolean}
  */
-export function isBrowserAgent(userAgent) {
+export function isBrowserAgent(userAgent: any) {
     if (!userAgent) return false;
     // Common browser keywords - must contain Mozilla and not be a common bot
     const isBrowser =
@@ -33,11 +33,11 @@ export function isBrowserAgent(userAgent) {
  * @param {URLSearchParams} searchParams
  * @returns {string} targetFormat (e.g., 'clash', 'singbox', 'base64')
  */
-export function isHiddifyAgent(userAgent) {
+export function isHiddifyAgent(userAgent: any) {
     return /hiddify/i.test(userAgent || '');
 }
 
-export function determineTargetFormat(userAgent, searchParams) {
+export function determineTargetFormat(userAgent: any, searchParams: any) {
     // 1. Check URL parameters first
     let targetFormat = searchParams.get('target');
     if (!targetFormat) {
@@ -160,7 +160,7 @@ export function determineTargetFormat(userAgent, searchParams) {
  * @param {URLSearchParams} [searchParams]
  * @returns {boolean}
  */
-export function isMetaCore(userAgent, searchParams) {
+export function isMetaCore(userAgent: any, searchParams: any) {
     // 支持通过 URL 参数强制开启 meta 模式 (e.g., &meta=true)
     if (searchParams && (searchParams.get('meta') === '1' || searchParams.get('meta') === 'true')) {
         return true;

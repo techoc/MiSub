@@ -52,7 +52,7 @@ overwrite_original_rules=true`;
     );
     const hasTemplates = computed(() => localTemplates.value.length > 0);
 
-    function cloneTemplates(items) {
+    function cloneTemplates(items: any) {
         return JSON.parse(JSON.stringify(Array.isArray(items) ? items : []));
     }
 
@@ -84,7 +84,7 @@ overwrite_original_rules=true`;
         selectedId.value = template.id;
     }
 
-    function duplicateTemplate(template) {
+    function duplicateTemplate(template: any) {
         if (!template) return;
         const copy = cloneTemplates([template])[0];
         copy.id = `${template.id || 'custom'}-copy-${Date.now().toString(36)}`;
@@ -93,7 +93,7 @@ overwrite_original_rules=true`;
         selectedId.value = copy.id;
     }
 
-    function removeTemplate(template) {
+    function removeTemplate(template: any) {
         if (!template) return;
         localTemplates.value = localTemplates.value.filter(
             (item) => (item as Record<string, any>).id !== template.id

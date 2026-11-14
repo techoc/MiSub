@@ -3,7 +3,7 @@
  * 从 main-handler.js 拆分而来；编排器见 ../main-handler.js。
  */
 
-export function maskSensitiveLogValue(value) {
+export function maskSensitiveLogValue(value: any) {
     const text = String(value ?? '');
     if (!text) return '';
     if (text.length <= 8) return '***';
@@ -12,11 +12,11 @@ export function maskSensitiveLogValue(value) {
 
 const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
 
-export function getProfileDownloadCountKey(profile) {
+export function getProfileDownloadCountKey(profile: any) {
     return `${PROFILE_DOWNLOAD_COUNT_PREFIX}${profile.customId || profile.id}`;
 }
 
-export function extractProxySectionFromBuiltin(content, targetFormat) {
+export function extractProxySectionFromBuiltin(content: any, targetFormat: any) {
     if (typeof content !== 'string' || content.trim() === '') return '';
 
     if (targetFormat === 'clash') {
@@ -50,7 +50,7 @@ export function extractProxySectionFromBuiltin(content, targetFormat) {
             if (config.outbounds && Array.isArray(config.outbounds)) {
                 // 过滤掉 direct, block, dns-out 等元 outbound
                 const proxies = config.outbounds.filter(
-                    (o) => o.type !== 'direct' && o.type !== 'block' && o.type !== 'dns'
+                    (o: any) => o.type !== 'direct' && o.type !== 'block' && o.type !== 'dns'
                 );
                 return JSON.stringify(proxies, null, 2);
             }
@@ -62,7 +62,7 @@ export function extractProxySectionFromBuiltin(content, targetFormat) {
     return '';
 }
 
-export function buildManagedConfigUrl(requestUrl) {
+export function buildManagedConfigUrl(requestUrl: any) {
     const managedUrl = new URL(requestUrl);
     managedUrl.searchParams.delete('refresh');
     managedUrl.searchParams.delete('nocache');

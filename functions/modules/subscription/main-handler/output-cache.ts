@@ -42,16 +42,16 @@ export function resetOutputCacheForTests() {
  * target-resolver 挂 downloadCountKey；编排器在访问日志分支挂
  * loggable/targetFormat/subName 等。
  */
-export function setOutputCacheHints(context, partial) {
+export function setOutputCacheHints(context: any, partial: any) {
     if (!context) return;
     context[HINTS_PROP] = { ...(context[HINTS_PROP] || {}), ...partial };
 }
 
-export function getOutputCacheHints(context) {
+export function getOutputCacheHints(context: any) {
     return context?.[HINTS_PROP] || null;
 }
 
-export function isCacheableRequest(request) {
+export function isCacheableRequest(request: any) {
     if (!request || request.method !== 'GET') return false;
     try {
         const url = new URL(request.url);
@@ -61,7 +61,7 @@ export function isCacheableRequest(request) {
     }
 }
 
-export function isCacheableResponse(response) {
+export function isCacheableResponse(response: any) {
     if (!response || response.status !== 200) return false;
     const contentType = response.headers?.get?.('Content-Type') || '';
     // 伪装页/浏览器落地页是 text/html；订阅输出永远是 yaml/json/纯文本
@@ -73,7 +73,7 @@ export function isCacheableResponse(response) {
  * 64-bit 指纹（FNV-1a + djb2 各 32 位），纯同步、跨 isolate 稳定，
  * 仅用于 304 协商，不需要加密强度。
  */
-export function computeOutputEtag(body) {
+export function computeOutputEtag(body: any) {
     const text = String(body ?? '');
     let fnv = 0x811c9dc5;
     let djb = 5381;
@@ -85,7 +85,7 @@ export function computeOutputEtag(body) {
     return `W/"misub-${fnv.toString(16).padStart(8, '0')}${djb.toString(16).padStart(8, '0')}"`;
 }
 
-function buildCacheKey(request) {
+function buildCacheKey(request: any) {
     let url;
     try {
         url = new URL(request.url);
@@ -96,7 +96,7 @@ function buildCacheKey(request) {
     return `${request.method} ${url.pathname}${url.search} ua=${ua}`;
 }
 
-function dropEntry(key) {
+function dropEntry(key: any) {
     const entry = outputCacheEntries.get(key);
     if (entry) {
         outputCacheTotalBytes -= entry.bytes;
@@ -104,13 +104,13 @@ function dropEntry(key) {
     }
 }
 
-function purgeExpired(now) {
+function purgeExpired(now: any) {
     for (const [key, entry] of outputCacheEntries) {
         if (now - entry.storedAt > OUTPUT_CACHE_TTL_MS) dropEntry(key);
     }
 }
 
-function evictIfNeeded(incomingBytes) {
+function evictIfNeeded(incomingBytes: any) {
     while (
         outputCacheEntries.size > 0 &&
         (outputCacheEntries.size >= OUTPUT_CACHE_MAX_ENTRIES ||
@@ -125,7 +125,7 @@ function evictIfNeeded(incomingBytes) {
 /**
  * 命中查询。返回 Response 或 null。onHit(entry) 供编排器补记日志/计数。
  */
-export function matchCachedOutput(request, { onHit }: Record<string, any> = {}) {
+export function matchCachedOutput(request: any, { onHit }: Record<string, any> = {}) {
     if (!isCacheableRequest(request)) return null;
     const key = buildCacheKey(request);
     if (!key) return null;
@@ -158,7 +158,7 @@ export function matchCachedOutput(request, { onHit }: Record<string, any> = {}) 
  * 把管线产出写入缓存；返回可能补上 ETag 的新 Response（调用方直接透传给客户端）。
  * 不满足缓存条件的响应原样返回。
  */
-export async function storeOutput(context, response) {
+export async function storeOutput(context: any, response: any) {
     if (!context || !isCacheableRequest(context.request)) return response;
     if (!isCacheableResponse(response)) return response;
     // 登录态响应永不入缓存：同一 URL+UA 下管理员看到的内容可能与匿名不同（伪装）

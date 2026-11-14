@@ -18,7 +18,7 @@ const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, f
  * - Clash / mihomo YAML（proxies: ...）
  * - sing-box JSON（{"outbounds": [...]}）
  */
-export function needsServerParsing(text) {
+export function needsServerParsing(text: any) {
     if (/^v2rayn:\/\//im.test(text)) return true;
     if (/^\s*proxies\s*:/im.test(text)) return true;
     const trimmed = text.trim();
@@ -26,7 +26,7 @@ export function needsServerParsing(text) {
     return false;
 }
 
-export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk }) {
+export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk }: any) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     const showModal = ref(false);
@@ -34,17 +34,19 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
     /**
      * 交给后端把特殊格式转成标准分享 URI；失败时回退原文（前端能识别多少算多少）
      */
-    const convertViaServer = async (importText) => {
+    const convertViaServer = async (importText: any) => {
         try {
             const parsed = await api.post('/api/parse_subscription', { content: importText });
-            const converted = (parsed?.data?.nodes || []).map((node) => node?.url).filter(Boolean);
+            const converted = (parsed?.data?.nodes || [])
+                .map((node: any) => node?.url)
+                .filter(Boolean);
             if (!parsed?.success || converted.length === 0) return importText;
 
             // 订阅链接（http/https）后端不处理，原样保留
             const keptLines = importText
                 .split('\n')
-                .map((line) => line.trim())
-                .filter((line) => /^https?:\/\//i.test(line));
+                .map((line: any) => line.trim())
+                .filter((line: any) => /^https?:\/\//i.test(line));
 
             return [...converted, ...keptLines].join('\n');
         } catch (error) {
@@ -53,7 +55,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         }
     };
 
-    const handleBulkImport = async (importText, group) => {
+    const handleBulkImport = async (importText: any, group: any) => {
         if (!importText) return;
 
         const normalizedGroup = normalizeManualNodeGroupName(group);
@@ -76,7 +78,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
 
         const lines = text
             .split('\n')
-            .map((line) => line.trim())
+            .map((line: any) => line.trim())
             .filter(Boolean);
         const validSubs: any[] = [];
         const validNodes: any[] = [];
@@ -103,7 +105,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         }
 
         // 处理标准 URL 格式（逐行检查）
-        lines.forEach((line) => {
+        lines.forEach((line: any) => {
             const baseItem = {
                 name: extractNodeName(line) || t('bulkImport.unnamed'),
                 url: line,

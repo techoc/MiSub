@@ -33,14 +33,14 @@ const SUBSCRIPTION_BODY_ERROR_PATTERNS = [
     /\bhttp\s*(400|401|403|404|429|5\d\d)\b/i,
 ];
 
-function summarizeResponseText(text) {
+function summarizeResponseText(text: any) {
     return String(text || '')
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, 180);
 }
 
-function detectSubscriptionBodyError(text) {
+function detectSubscriptionBodyError(text: any) {
     const summary = summarizeResponseText(text);
     if (!summary) return null;
 
@@ -57,7 +57,7 @@ function detectSubscriptionBodyError(text) {
     return error;
 }
 
-async function resolveNodeCountFetchCfOptions(env) {
+async function resolveNodeCountFetchCfOptions(env: any) {
     try {
         const storageAdapter = StorageFactory.createAdapter(
             env,
@@ -82,7 +82,7 @@ async function resolveNodeCountFetchCfOptions(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleNodeCountRequest(request, env) {
+export async function handleNodeCountRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -133,13 +133,16 @@ export async function handleNodeCountRequest(request, env) {
 
             // 1. 处理流量请求的结果
             // 辅助函数：从响应头提取用户信息
-            const extractUserInfo = (response) => {
+            const extractUserInfo = (response: any) => {
                 const userInfoHeader = response.headers.get('subscription-userinfo');
                 if (userInfoHeader) {
                     const info = {};
-                    userInfoHeader.split(';').forEach((part) => {
+                    userInfoHeader.split(';').forEach((part: any) => {
                         const [key, value] = part.trim().split('=');
-                        if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
+                        if (key && value)
+                            (info as Record<string, any>)[key] = /^\d+$/.test(value)
+                                ? Number(value)
+                                : value;
                     });
                     return info;
                 }
@@ -148,7 +151,7 @@ export async function handleNodeCountRequest(request, env) {
 
             // 辅助函数：从响应体伪节点名称中解析流量和到期信息
             // 许多机场会在节点列表中嵌入 "剩余流量：985.4 GB" / "套餐到期：2025-12-31" 等伪节点
-            const extractUserInfoFromBody = (decodedText) => {
+            const extractUserInfoFromBody = (decodedText: any) => {
                 if (!decodedText) return null;
 
                 const info: Record<string, any> = {};
@@ -185,7 +188,9 @@ export async function handleNodeCountRequest(request, env) {
                             GB: 1024 ** 3,
                             TB: 1024 ** 4,
                         };
-                        const bytes = Math.round(value * (multipliers[unit] || 1));
+                        const bytes = Math.round(
+                            value * ((multipliers as Record<string, any>)[unit] || 1)
+                        );
                         // 用 total = bytes, upload = 0, download = 0 表示剩余流量
                         info.total = bytes;
                         info.upload = 0;
@@ -425,7 +430,7 @@ export async function handleNodeCountRequest(request, env) {
                     await StorageFactory.getStorageType(env)
                 );
                 const originalSubs = (await storageAdapter.get('misub_subscriptions_v1')) || [];
-                const subToUpdate = originalSubs.find((s) => s.url === subUrl);
+                const subToUpdate = originalSubs.find((s: any) => s.url === subUrl);
 
                 if (subToUpdate) {
                     const knownNodeCount = Math.max(
@@ -455,7 +460,7 @@ export async function handleNodeCountRequest(request, env) {
                     ) {
                         await (storageAdapter as Record<string, any>).updateSubscriptionById(
                             subToUpdate.id,
-                            (current) => ({
+                            (current: any) => ({
                                 ...current,
                                 nodeCount: result.count,
                                 ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),
@@ -466,7 +471,7 @@ export async function handleNodeCountRequest(request, env) {
                         );
                     } else {
                         const allSubs = structuredClone(originalSubs);
-                        const target = allSubs.find((s) => s.url === subUrl);
+                        const target = allSubs.find((s: any) => s.url === subUrl);
                         if (target) {
                             target.nodeCount = result.count;
                             if (result.count >= 10) target.lastGoodNodeCount = result.count;
@@ -505,7 +510,7 @@ export async function handleNodeCountRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleBatchUpdateNodesRequest(request, env) {
+export async function handleBatchUpdateNodesRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -532,7 +537,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
 
         // 过滤出要更新的订阅
         const targetSubscriptions = allSubscriptions.filter(
-            (sub) =>
+            (sub: any) =>
                 subscriptionIds.includes(sub.id) &&
                 sub.enabled &&
                 sub.url &&
@@ -552,7 +557,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
         const SINGLE_SUB_TIMEOUT = 15000;
 
         // 并行获取所有订阅的节点（带超时）
-        const updatePromises = targetSubscriptions.map(async (subscription) => {
+        const updatePromises = targetSubscriptions.map(async (subscription: any) => {
             try {
                 const effectiveUserAgent =
                     (typeof subscription.customUserAgent === 'string' &&
@@ -672,7 +677,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleCleanNodesRequest(request, env) {
+export async function handleCleanNodesRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -699,7 +704,7 @@ export async function handleCleanNodesRequest(request, env) {
             const uniqueNodes: any[] = [];
             const seenUrls = new Set();
 
-            (previewResult.nodes as Record<string, any>).forEach((node) => {
+            (previewResult.nodes as Record<string, any>).forEach((node: any) => {
                 if (node.url && !seenUrls.has(node.url)) {
                     seenUrls.add(node.url);
                     uniqueNodes.push(node);
@@ -730,7 +735,7 @@ export async function handleCleanNodesRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleHealthCheckRequest(request, env) {
+export async function handleHealthCheckRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }

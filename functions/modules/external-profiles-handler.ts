@@ -25,21 +25,21 @@ function generateId() {
     return `profile_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function loadProfiles(storageAdapter) {
+async function loadProfiles(storageAdapter: any) {
     return sortBySortIndex(await storageAdapter.getAllProfiles());
 }
 
-async function getProfileById(storageAdapter, id) {
+async function getProfileById(storageAdapter: any, id: any) {
     return await storageAdapter.getProfileById(id);
 }
 
 async function validateProfileReferences(
-    storageAdapter,
+    storageAdapter: any,
     subscriptionIds: string[] | undefined = undefined,
     manualNodeIds: string[] | undefined = undefined
 ) {
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
-    const byId = new Map(allSubscriptions.map((item) => [item.id, item]));
+    const byId = new Map(allSubscriptions.map((item: any) => [item.id, item]));
 
     if (subscriptionIds !== undefined) {
         for (const id of subscriptionIds) {
@@ -80,19 +80,19 @@ async function validateProfileReferences(
     return null;
 }
 
-function dedupe(values) {
+function dedupe(values: any) {
     return [...new Set(normalizeStringArray(values))];
 }
 
-async function refreshProfileSubscriptions(storageAdapter, env, profile) {
+async function refreshProfileSubscriptions(storageAdapter: any, env: any, profile: any) {
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
-    const byId = new Map(allSubscriptions.map((item) => [item.id, item]));
+    const byId = new Map(allSubscriptions.map((item: any) => [item.id, item]));
     const remoteSubscriptions = (Array.isArray(profile.subscriptions) ? profile.subscriptions : [])
-        .map((id) => byId.get(id))
-        .filter((item) => item && isRemoteSubscription(item));
+        .map((id: any) => byId.get(id))
+        .filter((item: any) => item && isRemoteSubscription(item));
     const manualNodes = (Array.isArray(profile.manualNodes) ? profile.manualNodes : [])
-        .map((id) => byId.get(id))
-        .filter((item) => item && isManualNode(item));
+        .map((id: any) => byId.get(id))
+        .filter((item: any) => item && isManualNode(item));
 
     const results: any[] = [];
     for (const current of remoteSubscriptions) {
@@ -136,8 +136,8 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
 }
 
 export async function handleExternalProfilesRequest(
-    request,
-    env,
+    request: any,
+    env: any,
     { id = null, relation = null, action = null }: Record<string, any> = {}
 ) {
     const storageAdapter = await getExternalStorageAdapter(env);
@@ -208,7 +208,7 @@ export async function handleExternalProfilesRequest(
             sortIndex: Number.isFinite(Number(payload.sortIndex))
                 ? Number(payload.sortIndex)
                 : allProfiles.reduce(
-                      (max, item) => Math.max(max, Number(item?.sortIndex) || 0),
+                      (max: any, item: any) => Math.max(max, Number(item?.sortIndex) || 0),
                       0
                   ) + 1,
             createdAt: timestamp,

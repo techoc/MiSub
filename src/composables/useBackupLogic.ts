@@ -13,7 +13,7 @@ import { confirmAction } from './useConfirm.ts';
 export function useBackupLogic() {
     const { showToast } = useToastStore();
 
-    const downloadJson = (data, filename) => {
+    const downloadJson = (data: any, filename: any) => {
         const jsonString = JSON.stringify(data, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);

@@ -67,7 +67,7 @@
                 if (value && value.toLowerCase().includes(searchQuery.value.toLowerCase())) {
                     // 提取匹配的部分作为建议
                     const words = value.split(/\s+/);
-                    words.forEach((word) => {
+                    words.forEach((word: any) => {
                         if (
                             word.toLowerCase().includes(searchQuery.value.toLowerCase()) &&
                             word.length > 2
@@ -82,7 +82,7 @@
         return Array.from(suggestions).slice(0, 5);
     });
 
-    const toggleFilter = (filterKey) => {
+    const toggleFilter = (filterKey: any) => {
         if (activeFilters.value.has(filterKey)) {
             activeFilters.value.delete(filterKey);
         } else {
@@ -91,12 +91,12 @@
         activeFilters.value = new Set(activeFilters.value); // 触发响应式更新
     };
 
-    const selectSuggestion = (suggestion) => {
+    const selectSuggestion = (suggestion: any) => {
         searchQuery.value = suggestion;
         addToHistory(suggestion);
     };
 
-    const addToHistory = (query) => {
+    const addToHistory = (query: any) => {
         if (query && !searchHistory.value.includes(query)) {
             searchHistory.value.unshift(query);
             searchHistory.value = searchHistory.value.slice(0, 10); // 保留最近10个

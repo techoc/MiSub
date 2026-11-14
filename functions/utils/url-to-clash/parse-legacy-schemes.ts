@@ -5,7 +5,7 @@
 
 import { extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 
-export function parseHttpsUrl(url, isTls = true) {
+export function parseHttpsUrl(url: any, isTls = true) {
     try {
         // https://username:password@server:port?params#name
         const body = url.substring(isTls ? 8 : 7);
@@ -74,7 +74,7 @@ export function parseHttpsUrl(url, isTls = true) {
  * @param {string} url - SOCKS5 URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSocks5Url(url) {
+export function parseSocks5Url(url: any) {
     try {
         // socks5://username:password@server:port?tls=1#name
         const body = url.substring(9);

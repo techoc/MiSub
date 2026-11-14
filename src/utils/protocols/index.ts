@@ -8,7 +8,7 @@ import { parseQuantumultXConfig } from './quantumultx-parser.ts';
 
 export { parseLoonConfig, parseSurgeConfig, parseQuantumultXConfig };
 
-export function parseClientConfig(content) {
+export function parseClientConfig(content: any) {
     const text = String(content || '');
     const lower = text.toLowerCase();
 

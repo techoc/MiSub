@@ -60,7 +60,7 @@
     const isIframeMode = computed(() =>
         ['iframe-srcdoc', 'iframe-url'].includes(customPageType.value)
     );
-    const sanitizeHtml = (html) =>
+    const sanitizeHtml = (html: any) =>
         DOMPurify.sanitize(html || '', {
             USE_PROFILES: { html: true },
             ADD_ATTR: ['data-slot'],
@@ -71,7 +71,7 @@
     const iframeSrcdoc = computed(() =>
         customPageType.value === 'iframe-srcdoc' ? sanitizeHtml(props.content || '') : undefined
     );
-    const safeIframeUrl = (value) => {
+    const safeIframeUrl = (value: any) => {
         try {
             const url = new URL(String(value || ''), window.location.origin);
             return ['http:', 'https:'].includes(url.protocol) ? url.toString() : '';
@@ -100,7 +100,7 @@
     const iframeUsesDefaultViewportHeight = computed(() => !customPageConfig.value.iframeHeight);
 
     const parsedSource = computed(() => parseCustomPageSource(props.content, props.css));
-    const escapeHtml = (value) => {
+    const escapeHtml = (value: any) => {
         return String(value)
             .replace(/&/g, '&amp;')
             .replace(/"/g, '&quot;')
@@ -151,7 +151,7 @@
     });
 
     // 用于检测占位符是否在 HTML 中的辅助函数
-    const hasSlot = (name) => {
+    const hasSlot = (name: any) => {
         return renderedHtml.value.includes(`data-slot="${name}"`);
     };
 

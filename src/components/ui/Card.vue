@@ -26,7 +26,7 @@
     ]);
     const { t } = useI18n();
 
-    const getProtocol = (url) => {
+    const getProtocol = (url: any) => {
         try {
             if (!url) return 'unknown';
             const lowerUrl = url.toLowerCase();
@@ -156,7 +156,7 @@
         };
     });
 
-    const normalizeWebsiteUrl = (value) => {
+    const normalizeWebsiteUrl = (value: any) => {
         const website = (value || '').trim();
         if (!website) return null;
         if (/^https?:\/\//i.test(website)) return website;
@@ -170,7 +170,7 @@
         const date = new Date(raw);
         if (Number.isNaN(date.getTime())) return null;
 
-        const pad = (value) => String(value).padStart(2, '0');
+        const pad = (value: any) => String(value).padStart(2, '0');
         const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
         const now = new Date();
         const sameDay =

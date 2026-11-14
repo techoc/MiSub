@@ -1,5 +1,5 @@
-export function buildAutoSortedSubscriptions(allSubscriptions, manualNodes) {
-    const subs = allSubscriptions.filter((s) => s.url && /^https?:\/\//.test(s.url));
+export function buildAutoSortedSubscriptions(allSubscriptions: any, manualNodes: any) {
+    const subs = allSubscriptions.filter((s: any) => s.url && /^https?:\/\//.test(s.url));
     const nodes = [...manualNodes];
 
     const regionKeywords = {
@@ -16,9 +16,9 @@ export function buildAutoSortedSubscriptions(allSubscriptions, manualNodes) {
         AU: [/澳大利亚/, /AU/, /Australia/i],
     };
     const regionOrder = ['HK', 'TW', 'SG', 'JP', 'US', 'KR', 'GB', 'DE', 'FR', 'CA', 'AU'];
-    const getRegionCode = (name) => {
+    const getRegionCode = (name: any) => {
         for (const code in regionKeywords) {
-            for (const keyword of regionKeywords[code]) {
+            for (const keyword of (regionKeywords as Record<string, any>)[code]) {
                 if (keyword.test(name)) return code;
             }
         }

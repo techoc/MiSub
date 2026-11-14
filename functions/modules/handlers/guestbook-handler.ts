@@ -19,16 +19,16 @@ const GUESTBOOK_ITEM_PREFIX = `${KV_KEY_GUESTBOOK}:item:`;
 /**
  * 获取存储适配器实例
  */
-async function getStorageAdapter(env) {
+async function getStorageAdapter(env: any) {
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }
 
-function getGuestbookItemKey(id) {
+function getGuestbookItemKey(id: any) {
     return `${GUESTBOOK_ITEM_PREFIX}${id}`;
 }
 
-async function loadGuestbookMessages(storageAdapter) {
+async function loadGuestbookMessages(storageAdapter: any) {
     const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
     if (Array.isArray(index) && index.length > 0) {
         const entries = await Promise.all(
@@ -41,7 +41,7 @@ async function loadGuestbookMessages(storageAdapter) {
     return Array.isArray(legacy) ? legacy : [];
 }
 
-async function persistGuestbookMessage(storageAdapter, message) {
+async function persistGuestbookMessage(storageAdapter: any, message: any) {
     const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
     const ids = Array.isArray(index) ? index : [];
     if (!ids.includes(message.id)) {
@@ -51,7 +51,7 @@ async function persistGuestbookMessage(storageAdapter, message) {
     await storageAdapter.put(getGuestbookItemKey(message.id), message);
 }
 
-async function removeGuestbookMessage(storageAdapter, id) {
+async function removeGuestbookMessage(storageAdapter: any, id: any) {
     const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
     const ids = Array.isArray(index) ? index.filter((item) => item !== id) : [];
     await storageAdapter.put(GUESTBOOK_INDEX_KEY, ids);
@@ -62,7 +62,7 @@ async function removeGuestbookMessage(storageAdapter, id) {
  * 获取公开留言列表
  * 仅返回 isVisible 为 true 的留言
  */
-export async function handleGuestbookGet(env) {
+export async function handleGuestbookGet(env: any) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const [messages, settings] = await Promise.all([
@@ -114,7 +114,7 @@ export async function handleGuestbookGet(env) {
 /**
  * 提交新留言 (Public)
  */
-export async function handleGuestbookPost(request, env) {
+export async function handleGuestbookPost(request: any, env: any) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const settings = await storageAdapter.get(KV_KEY_SETTINGS).then((res) => res || {});
@@ -186,7 +186,7 @@ export async function handleGuestbookPost(request, env) {
 /**
  * 获取管理端留言列表 (Auth Required)
  */
-export async function handleGuestbookManageGet(env) {
+export async function handleGuestbookManageGet(env: any) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const messages = await loadGuestbookMessages(storageAdapter);
@@ -212,7 +212,7 @@ export async function handleGuestbookManageGet(env) {
  * - delete: 删除
  * - toggle: 切换可见性
  */
-export async function handleGuestbookManageAction(request, env) {
+export async function handleGuestbookManageAction(request: any, env: any) {
     try {
         const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
         const { action, id, replyContent } = body; // action: 'reply' | 'delete' | 'toggle' | 'update_status'

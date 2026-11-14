@@ -72,7 +72,7 @@
         showBulkImportModal.value = true;
     };
 
-    const handleDeleteSubscriptionWithCleanup = (subId) => {
+    const handleDeleteSubscriptionWithCleanup = (subId: any) => {
         deleteSubscription(subId);
         cleanupSubscriptions(subId);
     };
@@ -93,7 +93,7 @@
     const previewSubscriptionUrl = ref('');
 
     // 将当前显示组确认为一个机场身份，并统一显示组名；订阅源自身名称保持不变。
-    const handleRenameGroup = (ids, baseName, requestedGroupId) => {
+    const handleRenameGroup = (ids: any, baseName: any, requestedGroupId: any) => {
         const base = String(baseName || '').trim();
         if (!base || !Array.isArray(ids) || ids.length === 0) return;
         const groupId =
@@ -124,7 +124,7 @@
     };
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
-    const handleApplyDetectedName = (subscriptionId, name) => {
+    const handleApplyDetectedName = (subscriptionId: any, name: any) => {
         const target = String(name || '').trim();
         if (!target) return;
         // useSubscriptions 的 updateSubscription 接收「完整订阅对象」而非 (id, patch)
@@ -140,7 +140,7 @@
         showToast(t('subscriptions.nameApplied', { name: target }), 'success');
     };
 
-    const handleAssignAirportGroup = (ids, identity) => {
+    const handleAssignAirportGroup = (ids: any, identity: any) => {
         const groupId = String(identity?.groupId || '').trim();
         const name = String(identity?.name || '').trim();
         if (!groupId || !name || !Array.isArray(ids)) return;
@@ -150,7 +150,7 @@
         });
     };
 
-    const handleSplitAirportGroup = (ids, identity) => {
+    const handleSplitAirportGroup = (ids: any, identity: any) => {
         const groupId = String(identity?.groupId || '').trim();
         const name = String(identity?.name || '').trim();
         if (!groupId || !name || !Array.isArray(ids)) return;
@@ -160,15 +160,15 @@
         });
     };
 
-    const handleResetAirportIdentity = (ids) => {
-        (ids || []).forEach((id) => {
+    const handleResetAirportIdentity = (ids: any) => {
+        (ids || []).forEach((id: any) => {
             const target = subscriptions.value.find((sub) => sub.id === id);
             if (target) updateSubscription({ ...target, airportIdentity: null });
         });
         showToast(t('subscriptions.airportIdentityReset'), 'success');
     };
 
-    const handlePreviewSubscription = (subscriptionId) => {
+    const handlePreviewSubscription = (subscriptionId: any) => {
         const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
         if (subscription) {
             previewSubscriptionId.value = subscriptionId;
@@ -189,7 +189,7 @@
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
 
-    const handleQRCode = (id) => {
+    const handleQRCode = (id: any) => {
         const sub = subscriptions.value.find((s) => s.id === id);
         if (sub) {
             qrCodeUrl.value = sub.url;
@@ -211,7 +211,7 @@
     };
 
     const statusFilterLabel = computed(() => {
-        const key = STATUS_FILTER_LABEL_KEYS[activeStatusFilter.value];
+        const key = (STATUS_FILTER_LABEL_KEYS as Record<string, any>)[activeStatusFilter.value];
         return key ? t(key) : '';
     });
 

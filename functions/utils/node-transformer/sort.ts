@@ -4,12 +4,12 @@
 
 import { stripLeadingEmoji } from './shared.ts';
 
-export function makeComparator(sortCfg) {
+export function makeComparator(sortCfg: any) {
     const keys = sortCfg.keys || [];
     const nameIgnoreEmoji = sortCfg.nameIgnoreEmoji !== false;
 
     // 预先构建 customOrder 索引 Map，将 O(n) 查找优化为 O(1)
-    const customOrderMaps = keys.map((k) => {
+    const customOrderMaps = keys.map((k: any) => {
         let orderList = k?.customOrder;
         if (!Array.isArray(orderList) || orderList.length === 0) {
             if (k?.key === 'region') {
@@ -35,12 +35,12 @@ export function makeComparator(sortCfg) {
         return map;
     });
 
-    const cmpStr = (a, b) =>
+    const cmpStr = (a: any, b: any) =>
         String(a || '').localeCompare(String(b || ''), undefined, {
             numeric: true,
             sensitivity: 'base',
         });
-    const cmpNum = (a, b) => {
+    const cmpNum = (a: any, b: any) => {
         const an = Number(a),
             bn = Number(b);
         if (Number.isNaN(an) && Number.isNaN(bn)) return 0;
@@ -53,7 +53,7 @@ export function makeComparator(sortCfg) {
      * IP 地址比较器
      * 支持 IPv4 用于数字排序，其他作为字符串排序
      */
-    const cmpIp = (a, b) => {
+    const cmpIp = (a: any, b: any) => {
         const ip4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
         const ma = String(a).match(ip4Regex);
         const mb = String(b).match(ip4Regex);
@@ -73,7 +73,7 @@ export function makeComparator(sortCfg) {
         return cmpStr(a, b);
     };
 
-    return (ra, rb) => {
+    return (ra: any, rb: any) => {
         for (let i = 0; i < keys.length; i++) {
             const k = keys[i];
             if (!k?.key) continue;

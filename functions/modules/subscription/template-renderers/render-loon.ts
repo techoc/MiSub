@@ -2,7 +2,7 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.ts';
 import { normalizeUnifiedTemplateModel } from '../template-model.ts';
 import { normalizeGeneratorOptions } from '../generator-options.ts';
 
-function buildProxyLine(proxy) {
+function buildProxyLine(proxy: any) {
     const type = String(proxy.type || '').toLowerCase();
     const name = proxy.name || 'Untitled';
     const server = proxy.server;
@@ -148,7 +148,7 @@ function buildProxyLine(proxy) {
         // IPv4
         if (proxy.ip) {
             const ipv4 = Array.isArray(proxy.ip)
-                ? proxy.ip.find((ip) => !String(ip).includes(':'))
+                ? proxy.ip.find((ip: any) => !String(ip).includes(':'))
                 : proxy.ip;
 
             if (ipv4) {
@@ -177,8 +177,8 @@ function buildProxyLine(proxy) {
         if (proxy.dns) {
             const dnsList = Array.isArray(proxy.dns) ? proxy.dns.filter(Boolean) : [proxy.dns];
 
-            const dns4 = dnsList.find((dns) => !String(dns).includes(':'));
-            const dns6 = dnsList.find((dns) => String(dns).includes(':'));
+            const dns4 = dnsList.find((dns: any) => !String(dns).includes(':'));
+            const dns6 = dnsList.find((dns: any) => String(dns).includes(':'));
 
             if (dns4) {
                 extras.push(`dns=${dns4}`);
@@ -247,13 +247,13 @@ function buildProxyLine(proxy) {
     return null;
 }
 
-function buildGroupLine(group) {
+function buildGroupLine(group: any) {
     const type = String(group.type || 'select').toLowerCase();
     const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     const members = (
         ['url-test', 'fallback', 'load-balance'].includes(type)
             ? rawMembers.filter(
-                  (member) =>
+                  (member: any) =>
                       !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(
                           String(member).toUpperCase()
                       )
@@ -291,7 +291,7 @@ function buildGroupLine(group) {
 //     if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
 //     return `${type},${rule.value},${rule.policy}`;
 // }
-function buildRuleLine(rule) {
+function buildRuleLine(rule: any) {
     const type = String(rule.type || '').toUpperCase();
     if (!type || type === 'RULE-SET') return null;
     if (type === 'MATCH' || type === 'FINAL') {
@@ -303,14 +303,14 @@ function buildRuleLine(rule) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-function buildRemoteRuleLine(rule) {
+function buildRemoteRuleLine(rule: any) {
     const type = String(rule.type || '').toUpperCase();
     if (type !== 'RULE-SET') return null;
     if (!rule.value || !rule.policy) return null;
     return `${rule.value}, policy=${rule.policy}, enabled=true`;
 }
 
-export function renderLoonFromTemplateModel(model, options: Record<string, any> = {}) {
+export function renderLoonFromTemplateModel(model: any, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

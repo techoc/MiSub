@@ -17,7 +17,7 @@
     const logs = ref<any[]>([]);
     const step = ref('check'); // check, migrating, done, error
 
-    const addLog = (message, type = 'info') => {
+    const addLog = (message: any, type = 'info') => {
         const time = new Date().toLocaleTimeString();
         logs.value.unshift({ time, message, type });
     };
@@ -54,7 +54,7 @@
             } else {
                 addLog(t('d1Migration.logMigrateFailed', { message: result.message }), 'error');
                 if (result.details && Array.isArray(result.details)) {
-                    result.details.forEach((err) =>
+                    result.details.forEach((err: any) =>
                         addLog(t('d1Migration.logErrorDetail', { detail: err }), 'error')
                     );
                 }
@@ -100,7 +100,7 @@
         }
     };
 
-    const getLogClass = (type) => {
+    const getLogClass = (type: any) => {
         switch (type) {
             case 'success':
                 return 'text-green-400';

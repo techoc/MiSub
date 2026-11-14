@@ -75,12 +75,12 @@
         }
     };
 
-    const formatTime = (ts) => {
+    const formatTime = (ts: any) => {
         if (!ts) return '-';
         return new Date(ts).toLocaleString(locale.value, { hour12: false });
     };
 
-    const toggleExpand = (id) => {
+    const toggleExpand = (id: any) => {
         expandedLogId.value = expandedLogId.value === id ? null : id;
     };
 

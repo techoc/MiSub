@@ -15,7 +15,7 @@ const EMOJI_FLAG_REGEX = /[\u{1F1E6}-\u{1F1FF}]{2}/gu;
  * @param {string} name - 原始节点名称
  * @returns {Object} 结构化元数据
  */
-export function extractNodeMetadata(name) {
+export function extractNodeMetadata(name: any) {
     if (!name || typeof name !== 'string') {
         return {
             originalName: name,

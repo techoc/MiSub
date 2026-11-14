@@ -63,7 +63,7 @@
     /**
      * 文件导入：读取文件 → 后端解析 → 交回父级批量写入。
      */
-    const handleFiles = async (fileList) => {
+    const handleFiles = async (fileList: any) => {
         isProcessing.value = true;
         errorMessage.value = '';
         successMessage.value = '';
@@ -82,7 +82,7 @@
                 throw new Error(parseResult.error || t('importNodes.parseFileFailed'));
             }
 
-            const nodes = (parseResult.data?.nodes || []).map((node) => ({
+            const nodes = (parseResult.data?.nodes || []).map((node: any) => ({
                 id: generateNodeId(),
                 name: node.name || 'Unknown',
                 url: node.url,
@@ -98,7 +98,8 @@
             }
 
             const uniqueNodes = nodes.filter(
-                (node, index, self) => index === self.findIndex((n) => n.url === node.url)
+                (node: any, index: any, self: any) =>
+                    index === self.findIndex((n: any) => n.url === node.url)
             );
             const duplicateCount = nodes.length - uniqueNodes.length;
 

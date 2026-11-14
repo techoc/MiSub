@@ -2,8 +2,8 @@ import { createExternalError, getExternalApiSettings } from './external-api-util
 
 import type { KvRecord } from '../../types/models.ts';
 export async function authenticateExternalApiRequest(
-    request,
-    env,
+    request: any,
+    env: any,
     storageAdapter: KvRecord | null = null
 ) {
     const settings = await getExternalApiSettings(env, storageAdapter);
@@ -25,7 +25,7 @@ export async function authenticateExternalApiRequest(
 
     const token = match[1].trim();
     const tokens = Array.isArray(settings.tokens) ? settings.tokens : [];
-    const matchedToken = tokens.find((item) => String(item?.token || '') === token);
+    const matchedToken = tokens.find((item: any) => String(item?.token || '') === token);
     if (!matchedToken) {
         return {
             ok: false,

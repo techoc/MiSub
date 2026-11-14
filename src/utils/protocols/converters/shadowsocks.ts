@@ -4,7 +4,7 @@ import { base64Encode } from '../common/base64.ts';
  * Shadowsocks配置转换为URL
  * 支持完整参数：SS2022、插件(obfs/v2ray-plugin)、UDP
  */
-export function convertShadowsocksToUrl(proxy) {
+export function convertShadowsocksToUrl(proxy: any) {
     try {
         if (!proxy.server || !proxy.port || !proxy.cipher || !proxy.password) {
             return null;
@@ -86,7 +86,7 @@ export function convertShadowsocksToUrl(proxy) {
 /**
  * ShadowsocksR配置转换为URL
  */
-export function convertShadowsocksRToUrl(proxy) {
+export function convertShadowsocksRToUrl(proxy: any) {
     try {
         if (!proxy.server || !proxy.port || !proxy.password) {
             return null;

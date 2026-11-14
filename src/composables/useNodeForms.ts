@@ -6,7 +6,7 @@ import { t } from '../i18n/index.ts';
 
 const isDev = import.meta.env.DEV;
 
-export function useNodeForms({ addNode, updateNode }) {
+export function useNodeForms({ addNode, updateNode }: any) {
     const { showToast } = useToastStore();
     const showModal = ref(false);
     const isNew = ref(false);
@@ -24,7 +24,7 @@ export function useNodeForms({ addNode, updateNode }) {
         showModal.value = true;
     };
 
-    const openEdit = (node) => {
+    const openEdit = (node: any) => {
         if (!node) {
             console.error('UseNodeForms: openEdit called with null');
             return;
@@ -40,7 +40,7 @@ export function useNodeForms({ addNode, updateNode }) {
         showModal.value = true;
     };
 
-    const handleUrlInput = (event) => {
+    const handleUrlInput = (event: any) => {
         if (!editingNode.value) return;
         const newUrl = event.target.value;
         if (newUrl && !(editingNode.value as Error).name) {

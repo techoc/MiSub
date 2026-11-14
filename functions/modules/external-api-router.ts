@@ -5,7 +5,7 @@ import { handleExternalManualNodesRequest } from './external-manual-nodes-handle
 import { handleExternalProfilesRequest } from './external-profiles-handler.ts';
 import { handleExternalPreviewRequest } from './external-preview-handler.ts';
 
-export async function handleExternalApiRequest(request, env) {
+export async function handleExternalApiRequest(request: any, env: any) {
     const url = new URL(request.url);
     const rawPath = url.pathname.replace(/^\/api\/ext\/v1/, '') || '/';
 

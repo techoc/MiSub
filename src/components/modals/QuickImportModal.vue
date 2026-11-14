@@ -59,7 +59,7 @@
     };
 
     // 生成深度链接
-    const withQueryParam = (url, key, value) => {
+    const withQueryParam = (url: any, key: any, value: any) => {
         try {
             const parsed = new URL(url);
             if (!parsed.searchParams.has(key)) {
@@ -72,10 +72,10 @@
         }
     };
 
-    const generateDeepLink = (client) => {
+    const generateDeepLink = (client: any) => {
         const subUrl = getSubscriptionUrl();
         const clashSubUrl = withQueryParam(subUrl, 'target', 'clash');
-        const scheme = urlSchemeMap[client.id];
+        const scheme = (urlSchemeMap as Record<string, any>)[client.id];
 
         if (!scheme) return null;
 
@@ -93,7 +93,9 @@
     // 过滤支持一键导入的客户端
     const supportedClients = computed(() => {
         if (!props.clients) return [];
-        return props.clients.filter((client) => urlSchemeMap[(client as Record<string, any>).id]);
+        return props.clients.filter(
+            (client) => (urlSchemeMap as Record<string, any>)[(client as Record<string, any>).id]
+        );
     });
 
     // 按平台分组并排序
@@ -115,12 +117,12 @@
     });
 
     // 判断客户端是否为{{ t('quickImport.recommended') }}（当前平台）
-    const isRecommended = (client) => {
+    const isRecommended = (client: any) => {
         return detectedPlatform.value && client.platforms?.includes(detectedPlatform.value);
     };
 
     // 处理客户端点击
-    const handleClientClick = (client) => {
+    const handleClientClick = (client: any) => {
         const deepLink = generateDeepLink(client);
         if (deepLink) {
             window.location.href = deepLink;
@@ -128,7 +130,7 @@
     };
 
     // 获取平台标签
-    const getPlatformLabel = (platform) => {
+    const getPlatformLabel = (platform: any) => {
         const map = {
             ios: 'iOS',
             android: 'Android',
@@ -137,7 +139,7 @@
             linux: 'Linux',
             HarmonyOS: 'HarmonyOS',
         };
-        return map[platform] || platform;
+        return (map as Record<string, any>)[platform] || platform;
     };
 
     const closeModal = () => {

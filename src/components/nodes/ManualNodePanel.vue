@@ -65,8 +65,8 @@
         manualNodes: computed(() => props.manualNodes),
         paginatedManualNodes: computed(() => props.paginatedManualNodes || []),
         initialSearchTerm: computed(() => props.searchTerm || ''),
-        onBasePageChange: (page) => emit('changePage', page),
-        onSearchTermChange: (value) => emit('update:searchTerm', value),
+        onBasePageChange: (page: any) => emit('changePage', page),
+        onSearchTermChange: (value: any) => emit('update:searchTerm', value),
     });
 
     const toggleSelectionMode = () => {
@@ -74,7 +74,7 @@
         selectedNodeIds.value.clear();
     };
 
-    const toggleNodeSelection = (nodeId) => {
+    const toggleNodeSelection = (nodeId: any) => {
         if (selectedNodeIds.value.has(nodeId)) {
             selectedNodeIds.value.delete(nodeId);
         } else {
@@ -84,7 +84,7 @@
 
     const isAllSelected = computed(() => {
         if (paginatedNodes.value.length === 0) return false;
-        return paginatedNodes.value.every((node) => selectedNodeIds.value.has(node.id));
+        return paginatedNodes.value.every((node: any) => selectedNodeIds.value.has(node.id));
     });
 
     const selectedCount = computed(() => selectedNodeIds.value.size);
@@ -92,10 +92,10 @@
     const toggleSelectAll = () => {
         if (isAllSelected.value) {
             // Deselect all on current page
-            paginatedNodes.value.forEach((node) => selectedNodeIds.value.delete(node.id));
+            paginatedNodes.value.forEach((node: any) => selectedNodeIds.value.delete(node.id));
         } else {
             // Select all on current page
-            paginatedNodes.value.forEach((node) => selectedNodeIds.value.add(node.id));
+            paginatedNodes.value.forEach((node: any) => selectedNodeIds.value.add(node.id));
         }
     };
 
@@ -125,7 +125,7 @@
             const normalizedActiveGroup =
                 activeGroup === DEFAULT_GROUP_KEY ? '' : normalizeManualNodeGroupName(activeGroup);
             nodes = nodes.filter(
-                (node) => normalizeManualNodeGroupName(node.group) === normalizedActiveGroup
+                (node: any) => normalizeManualNodeGroupName(node.group) === normalizedActiveGroup
             );
         }
 
@@ -137,12 +137,12 @@
         set: (val) => emit('reorder', val),
     });
 
-    const handleDelete = (id) => emit('delete', id);
-    const handleEdit = (id) => emit('edit', id);
+    const handleDelete = (id: any) => emit('delete', id);
+    const handleEdit = (id: any) => emit('edit', id);
     const handleAdd = () => emit('add');
-    const handleChangePage = (page) => handlePageChange(page);
-    const handleSetViewMode = (mode) => emit('update:viewMode', mode);
-    const handleSearchTermUpdate = (value) => {
+    const handleChangePage = (page: any) => handlePageChange(page);
+    const handleSetViewMode = (mode: any) => emit('update:viewMode', mode);
+    const handleSearchTermUpdate = (value: any) => {
         localSearchTerm.value = value || '';
     };
     const handleToggleSort = () => {

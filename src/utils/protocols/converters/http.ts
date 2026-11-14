@@ -2,7 +2,7 @@
  * HTTP代理转换为URL
  * 支持完整参数：认证、TLS (HTTPS)、SNI
  */
-export function convertHttpToUrl(proxy) {
+export function convertHttpToUrl(proxy: any) {
     try {
         if (!proxy.server || !proxy.port) {
             return null;

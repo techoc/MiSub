@@ -12,12 +12,12 @@ export const useToastStore = defineStore('toast', () => {
     const toasts = ref<any[]>([]);
     const queue = ref<any[]>([]);
 
-    function _resolveDuration(type, duration) {
+    function _resolveDuration(type: any, duration: any) {
         if (duration !== undefined) return duration;
-        return DURATION_BY_TYPE[type] ?? TIMING.TOAST_DURATION_MS;
+        return (DURATION_BY_TYPE as Record<string, any>)[type] ?? TIMING.TOAST_DURATION_MS;
     }
 
-    function _display(toastItem) {
+    function _display(toastItem: any) {
         toasts.value.push(toastItem);
         setTimeout(() => removeToast(toastItem.id), toastItem.duration);
     }
@@ -28,7 +28,7 @@ export const useToastStore = defineStore('toast', () => {
         }
     }
 
-    function showToast(message, type = 'info', duration?: number) {
+    function showToast(message: any, type = 'info', duration?: number) {
         const id = Date.now() + Math.random().toString(36).substring(2, 7);
         const toastItem = { id, message, type, duration: _resolveDuration(type, duration) };
 
@@ -39,7 +39,7 @@ export const useToastStore = defineStore('toast', () => {
         }
     }
 
-    function removeToast(id) {
+    function removeToast(id: any) {
         const index = toasts.value.findIndex((t) => (t as Record<string, any>).id === id);
         if (index > -1) {
             toasts.value.splice(index, 1);

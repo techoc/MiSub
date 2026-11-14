@@ -84,11 +84,11 @@
         },
     ];
 
-    function readPath(path) {
-        return path.split('.').reduce((value, key) => value?.[key], props.settings);
+    function readPath(path: any) {
+        return path.split('.').reduce((value: any, key: any) => value?.[key], props.settings);
     }
 
-    function writePath(path, value) {
+    function writePath(path: any, value: any) {
         const keys = path.split('.');
         let target = props.settings;
         for (const key of keys.slice(0, -1)) {

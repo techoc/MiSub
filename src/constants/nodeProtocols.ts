@@ -25,8 +25,8 @@ export const COMMON_NODE_PROTOCOLS = [
     'wireguard',
 ];
 
-export function createProtocolRegex(protocols, caseInsensitive = true) {
-    const escaped = protocols.map((protocol) => protocol.replace('+', '\\+'));
+export function createProtocolRegex(protocols: any, caseInsensitive = true) {
+    const escaped = protocols.map((protocol: any) => protocol.replace('+', '\\+'));
     return new RegExp(`^(${escaped.join('|')}):\\/\\/`, caseInsensitive ? 'i' : '');
 }
 

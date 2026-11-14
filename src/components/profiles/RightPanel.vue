@@ -26,9 +26,9 @@
     const selectedFormat = ref('universal');
     const selectedId = ref('default');
 
-    const formatLabel = (format) =>
+    const formatLabel = (format: any) =>
         format === 'universal' ? t('dashboard.linkCard.universalFormat') : format;
-    const isStableToken = (value) =>
+    const isStableToken = (value: any) =>
         typeof value === 'string' &&
         value.trim() === value &&
         value !== 'auto' &&
@@ -102,7 +102,9 @@
         }
 
         const targetMapping = { 'Sing-Box': 'singbox', QuanX: 'quanx' };
-        const formatKey = targetMapping[selectedFormat.value] || selectedFormat.value.toLowerCase();
+        const formatKey =
+            (targetMapping as Record<string, any>)[selectedFormat.value] ||
+            selectedFormat.value.toLowerCase();
         return `${baseUrl}?${formatKey}`;
     });
 

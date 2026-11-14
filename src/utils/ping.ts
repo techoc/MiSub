@@ -12,7 +12,7 @@ import { t } from '@/i18n/index.ts';
  * @param {number} timeoutMs 超时时间（毫秒）
  * @returns {Promise<{status: 'ok'|'timeout'|'error', latency: number, message?: string}>}
  */
-export async function pingNode(host, port, timeoutMs = 3000) {
+export async function pingNode(host: any, port: any, timeoutMs = 3000) {
     if (!host || !port) {
         return { status: 'error', latency: -1, message: t('utils.invalidAddressOrPort') };
     }

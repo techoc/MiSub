@@ -24,7 +24,7 @@ import { normalizeGeneratorOptions } from './generator-options.ts';
  * @param {string} str - 输入字符串
  * @returns {string} 清理后的字符串
  */
-function cleanControlChars(str) {
+function cleanControlChars(str: any) {
     if (typeof str !== 'string') return str;
     // 移除控制字符，但保留换行(\n)、回车(\r)、制表符(\t)
     // eslint-disable-next-line no-control-regex
@@ -37,7 +37,7 @@ function cleanControlChars(str) {
  * @param {string} name - 原始节点名称
  * @returns {string} 安全化后的名称
  */
-function sanitizeNodeName(name) {
+function sanitizeNodeName(name: any) {
     if (!name) return 'Untitled';
     // 清理控制字符
     let safe = cleanControlChars(name);
@@ -54,7 +54,7 @@ function sanitizeNodeName(name) {
  * @param {string} value
  * @returns {string}
  */
-function surgeQuote(value) {
+function surgeQuote(value: any) {
     if (!value) return '';
     // 含逗号、空格或双引号时需要包裹
     if (/[,\s"=]/.test(value)) {
@@ -70,7 +70,7 @@ function surgeQuote(value) {
  *   - proxyLine: Surge [Proxy] 行
  *   - wireguardSection: WireGuard 独立 section（仅 WireGuard 协议有）
  */
-function clashProxyToSurgeResult(proxy) {
+function clashProxyToSurgeResult(proxy: any) {
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const name = sanitizeNodeName(proxy.name);
@@ -297,7 +297,7 @@ function clashProxyToSurgeResult(proxy) {
  * @param {Object} proxy - Clash 格式代理对象
  * @returns {{proxyLine: string, wireguardSection: string}|null}
  */
-function buildWireGuardResult(name, proxy) {
+function buildWireGuardResult(name: any, proxy: any) {
     const sectionName = `WG_${name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_')}`;
 
     // [Proxy] 行
@@ -319,7 +319,9 @@ function buildWireGuardResult(name, proxy) {
     //     if (ipv6) wgLines.push(`self-ip-v6 = ${ipv6}`);
     // }
     if (proxy.ip) {
-        const ipv4 = Array.isArray(proxy.ip) ? proxy.ip.find((ip) => !ip.includes(':')) : proxy.ip;
+        const ipv4 = Array.isArray(proxy.ip)
+            ? proxy.ip.find((ip: any) => !ip.includes(':'))
+            : proxy.ip;
 
         if (ipv4) {
             wgLines.push(`self-ip = ${ipv4}`);
@@ -390,7 +392,7 @@ function buildWireGuardResult(name, proxy) {
  * @param {string[]} parts - 参数列表
  * @param {Object} proxy - 代理对象
  */
-function appendTlsParams(parts, proxy) {
+function appendTlsParams(parts: any, proxy: any) {
     if (proxy.sni || proxy.servername) {
         parts.push(`sni=${proxy.sni || proxy.servername}`);
     }
@@ -409,7 +411,7 @@ function appendTlsParams(parts, proxy) {
  * @returns {string} Surge INI 配置
  */
 
-export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any> = {}) {
+export function generateBuiltinSurgeConfig(nodeList: any, options: Record<string, any> = {}) {
     const {
         fileName = 'MiSub',
         managedConfigUrl = '',
@@ -424,8 +426,8 @@ export function generateBuiltinSurgeConfig(nodeList, options: Record<string, any
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'));
+        .map((line: any) => line.trim())
+        .filter((line: any) => line && !line.startsWith('#'));
 
     const results: any[] = [];
     const proxyNames: any[] = [];
@@ -500,7 +502,7 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
     sections.push(`[Proxy]\nDIRECT = direct\n${finalProxyLines.join('\n')}`);
 
     const levelKey = (ruleLevel || 'std').toUpperCase();
-    const policyFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+    const policyFactory = (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
 
     // 构造带元数据的代理对象用于策略分组
     const proxiesForGrouping = finalProxyNames.map((name, index) => ({
@@ -513,15 +515,15 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
     // 生成策略组
     let abstractGroups = policyFactory(proxiesForGrouping, options);
     if (levelKey === 'RELAY') {
-        abstractGroups = abstractGroups.map((group) =>
+        abstractGroups = abstractGroups.map((group: any) =>
             group.name === '🔗 链式代理'
                 ? { ...group, type: 'relay', proxies: ['入口节点', '落地节点'] }
                 : group
         );
-        if (!abstractGroups.some((group) => group.name === '落地节点')) {
+        if (!abstractGroups.some((group: any) => group.name === '落地节点')) {
             const proxyNames = proxiesForGrouping.map((proxy) => proxy.name);
             abstractGroups.splice(
-                abstractGroups.findIndex((group) => group.name === '入口节点') + 1,
+                abstractGroups.findIndex((group: any) => group.name === '入口节点') + 1,
                 0,
                 {
                     name: '落地节点',
@@ -531,7 +533,7 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
             );
         }
     }
-    const proxyGroupLines = abstractGroups.map((group) => {
+    const proxyGroupLines = abstractGroups.map((group: any) => {
         let type = group.type === 'url-test' ? 'url-test' : 'select';
         if (group.type === 'fallback') type = 'fallback';
         if (group.type === 'relay') type = 'relay';
@@ -567,6 +569,6 @@ ${generatorOptions.ipv6 ? 'ipv6-vif = auto\n' : ''}dns-server = 119.29.29.29, 22
     return sections.join('\n\n') + '\n';
 }
 
-function escapeRegExp(str) {
+function escapeRegExp(str: any) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

@@ -36,7 +36,7 @@
         set(value) {
             const ids = value
                 .split(',')
-                .map((id) => id.trim())
+                .map((id: any) => id.trim())
                 .filter(Boolean);
             telegramPushConfig.value = {
                 ...telegramPushConfig.value,
@@ -69,7 +69,7 @@
     const isTesting = ref(false);
     const testResult = ref<any>(null);
 
-    async function copyText(value, key) {
+    async function copyText(value: any, key: any) {
         if (!value) return;
 
         try {

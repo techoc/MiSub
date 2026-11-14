@@ -7,14 +7,14 @@ import { normalizeUnifiedTemplateModel } from '../template-model.ts';
  * @param {any} val
  * @returns {string}
  */
-function s(val) {
+function s(val: any) {
     if (val === undefined || val === null) return '';
     return String(val)
         .replace(/[\r\n]/g, '')
         .trim();
 }
 
-function mapTransport(proxy) {
+function mapTransport(proxy: any) {
     const network = String(proxy.network || 'tcp').toLowerCase();
     const transport: Record<string, any> = {};
 
@@ -53,7 +53,7 @@ function mapTransport(proxy) {
         transport.h2 = {
             path: s(proxy['h2-opts']?.path || '/'),
             host: Array.isArray(proxy['h2-opts']?.host)
-                ? proxy['h2-opts'].host.map((h) => s(h))
+                ? proxy['h2-opts'].host.map((h: any) => s(h))
                 : [s(proxy['h2-opts']?.host || proxy.server)],
         };
         if (tls) transport.tls = tls;
@@ -73,7 +73,7 @@ function mapTransport(proxy) {
     return Object.keys(transport).length > 0 ? transport : undefined;
 }
 
-function mapProxy(proxy) {
+function mapProxy(proxy: any) {
     const type = s(proxy.type).toLowerCase();
     const name = s(proxy.name);
     const server = s(proxy.server);
@@ -251,10 +251,10 @@ function mapProxy(proxy) {
     return mapped;
 }
 
-function mapPolicyGroup(group) {
+function mapPolicyGroup(group: any) {
     const type = s(group.type || 'select').toLowerCase();
     const policies = Array.isArray(group.members)
-        ? group.members.filter(Boolean).map((p) => s(p))
+        ? group.members.filter(Boolean).map((p: any) => s(p))
         : [];
 
     if (type === 'url-test' || type === 'urltest' || type === 'auto-test') {
@@ -286,7 +286,7 @@ function mapPolicyGroup(group) {
     };
 }
 
-function mapRule(rule) {
+function mapRule(rule: any) {
     const type = s(rule.type).toLowerCase();
     const policy = s(rule.policy || 'DIRECT');
     const value = s(rule.value);
@@ -315,7 +315,7 @@ function mapRule(rule) {
     };
 }
 
-export function renderEgernFromTemplateModel(model, options: Record<string, any> = {}) {
+export function renderEgernFromTemplateModel(model: any, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

@@ -48,7 +48,7 @@
     const titleId = `modal-title-${Math.random().toString(36).slice(2, 10)}`;
 
     // 记录打开弹窗前的焦点元素，关闭时还原
-    let previouslyFocused = null;
+    let previouslyFocused: any = null;
 
     const FOCUSABLE = [
         'a[href]',
@@ -66,7 +66,7 @@
     }
 
     // Focus trap：Tab / Shift+Tab 循环限制在弹窗内，Escape 关闭
-    const handleKeydown = (e) => {
+    const handleKeydown = (e: any) => {
         if (e.key === 'Escape') {
             emit('update:show', false);
             return;

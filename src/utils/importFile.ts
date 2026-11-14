@@ -34,7 +34,7 @@ export const IMPORT_FILE_ACCEPT = [
  * @param {File} file
  * @returns {Promise<string>}
  */
-export function readFileAsText(file): Promise<string> {
+export function readFileAsText(file: any): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result || ''));
@@ -47,7 +47,7 @@ export function readFileAsText(file): Promise<string> {
  * 校验文件大小，超限时抛出可展示的错误。
  * @param {File} file
  */
-export function assertFileSize(file) {
+export function assertFileSize(file: any) {
     if (file && typeof file.size === 'number' && file.size > MAX_IMPORT_FILE_SIZE) {
         const mb = (MAX_IMPORT_FILE_SIZE / 1024 / 1024).toFixed(1);
         throw new Error(
@@ -64,7 +64,7 @@ export function assertFileSize(file) {
  * @param {File: any[]} files
  * @returns {Promise<{ text: string, fileCount: number, byteSize: number }>}
  */
-export async function readFilesAsText(files) {
+export async function readFilesAsText(files: any) {
     const list = Array.from(files || []);
     const chunks: any[] = [];
     let byteSize = 0;

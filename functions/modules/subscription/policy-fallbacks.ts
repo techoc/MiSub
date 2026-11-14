@@ -18,7 +18,7 @@ const AUTO_GROUP_TYPES = new Set(['url-test', 'urltest', 'fallback', 'load-balan
 // 手动选择类组统一追加的兜底成员（按此顺序排在真实成员之后）
 const FALLBACK_POLICY_MEMBERS = ['REJECT', 'DIRECT'];
 
-function isBuiltinPolicyMember(member) {
+function isBuiltinPolicyMember(member: any) {
     return AUTO_GROUP_POLICY_MEMBERS.includes(
         String(member || '')
             .trim()
@@ -26,7 +26,7 @@ function isBuiltinPolicyMember(member) {
     );
 }
 
-function isAutoGroupType(groupType) {
+function isAutoGroupType(groupType: any) {
     return AUTO_GROUP_TYPES.has(
         String(groupType || '')
             .trim()
@@ -40,7 +40,7 @@ function isAutoGroupType(groupType) {
  * @param {string[]} members
  * @returns {string[]}
  */
-export function stripPolicyMembersForAutoGroup(members) {
+export function stripPolicyMembersForAutoGroup(members: any) {
     const list = Array.isArray(members) ? members.filter(Boolean) : [];
     const stripped = list.filter((member) => !isBuiltinPolicyMember(member));
     return stripped.length > 0 ? stripped : list;
@@ -53,7 +53,7 @@ export function stripPolicyMembersForAutoGroup(members) {
  * @param {string[]} members
  * @returns {boolean}
  */
-export function hasRealPolicyMembers(members) {
+export function hasRealPolicyMembers(members: any) {
     const list = Array.isArray(members) ? members.filter(Boolean) : [];
     return list.some((member) => !isBuiltinPolicyMember(member));
 }
@@ -66,7 +66,7 @@ export function hasRealPolicyMembers(members) {
  * @param {string} [groupType] 组类型；未知类型按手动选择类处理
  * @returns {string[]}
  */
-export function withPolicyFallbacks(members, groupType) {
+export function withPolicyFallbacks(members: any, groupType: any) {
     const list = Array.isArray(members) ? members.filter(Boolean) : [];
     const seen = new Set(list.map((member) => String(member).toUpperCase()));
     const fallbacks = isAutoGroupType(groupType) ? ['REJECT'] : FALLBACK_POLICY_MEMBERS;

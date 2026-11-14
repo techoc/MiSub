@@ -151,7 +151,7 @@
         info: 'bg-sky-500',
     };
 
-    const handleStatNavigate = (path, query = {}) => {
+    const handleStatNavigate = (path: any, query = {}) => {
         router.push({ path, query });
     };
 
@@ -189,14 +189,14 @@
     // action key and must not be consulted: an item can carry both (e.g. the
     // error card links to the filtered list AND offers "打开日志"), and reading
     // `action` here used to short-circuit the primary navigation entirely.
-    const handleHealthAction = (item) => {
+    const handleHealthAction = (item: any) => {
         if (item.actionRoute) {
             router.push({ path: item.actionRoute, query: item.actionQuery || {} });
         }
     };
 
     // Secondary buttons dispatch the item's own action key instead of navigating.
-    const handleHealthSecondaryAction = (item) => {
+    const handleHealthSecondaryAction = (item: any) => {
         if (item.action === 'openLog') {
             showLogModal.value = true;
         }
@@ -208,7 +208,7 @@
     // 写入失败必须明确告知用户，否则表现为「点了没反应」且没有任何提示。
     // silent=true：忽略某个待处理项不该弹「设置已更新」，失败文案也用下面更贴切的两句。
     // preferencesOnly=true：这个字段不影响节点处理，让服务端跳过清缓存与 TG 通知。
-    const persistDismissedHealthItems = async (ids) => {
+    const persistDismissedHealthItems = async (ids: any) => {
         try {
             await dataStore.saveSettings(
                 { dismissedHealthItems: ids },
@@ -221,7 +221,7 @@
         }
     };
 
-    const dismissHealthItemById = async (id) => {
+    const dismissHealthItemById = async (id: any) => {
         const current = dismissedHealthItemIds.value;
         // 已经忽略过就不必再往返一次服务端
         if (isHealthItemDismissed(current, id)) return;
@@ -265,7 +265,7 @@
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
 
-    const handleQRCode = (url, title) => {
+    const handleQRCode = (url: any, title: any) => {
         qrCodeUrl.value = url;
         qrCodeTitle.value = title;
         showQRCodeModal.value = true;
@@ -403,13 +403,17 @@
                                 v-for="item in visibleHealthItems"
                                 :key="item.id"
                                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[var(--misub-radius-md)] border p-3"
-                                :class="healthToneClasses[item.tone] || healthToneClasses.info"
+                                :class="
+                                    (healthToneClasses as Record<string, any>)[item.tone] ||
+                                    healthToneClasses.info
+                                "
                             >
                                 <div class="flex gap-3 min-w-0">
                                     <span
                                         class="mt-2 h-2 w-2 shrink-0 rounded-full"
                                         :class="
-                                            healthDotClasses[item.tone] || healthDotClasses.info
+                                            (healthDotClasses as Record<string, any>)[item.tone] ||
+                                            healthDotClasses.info
                                         "
                                     ></span>
                                     <div class="min-w-0">

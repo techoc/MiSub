@@ -19,7 +19,7 @@ export const DATA_KEYS = {
 const D1_COLLECTION_CACHE_TTL_MS = 30 * 1000;
 const d1CollectionCaches = new WeakMap();
 
-function getD1CollectionCache(database) {
+function getD1CollectionCache(database: any) {
     let cache = d1CollectionCaches.get(database);
     if (!cache) {
         cache = new Map();
@@ -28,11 +28,11 @@ function getD1CollectionCache(database) {
     return cache;
 }
 
-export function invalidateD1CollectionCache(database, table) {
+export function invalidateD1CollectionCache(database: any, table: any) {
     getD1CollectionCache(database).delete(table);
 }
 
-export async function readCachedD1Collection(database, table, loader) {
+export async function readCachedD1Collection(database: any, table: any, loader: any) {
     const cache = getD1CollectionCache(database);
     const now = Date.now();
     const existing = cache.get(table);
@@ -88,7 +88,7 @@ export const D1_KNOWN_SETTINGS_KEYS = new Set([
     'misub_restore_snapshot_latest',
 ]);
 
-export async function ensureD1Schema(d1Db) {
+export async function ensureD1Schema(d1Db: any) {
     for (const statement of D1_SCHEMA_STATEMENTS) {
         await d1Db.prepare(statement).run();
     }
@@ -97,7 +97,7 @@ export async function ensureD1Schema(d1Db) {
 /**
  * 判断一个值是否像 KV namespace（有 get/put/delete 方法）
  */
-function isKVNamespace(val) {
+function isKVNamespace(val: any) {
     return (
         val &&
         typeof val === 'object' &&
@@ -113,7 +113,7 @@ function isKVNamespace(val) {
  * @param {Object} env
  * @returns {Object|null}
  */
-export function resolveKV(env) {
+export function resolveKV(env: any) {
     // 1. Cloudflare Pages 方式：env.MISUB_KV
     if (env && isKVNamespace(env.MISUB_KV)) return env.MISUB_KV;
 

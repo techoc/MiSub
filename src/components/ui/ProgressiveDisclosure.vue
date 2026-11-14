@@ -58,7 +58,7 @@
                 padding: 'p-3',
             },
         };
-        return levels[props.level];
+        return (levels as Record<string, any>)[props.level];
     });
 </script>
 

@@ -2,7 +2,7 @@
  * AnyTLS配置转换为URL
  * 支持：TLS、SNI、ALPN、跳过证书验证
  */
-export function convertAnytlsToUrl(proxy) {
+export function convertAnytlsToUrl(proxy: any) {
     try {
         if (!proxy.server || !proxy.port || !proxy.password) {
             return null;

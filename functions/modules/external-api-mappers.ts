@@ -24,11 +24,11 @@ const NODE_PROTOCOL_REGEX = new RegExp(
     'i'
 );
 
-export function isRemoteSubscription(item) {
+export function isRemoteSubscription(item: any) {
     return typeof item?.url === 'string' && /^https?:\/\//i.test(item.url.trim());
 }
 
-export function isManualNode(item) {
+export function isManualNode(item: any) {
     if (typeof item?.url !== 'string') return false;
     const url = item.url.trim();
     if (!url || /^https?:\/\//i.test(url)) return false;
@@ -42,7 +42,7 @@ export function detectNodeProtocol(url = '') {
     return match ? match[1].toLowerCase() : '';
 }
 
-export function toExternalSubscription(item) {
+export function toExternalSubscription(item: any) {
     return {
         id: item.id,
         type: 'subscription',
@@ -63,7 +63,7 @@ export function toExternalSubscription(item) {
     };
 }
 
-export function toExternalManualNode(item) {
+export function toExternalManualNode(item: any) {
     return {
         id: item.id,
         type: 'manual_node',
@@ -80,7 +80,7 @@ export function toExternalManualNode(item) {
     };
 }
 
-export function toExternalProfile(profile) {
+export function toExternalProfile(profile: any) {
     return {
         id: profile.id,
         name: profile.name || '',
@@ -90,7 +90,7 @@ export function toExternalProfile(profile) {
         customId: profile.customId || '',
         subscriptionIds: Array.isArray(profile.subscriptions)
             ? profile.subscriptions
-                  .map((item) => (typeof item === 'object' ? item?.id : item))
+                  .map((item: any) => (typeof item === 'object' ? item?.id : item))
                   .filter(Boolean)
             : [],
         manualNodeIds: Array.isArray(profile.manualNodes)

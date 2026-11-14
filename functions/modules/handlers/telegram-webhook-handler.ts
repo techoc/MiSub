@@ -38,7 +38,7 @@ import { handleCallbackQuery } from './telegram-webhook/callback.ts';
 /**
  * 主 Webhook 处理函数
  */
-export async function handleTelegramWebhook(request, env) {
+export async function handleTelegramWebhook(request: any, env: any) {
     try {
         const requestCache = createRequestCache();
         // 获取配置

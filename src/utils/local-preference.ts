@@ -26,7 +26,7 @@ export function canUseLocalStorage() {
  * @param {(value: unknown) => unknown} validate 校验并归一化；返回 undefined 视为不合法
  * @param {unknown} fallback 不存在 / 损坏 / 不合法时的返回值
  */
-export function readPreference(key, validate, fallback) {
+export function readPreference(key: any, validate: any, fallback: any) {
     try {
         if (!canUseLocalStorage()) return fallback;
         const raw = localStorage.getItem(key);
@@ -43,7 +43,7 @@ export function readPreference(key, validate, fallback) {
  * 写入偏好（JSON 序列化）并回读校验。
  * @returns {boolean} 是否真正落盘
  */
-export function writePreference(key, value) {
+export function writePreference(key: any, value: any) {
     try {
         if (!canUseLocalStorage()) return false;
         const serialized = JSON.stringify(value);
@@ -60,7 +60,7 @@ export function writePreference(key, value) {
  * 用于历史遗留的裸字符串键（如 `'true'` 标记），避免改变已存数据的格式。
  * @returns {boolean} 是否真正落盘
  */
-export function writeRawPreference(key, value) {
+export function writeRawPreference(key: any, value: any) {
     try {
         if (!canUseLocalStorage()) return false;
         const serialized = String(value);
@@ -76,7 +76,7 @@ export function writeRawPreference(key, value) {
  * 读取原始字符串偏好。
  * @returns {string|null}
  */
-export function readRawPreference(key) {
+export function readRawPreference(key: any) {
     try {
         if (!canUseLocalStorage()) return null;
         return localStorage.getItem(key);
@@ -90,7 +90,7 @@ export function readRawPreference(key) {
  * 删除偏好并回读校验。
  * @returns {boolean} key 是否确实已不存在
  */
-export function removePreference(key) {
+export function removePreference(key: any) {
     try {
         if (!canUseLocalStorage()) return false;
         localStorage.removeItem(key);

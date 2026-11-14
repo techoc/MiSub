@@ -11,7 +11,7 @@
  * @param {Object} [disguiseConfig] 伪装配置；若配置了 redirectUrl，则「返回首页」指向该地址
  * @returns {Response} HTML响应
  */
-export function renderDisguisePage(disguiseConfig) {
+export function renderDisguisePage(disguiseConfig: any) {
     const homeHref = resolveHomeHref(disguiseConfig);
     const homeLink = homeHref
         ? `<a href="${escapeHtml(homeHref)}" class="home-link">返回首页</a>`
@@ -205,7 +205,7 @@ export function renderDisguisePage(disguiseConfig) {
  * @param {string} [baseUrl]
  * @returns {Response}
  */
-export function createDisguiseResponse(disguiseConfig, baseUrl) {
+export function createDisguiseResponse(disguiseConfig: any, baseUrl: any) {
     if (disguiseConfig && disguiseConfig.pageType === 'redirect' && disguiseConfig.redirectUrl) {
         const redirectUrl = normalizeRedirectUrl(disguiseConfig.redirectUrl, baseUrl);
         if (redirectUrl) {
@@ -226,7 +226,7 @@ export function createDisguiseResponse(disguiseConfig, baseUrl) {
 }
 
 /** 转义 HTML 属性/文本，避免配置里的引号破坏页面结构。 */
-function escapeHtml(value) {
+function escapeHtml(value: any) {
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -241,7 +241,7 @@ function escapeHtml(value) {
  * @param {Object} [disguiseConfig]
  * @returns {string} 空字符串表示不渲染该链接
  */
-function resolveHomeHref(disguiseConfig) {
+function resolveHomeHref(disguiseConfig: any) {
     if (disguiseConfig && typeof disguiseConfig.redirectUrl === 'string') {
         const trimmed = disguiseConfig.redirectUrl.trim();
         if (trimmed) {
@@ -258,7 +258,7 @@ function resolveHomeHref(disguiseConfig) {
     return '';
 }
 
-function normalizeRedirectUrl(rawUrl, baseUrl) {
+function normalizeRedirectUrl(rawUrl: any, baseUrl: any) {
     if (typeof rawUrl !== 'string') {
         return null;
     }

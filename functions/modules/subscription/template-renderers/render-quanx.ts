@@ -2,7 +2,7 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.ts';
 import { normalizeUnifiedTemplateModel } from '../template-model.ts';
 import { normalizeGeneratorOptions } from '../generator-options.ts';
 
-function buildProxyLine(proxy) {
+function buildProxyLine(proxy: any) {
     const type = String(proxy.type || '').toLowerCase();
     const name = proxy.name || 'Untitled';
     const server = proxy.server;
@@ -161,13 +161,13 @@ function buildProxyLine(proxy) {
     return null;
 }
 
-function buildPolicyLine(group) {
+function buildPolicyLine(group: any) {
     const type = String(group.type || 'select').toLowerCase();
     const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     const members = (
         ['url-test', 'fallback', 'load-balance'].includes(type)
             ? rawMembers.filter(
-                  (member) =>
+                  (member: any) =>
                       !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(
                           String(member).toUpperCase()
                       )
@@ -191,7 +191,7 @@ function buildPolicyLine(group) {
     return `static=${group.name}, ${members}`;
 }
 
-function buildRuleLine(rule) {
+function buildRuleLine(rule: any) {
     const type = String(rule.type || '').toUpperCase();
     if (!type) return null;
     if (type === 'RULE-SET') return null; // Remote rules moved to filter_remote
@@ -200,7 +200,7 @@ function buildRuleLine(rule) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-function normalizeQxVmessMethod(method) {
+function normalizeQxVmessMethod(method: any) {
     const normalized = String(method || '')
         .trim()
         .toLowerCase();
@@ -208,7 +208,7 @@ function normalizeQxVmessMethod(method) {
     return normalized;
 }
 
-export function renderQuanxFromTemplateModel(model, options: Record<string, any> = {}) {
+export function renderQuanxFromTemplateModel(model: any, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

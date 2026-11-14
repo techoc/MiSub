@@ -30,7 +30,7 @@ import yaml from 'js-yaml';
  * @param {string} str - 输入字符串
  * @returns {string} 清理后的字符串
  */
-function cleanControlChars(str) {
+function cleanControlChars(str: any) {
     if (typeof str !== 'string') return str;
     // 移除控制字符，但保留换行(\n)、回车(\r)、制表符(\t)
     // eslint-disable-next-line no-control-regex
@@ -42,7 +42,7 @@ function cleanControlChars(str) {
  * @param {any} obj - 输入对象
  * @returns {any} 清理后的对象
  */
-function deepCleanControlChars(obj) {
+function deepCleanControlChars(obj: any): any {
     if (obj === null || obj === undefined) return obj;
 
     if (typeof obj === 'string') {
@@ -56,7 +56,7 @@ function deepCleanControlChars(obj) {
     if (typeof obj === 'object') {
         const cleaned = {};
         for (const [key, value] of Object.entries(obj)) {
-            cleaned[cleanControlChars(key)] = deepCleanControlChars(value);
+            (cleaned as Record<string, any>)[cleanControlChars(key)] = deepCleanControlChars(value);
         }
         return cleaned;
     }
@@ -68,9 +68,9 @@ function deepCleanControlChars(obj) {
  * 处理重名节点，确保每个节点名称唯一
  * @param {Object[]} proxies - 代理对象数组
  */
-function deduplicateNames(proxies) {
+function deduplicateNames(proxies: any) {
     const usedNames = new Map();
-    proxies.forEach((proxy) => {
+    proxies.forEach((proxy: any) => {
         proxy.name = getUniqueName(proxy.name, usedNames);
     });
 }
@@ -80,8 +80,8 @@ function deduplicateNames(proxies) {
  * @param {Object[]} proxies
  * @returns {Object[]}
  */
-function stripInternalProxyFields(proxies) {
-    return proxies.map((proxy) => {
+function stripInternalProxyFields(proxies: any) {
+    return proxies.map((proxy: any) => {
         const { metadata, ...publicProxy } = proxy;
         return publicProxy;
     });
@@ -95,21 +95,21 @@ function stripInternalProxyFields(proxies) {
  * @param {Object[]} proxyGroups 策略组定义
  * @returns {{proxies: Object[], proxyGroups: Object[]}}
  */
-function applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups) {
-    const relayGroup = proxyGroups.find((group) => group.name === '🔗 链式代理');
+function applyMihomoRelayDialerProxy(proxies: any, publicProxies: any, proxyGroups: any) {
+    const relayGroup = proxyGroups.find((group: any) => group.name === '🔗 链式代理');
     if (!relayGroup) {
         return { proxies: publicProxies, proxyGroups };
     }
 
-    const chainProxies = publicProxies.map((proxy) => ({
+    const chainProxies = publicProxies.map((proxy: any) => ({
         ...proxy,
         name: `🔗 链式代理 - ${proxy.name}`,
         'dialer-proxy': '入口节点',
     }));
-    const chainNames = chainProxies.map((proxy) => proxy.name);
+    const chainNames = chainProxies.map((proxy: any) => proxy.name);
 
     const nextProxyGroups = proxyGroups
-        .map((group) => {
+        .map((group: any) => {
             if (group.name === '🔗 链式代理') {
                 return {
                     ...group,
@@ -138,7 +138,7 @@ function applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups) {
  * @param {Object} options - 配置选项
  * @returns {string} Clash YAML 配置
  */
-export function generateBuiltinClashConfig(nodeList, options: Record<string, any> = {}) {
+export function generateBuiltinClashConfig(nodeList: any, options: Record<string, any> = {}) {
     const {
         fileName = 'MiSub',
         enableUdp = true,
@@ -186,7 +186,8 @@ export function generateBuiltinClashConfig(nodeList, options: Record<string, any
             : getBuiltinRules(levelKey, 'clash');
 
         // 生成策略组并执行引用修剪
-        const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+        const policyGroupsFactory =
+            (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
         let proxyGroups = policyGroupsFactory(proxies, options);
         proxyGroups = pruneProxyGroups(proxyGroups, proxies);
 
@@ -198,7 +199,7 @@ export function generateBuiltinClashConfig(nodeList, options: Record<string, any
 
         // 转换规则行为最终字符串
         const clashRules = rawRules
-            .map((r) => {
+            .map((r: any) => {
                 if (typeof r === 'string') return r;
                 if (r.type === 'rule-provider') return `RULE-SET,${r.provider},${r.target}`;
                 return null;
@@ -223,7 +224,7 @@ export function generateBuiltinClashConfig(nodeList, options: Record<string, any
             (isDomesticDnsMode(options.dnsMode) ||
                 (overrideText.trim() && isExplicitDnsOverride(overrideText)))
         ) {
-            proxyGroups = proxyGroups.filter((g) => g.name !== DNS_PROXY_GROUP);
+            proxyGroups = proxyGroups.filter((g: any) => g.name !== DNS_PROXY_GROUP);
         }
 
         // 基础配置：安全默认值，不再依赖 KV 覆盖才能避免 DNS 递归。
@@ -280,8 +281,8 @@ export function generateBuiltinClashConfig(nodeList, options: Record<string, any
                 ? DEFAULT_RELAY_GROUP
                 : DEFAULT_SELECT_GROUP;
         const fallbackYaml =
-            `proxies:\n${fallbackProxies.map((p) => `  - ${JSON.stringify(p)}`).join('\n')}\n` +
-            `proxy-groups:\n  - name: ${selectGroup}\n    type: select\n    proxies: ${JSON.stringify(fallbackProxies.map((p) => p.name))}\n` +
+            `proxies:\n${fallbackProxies.map((p: any) => `  - ${JSON.stringify(p)}`).join('\n')}\n` +
+            `proxy-groups:\n  - name: ${selectGroup}\n    type: select\n    proxies: ${JSON.stringify(fallbackProxies.map((p: any) => p.name))}\n` +
             `rules:\n  - MATCH,${selectGroup}\n`;
         return fallbackYaml;
     }
@@ -292,12 +293,12 @@ export function generateBuiltinClashConfig(nodeList, options: Record<string, any
  * @param {string} nodeList - 节点列表
  * @returns {string} 仅包含 proxies 部分的 YAML
  */
-export function generateProxiesOnly(nodeList) {
+export function generateProxiesOnly(nodeList: any) {
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'));
+        .map((line: any) => line.trim())
+        .filter((line: any) => line && !line.startsWith('#'));
 
     let proxies = urlsToClashProxies(nodeUrls);
 
@@ -321,6 +322,6 @@ export function generateProxiesOnly(nodeList) {
         return cleanControlChars(yamlStr);
     } catch (e) {
         const fallbackProxies = Array.isArray(proxies) ? stripInternalProxyFields(proxies) : [];
-        return `proxies:\n${fallbackProxies.map((p) => `  - ${JSON.stringify(p)}`).join('\n')}\n`;
+        return `proxies:\n${fallbackProxies.map((p: any) => `  - ${JSON.stringify(p)}`).join('\n')}\n`;
     }
 }

@@ -4,7 +4,7 @@ import { base64Encode } from '../common/base64.ts';
  * VMess配置转换为URL
  * 支持完整参数：TLS、WebSocket、gRPC、HTTP/2、fingerprint
  */
-export function convertVmessToUrl(proxy) {
+export function convertVmessToUrl(proxy: any) {
     try {
         // 兼容 uuid 和 UUID 两种写法
         const uuid = proxy.uuid || proxy.UUID;
@@ -125,7 +125,7 @@ export function convertVmessToUrl(proxy) {
         const cleanConfig = {};
         for (const [key, value] of Object.entries(config)) {
             if (value !== '' && value !== undefined && value !== null) {
-                cleanConfig[key] = value;
+                (cleanConfig as Record<string, any>)[key] = value;
             }
         }
 

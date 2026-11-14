@@ -7,9 +7,9 @@ import { t } from '../i18n/index.ts';
 import { isChunkLoadError } from './chunk-reload.ts';
 import { isNetworkErrorMessage } from './network-error.ts';
 
-let toastHandler = null;
-let monitoringEndpoint = null;
-let monitoringHeaders = null;
+let toastHandler: any = null;
+let monitoringEndpoint: any = null;
+let monitoringHeaders: any = null;
 
 function resolveMonitoringEndpoint() {
     if (
@@ -26,7 +26,7 @@ function resolveMonitoringEndpoint() {
 
 monitoringEndpoint = resolveMonitoringEndpoint();
 
-export function setToastHandler(handler) {
+export function setToastHandler(handler: any) {
     toastHandler = typeof handler === 'function' ? handler : null;
 }
 
@@ -52,7 +52,7 @@ class ErrorHandler {
      * @param {string} context - 错误上下文
      * @param {Object} additionalData - 附加数据
      */
-    handleError(error, context = '', additionalData = {}) {
+    handleError(error: any, context = '', additionalData = {}) {
         const errorKey = this.getErrorKey(error, context);
 
         // 更新错误计数
@@ -103,7 +103,7 @@ class ErrorHandler {
      * @param {string} context - 上下文
      * @returns {string} 错误键
      */
-    getErrorKey(error, context) {
+    getErrorKey(error: any, context: any) {
         const message = error.message || '未知错误';
         const stack = error.stack?.split('\n')[0] || '';
         return `${context}:${message}:${stack}`.substring(0, 100);
@@ -113,7 +113,7 @@ class ErrorHandler {
      * 更新错误计数
      * @param {string} errorKey - 错误键
      */
-    updateErrorCount(errorKey) {
+    updateErrorCount(errorKey: any) {
         const current = (this as Record<string, any>).errorCounts.get(errorKey) || 0;
         (this as Record<string, any>).errorCounts.set(errorKey, current + 1);
     }
@@ -136,7 +136,7 @@ class ErrorHandler {
      * @param {string} errorKey - 错误键
      * @returns {boolean} 是否显示通知
      */
-    shouldShowUserNotification(errorKey) {
+    shouldShowUserNotification(errorKey: any) {
         const count = (this as Record<string, any>).errorCounts.get(errorKey) || 0;
 
         // 第一次错误或错误次数是 5 的倍数时显示
@@ -148,7 +148,7 @@ class ErrorHandler {
      * @param {Object} errorInfo - 错误信息
      * @returns {boolean} 是否发送
      */
-    shouldSendToMonitoring(errorInfo) {
+    shouldSendToMonitoring(errorInfo: any) {
         // 仅发送关键错误或高频错误
         return (
             errorInfo.count >= 3 ||
@@ -161,7 +161,7 @@ class ErrorHandler {
      * 显示用户通知
      * @param {Object} errorInfo - 错误信息
      */
-    showUserNotification(errorInfo) {
+    showUserNotification(errorInfo: any) {
         const handler =
             toastHandler ||
             (typeof window !== 'undefined' ? (window as Record<string, any>).showToast : null);
@@ -184,7 +184,7 @@ class ErrorHandler {
      * @param {Object} errorInfo - 错误信息
      * @returns {string} 用户友好的消息
      */
-    getUserFriendlyMessage(errorInfo) {
+    getUserFriendlyMessage(errorInfo: any) {
         const { message, context } = errorInfo;
 
         if (message.includes('timeout')) {
@@ -249,7 +249,7 @@ class ErrorHandler {
      * 发送错误到监控服务
      * @param {Object} errorInfo - 错误信息
      */
-    async sendToMonitoringService(errorInfo) {
+    async sendToMonitoringService(errorInfo: any) {
         try {
             const endpoint = monitoringEndpoint || resolveMonitoringEndpoint();
             if (!endpoint) return;
@@ -308,7 +308,7 @@ const globalErrorHandler = new ErrorHandler();
 
 export { ErrorHandler, globalErrorHandler };
 
-export const handleError = (error, context, data) => {
+export const handleError = (error: any, context: any, data: any) => {
     return globalErrorHandler.handleError(error, context, data);
 };
 

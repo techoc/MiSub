@@ -4,7 +4,7 @@ import { t } from '../i18n/index.ts';
 //
 const isDev = import.meta.env.DEV;
 
-export function extractNodeName(url) {
+export function extractNodeName(url: any) {
     if (!url) return '';
     url = url.trim();
     try {
@@ -86,7 +86,7 @@ export function extractNodeName(url) {
  * @param {string} prefix - 要添加的前缀 (通常是订阅名)
  * @returns {string} - 添加了前缀的新链接
  */
-export function prependNodeName(link, prefix) {
+export function prependNodeName(link: any, prefix: any) {
     if (!prefix) return link; // 如果没有前缀，直接返回原链接
 
     const hashIndex = link.lastIndexOf('#');
@@ -115,7 +115,7 @@ export function prependNodeName(link, prefix) {
  * @param {string} url - 节点链接
  * @returns {{host: string, port: string}} - 解析失败时返回 { host: '解析失败', port: 'N/A' }
  */
-export function extractHostAndPort(url) {
+export function extractHostAndPort(url: any) {
     if (!url) return { host: '', port: '' };
 
     try {
@@ -214,7 +214,7 @@ export function extractHostAndPort(url) {
  * @param {string} userAgent
  * @returns {{name: string, className: string}}
  */
-export function getClientInfo(userAgent) {
+export function getClientInfo(userAgent: any) {
     if (!userAgent)
         return {
             name: 'Unknown',

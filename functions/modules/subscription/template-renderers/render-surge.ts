@@ -2,7 +2,7 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.ts';
 import { normalizeUnifiedTemplateModel } from '../template-model.ts';
 import { normalizeGeneratorOptions } from '../generator-options.ts';
 
-function buildProxyLine(proxy) {
+function buildProxyLine(proxy: any) {
     const type = String(proxy.type || '').toLowerCase();
     const name = proxy.name || 'Untitled';
     const server = proxy.server;
@@ -153,12 +153,12 @@ function buildProxyLine(proxy) {
 }
 
 // builtin-surge-generator.js implement
-function getWireGuardSectionName(name) {
+function getWireGuardSectionName(name: any) {
     const safeName = String(name || 'WireGuard').replace(/[^a-zA-Z0-9_\u4e00-\u9fa5-]/g, '_');
 
     return `WG_${safeName}`;
 }
-function buildWireGuardSection(proxy) {
+function buildWireGuardSection(proxy: any) {
     if (!proxy || String(proxy.type || '').toLowerCase() !== 'wireguard') {
         return null;
     }
@@ -181,7 +181,7 @@ function buildWireGuardSection(proxy) {
     // IPv4
     if (proxy.ip) {
         const ipv4 = Array.isArray(proxy.ip)
-            ? proxy.ip.find((ip) => !String(ip).includes(':'))
+            ? proxy.ip.find((ip: any) => !String(ip).includes(':'))
             : proxy.ip;
 
         if (ipv4) {
@@ -262,13 +262,13 @@ function buildWireGuardSection(proxy) {
     return lines.join('\n');
 }
 
-function buildProxyGroupLine(group) {
+function buildProxyGroupLine(group: any) {
     const type = String(group.type || 'select').toLowerCase();
     const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     const members = (
         ['url-test', 'fallback', 'load-balance'].includes(type)
             ? rawMembers.filter(
-                  (member) =>
+                  (member: any) =>
                       !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(
                           String(member).toUpperCase()
                       )
@@ -298,7 +298,7 @@ function buildProxyGroupLine(group) {
     return `${group.name} = select, ${members}`;
 }
 
-function buildRuleLine(rule) {
+function buildRuleLine(rule: any) {
     const type = String(rule.type || '').toUpperCase();
     if (!type) return null;
     if (type === 'RULE-SET') return `RULE-SET,${rule.value},${rule.policy}`;
@@ -307,7 +307,7 @@ function buildRuleLine(rule) {
     return `${type},${rule.value},${rule.policy}`;
 }
 
-export function renderSurgeFromTemplateModel(model, options: Record<string, any> = {}) {
+export function renderSurgeFromTemplateModel(model: any, options: Record<string, any> = {}) {
     const normalizedModel = normalizeUnifiedTemplateModel(model);
     const generatorOptions = normalizeGeneratorOptions(
         options.generatorOptions || normalizedModel.settings?.generatorOptions

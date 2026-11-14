@@ -15,7 +15,7 @@ import {
 import { StorageFactory } from '../storage-adapter.ts';
 
 import type { KvRecord } from '../../types/models.ts';
-function normalizeSecret(value) {
+function normalizeSecret(value: any) {
     return String(value ?? '')
         .replace(/\uFEFF/g, '')
         .replace(/[\u200B-\u200D]/g, '')
@@ -23,7 +23,7 @@ function normalizeSecret(value) {
         .replace(/^['"]|['"]$/g, '');
 }
 
-function buildRequestMeta(request, env) {
+function buildRequestMeta(request: any, env: any) {
     return {
         url: request?.url,
         method: request?.method,
@@ -38,7 +38,7 @@ function buildRequestMeta(request, env) {
     };
 }
 
-async function isUsingDefaultAdminPassword(env) {
+async function isUsingDefaultAdminPassword(env: any) {
     const debugInfo = await getAuthDebugInfo(env);
     return debugInfo?.adminPassword?.isDefaultFallback === true;
 }
@@ -49,7 +49,7 @@ async function isUsingDefaultAdminPassword(env) {
  * @param {string} data - 要签名的数据
  * @returns {Promise<string>} 签名后的令牌
  */
-export async function createSignedToken(key, data) {
+export async function createSignedToken(key: any, data: any) {
     if (!key || !data) throw new Error('Key and data are required for signing.');
     const encoder = new TextEncoder();
     const keyData = encoder.encode(key);
@@ -73,7 +73,7 @@ export async function createSignedToken(key, data) {
  * @param {string} token - 要验证的令牌
  * @returns {Promise<string|null>} 验证成功返回数据，失败返回 null
  */
-export async function verifySignedToken(key, token) {
+export async function verifySignedToken(key: any, token: any) {
     if (!key || !token) return null;
     const parts = token.split('.');
     if (parts.length !== 2) return null;
@@ -116,7 +116,7 @@ export async function verifySignedToken(key, token) {
  * @param {Object} env
  * @returns {Promise<Object>}
  */
-export async function getAuthSessionDiagnostic(request, env) {
+export async function getAuthSessionDiagnostic(request: any, env: any) {
     const result: Record<string, any> = {
         isAuthenticated: false,
         reason: 'unknown',
@@ -148,8 +148,8 @@ export async function getAuthSessionDiagnostic(request, env) {
 
     const matchedCookies = cookieHeader
         .split(';')
-        .map((c) => c.trim())
-        .filter((c) => c.startsWith(`${COOKIE_NAME}=`));
+        .map((c: any) => c.trim())
+        .filter((c: any) => c.startsWith(`${COOKIE_NAME}=`));
 
     result.authSessionCookieCount = matchedCookies.length;
     if (matchedCookies.length === 0) {
@@ -221,7 +221,12 @@ export async function getAuthSessionDiagnostic(request, env) {
  * @param {Object|null} diagnostic Optional diagnostic from a prior auth check
  * @returns {Promise<Response>}
  */
-export async function renewAuthSession(request, env, response, diagnostic: KvRecord | null = null) {
+export async function renewAuthSession(
+    request: any,
+    env: any,
+    response: any,
+    diagnostic: KvRecord | null = null
+) {
     const authDiagnostic = diagnostic || (await getAuthSessionDiagnostic(request, env));
     if (!authDiagnostic?.isAuthenticated || !authDiagnostic.shouldRenew) {
         return response;
@@ -248,7 +253,7 @@ export async function renewAuthSession(request, env, response, diagnostic: KvRec
  * @param {Object} env
  * @returns {Promise<Object>}
  */
-export async function getLoginPasswordDiagnostic(request, env) {
+export async function getLoginPasswordDiagnostic(request: any, env: any) {
     const debugInfo = await getAuthDebugInfo(env);
     const result = {
         success: false,
@@ -298,7 +303,7 @@ export async function getLoginPasswordDiagnostic(request, env) {
  * @param {Object} env - Cloudflare 环境对象
  * @returns {Promise<boolean>} 是否认证通过
  */
-export async function authMiddleware(request, env) {
+export async function authMiddleware(request: any, env: any) {
     const logMeta = buildRequestMeta(request, env);
     try {
         const diagnostic = await getAuthSessionDiagnostic(request, env);
@@ -315,7 +320,7 @@ export async function authMiddleware(request, env) {
  * @param {Object} env - Cloudflare 环境对象
  * @returns {Promise<Response>} 登录响应
  */
-export async function handleLogin(request, env) {
+export async function handleLogin(request: any, env: any) {
     if (request.method !== 'POST') {
         return new Response('Method Not Allowed', { status: 405 });
     }
@@ -378,7 +383,7 @@ export async function handleLogin(request, env) {
  * 处理用户登出
  * @returns {Promise<Response>} 登出响应
  */
-export async function handleLogout(request) {
+export async function handleLogout(request: any) {
     const headers = new Headers({ 'Content-Type': 'application/json' });
     const isSecure = typeof request?.url === 'string' && request.url.startsWith('https');
     const secureFlag = isSecure ? 'Secure;' : '';

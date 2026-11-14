@@ -2,7 +2,7 @@
  * URL origin helpers used by browser-level error recovery.
  */
 
-export function isSameOriginUrl(value, origin, baseUrl = origin) {
+export function isSameOriginUrl(value: any, origin: any, baseUrl = origin) {
     if (!origin || value === undefined || value === null || value === '') return false;
 
     try {
@@ -12,7 +12,7 @@ export function isSameOriginUrl(value, origin, baseUrl = origin) {
     }
 }
 
-export function isLocalHost(hostname) {
+export function isLocalHost(hostname: any) {
     return ['localhost', '127.0.0.1', '::1', '[::1]'].includes(
         String(hostname || '')
             .trim()
@@ -30,6 +30,6 @@ export function isLocalHost(hostname) {
  */
 const CRITICAL_ASSET_PATTERN = /\/assets\/.+\.(js|css)$/i;
 
-export function isCriticalAssetPath(pathname) {
+export function isCriticalAssetPath(pathname: any) {
     return CRITICAL_ASSET_PATTERN.test(String(pathname || ''));
 }

@@ -21,7 +21,7 @@ const CACHE_CONFIG = {
 const SHRINK_PROTECTION_MIN_CACHED_NODES = 10;
 const SHRINK_PROTECTION_MAX_RATIO = 0.3;
 
-export function isSuspiciousNodeCountDrop(previousCount, nextCount) {
+export function isSuspiciousNodeCountDrop(previousCount: any, nextCount: any) {
     const previous = Number(previousCount);
     const next = Number(nextCount);
     if (!Number.isFinite(previous) || !Number.isFinite(next)) return false;
@@ -29,7 +29,7 @@ export function isSuspiciousNodeCountDrop(previousCount, nextCount) {
     return next / previous < SHRINK_PROTECTION_MAX_RATIO;
 }
 
-export function isLikelyPartialAggregateNodeList(nodes) {
+export function isLikelyPartialAggregateNodeList(nodes: any) {
     const lines = String(nodes || '')
         .split(/\r?\n+/)
         .map((line) => line.trim())
@@ -50,11 +50,11 @@ export function isLikelyPartialAggregateNodeList(nodes) {
  * @param {string} identifier - 标识符
  * @returns {string} 缓存键
  */
-export function generateCacheKey(type, identifier) {
+export function generateCacheKey(type: any, identifier: any) {
     return `${CACHE_CONFIG.KEY_PREFIX}${type}_${identifier}`;
 }
 
-function isSubscriptionNodeCacheKey(key) {
+function isSubscriptionNodeCacheKey(key: any) {
     return (
         typeof key === 'string' &&
         (key.startsWith(`${CACHE_CONFIG.KEY_PREFIX}subscription_`) ||
@@ -77,7 +77,7 @@ function isSubscriptionNodeCacheKey(key) {
  * @param {string} cacheKey - 缓存键
  * @returns {Promise<{data: CacheEntry|null, status: 'fresh'|'stale'|'expired'|'miss'}>}
  */
-export async function getCache(storageAdapter, cacheKey) {
+export async function getCache(storageAdapter: any, cacheKey: any) {
     try {
         const cached = await storageAdapter.get(cacheKey);
         if (!cached) {
@@ -110,9 +110,14 @@ export async function getCache(storageAdapter, cacheKey) {
  * @param {string[]} sources - 来源订阅名称列表
  * @returns {Promise<boolean>}
  */
-export async function setCache(storageAdapter, cacheKey, nodes, sources: any[] = []) {
+export async function setCache(
+    storageAdapter: any,
+    cacheKey: any,
+    nodes: any,
+    sources: any[] = []
+) {
     try {
-        const nodeCount = nodes.split('\n').filter((line) => line.trim()).length;
+        const nodeCount = nodes.split('\n').filter((line: any) => line.trim()).length;
         if (isLikelyPartialAggregateNodeList(nodes)) {
             console.warn(
                 `[Cache] Refusing to cache a likely partial aggregate node list for ${cacheKey}`
@@ -172,7 +177,7 @@ export async function setCache(storageAdapter, cacheKey, nodes, sources: any[] =
  * @param {Object} context - Cloudflare 上下文
  * @param {Function} refreshFn - 刷新函数
  */
-export function triggerBackgroundRefresh(context, refreshFn) {
+export function triggerBackgroundRefresh(context: any, refreshFn: any) {
     if (context && typeof context.waitUntil === 'function') {
         // 使用 waitUntil 在响应后继续执行
         const refreshPromise = Promise.race([
@@ -200,7 +205,7 @@ export function triggerBackgroundRefresh(context, refreshFn) {
  * @param {number} nodeCount - 节点数量
  * @returns {Object} 响应头对象
  */
-export function createCacheHeaders(status, nodeCount) {
+export function createCacheHeaders(status: any, nodeCount: any) {
     return {
         'X-Cache-Status': status,
         'X-Node-Count': String(nodeCount),
@@ -221,7 +226,7 @@ export function getCacheConfig() {
  * @param {string} cacheKey - 缓存键
  * @returns {Promise<boolean>}
  */
-export async function clearCache(storageAdapter, cacheKey) {
+export async function clearCache(storageAdapter: any, cacheKey: any) {
     try {
         await storageAdapter.delete(cacheKey);
 
@@ -237,7 +242,7 @@ export async function clearCache(storageAdapter, cacheKey) {
  * @param {Object} storageAdapter - 存储适配器
  * @returns {Promise<{cleared: number, failed: number}>}
  */
-export async function clearAllNodeCaches(storageAdapter, options: Record<string, any> = {}) {
+export async function clearAllNodeCaches(storageAdapter: any, options: Record<string, any> = {}) {
     try {
         let cleared = 0;
         let failed = 0;
@@ -318,7 +323,7 @@ export async function clearAllNodeCaches(storageAdapter, options: Record<string,
  * @returns {Promise<number>} 清除的缓存数量
  */
 export async function invalidateCaches(
-    storageAdapter,
+    storageAdapter: any,
     profileIds: any[] = [],
     token: KvRecord | null = null
 ) {

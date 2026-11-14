@@ -81,7 +81,7 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="1.5"
-                    :d="iconPaths[icon] || iconPaths.default"
+                    :d="(iconPaths as Record<string, any>)[icon] || iconPaths.default"
                 />
             </svg>
         </div>

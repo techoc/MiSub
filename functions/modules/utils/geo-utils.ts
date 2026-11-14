@@ -9,7 +9,7 @@ import { REGION_EMOJI, REGION_KEYWORDS } from './geo-data.ts';
 // 数据表已拆分至 geo-data.js；这里原样重新导出，保持既有 import 路径不变。
 export { REGION_KEYWORDS, REGION_EMOJI } from './geo-data.ts';
 
-function normalizeBase64(input) {
+function normalizeBase64(input: any) {
     let s = String(input || '')
         .trim()
         .replace(/\s+/g, '');
@@ -26,14 +26,14 @@ function normalizeBase64(input) {
     return s;
 }
 
-function isLikelyBase64(input) {
+function isLikelyBase64(input: any) {
     const s = String(input || '').trim();
     if (!s) return false;
     if (!/^[A-Za-z0-9+/=_-]+$/.test(s)) return false;
     return s.length >= 6;
 }
 
-function tryDecodeBase64(input) {
+function tryDecodeBase64(input: any) {
     if (!isLikelyBase64(input)) return null;
     try {
         return atob(normalizeBase64(input));
@@ -42,7 +42,7 @@ function tryDecodeBase64(input) {
     }
 }
 
-function parseHostPort(value) {
+function parseHostPort(value: any) {
     let segment = String(value || '');
     if (!segment) return { server: '', port: '' };
     const cut = segment.search(/[/?#]/);
@@ -70,7 +70,7 @@ function parseHostPort(value) {
  * @param {string} nodeName - 节点名称
  * @returns {string} 识别出的地区，如未识别返回"其他"
  */
-export function extractNodeRegion(nodeName) {
+export function extractNodeRegion(nodeName: any) {
     if (!nodeName || typeof nodeName !== 'string') {
         return '其他';
     }
@@ -126,8 +126,8 @@ export function getSupportedRegions() {
  * @param {string} region - 地区名称
  * @returns {string[]} 该地区的所有关键词，如地区不存在返回空数组
  */
-export function getRegionKeywords(region) {
-    return REGION_KEYWORDS[region] || [];
+export function getRegionKeywords(region: any) {
+    return (REGION_KEYWORDS as Record<string, any>)[region] || [];
 }
 
 /**
@@ -135,8 +135,10 @@ export function getRegionKeywords(region) {
  * @param {string} region - 地区名称
  * @returns {string} 对应的 Emoji，如果未找到则返回空字符串
  */
-export function getRegionEmoji(region) {
-    return REGION_EMOJI[region] || (region === '其他' || !region ? '🌍' : '');
+export function getRegionEmoji(region: any) {
+    return (
+        (REGION_EMOJI as Record<string, any>)[region] || (region === '其他' || !region ? '🌍' : '')
+    );
 }
 
 /**
@@ -145,13 +147,13 @@ export function getRegionEmoji(region) {
  * @param {string} region - 要检查的地区
  * @returns {boolean} 是否包含该地区
  */
-export function containsRegion(nodeName, region) {
-    if (!nodeName || !region || !REGION_KEYWORDS[region]) {
+export function containsRegion(nodeName: any, region: any) {
+    if (!nodeName || !region || !(REGION_KEYWORDS as Record<string, any>)[region]) {
         return false;
     }
 
     const normalizedNodeName = nodeName.toLowerCase();
-    const keywords = REGION_KEYWORDS[region];
+    const keywords = (REGION_KEYWORDS as Record<string, any>)[region];
 
     for (const keyword of keywords) {
         if (normalizedNodeName.includes(keyword.toLowerCase())) {
@@ -167,7 +169,7 @@ export function containsRegion(nodeName, region) {
  * @param {string} nodeUrl - 节点URL
  * @returns {Object} 节点详细信息
  */
-export function parseNodeInfo(nodeUrl) {
+export function parseNodeInfo(nodeUrl: any) {
     if (!nodeUrl || typeof nodeUrl !== 'string') {
         return {
             protocol: 'unknown',
@@ -472,18 +474,18 @@ export function parseNodeInfo(nodeUrl) {
  * @param {Array} nodes - 节点数组
  * @returns {Object} 地区统计信息
  */
-export function calculateRegionStats(nodes) {
+export function calculateRegionStats(nodes: any) {
     const stats = {};
     const total = nodes.length;
 
-    nodes.forEach((node) => {
+    nodes.forEach((node: any) => {
         const region = extractNodeRegion(node.name || '');
-        stats[region] = (stats[region] || 0) + 1;
+        (stats as Record<string, any>)[region] = ((stats as Record<string, any>)[region] || 0) + 1;
     });
 
     // 添加百分比信息
     for (const [region, count] of Object.entries(stats) as [string, number][]) {
-        stats[region] = {
+        (stats as Record<string, any>)[region] = {
             count,
             percentage: Math.round((count / total) * 100),
         };

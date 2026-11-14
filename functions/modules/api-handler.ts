@@ -37,7 +37,7 @@ import { listRuleTemplates } from './rule-template-handler.ts';
 
 const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
 
-function normalizeLoginPath(customLoginPath) {
+function normalizeLoginPath(customLoginPath: any) {
     if (typeof customLoginPath !== 'string') return '/login';
     const normalized = customLoginPath.trim().replace(/^\/+/, '');
     return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
@@ -54,7 +54,7 @@ function normalizeProfile(profile: Record<string, any> = {}) {
     return normalized;
 }
 
-async function attachProfileDownloadCounts(storageAdapter, profiles) {
+async function attachProfileDownloadCounts(storageAdapter: any, profiles: any) {
     if (!Array.isArray(profiles) || profiles.length === 0) return profiles;
 
     const counts = await Promise.all(
@@ -71,7 +71,7 @@ async function attachProfileDownloadCounts(storageAdapter, profiles) {
     );
 }
 
-function isStorageUnavailableError(error) {
+function isStorageUnavailableError(error: any) {
     const message = String(error?.message || error || '').toLowerCase();
     return (
         message.includes('kv storage is paused') ||
@@ -85,19 +85,19 @@ function isStorageUnavailableError(error) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Object>} 存储适配器实例
  */
-async function getStorageAdapter(env) {
+async function getStorageAdapter(env: any) {
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }
 
-function isSimpleArrayDiff(diff) {
+function isSimpleArrayDiff(diff: any) {
     if (!diff || typeof diff !== 'object') return false;
     const allowedKeys = ['added', 'updated', 'removed'];
     if (!Object.keys(diff).every((key) => allowedKeys.includes(key))) return false;
     return ['added', 'updated', 'removed'].every((key) => Array.isArray(diff[key] || []));
 }
 
-async function applyRowLevelDiff(storageAdapter, type, diff) {
+async function applyRowLevelDiff(storageAdapter: any, type: any, diff: any) {
     const isProfile = type === 'profiles';
     const putItem = isProfile
         ? storageAdapter.putProfile?.bind(storageAdapter)
@@ -118,15 +118,15 @@ async function applyRowLevelDiff(storageAdapter, type, diff) {
     const { added = [], updated = [], removed = [] } = diff;
 
     await Promise.all([
-        ...added.map((item) => putItem(item)),
-        ...updated.map((item) => putItem(item)),
-        ...removed.map((id) => deleteItem(id)),
+        ...added.map((item: any) => putItem(item)),
+        ...updated.map((item: any) => putItem(item)),
+        ...removed.map((id: any) => deleteItem(id)),
     ]);
 
     return true;
 }
 
-async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
+async function syncCollectionRowLevel(storageAdapter: any, type: any, finalItems: any) {
     const isProfile = type === 'profiles';
     const getAll = isProfile
         ? storageAdapter.getAllProfiles?.bind(storageAdapter)
@@ -148,7 +148,7 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
     }
 
     const currentItems = await getAll();
-    const currentMap = new Map(currentItems.map((item) => [item.id, item]));
+    const currentMap = new Map(currentItems.map((item: any) => [item.id, item]));
     const finalMap = new Map(finalItems.map((item) => [item.id, item]));
 
     const puts: Promise<boolean | unknown>[] = [];
@@ -176,7 +176,7 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleDataRequest(env, context: PagesEventContext | null = null) {
+export async function handleDataRequest(env: any, context: PagesEventContext | null = null) {
     let storageType = 'unknown';
     try {
         storageType = await StorageFactory.getStorageType(env);
@@ -266,7 +266,7 @@ import { applyPatch } from './patch-utils.ts';
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleMisubsSave(request, env) {
+export async function handleMisubsSave(request: any, env: any) {
     try {
         // 步骤1: 解析请求体
         let requestData;
@@ -359,14 +359,16 @@ export async function handleMisubsSave(request, env) {
 
             // [Fix] Sync sortIndex back to diff for correct row-level persistence
             if (diff?.profiles) {
-                const profileMap = new Map<string, KvRecord>(finalProfiles.map((p) => [p.id, p]));
+                const profileMap = new Map<string, KvRecord>(
+                    finalProfiles.map((p: any) => [p.id, p])
+                );
                 if (diff.profiles.added)
-                    diff.profiles.added = diff.profiles.added.map((p) => ({
+                    diff.profiles.added = diff.profiles.added.map((p: any) => ({
                         ...p,
                         sortIndex: profileMap.get(p.id)?.sortIndex,
                     }));
                 if (diff.profiles.updated)
-                    diff.profiles.updated = diff.profiles.updated.map((p) => ({
+                    diff.profiles.updated = diff.profiles.updated.map((p: any) => ({
                         ...p,
                         sortIndex: profileMap.get(p.id)?.sortIndex,
                     }));
@@ -381,14 +383,14 @@ export async function handleMisubsSave(request, env) {
 
             // [Fix] Sync sortIndex back to diff for correct row-level persistence
             if (diff?.subscriptions) {
-                const subMap = new Map<string, KvRecord>(finalMisubs.map((s) => [s.id, s]));
+                const subMap = new Map<string, KvRecord>(finalMisubs.map((s: any) => [s.id, s]));
                 if (diff.subscriptions.added)
-                    diff.subscriptions.added = diff.subscriptions.added.map((s) => ({
+                    diff.subscriptions.added = diff.subscriptions.added.map((s: any) => ({
                         ...s,
                         sortIndex: subMap.get(s.id)?.sortIndex,
                     }));
                 if (diff.subscriptions.updated)
-                    diff.subscriptions.updated = diff.subscriptions.updated.map((s) => ({
+                    diff.subscriptions.updated = diff.subscriptions.updated.map((s: any) => ({
                         ...s,
                         sortIndex: subMap.get(s.id)?.sortIndex,
                     }));
@@ -408,8 +410,8 @@ export async function handleMisubsSave(request, env) {
         if (finalMisubs && finalMisubs.length > 0) {
             try {
                 const notificationPromises = finalMisubs
-                    .filter((sub) => sub?.enabled && sub.url && sub.url.startsWith('http'))
-                    .map((sub) =>
+                    .filter((sub: any) => sub?.enabled && sub.url && sub.url.startsWith('http'))
+                    .map((sub: any) =>
                         checkAndNotify(sub, settings, env).catch((notifyError) => {
                             console.warn(
                                 '[API] Notification failed for subscription:',
@@ -521,7 +523,7 @@ function redactSettingsForResponse(settings: Record<string, any> = {}) {
     };
 }
 
-export async function handleSettingsGet(env) {
+export async function handleSettingsGet(env: any) {
     try {
         const settings = (await SettingsCache.get(env)) || {};
         return createJsonResponse(redactSettingsForResponse({ ...defaultSettings, ...settings }));
@@ -543,7 +545,7 @@ export async function handleSettingsGet(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSettingsSave(request, env) {
+export async function handleSettingsSave(request: any, env: any) {
     try {
         const newSettings = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
 
@@ -582,12 +584,12 @@ export async function handleSettingsSave(request, env) {
             'preview',
         ]);
 
-        const normalizePathRoot = (value) => {
+        const normalizePathRoot = (value: any) => {
             if (typeof value !== 'string') return '';
             return value.trim().replace(/^\/+/, '').split('/')[0].toLowerCase();
         };
 
-        const rejectReservedValue = (value, fieldLabel) => {
+        const rejectReservedValue = (value: any, fieldLabel: any) => {
             const pathRoot = normalizePathRoot(value);
             if (pathRoot && reservedPathRoots.has(pathRoot)) {
                 return createJsonResponse(
@@ -705,7 +707,7 @@ export async function handleSettingsSave(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSettingsReset(env) {
+export async function handleSettingsReset(env: any) {
     try {
         const storageAdapter = await getStorageAdapter(env);
 
@@ -748,7 +750,7 @@ export async function handleSettingsReset(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicProfilesRequest(env) {
+export async function handlePublicProfilesRequest(env: any) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const cachedSettings = await SettingsCache.get(env);
@@ -793,8 +795,8 @@ export async function handlePublicProfilesRequest(env) {
         // 过滤出公开且启用的订阅组
         const publicProfiles = profiles
             .map(normalizeProfile)
-            .filter((p) => p.isPublic && p.enabled)
-            .map((p) => ({
+            .filter((p: any) => p.isPublic && p.enabled)
+            .map((p: any) => ({
                 id: p.id,
                 name: p.name,
                 description: p.description || '',
@@ -841,7 +843,7 @@ export async function handlePublicProfilesRequest(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicConfig(request, env) {
+export async function handlePublicConfig(request: any, env: any) {
     try {
         const storageAdapter = await getStorageAdapter(env);
         const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
@@ -887,7 +889,7 @@ export async function handlePublicConfig(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleUpdatePassword(request, env) {
+export async function handleUpdatePassword(request: any, env: any) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }

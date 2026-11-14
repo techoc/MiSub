@@ -25,7 +25,7 @@ const localeLoaders = new Map();
  * 生产链路由 ensureLocaleMessages 使用；tests/setup.js 也用它静态预注入
  * en-US，因为大量测试同步断言英文文案，无法等待异步加载。
  */
-export function registerLocaleMessages(locale, messages) {
+export function registerLocaleMessages(locale: any, messages: any) {
     const normalized = normalizeLocale(locale);
     loadedLocales.add(normalized);
     runtimeMessages.value = { ...runtimeMessages.value, [normalized]: messages };
@@ -35,7 +35,7 @@ export function registerLocaleMessages(locale, messages) {
  * 确保某语言包已加载（已加载/正在加载时立即 resolve）。
  * 失败时清除加载记录，下次切换可重试；期间 t() 回退默认语言。
  */
-export function ensureLocaleMessages(locale) {
+export function ensureLocaleMessages(locale: any) {
     const normalized = normalizeLocale(locale);
     if (loadedLocales.has(normalized)) return Promise.resolve();
     if (!localeLoaders.has(normalized)) {
@@ -56,7 +56,7 @@ function readStoredLocale() {
     return readRawPreference(LOCALE_STORAGE_KEY) || '';
 }
 
-function writeStoredLocale(locale) {
+function writeStoredLocale(locale: any) {
     // 写入失败（隐私模式 / 存储被禁用）只影响「下次启动的语言」，
     // 本次切换已经生效，不需要打扰用户。
     writeRawPreference(LOCALE_STORAGE_KEY, locale);
@@ -66,7 +66,7 @@ export function hasStoredLocale() {
     return supportedCodes.has(readStoredLocale());
 }
 
-export function normalizeLocale(locale) {
+export function normalizeLocale(locale: any) {
     if (!locale || typeof locale !== 'string') return DEFAULT_LOCALE;
     if (supportedCodes.has(locale)) return locale;
     const lower = locale.toLowerCase();
@@ -94,14 +94,17 @@ export function detectInitialLocale(browserLanguages: any[] = []) {
     return DEFAULT_LOCALE;
 }
 
-function lookupMessage(locale, key) {
-    return key.split('.').reduce((current, part) => {
-        if (!current || typeof current !== 'object') return undefined;
-        return current[part];
-    }, runtimeMessages.value[locale]);
+function lookupMessage(locale: any, key: any) {
+    return key.split('.').reduce(
+        (current: any, part: any) => {
+            if (!current || typeof current !== 'object') return undefined;
+            return current[part];
+        },
+        (runtimeMessages.value as Record<string, any>)[locale]
+    );
 }
 
-function interpolate(template, params: Record<string, any> = {}) {
+function interpolate(template: any, params: Record<string, any> = {}) {
     if (typeof template !== 'string') return template;
     return template.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
 }
@@ -111,13 +114,13 @@ export function createI18n(options: Record<string, any> = {}) {
     // 初始语言若非默认语言（例如浏览器语言/存储偏好是 en-US），立刻开始加载其语言包
     ensureLocaleMessages(locale.value);
 
-    const translate = (key, params = {}, forcedLocale?: string) => {
+    const translate = (key: any, params = {}, forcedLocale?: string) => {
         const targetLocale = normalizeLocale(forcedLocale || locale.value);
         const resolved = lookupMessage(targetLocale, key) ?? lookupMessage(DEFAULT_LOCALE, key);
         return resolved === undefined ? key : interpolate(resolved, params);
     };
 
-    const set = (nextLocale) => {
+    const set = (nextLocale: any) => {
         const normalized = normalizeLocale(nextLocale);
         ensureLocaleMessages(normalized);
         locale.value = normalized;
@@ -132,7 +135,7 @@ export function createI18n(options: Record<string, any> = {}) {
         supportedLocales: SUPPORTED_LOCALES,
         t: translate,
         setLocale: set,
-        install(app) {
+        install(app: any) {
             app.provide(I18N_KEY, instance);
             app.config.globalProperties.$t = translate;
             app.config.globalProperties.$locale = readonly(locale);
@@ -147,11 +150,11 @@ export function createI18n(options: Record<string, any> = {}) {
 
 export const i18n = createI18n();
 
-export function t(key, params: Record<string, any> = {}, forcedLocale?: string) {
+export function t(key: any, params: Record<string, any> = {}, forcedLocale?: string) {
     return i18n.t(key, params, forcedLocale);
 }
 
-export function setLocale(locale) {
+export function setLocale(locale: any) {
     i18n.setLocale(locale);
 }
 

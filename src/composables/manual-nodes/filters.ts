@@ -58,7 +58,7 @@ export const countryCodeMap = {
     nz: ['🇳🇿', '新西兰', '紐西蘭'],
 };
 
-export function isManualNodeEntry(item) {
+export function isManualNodeEntry(item: any) {
     if (!item.url) return false;
     if (typeof item.url !== 'string') return false;
 
@@ -77,14 +77,14 @@ export function isManualNodeEntry(item) {
     }
 }
 
-export function filterManualNodes(nodes, searchTerm, activeColorFilter) {
+export function filterManualNodes(nodes: any, searchTerm: any, activeColorFilter: any) {
     let filtered = nodes;
 
     if (activeColorFilter) {
         if (activeColorFilter === DEFAULT_GROUP_KEY) {
-            filtered = filtered.filter((n) => !n.group);
+            filtered = filtered.filter((n: any) => !n.group);
         } else {
-            filtered = filtered.filter((n) => n.group === activeColorFilter);
+            filtered = filtered.filter((n: any) => n.group === activeColorFilter);
         }
     }
 
@@ -93,9 +93,9 @@ export function filterManualNodes(nodes, searchTerm, activeColorFilter) {
     }
 
     const searchQuery = searchTerm.toLowerCase().trim();
-    const alternativeTerms = countryCodeMap[searchQuery] || [];
+    const alternativeTerms = (countryCodeMap as Record<string, any>)[searchQuery] || [];
 
-    return filtered.filter((node) => {
+    return filtered.filter((node: any) => {
         if (!node.name) return false;
         const nodeName = node.name.toLowerCase();
         if (nodeName.includes(searchQuery)) return true;

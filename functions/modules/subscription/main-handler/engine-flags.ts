@@ -59,7 +59,7 @@ export function resolveEffectiveEngine({
     return profileEngineMode || globalEngineMode || 'builtin';
 }
 
-function parseToggleValue(value) {
+function parseToggleValue(value: any) {
     if (value === null || value === undefined) return null;
     const normalized = String(value).trim().toLowerCase();
     if (normalized === 'true' || normalized === '1') return true;
@@ -77,9 +77,9 @@ function parseToggleValue(value) {
  * @returns {boolean}
  */
 export function resolveInjectionToggle(
-    searchParams,
+    searchParams: any,
     paramNames: any[] = [],
-    configValue,
+    configValue: any,
     fallback = true
 ) {
     const params = searchParams || new URLSearchParams('');

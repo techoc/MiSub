@@ -16,7 +16,7 @@
     const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-group', 'ping']);
     const { t } = useI18n();
 
-    const getProtocol = (url) => {
+    const getProtocol = (url: any) => {
         // ... (protocol logic unchanged)
         try {
             if (!url) return 'unknown';

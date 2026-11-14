@@ -14,10 +14,10 @@ import { fetchSubscriptionNodes } from './node-fetcher.ts';
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleSingleSubscriptionMode(
-    request,
-    env,
-    subscriptionId,
-    userAgent,
+    request: any,
+    env: any,
+    subscriptionId: any,
+    userAgent: any,
     skipCertVerify = false
 ) {
     const storageAdapter = StorageFactory.createAdapter(
@@ -30,7 +30,7 @@ export async function handleSingleSubscriptionMode(
         typeof (storageAdapter as Record<string, any>).getSubscriptionById === 'function'
             ? await (storageAdapter as Record<string, any>).getSubscriptionById(subscriptionId)
             : ((await storageAdapter.get(KV_KEY_SUBS)) || []).find(
-                  (sub) => sub.id === subscriptionId
+                  (sub: any) => sub.id === subscriptionId
               );
 
     if (!subscription || !subscription.enabled) {
@@ -103,8 +103,8 @@ export async function handleSingleSubscriptionMode(
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleDirectUrlMode(
-    subscriptionUrl,
-    userAgent,
+    subscriptionUrl: any,
+    userAgent: any,
     skipCertVerify = false,
     plusAsSpace = false
 ) {

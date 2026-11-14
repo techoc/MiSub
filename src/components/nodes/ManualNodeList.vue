@@ -23,7 +23,7 @@
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
-    const getProtocol = (url) => {
+    const getProtocol = (url: any) => {
         try {
             if (!url) return 'unknown';
             const lowerUrl = url.toLowerCase();
@@ -87,7 +87,7 @@
         return styles[p] || styles['unknown'];
     });
 
-    const copyToClipboard = async (text) => {
+    const copyToClipboard = async (text: any) => {
         try {
             await navigator.clipboard.writeText(text);
             showToast(t('notices.copied'), 'success');

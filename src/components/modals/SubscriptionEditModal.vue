@@ -68,20 +68,20 @@
     });
 
     // 检查标签在当前激活模式中是否已选中
-    const isSelected = (pattern) => {
+    const isSelected = (pattern: any) => {
         return currentRulePool.value.some(
             (rule) => (rule as Record<string, any>).pattern === pattern
         );
     };
 
     // 检查标签在另一个模式中是否已选中
-    const isOtherSelected = (pattern) => {
+    const isOtherSelected = (pattern: any) => {
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
         return otherPool.some((rule) => (rule as Record<string, any>).pattern === pattern);
     };
 
     // 辅助函数：根据 pattern 转换为规范规则对象
-    const createRuleItem = (tag, type) => {
+    const createRuleItem = (tag: any, type: any) => {
         const normalizedPattern =
             type === 'protocol' && !String(tag.pattern).toLowerCase().startsWith('proto:')
                 ? `proto:${String(tag.pattern).toLowerCase()}`
@@ -94,7 +94,7 @@
     };
 
     // 切换标签选择
-    const toggleTag = (tag, type) => {
+    const toggleTag = (tag: any, type: any) => {
         const pool = currentRulePool.value;
         const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
 
@@ -154,17 +154,17 @@
     };
 
     // 移除规则
-    const removeKeepRule = (index) => {
+    const removeKeepRule = (index: any) => {
         keepRules.value.splice(index, 1);
         syncToText();
     };
 
-    const removeExcludeRule = (index) => {
+    const removeExcludeRule = (index: any) => {
         excludeRules.value.splice(index, 1);
         syncToText();
     };
 
-    const removeRule = (index, targetPool = null) => {
+    const removeRule = (index: any, targetPool = null) => {
         if (targetPool === 'keep') {
             removeKeepRule(index);
         } else if (targetPool === 'exclude') {
@@ -205,7 +205,7 @@
         ].join('\n');
     };
 
-    const resolvePreset = (pattern) => {
+    const resolvePreset = (pattern: any) => {
         const protocolPreset = presetProtocols.find(
             (p) => p.pattern.toLowerCase() === pattern.toLowerCase()
         );
@@ -243,18 +243,18 @@
         const text = props.editingSubscription.exclude;
         const lines = text
             .split('\n')
-            .map((l) => l.trim())
+            .map((l: any) => l.trim())
             .filter(Boolean);
 
         if (lines.length === 0) return;
 
-        const dividerIndex = lines.findIndex((line) => line === '---');
+        const dividerIndex = lines.findIndex((line: any) => line === '---');
         const hasDivider = dividerIndex !== -1;
 
         const rawExcludePatterns: any[] = [];
         const rawKeepPatterns: any[] = [];
 
-        lines.forEach((line, index) => {
+        lines.forEach((line: any, index: any) => {
             if (line === '---') return;
 
             if (hasDivider) {
@@ -319,20 +319,20 @@
     const excludeRuleState = computed(() => {
         const text = props.editingSubscription?.exclude ?? '';
         const rawLines = text.split('\n');
-        const lines = rawLines.map((line) => line.trim());
-        const hasContent = lines.some((line) => line);
-        const dividerIndex = lines.findIndex((line) => line === '---');
+        const lines = rawLines.map((line: any) => line.trim());
+        const hasContent = lines.some((line: any) => line);
+        const dividerIndex = lines.findIndex((line: any) => line === '---');
         const hasDivider = dividerIndex !== -1;
-        const hasKeepPrefix = lines.some((line) => line.toLowerCase().startsWith('keep:'));
+        const hasKeepPrefix = lines.some((line: any) => line.toLowerCase().startsWith('keep:'));
 
         let tagKey = 'unset';
         if (hasContent) {
             const hasExclude = lines.some(
-                (l) => l && l !== '---' && !l.toLowerCase().startsWith('keep:')
+                (l: any) => l && l !== '---' && !l.toLowerCase().startsWith('keep:')
             );
             const hasKeep =
-                lines.some((l) => l && l.toLowerCase().startsWith('keep:')) ||
-                (hasDivider && lines.slice(dividerIndex + 1).some((l) => l));
+                lines.some((l: any) => l && l.toLowerCase().startsWith('keep:')) ||
+                (hasDivider && lines.slice(dividerIndex + 1).some((l: any) => l));
 
             if (hasDivider || (hasExclude && hasKeep)) tagKey = 'mixed';
             else if (hasKeep) tagKey = 'keepOnly';
@@ -348,7 +348,7 @@
         };
 
         const errors: any[] = [];
-        rawLines.forEach((rawLine, index) => {
+        rawLines.forEach((rawLine: any, index: any) => {
             let line = rawLine.trim();
             if (!line) return;
             if (line === '---') return;
@@ -365,7 +365,7 @@
                 const protocols = line
                     .substring('proto:'.length)
                     .split(',')
-                    .map((p) => p.trim())
+                    .map((p: any) => p.trim())
                     .filter(Boolean);
                 if (protocols.length === 0) {
                     errors.push({ line: index + 1, message: t('subscriptions.protoEmptyError') });
@@ -383,7 +383,7 @@
         return {
             tagKey,
             tag: t(`subscriptions.ruleTag.${tagKey}`),
-            tagClass: tagClassMap[tagKey] || tagClassMap.unset,
+            tagClass: (tagClassMap as Record<string, any>)[tagKey] || tagClassMap.unset,
             errors,
             errorsText: errors
                 .map((item) =>

@@ -32,7 +32,7 @@ export const TEMPLATE_COMPATIBILITY = {
     },
 };
 
-function getTemplateExtension(templateUrl) {
+function getTemplateExtension(templateUrl: any) {
     const normalizedTemplateUrl = typeof templateUrl === 'string' ? templateUrl.trim() : '';
     if (!normalizedTemplateUrl) return '';
 
@@ -45,19 +45,19 @@ function getTemplateExtension(templateUrl) {
     }
 }
 
-export function normalizeTemplateTarget(targetFormat) {
+export function normalizeTemplateTarget(targetFormat: any) {
     const normalizedTarget = typeof targetFormat === 'string' ? targetFormat.toLowerCase() : '';
     if (normalizedTarget.startsWith('surge&ver=')) return 'surge';
     if (normalizedTarget === 'sing-box') return 'singbox';
     return normalizedTarget;
 }
 
-export function getTemplateCompatibility(targetFormat) {
+export function getTemplateCompatibility(targetFormat: any) {
     const normalizedTarget = normalizeTemplateTarget(targetFormat);
-    return TEMPLATE_COMPATIBILITY[normalizedTarget] || null;
+    return (TEMPLATE_COMPATIBILITY as Record<string, any>)[normalizedTarget] || null;
 }
 
-export function shouldApplyExternalTemplateForTarget(targetFormat, templateUrl) {
+export function shouldApplyExternalTemplateForTarget(targetFormat: any, templateUrl: any) {
     const normalizedTemplateUrl = typeof templateUrl === 'string' ? templateUrl.trim() : '';
     const targetRule = getTemplateCompatibility(targetFormat);
 

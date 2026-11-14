@@ -1,18 +1,18 @@
 import { serializeXhttpExtra } from './xhttp-extra.ts';
 
-function base64Encode(str) {
+function base64Encode(str: any) {
     return btoa(unescape(encodeURIComponent(str)));
 }
 
-function base64UrlSafeEncode(str) {
+function base64UrlSafeEncode(str: any) {
     return base64Encode(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-function formatUriServer(server) {
+function formatUriServer(server: any) {
     return server.includes(':') && !server.startsWith('[') ? `[${server}]` : server;
 }
 
-function appendHysteria2RealmParams(params, realmOpts) {
+function appendHysteria2RealmParams(params: any, realmOpts: any) {
     if (!realmOpts || typeof realmOpts !== 'object') return;
     if (realmOpts['realm-id']) params.push(`realm-id=${encodeURIComponent(realmOpts['realm-id'])}`);
     if (realmOpts.token) params.push(`realm-token=${encodeURIComponent(realmOpts.token)}`);
@@ -23,7 +23,7 @@ function appendHysteria2RealmParams(params, realmOpts) {
     }
 }
 
-export function convertClashProxyToUrl(proxy) {
+export function convertClashProxyToUrl(proxy: any) {
     try {
         const type = (proxy.type || '').toLowerCase();
         const name = proxy.name || 'Untitled';

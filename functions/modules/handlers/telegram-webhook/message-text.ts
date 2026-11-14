@@ -15,7 +15,7 @@ export function generateId() {
 /**
  * 从节点URL提取名称
  */
-export function extractNodeName(url) {
+export function extractNodeName(url: any) {
     try {
         const hashIndex = url.indexOf('#');
         if (hashIndex !== -1) {
@@ -36,7 +36,7 @@ export function extractNodeName(url) {
 /**
  * 提取节点链接（支持多种协议）
  */
-export function extractNodeUrls(text): any[] {
+export function extractNodeUrls(text: any): any[] {
     const protocols = [
         'ss://',
         'ssr://',
@@ -79,7 +79,7 @@ export function extractNodeUrls(text): any[] {
  * @param {string} text
  * @returns {string[]} 去重后的订阅链接
  */
-export function extractSubscriptionUrls(text) {
+export function extractSubscriptionUrls(text: any) {
     const matches = String(text || '').match(/https?:\/\/[^\s<>"'，。、；：！？）】]+/gi) || [];
     const seen = new Set();
     const urls: any[] = [];
@@ -110,7 +110,7 @@ export function extractSubscriptionUrls(text) {
  * @returns {string} 形如「TG-文件 nodes 2026-09-15」或「TG-导入 2026-09-15 18:30」
  */
 export function buildImportGroupName({ source = 'text', fileName = '', now = new Date() } = {}) {
-    const pad = (n) => String(n).padStart(2, '0');
+    const pad = (n: any) => String(n).padStart(2, '0');
     const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
     if (source === 'file' && fileName) {

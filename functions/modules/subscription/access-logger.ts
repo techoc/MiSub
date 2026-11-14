@@ -1,6 +1,6 @@
 import { LogService, anonymizeLogToken } from '../../services/log-service.ts';
 
-export function shouldSkipLogging(userAgentHeader) {
+export function shouldSkipLogging(userAgentHeader: any) {
     return userAgentHeader.includes('MiSub-Backend') || userAgentHeader.includes('TelegramBot');
 }
 
@@ -14,7 +14,7 @@ export function logAccessSuccess({
     profileIdentifier,
     subName,
     domain,
-}) {
+}: any) {
     const stats = context?.generationStats || {};
     const clientIp =
         request.headers.get('CF-Connecting-IP') ||
@@ -68,7 +68,7 @@ export function logAccessError({
     subName,
     domain,
     errorMessage,
-}) {
+}: any) {
     const stats = context?.generationStats || {};
     const clientIp =
         request.headers.get('CF-Connecting-IP') ||

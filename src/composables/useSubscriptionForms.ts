@@ -5,7 +5,7 @@ import { t } from '../i18n/index.ts';
 
 const isDev = import.meta.env.DEV;
 
-export function useSubscriptionForms({ addSubscription, updateSubscription }) {
+export function useSubscriptionForms({ addSubscription, updateSubscription }: any) {
     const { showToast } = useToastStore();
     const showModal = ref(false);
     const isNew = ref(false);
@@ -29,7 +29,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
         showModal.value = true;
     };
 
-    const openEdit = (sub) => {
+    const openEdit = (sub: any) => {
         if (!sub) {
             console.error('UseSubscriptionForms: openEdit called with null/undefined');
             return;

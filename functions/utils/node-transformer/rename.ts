@@ -16,7 +16,7 @@ import {
 import type { KvRecord } from '../../../types/models.ts';
 // ============ 转换函数 ============
 
-export function matchesRegexRules(name, rules) {
+export function matchesRegexRules(name: any, rules: any) {
     const value = String(name || '');
     for (const rule of rules) {
         if (!rule) continue;
@@ -37,7 +37,7 @@ export function matchesRegexRules(name, rules) {
     return false;
 }
 
-export function ensureRegionInfo(record, enableEmoji = false) {
+export function ensureRegionInfo(record: any, enableEmoji = false) {
     if (record.regionZh) return record;
 
     // 优先使用预解析的元数据
@@ -56,7 +56,7 @@ export function ensureRegionInfo(record, enableEmoji = false) {
     return { ...record, region: regionCode, regionZh, emoji };
 }
 
-export function isUselessNode(record) {
+export function isUselessNode(record: any) {
     const name = String(record?.name || '').trim();
     const protocol = normalizeProtocol(record?.protocol);
     const server = String(record?.server || '')
@@ -93,7 +93,7 @@ export function isUselessNode(record) {
  * [核心引擎] 将新名称写回不同协议的节点 URL
  * 支持 VMess (JSON-Base64)、VLESS/Trojan/SS (Fragment)
  */
-export function setNodeName(url, protocol, newName) {
+export function setNodeName(url: any, protocol: any, newName: any) {
     if (!url || !newName) return url;
     const proto = String(protocol || '').toLowerCase();
 
@@ -127,7 +127,7 @@ export function setNodeName(url, protocol, newName) {
     }
 }
 
-export function applyRegexRename(name, rules, record: KvRecord | null = null) {
+export function applyRegexRename(name: any, rules: any, record: KvRecord | null = null) {
     let result = String(name || '');
     if (!Array.isArray(rules)) return result;
 
@@ -174,18 +174,18 @@ export function applyRegexRename(name, rules, record: KvRecord | null = null) {
     return result.trim();
 }
 
-function safeTitle(value) {
+function safeTitle(value: any) {
     const text = String(value || '');
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 }
 
-function safeContains(value, keyword) {
+function safeContains(value: any, keyword: any) {
     return String(value || '')
         .toLowerCase()
         .includes(String(keyword || '').toLowerCase());
 }
 
-function safeMatch(value, pattern, flags = 'i') {
+function safeMatch(value: any, pattern: any, flags = 'i') {
     try {
         return new RegExp(pattern, flags).test(String(value || ''));
     } catch {
@@ -193,18 +193,18 @@ function safeMatch(value, pattern, flags = 'i') {
     }
 }
 
-function safeFallback(...values) {
+function safeFallback(...values: any[]) {
     for (const value of values) {
         if (value !== null && value !== undefined && String(value).trim() !== '') return value;
     }
     return '';
 }
 
-function safePick(condition, truthyValue, falsyValue = '') {
+function safePick(condition: any, truthyValue: any, falsyValue = '') {
     return condition ? truthyValue : falsyValue;
 }
 
-function safeRegionAlias(regionValue) {
+function safeRegionAlias(regionValue: any) {
     const region = toRegionZh(regionValue);
     const aliases = {
         香港: 'HK',
@@ -215,19 +215,19 @@ function safeRegionAlias(regionValue) {
         韩国: 'KR',
         英国: 'UK',
     };
-    return aliases[region] || toRegionCode(region);
+    return (aliases as Record<string, any>)[region] || toRegionCode(region);
 }
 
-function safeProtocolAlias(protocolValue) {
+function safeProtocolAlias(protocolValue: any) {
     const protocol = normalizeProtocol(protocolValue);
     const aliases = {
         hysteria2: 'hy2',
         shadowsocks: 'ss',
     };
-    return aliases[protocol] || protocol;
+    return (aliases as Record<string, any>)[protocol] || protocol;
 }
 
-function buildDslContext(record) {
+function buildDslContext(record: any) {
     return {
         name: record.name,
         originalName: record.originalName,
@@ -243,7 +243,7 @@ function buildDslContext(record) {
     };
 }
 
-export function applyScriptRename(record, expression) {
+export function applyScriptRename(record: any, expression: any) {
     if (!expression) return record.name;
     try {
         const result = renderDslTemplate(
@@ -260,7 +260,7 @@ export function applyScriptRename(record, expression) {
     }
 }
 
-export function evaluateScriptExpression(record, expression) {
+export function evaluateScriptExpression(record: any, expression: any) {
     if (!expression) return true;
     try {
         return evaluateDslExpression(expression, buildDslContext(record));

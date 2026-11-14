@@ -16,7 +16,7 @@ const SS2022_KEY_LENGTHS = {
  * @param {string} nodeUrl - SS 节点 URL
  * @returns {Object} 验证结果
  */
-export function validateSS2022Node(nodeUrl) {
+export function validateSS2022Node(nodeUrl: any) {
     if (!nodeUrl || typeof nodeUrl !== 'string') {
         return { valid: true };
     }
@@ -73,7 +73,7 @@ export function validateSS2022Node(nodeUrl) {
         }
 
         // 获取期望的密钥长度
-        const expectedLength = SS2022_KEY_LENGTHS[cipher];
+        const expectedLength = (SS2022_KEY_LENGTHS as Record<string, any>)[cipher];
         if (!expectedLength) {
             return {
                 valid: true,
@@ -143,7 +143,7 @@ export function validateSS2022Node(nodeUrl) {
  * @param {string} nodeUrl - 原始 SS 节点 URL
  * @returns {Object} 修复结果
  */
-export function fixSS2022Node(nodeUrl) {
+export function fixSS2022Node(nodeUrl: any) {
     const validation = validateSS2022Node(nodeUrl);
 
     if (validation.valid || !validation.details?.suggestedCipher) {
@@ -201,7 +201,7 @@ export function fixSS2022Node(nodeUrl) {
  * @param {Array<string>} nodeUrls - 节点 URL 列表
  * @returns {Object} 验证统计
  */
-export function validateNodeList(nodeUrls) {
+export function validateNodeList(nodeUrls: any) {
     if (!Array.isArray(nodeUrls)) {
         return { error: '输入必须是数组' };
     }

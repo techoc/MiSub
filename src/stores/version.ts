@@ -44,13 +44,13 @@ export const useVersionStore = defineStore('version', () => {
     });
 
     // --- Helpers ---
-    function normalizeVersion(version) {
+    function normalizeVersion(version: any) {
         return String(version || '')
             .trim()
             .replace(/^v/i, '');
     }
 
-    function compareVersions(left, right) {
+    function compareVersions(left: any, right: any) {
         const a = normalizeVersion(left)
             .split('.')
             .map((n) => parseInt(n, 10) || 0);
@@ -67,7 +67,7 @@ export const useVersionStore = defineStore('version', () => {
         return 0;
     }
 
-    function getDismissKey(releaseTag) {
+    function getDismissKey(releaseTag: any) {
         return `misub_release_notes_hidden:${normalizeVersion(currentVersion.value)}:${normalizeVersion(releaseTag)}`;
     }
 

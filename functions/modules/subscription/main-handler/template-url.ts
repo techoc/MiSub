@@ -7,7 +7,7 @@ import { DEFAULT_SUBCONVERTER_BACKEND } from '../../config.ts';
 import { assertPublicNetworkUrl } from '../../security-utils.ts';
 import { isMetaCore } from '../user-agent-utils.ts';
 
-export function resolveTemplateUrl(mode, value, fallbackUrl = '') {
+export function resolveTemplateUrl(mode: any, value: any, fallbackUrl = '') {
     const normalizedMode = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
     const normalizedValue = typeof value === 'string' ? value.trim() : '';
     const normalizedFallback = typeof fallbackUrl === 'string' ? fallbackUrl.trim() : '';
@@ -22,7 +22,7 @@ export function resolveTemplateUrl(mode, value, fallbackUrl = '') {
     return normalizedValue;
 }
 
-export function resolveTemplateSource(value) {
+export function resolveTemplateSource(value: any) {
     const normalizedValue = typeof value === 'string' ? value.trim() : '';
     if (!normalizedValue) return { kind: 'none', value: '' };
     if (normalizedValue.startsWith('builtin:')) {
@@ -34,13 +34,13 @@ export function resolveTemplateSource(value) {
     return { kind: 'remote', value: normalizedValue };
 }
 
-export function resolveExternalTemplateConfigUrl(templateSource) {
+export function resolveExternalTemplateConfigUrl(templateSource: any) {
     if (!templateSource || typeof templateSource !== 'object') return '';
     if (templateSource.kind !== 'remote') return '';
     return normalizeExternalTemplateConfigUrl(String(templateSource.value || '').trim());
 }
 
-export function normalizeExternalTemplateConfigUrl(input) {
+export function normalizeExternalTemplateConfigUrl(input: any) {
     const raw = typeof input === 'string' ? input.trim() : '';
     if (!raw) return '';
 
@@ -71,7 +71,7 @@ export function normalizeExternalTemplateConfigUrl(input) {
     }
 }
 
-export function normalizeSubconverterBackend(input, fallback = DEFAULT_SUBCONVERTER_BACKEND) {
+export function normalizeSubconverterBackend(input: any, fallback = DEFAULT_SUBCONVERTER_BACKEND) {
     let backend = String(input || fallback || DEFAULT_SUBCONVERTER_BACKEND).trim();
 
     // 防止历史 UI 文案或标签被误保存为后端地址。
@@ -87,15 +87,15 @@ export function normalizeSubconverterBackend(input, fallback = DEFAULT_SUBCONVER
     }
 
     const externalUrl = assertPublicNetworkUrl(backend);
-    if (externalUrl.pathname === '/' || !externalUrl.pathname) {
-        externalUrl.pathname = '/sub';
+    if (externalUrl!.pathname === '/' || !externalUrl!.pathname) {
+        externalUrl!.pathname = '/sub';
     }
-    if (externalUrl.pathname !== '/sub') {
-        externalUrl.pathname = '/sub';
+    if (externalUrl!.pathname !== '/sub') {
+        externalUrl!.pathname = '/sub';
     }
 
     // 历史默认值可能保存为 /sub?；URL 会自动消除空 query。
-    externalUrl.hash = '';
+    externalUrl!.hash = '';
     return externalUrl;
 }
 
@@ -116,10 +116,10 @@ export function buildExternalSubconverterUrl({
 
     // [优化] 解析 targetFormat，支持带参数的格式（如 surge&ver=4）
     const [targetBase, ...targetParams] = String(targetFormat || '').split('&');
-    externalUrl.searchParams.set('target', targetBase || 'clash');
+    externalUrl!.searchParams.set('target', targetBase || 'clash');
     targetParams.forEach((p) => {
         const [k, v] = p.split('=');
-        if (k && v) externalUrl.searchParams.set(k, v);
+        if (k && v) externalUrl!.searchParams.set(k, v);
     });
 
     if (requestUrl) {
@@ -147,7 +147,7 @@ export function buildExternalSubconverterUrl({
         paramsToClear.forEach((p) => dataSourceUrl.searchParams.delete(p));
         dataSourceUrl.searchParams.set('base64', '');
         dataSourceUrl.searchParams.set('callback_token', 'external');
-        externalUrl.searchParams.set('url', dataSourceUrl.toString());
+        externalUrl!.searchParams.set('url', dataSourceUrl.toString());
     } else {
         const normalizedNodeList = String(nodeList || '').trim();
         if (normalizedNodeList) {
@@ -156,7 +156,7 @@ export function buildExternalSubconverterUrl({
                 .map((line) => line.trim())
                 .filter(Boolean)
                 .join('|');
-            externalUrl.searchParams.set('url', inlineNodeList);
+            externalUrl!.searchParams.set('url', inlineNodeList);
         }
     }
 
@@ -174,21 +174,21 @@ export function buildExternalSubconverterUrl({
     };
 
     if (isMetaCore(userAgent, params)) {
-        externalUrl.searchParams.set('meta', 'true');
+        externalUrl!.searchParams.set('meta', 'true');
     }
 
     Object.entries(flagMap).forEach(([key, paramName]) => {
         const val = params.has(paramName)
             ? params.get(paramName) === 'true'
             : effectiveOptions[key];
-        externalUrl.searchParams.set(paramName, val ? 'true' : 'false');
+        externalUrl!.searchParams.set(paramName, val ? 'true' : 'false');
     });
 
     const externalTemplateConfigUrl = resolveExternalTemplateConfigUrl(templateSource);
     if (externalTemplateConfigUrl) {
-        externalUrl.searchParams.set('config', externalTemplateConfigUrl);
+        externalUrl!.searchParams.set('config', externalTemplateConfigUrl);
     }
 
-    externalUrl.searchParams.set('filename', subName);
+    externalUrl!.searchParams.set('filename', subName);
     return externalUrl;
 }

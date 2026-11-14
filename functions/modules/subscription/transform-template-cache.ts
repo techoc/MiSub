@@ -10,22 +10,22 @@ const MAX_REVALIDATE_INTERVAL_SECONDS = 24 * 60 * 60;
 const MIN_CACHE_MAX_AGE_SECONDS = 5 * 60;
 const MAX_CACHE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
-function makeTemplateCacheKey(url) {
+function makeTemplateCacheKey(url: any) {
     return `${TEMPLATE_CACHE_PREFIX}${btoa(url).replace(/=+$/g, '')}`;
 }
 
-function readNumericSetting(name, storageAdapter) {
-    const value = storageAdapter?.env?.[name] ?? globalThis[name];
+function readNumericSetting(name: any, storageAdapter: any) {
+    const value = storageAdapter?.env?.[name] ?? (globalThis as Record<string, any>)[name];
     if (value === undefined || value === null || value === '') return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
 }
 
-function clampNumber(value, min, max) {
+function clampNumber(value: any, min: any, max: any) {
     return Math.min(max, Math.max(min, value));
 }
 
-function getTemplateCacheConfig(storageAdapter) {
+function getTemplateCacheConfig(storageAdapter: any) {
     const revalidateSetting = readNumericSetting(
         'TEMPLATE_REVALIDATE_INTERVAL_SECONDS',
         storageAdapter
@@ -47,31 +47,36 @@ function getTemplateCacheConfig(storageAdapter) {
     };
 }
 
-function isCacheYoungerThan(cacheEntry, maxAgeMs) {
+function isCacheYoungerThan(cacheEntry: any, maxAgeMs: any) {
     if (!cacheEntry?.timestamp) return false;
     return Date.now() - cacheEntry.timestamp < maxAgeMs;
 }
 
-function buildFetchHeaders(cacheEntry) {
+function buildFetchHeaders(cacheEntry: any) {
     const headers = {
         'User-Agent': 'MiSub-Template-Fetch/1.0',
     };
 
     if (cacheEntry?.etag) {
-        headers['If-None-Match'] = cacheEntry.etag;
+        (headers as Record<string, any>)['If-None-Match'] = cacheEntry.etag;
     }
     if (cacheEntry?.lastModified) {
-        headers['If-Modified-Since'] = cacheEntry.lastModified;
+        (headers as Record<string, any>)['If-Modified-Since'] = cacheEntry.lastModified;
     }
 
     return headers;
 }
 
-function getHeader(response, name) {
+function getHeader(response: any, name: any) {
     return response.headers?.get?.(name) || response.headers?.get?.(name.toLowerCase()) || null;
 }
 
-async function putTemplateCache(storageAdapter, cacheKey, cacheEntry, maxAgeSeconds) {
+async function putTemplateCache(
+    storageAdapter: any,
+    cacheKey: any,
+    cacheEntry: any,
+    maxAgeSeconds: any
+) {
     if (storageAdapter?.kv && typeof storageAdapter.kv.put === 'function') {
         await storageAdapter.kv.put(cacheKey, JSON.stringify(cacheEntry), {
             expirationTtl: maxAgeSeconds,
@@ -81,7 +86,12 @@ async function putTemplateCache(storageAdapter, cacheKey, cacheEntry, maxAgeSeco
     }
 }
 
-function createCacheEntry(templateUrl, nodes, response, previousEntry: KvRecord | null = null) {
+function createCacheEntry(
+    templateUrl: any,
+    nodes: any,
+    response: any,
+    previousEntry: KvRecord | null = null
+) {
     return {
         nodes,
         timestamp: Date.now(),
@@ -92,10 +102,14 @@ function createCacheEntry(templateUrl, nodes, response, previousEntry: KvRecord 
     };
 }
 
-export async function fetchTransformTemplate(storageAdapter, templateUrl, forceRefresh = false) {
+export async function fetchTransformTemplate(
+    storageAdapter: any,
+    templateUrl: any,
+    forceRefresh = false
+) {
     if (!templateUrl) return null;
 
-    const safeTemplateUrl = assertPublicNetworkUrl(templateUrl).toString();
+    const safeTemplateUrl = (assertPublicNetworkUrl(templateUrl) as URL).toString();
     const cacheKey = makeTemplateCacheKey(safeTemplateUrl);
     const cacheConfig = getTemplateCacheConfig(storageAdapter);
     const { data: cachedTemplate } = await getCache(storageAdapter, cacheKey);

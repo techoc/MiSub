@@ -7,7 +7,7 @@ export class APIError extends Error {
     status: number;
     data: any;
 
-    constructor(message, status = 500, data = null) {
+    constructor(message: any, status = 500, data = null) {
         super(message);
         this.name = 'APIError';
         this.status = status;
@@ -17,11 +17,11 @@ export class APIError extends Error {
 
 let unauthorizedHandler: any = null;
 
-export function configureUnauthorizedHandler(handler) {
+export function configureUnauthorizedHandler(handler: any) {
     unauthorizedHandler = typeof handler === 'function' ? handler : null;
 }
 
-const buildHeaders = (headers, body) => {
+const buildHeaders = (headers: any, body: any) => {
     if (headers instanceof Headers) {
         return headers;
     }
@@ -32,7 +32,7 @@ const buildHeaders = (headers, body) => {
     return resolved;
 };
 
-const parseJson = async (response) => {
+const parseJson = async (response: any) => {
     const text = await response.text();
     if (!text) return null;
     try {
@@ -42,7 +42,7 @@ const parseJson = async (response) => {
     }
 };
 
-export async function request(url, options: Record<string, any> = {}) {
+export async function request(url: any, options: Record<string, any> = {}) {
     const { headers, body, ...rest } = options;
     const response = await fetch(url, {
         credentials: 'include',
@@ -67,15 +67,15 @@ export async function request(url, options: Record<string, any> = {}) {
     return data;
 }
 
-const stringifyBody = (data) => (data === undefined ? undefined : JSON.stringify(data));
+const stringifyBody = (data: any) => (data === undefined ? undefined : JSON.stringify(data));
 
 export const api = {
-    get: (url, options = {}) => request(url, { ...options, method: 'GET' }),
-    post: (url, data?: any, options = {}) =>
+    get: (url: any, options = {}) => request(url, { ...options, method: 'GET' }),
+    post: (url: any, data?: any, options = {}) =>
         request(url, { ...options, method: 'POST', body: stringifyBody(data) }),
-    put: (url, data?: any, options = {}) =>
+    put: (url: any, data?: any, options = {}) =>
         request(url, { ...options, method: 'PUT', body: stringifyBody(data) }),
-    patch: (url, data?: any, options = {}) =>
+    patch: (url: any, data?: any, options = {}) =>
         request(url, { ...options, method: 'PATCH', body: stringifyBody(data) }),
-    del: (url, options = {}) => request(url, { ...options, method: 'DELETE' }),
+    del: (url: any, options = {}) => request(url, { ...options, method: 'DELETE' }),
 };

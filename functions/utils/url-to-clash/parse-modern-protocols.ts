@@ -5,7 +5,7 @@
 
 import { extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 
-export function parseHysteria2Url(url) {
+export function parseHysteria2Url(url: any) {
     try {
         // hysteria2://password@server:port?params#name
         // hy2://password@server:port?params#name
@@ -126,7 +126,7 @@ export function parseHysteria2Url(url) {
  * @param {string} url - TUIC URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseTuicUrl(url) {
+export function parseTuicUrl(url: any) {
     try {
         // tuic://token@server:port?sni=xxx&alpn=xxx#name
         const body = url.substring(7); // 去掉 tuic://
@@ -139,7 +139,7 @@ export function parseTuicUrl(url) {
         const rawUuid = separatorIndex === -1 ? token : token.substring(0, separatorIndex);
         const rawPassword = separatorIndex === -1 ? '' : token.substring(separatorIndex + 1);
 
-        const safeDecode = (value) => {
+        const safeDecode = (value: any) => {
             try {
                 return decodeURIComponent(value);
             } catch {
@@ -293,7 +293,7 @@ export function parseTuicUrl(url) {
  * @param {string} url - WireGuard URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseWireguardUrl(url) {
+export function parseWireguardUrl(url: any) {
     try {
         // wireguard://privatekey@server:port?params#name
         const body = url.substring('wireguard://'.length);
@@ -402,7 +402,7 @@ export function parseWireguardUrl(url) {
  * @param {string} url - Snell URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSnellUrl(url) {
+export function parseSnellUrl(url: any) {
     try {
         const body = url.substring('snell://'.length);
         let psk = '';
@@ -467,7 +467,7 @@ export function parseSnellUrl(url) {
  * @param {string} url - AnyTLS URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseAnytlsUrl(url) {
+export function parseAnytlsUrl(url: any) {
     try {
         const body = url.substring(9);
         let password = '';

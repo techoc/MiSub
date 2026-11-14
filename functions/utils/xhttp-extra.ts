@@ -6,13 +6,13 @@ import type { KvRecord } from '../../types/models.ts'; /**
  * 避免转换逻辑和 HTTP 细节互相牵扯。
  */
 
-function isPlainObject(value) {
+function isPlainObject(value: any) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 // mihomo 中这些字段最终按字符串读取，空串等同于“未配置”；
 // 直接丢弃空值，避免生成会覆盖默认值的空配置。
-function setNonEmptyString(source, sourceKey, target, targetKey) {
+function setNonEmptyString(source: any, sourceKey: any, target: any, targetKey: any) {
     const value = source[sourceKey];
     if (typeof value === 'string' && value !== '') {
         target[targetKey] = value;
@@ -21,11 +21,11 @@ function setNonEmptyString(source, sourceKey, target, targetKey) {
 
 // mihomo 的头表是 map[string]string；extra 由外部 JSON 控制，
 // 非字符串值会让整份配置解码失败，因此按字段类型不符处理并跳过。
-function copyStringHeaders(headers) {
+function copyStringHeaders(headers: any) {
     const result = {};
     for (const [key, value] of Object.entries(headers)) {
         if (typeof value === 'string') {
-            result[key] = value;
+            (result as Record<string, any>)[key] = value;
         }
     }
     return result;
@@ -33,7 +33,7 @@ function copyStringHeaders(headers) {
 
 // Xray 的 StringList 同时接受数组与逗号分隔字符串（infra/conf/common.go），
 // 两种形态都要保留；空列表视为未配置。
-function readStringList(value) {
+function readStringList(value: any) {
     if (Array.isArray(value)) {
         const list = value.filter((item) => typeof item === 'string' && item !== '');
         return list.length > 0 ? list : null;
@@ -49,7 +49,7 @@ function readStringList(value) {
 }
 
 // Xray 的分包参数允许数字或区间字符串，mihomo 的配置层统一按字符串处理。
-function setRangeField(source, sourceKey, target, targetKey) {
+function setRangeField(source: any, sourceKey: any, target: any, targetKey: any) {
     const value = source[sourceKey];
     if (typeof value === 'string' && value !== '') {
         target[targetKey] = value;
@@ -58,14 +58,14 @@ function setRangeField(source, sourceKey, target, targetKey) {
     }
 }
 
-function xmuxToReuseSettings(xmux) {
+function xmuxToReuseSettings(xmux: any) {
     const reuse = {};
-    const set = (sourceKey, targetKey) => {
+    const set = (sourceKey: any, targetKey: any) => {
         const value = xmux[sourceKey];
         if (typeof value === 'string') {
-            if (value !== '') reuse[targetKey] = value;
+            if (value !== '') (reuse as Record<string, any>)[targetKey] = value;
         } else if (typeof value === 'number' && Number.isFinite(value)) {
-            reuse[targetKey] = String(Math.trunc(value));
+            (reuse as Record<string, any>)[targetKey] = String(Math.trunc(value));
         }
     };
     set('maxConnections', 'max-connections');
@@ -75,12 +75,12 @@ function xmuxToReuseSettings(xmux) {
     set('hMaxReusableSecs', 'h-max-reusable-secs');
     // mihomo 把该值当整数秒读取，写成字符串会被拒绝。
     if (typeof xmux.hKeepAlivePeriod === 'number' && Number.isFinite(xmux.hKeepAlivePeriod)) {
-        reuse['h-keep-alive-period'] = Math.trunc(xmux.hKeepAlivePeriod);
+        (reuse as Record<string, any>)['h-keep-alive-period'] = Math.trunc(xmux.hKeepAlivePeriod);
     }
     return reuse;
 }
 
-function parseDownloadSettings(settings) {
+function parseDownloadSettings(settings: any) {
     const ds: Record<string, any> = {};
 
     setNonEmptyString(settings, 'address', ds, 'server');
@@ -146,9 +146,9 @@ function parseDownloadSettings(settings) {
     return ds;
 }
 
-function reuseSettingsToXmux(reuse) {
+function reuseSettingsToXmux(reuse: any) {
     const xmux: Record<string, any> = {};
-    const set = (sourceKey, targetKey) => {
+    const set = (sourceKey: any, targetKey: any) => {
         const value = reuse[sourceKey];
         if (typeof value === 'string') {
             if (value !== '') xmux[targetKey] = value;
@@ -170,7 +170,7 @@ function reuseSettingsToXmux(reuse) {
     return xmux;
 }
 
-function serializeDownloadSettings(ds, upstream) {
+function serializeDownloadSettings(ds: any, upstream: any) {
     const out: Record<string, any> = {};
     const context = isPlainObject(upstream) ? upstream : null;
 
@@ -261,7 +261,9 @@ function serializeDownloadSettings(ds, upstream) {
             tlsSettings.fingerprint = effectiveFingerprint;
         }
         if (effectiveAlpn && effectiveAlpn.length > 0) {
-            const alpn = effectiveAlpn.filter((item) => typeof item === 'string' && item !== '');
+            const alpn = effectiveAlpn.filter(
+                (item: any) => typeof item === 'string' && item !== ''
+            );
             if (alpn.length > 0) tlsSettings.alpn = alpn;
         }
         if (effectiveSkipCertVerify === true) {
@@ -279,7 +281,7 @@ function serializeDownloadSettings(ds, upstream) {
         const headers = copyStringHeaders(ds.headers);
         // 与上行一致：Host 由 host 参数表达；Xray 也禁止 xhttp headers 含 host。
         for (const key of Object.keys(headers)) {
-            if (key.toLowerCase() === 'host') delete headers[key];
+            if (key.toLowerCase() === 'host') delete (headers as Record<string, any>)[key];
         }
         if (Object.keys(headers).length > 0) {
             xhttpSettings.headers = headers;
@@ -308,7 +310,7 @@ function serializeDownloadSettings(ds, upstream) {
  * @param {Object} extra - xhttpSettings.extra 解析后的 JSON 对象
  * @returns {Object} mihomo xhttp-opts 附加字段（kebab-case）；无有效字段时为空对象
  */
-export function parseXhttpExtra(extra) {
+export function parseXhttpExtra(extra: any) {
     const opts: Record<string, any> = {};
     if (!isPlainObject(extra)) return opts;
 
@@ -387,17 +389,17 @@ export function parseXhttpExtra(extra) {
  * @param {Object} [upstream] - 代理级上下文，用于物化 mihomo 下行对上行安全配置的继承
  * @returns {Object|null} Xray extra 对象；不含任何 extra 字段时返回 null
  */
-export function serializeXhttpExtra(xhttpOpts, upstream: KvRecord | null = null) {
+export function serializeXhttpExtra(xhttpOpts: any, upstream: KvRecord | null = null) {
     if (!isPlainObject(xhttpOpts)) return null;
 
     const extra: Record<string, any> = {};
-    const getString = (sourceKey, targetKey) => {
+    const getString = (sourceKey: any, targetKey: any) => {
         if (typeof xhttpOpts[sourceKey] === 'string' && xhttpOpts[sourceKey] !== '') {
             extra[targetKey] = xhttpOpts[sourceKey];
         }
     };
     // mihomo 的字符串字段经 WeaklyTypedInput 也接受数字（如 session-length: 16）。
-    const getStringOrNumber = (sourceKey, targetKey) => {
+    const getStringOrNumber = (sourceKey: any, targetKey: any) => {
         const value = xhttpOpts[sourceKey];
         if (typeof value === 'string' && value !== '') {
             extra[targetKey] = value;
@@ -405,7 +407,7 @@ export function serializeXhttpExtra(xhttpOpts, upstream: KvRecord | null = null)
             extra[targetKey] = String(Math.trunc(value));
         }
     };
-    const getRange = (sourceKey, targetKey) => {
+    const getRange = (sourceKey: any, targetKey: any) => {
         const value = xhttpOpts[sourceKey];
         if (typeof value === 'string' && value !== '') {
             extra[targetKey] = value;
@@ -446,7 +448,7 @@ export function serializeXhttpExtra(xhttpOpts, upstream: KvRecord | null = null)
         const headers = copyStringHeaders(xhttpOpts.headers);
         for (const key of Object.keys(headers)) {
             if (key.toLowerCase() === 'host') {
-                delete headers[key];
+                delete (headers as Record<string, any>)[key];
             }
         }
         if (Object.keys(headers).length > 0) extra.headers = headers;
@@ -475,7 +477,7 @@ export function serializeXhttpExtra(xhttpOpts, upstream: KvRecord | null = null)
  * 回退上行值。这里把缺省值写成显式值，让两边语义一致。
  */
 export function applyDownloadInheritanceGuard(
-    xhttpOpts,
+    xhttpOpts: any,
     { upstreamReality }: Record<string, any> = {}
 ) {
     const ds = xhttpOpts && xhttpOpts['download-settings'];

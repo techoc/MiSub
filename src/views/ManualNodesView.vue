@@ -69,7 +69,7 @@
         sortNodesByLatency,
     } = useManualNodes(markDirty);
 
-    const handleSearchTermUpdate = (val) => {
+    const handleSearchTermUpdate = (val: any) => {
         searchTerm.value = val;
     };
 
@@ -84,12 +84,12 @@
     } = useNodeForms({ addNode, updateNode });
 
     // Actions
-    const setViewMode = (mode) => {
+    const setViewMode = (mode: any) => {
         manualNodeViewMode.value = mode;
         writeRawPreference('manualNodeViewMode', mode);
     };
 
-    const handleDeleteNodeWithCleanup = (nodeId) => {
+    const handleDeleteNodeWithCleanup = (nodeId: any) => {
         deleteNode(nodeId);
         // cleanupNodes 已在 deleteNode 内部通过 removeManualNodeFromProfiles 实现
     };
@@ -125,12 +125,12 @@
 
     // Old Handlers Removed
 
-    const handleOpenBatchGroupModal = (ids) => {
+    const handleOpenBatchGroupModal = (ids: any) => {
         batchGroupIds.value = ids;
         showBatchGroupModal.value = true;
     };
 
-    const handleBatchGroupConfirm = (groupName) => {
+    const handleBatchGroupConfirm = (groupName: any) => {
         batchUpdateGroup(batchGroupIds.value, groupName);
         batchGroupIds.value = [];
         // Ideally we should also clear selection in ManualNodePanel, but we don't have direct access.
@@ -143,7 +143,7 @@
         // Let's modify ManualNodePanel later if needed.
     };
 
-    const handleBatchDeleteRequest = (ids) => {
+    const handleBatchDeleteRequest = (ids: any) => {
         if (ids && ids.length > 0) {
             batchDeleteIds.value = ids;
             showBatchDeleteModal.value = true;
@@ -161,17 +161,17 @@
         showGroupManagementModal.value = true;
     };
 
-    const handleGroupRename = (oldName, newName) => {
+    const handleGroupRename = (oldName: any, newName: any) => {
         renameGroup(oldName, newName);
         showToast(t('manualNodes.groupRenamed', { oldName, newName }), 'success');
     };
 
-    const handleGroupDelete = (groupName) => {
+    const handleGroupDelete = (groupName: any) => {
         deleteGroup(groupName);
         showToast(t('manualNodes.groupDeleted', { groupName }), 'success');
     };
 
-    const handleGroupReorder = (newOrder) => {
+    const handleGroupReorder = (newOrder: any) => {
         reorderGroups(newOrder);
         showToast(t('manualNodes.groupOrderUpdated'), 'success');
     };
@@ -206,7 +206,7 @@
             @reorder="reorderManualNodes"
             @rename-group="renameGroup"
             @set-group-filter="setGroupFilter"
-            @batch-update-group="(ids, group) => batchUpdateGroup(ids, group)"
+            @batch-update-group="(ids: any, group: any) => batchUpdateGroup(ids, group)"
             @batch-delete-nodes="handleBatchDeleteRequest"
             @open-batch-group-modal="handleOpenBatchGroupModal"
             @manage-groups="handleOpenGroupManagement"

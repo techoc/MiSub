@@ -17,7 +17,7 @@ const DEFAULT_RETRY_OPTIONS = {
  * @returns {Promise<Response>} - 响应对象
  */
 export async function fetchWithRetry(
-    url,
+    url: any,
     init: Record<string, any> = {},
     options: Record<string, any> = {}
 ) {
@@ -72,7 +72,7 @@ export async function fetchWithRetry(
  * @param {number} limit - 最大并发数
  * @returns {Function} - 包装函数 (task => Promise)
  */
-export function createConcurrencyLimiter(limit) {
+export function createConcurrencyLimiter(limit: any) {
     const queue: any[] = [];
     let active = 0;
 
@@ -92,7 +92,7 @@ export function createConcurrencyLimiter(limit) {
         }
     };
 
-    return (task) => {
+    return (task: any) => {
         return new Promise((resolve, reject) => {
             queue.push({ task, resolve, reject });
             runNext();
@@ -107,12 +107,12 @@ export function createConcurrencyLimiter(limit) {
  * @param {number} timeoutMs - 超时时间（毫秒）
  * @returns {Promise<string[]>} - 已完成的结果数组
  */
-export async function collectWithinTimeout(promises, timeoutMs) {
+export async function collectWithinTimeout(promises: any, timeoutMs: any) {
     // 包装每个 Promise，使其在成功时返回结果，失败时返回 null（被忽略）
-    const wrappedPromises = promises.map((p) =>
+    const wrappedPromises = promises.map((p: any) =>
         p
-            .then((res) => ({ status: 'fulfilled', value: res }))
-            .catch((err) => ({ status: 'rejected', reason: err }))
+            .then((res: any) => ({ status: 'fulfilled', value: res }))
+            .catch((err: any) => ({ status: 'rejected', reason: err }))
     );
 
     // 竞态 Promise：所有完成 OR 超时
@@ -126,7 +126,7 @@ export async function collectWithinTimeout(promises, timeoutMs) {
     let results;
 
     if (raceResult === 'TIMEOUT') {
-        const completedCount = wrappedPromises.filter((p) => {
+        const completedCount = wrappedPromises.filter((p: any) => {
             // 这是一个稍微取巧的方法查看 Promise 状态，但在标准 JS 中无法同步查看。
             // 实际上 Promise.race 返回时，未完成的 promise 还在 pending。
             // 我们这里其实需要获取那些已经 settled 的 promise 的值。
@@ -154,8 +154,8 @@ export async function collectWithinTimeout(promises, timeoutMs) {
     } else {
         // 全都完成了
         results = (raceResult as Record<string, any>)
-            .filter((r) => r.status === 'fulfilled' && r.value)
-            .map((r) => r.value);
+            .filter((r: any) => r.status === 'fulfilled' && r.value)
+            .map((r: any) => r.value);
     }
 
     return results;
@@ -169,7 +169,7 @@ export async function collectWithinTimeout(promises, timeoutMs) {
  * @param {number} timeoutMs - 整体超时时间(ms)
  * @returns {Promise<any[]>} - 在超时前所有成功 resolve 的结果数组
  */
-export async function robustCollect(taskFactories, timeoutMs) {
+export async function robustCollect(taskFactories: any, timeoutMs: any) {
     const results: any[] = [];
     const controller = new AbortController();
 
@@ -178,7 +178,7 @@ export async function robustCollect(taskFactories, timeoutMs) {
         controller.abort();
     }, timeoutMs);
 
-    const promises = taskFactories.map(async (taskFactory) => {
+    const promises = taskFactories.map(async (taskFactory: any) => {
         try {
             const res = await taskFactory(controller.signal);
             if (res !== undefined && res !== null) {

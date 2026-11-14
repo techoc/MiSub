@@ -48,7 +48,7 @@ export class DataMigrator {
      * @param {Object} env - Cloudflare 环境对象
      * @returns {Promise<Object>} 迁移结果
      */
-    static async migrateKVToD1(env) {
+    static async migrateKVToD1(env: any) {
         try {
             const kvNs = resolveKV(env);
             if (!kvNs) throw new Error('No KV binding found');
@@ -65,18 +65,18 @@ export class DataMigrator {
                 errors: [] as any[],
             };
 
-            const copyKey = async (key) => {
+            const copyKey = async (key: any) => {
                 try {
                     const value = await kvAdapter.get(key);
                     if (value === null || value === undefined) {
-                        results.keys[key] = 'empty';
+                        (results.keys as Record<string, any>)[key] = 'empty';
                         return false;
                     }
                     await d1Adapter.put(key, value);
-                    results.keys[key] = 'migrated';
+                    (results.keys as Record<string, any>)[key] = 'migrated';
                     return true;
                 } catch (error) {
-                    results.keys[key] = 'failed';
+                    (results.keys as Record<string, any>)[key] = 'failed';
                     results.errors.push(`${key} 迁移失败: ${(error as Error).message}`);
                     return false;
                 }
@@ -109,12 +109,12 @@ export class DataMigrator {
                     settings.storageType = STORAGE_TYPES.D1;
                     await d1Adapter.put(DATA_KEYS.SETTINGS, settings);
                     results.settings = true;
-                    results.keys[DATA_KEYS.SETTINGS] = 'migrated';
+                    (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'migrated';
                 } else {
-                    results.keys[DATA_KEYS.SETTINGS] = 'empty';
+                    (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'empty';
                 }
             } catch (error) {
-                results.keys[DATA_KEYS.SETTINGS] = 'failed';
+                (results.keys as Record<string, any>)[DATA_KEYS.SETTINGS] = 'failed';
                 results.errors.push(`设置迁移失败: ${(error as Error).message}`);
             }
 
@@ -125,7 +125,7 @@ export class DataMigrator {
         }
     }
 
-    static async migrateLegacyD1MainRows(env) {
+    static async migrateLegacyD1MainRows(env: any) {
         if (!env?.MISUB_DB) throw new Error('D1 database not available');
 
         const d1Adapter = new D1StorageAdapter(env.MISUB_DB);
@@ -176,7 +176,7 @@ export class DataMigrator {
         return results;
     }
 
-    static async detectLegacyD1MainRows(env) {
+    static async detectLegacyD1MainRows(env: any) {
         if (!env?.MISUB_DB) {
             return {
                 hasLegacySubscriptions: false,

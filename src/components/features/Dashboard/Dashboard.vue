@@ -82,7 +82,7 @@
     const showCopyModal = ref(false);
     const showCopyModalProfile = ref<any>(null);
 
-    const handleQRCode = (id, type = 'subscription') => {
+    const handleQRCode = (id: any, type = 'subscription') => {
         if (type === 'subscription') {
             const sub = subscriptions.value.find((s) => s.id === id);
             if (sub) {
@@ -108,7 +108,7 @@
         }
     };
 
-    const handleOpenCopy = (profileId) => {
+    const handleOpenCopy = (profileId: any) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             showCopyModalProfile.value = profile;
@@ -173,7 +173,7 @@
         pingAllNodes,
     } = useManualNodes(markDirty);
 
-    const handleSearchTermUpdate = (val) => {
+    const handleSearchTermUpdate = (val: any) => {
         searchTerm.value = val;
     };
 
@@ -270,7 +270,7 @@
         }
     };
 
-    const handleBeforeUnload = (event) => {
+    const handleBeforeUnload = (event: any) => {
         if (isDirty.value) {
             event.preventDefault();
             event.returnValue = t('common.unsavedLeaveConfirm');
@@ -304,7 +304,7 @@
         }
     );
 
-    const setViewMode = (mode) => {
+    const setViewMode = (mode: any) => {
         manualNodeViewMode.value = mode;
         writeRawPreference('manualNodeViewMode', mode);
     };
@@ -334,11 +334,11 @@
         }
     };
 
-    const handleDeleteSubscriptionWithCleanup = (subId) => {
+    const handleDeleteSubscriptionWithCleanup = (subId: any) => {
         deleteSubscription(subId);
         // cleanup 已在 deleteSubscription 内部通过 removeSubscriptionFromProfiles 实现
     };
-    const handleDeleteNodeWithCleanup = (nodeId) => {
+    const handleDeleteNodeWithCleanup = (nodeId: any) => {
         deleteNode(nodeId);
         // cleanup 已在 deleteNode 内部通过 removeManualNodeFromProfiles 实现
     };
@@ -367,7 +367,7 @@
         showDedupModal.value = true;
     };
 
-    const handleBatchDeleteRequest = (ids) => {
+    const handleBatchDeleteRequest = (ids: any) => {
         if (ids && ids.length > 0) {
             batchDeleteIds.value = ids;
             showBatchDeleteModal.value = true;
@@ -380,12 +380,12 @@
         showBatchDeleteModal.value = false;
     };
 
-    const handleOpenBatchGroupModal = (ids) => {
+    const handleOpenBatchGroupModal = (ids: any) => {
         batchGroupIds.value = ids;
         showBatchGroupModal.value = true;
     };
 
-    const handleBatchGroupConfirm = (groupName) => {
+    const handleBatchGroupConfirm = (groupName: any) => {
         batchUpdateGroup(batchGroupIds.value, groupName);
         batchGroupIds.value = [];
     };
@@ -395,23 +395,23 @@
         showGroupManagementModal.value = true;
     };
 
-    const handleGroupRename = (oldName, newName) => {
+    const handleGroupRename = (oldName: any, newName: any) => {
         renameGroup(oldName, newName);
         showToast(t('manualNodes.groupRenamed', { oldName, newName }), 'success');
     };
 
-    const handleGroupDelete = (groupName) => {
+    const handleGroupDelete = (groupName: any) => {
         deleteGroup(groupName);
         showToast(t('manualNodes.groupDeleted', { groupName }), 'success');
     };
 
-    const handleGroupReorder = (newOrder) => {
+    const handleGroupReorder = (newOrder: any) => {
         reorderGroups(newOrder);
         showToast(t('manualNodes.groupOrderUpdated'), 'success');
     };
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
-    const handleApplyDetectedName = (subscriptionId, name) => {
+    const handleApplyDetectedName = (subscriptionId: any, name: any) => {
         const target = String(name || '').trim();
         if (!target) return;
         const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
@@ -425,7 +425,7 @@
     };
 
     // 节点预览处理函数
-    const handlePreviewSubscription = (subscriptionId) => {
+    const handlePreviewSubscription = (subscriptionId: any) => {
         const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
         if (subscription) {
             previewSubscriptionId.value = subscriptionId;
@@ -437,7 +437,7 @@
         }
     };
 
-    const handlePreviewProfile = (profileId) => {
+    const handlePreviewProfile = (profileId: any) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             previewProfileId.value = profileId;
@@ -449,7 +449,7 @@
         }
     };
 
-    const handleViewLogs = (profileId) => {
+    const handleViewLogs = (profileId: any) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             logProfileName.value = profile.name;
@@ -457,7 +457,7 @@
         }
     };
 
-    const handleProfileReorder = (profileId, direction) => {
+    const handleProfileReorder = (profileId: any, direction: any) => {
         const fromIndex = profiles.value.findIndex(
             (profile) => profile.id === profileId || profile.customId === profileId
         );
@@ -559,7 +559,7 @@
                     @delete-all="showDeleteNodesModal = true"
                     @reorder="reorderManualNodes"
                     @set-group-filter="setGroupFilter"
-                    @batch-update-group="(ids, group) => batchUpdateGroup(ids, group)"
+                    @batch-update-group="(ids: any, group: any) => batchUpdateGroup(ids, group)"
                     @batch-delete-nodes="handleBatchDeleteRequest"
                     @rename-group="renameGroup"
                     @delete-group="deleteGroup"

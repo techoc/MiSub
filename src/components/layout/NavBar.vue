@@ -30,7 +30,7 @@
 
     const navItems = MAIN_NAV_ITEMS;
 
-    function isActive(path) {
+    function isActive(path: any) {
         if (path === '/') return route.path === '/';
         if (path === '/dashboard') return route.path === '/dashboard';
         return route.path.startsWith(path);

@@ -58,11 +58,11 @@
             3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
             4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
         };
-        return columnMap[props.columns] || columnMap[3];
+        return (columnMap as Record<string, any>)[props.columns] || columnMap[3];
     });
 
     // 计算过滤器值
-    const filterValue = computed(() => (filter) => {
+    const filterValue = computed(() => (filter: any) => {
         return localValues.value[filter.key] ?? filter.defaultValue ?? '';
     });
 
@@ -93,7 +93,7 @@
     });
 
     // 处理过滤器值变化
-    const handleFilterChange = (filter, value) => {
+    const handleFilterChange = (filter: any, value: any) => {
         localValues.value[filter.key] = value;
 
         // 特殊处理：对于数值范围和日期范围，需要格式化
@@ -114,7 +114,7 @@
     const resetFilters = () => {
         const defaultValues = {};
         props.filters.forEach((filter: any) => {
-            defaultValues[(filter as Record<string, any>).key] = (((filter.defaultValue as any) as any) as any) ?? (((((filter as Record<string, any>).type as any) as any) as any) === 'select' ? '' : '');
+            (defaultValues as Record<string, any>)[(filter as Record<string, any>).key] = (((filter.defaultValue as any) as any) as any) ?? (((((filter as Record<string, any>).type as any) as any) as any) === 'select' ? '' : '');
         });
         localValues.value = defaultValues;
 
@@ -134,11 +134,11 @@
     };
 
     // 获取过滤器的显示值
-    const getDisplayValue = (filter) => {
+    const getDisplayValue = (filter: any) => {
         const value = filterValue.value(filter);
 
         if (filter.type === 'select' && filter.options) {
-            const option = filter.options.find((opt) => opt.value === value);
+            const option = filter.options.find((opt: any) => opt.value === value);
             return option ? option.label : value;
         }
 
@@ -154,7 +154,7 @@
     };
 
     // 渲染不同类型的过滤器
-    const renderFilter = (filter) => {
+    const renderFilter = (filter: any) => {
         const value = filterValue.value(filter);
 
         switch (filter.type) {
@@ -165,7 +165,7 @@
                     type: 'text',
                     placeholder: filter.placeholder,
                     value,
-                    onInput: (e) => handleFilterChange(filter, e.target.value),
+                    onInput: (e: any) => handleFilterChange(filter, e.target.value),
                 };
 
             case 'number':
@@ -174,14 +174,14 @@
                     type: 'number',
                     placeholder: filter.placeholder,
                     value,
-                    onInput: (e) => handleFilterChange(filter, Number(e.target.value)),
+                    onInput: (e: any) => handleFilterChange(filter, Number(e.target.value)),
                 };
 
             case 'select':
                 return {
                     tag: 'select',
                     value,
-                    onChange: (e) => handleFilterChange(filter, e.target.value),
+                    onChange: (e: any) => handleFilterChange(filter, e.target.value),
                 };
 
             case 'multiselect':
@@ -189,7 +189,7 @@
                     tag: 'select',
                     multiple: true,
                     value: Array.isArray(value) ? value : [],
-                    onChange: (e) => {
+                    onChange: (e: any) => {
                         const selected = Array.from(
                             e.target.selectedOptions,
                             (option) => (option as Record<string, any>).value
@@ -215,7 +215,7 @@
                     tag: 'input',
                     type: 'checkbox',
                     checked: Boolean(value),
-                    onChange: (e) => handleFilterChange(filter, e.target.checked),
+                    onChange: (e: any) => handleFilterChange(filter, e.target.checked),
                 };
 
             default:
@@ -223,7 +223,7 @@
                     tag: 'input',
                     type: 'text',
                     value,
-                    onInput: (e) => handleFilterChange(filter, e.target.value),
+                    onInput: (e: any) => handleFilterChange(filter, e.target.value),
                 };
         }
     };
@@ -422,7 +422,7 @@
                             :name="`filter-${(filter as Record<string, any>).key}`"
                             :filter="filter"
                             :value="filterValue(filter)"
-                            :onChange="(value) => handleFilterChange(filter, value)"
+                            :onChange="(value: any) => handleFilterChange(filter, value)"
                         />
                     </div>
                 </div>

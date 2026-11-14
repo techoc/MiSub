@@ -1,6 +1,11 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 
-export function useVirtualScroll({ items, itemHeight = 52, containerHeight = 400, overscan = 5 }) {
+export function useVirtualScroll({
+    items,
+    itemHeight = 52,
+    containerHeight = 400,
+    overscan = 5,
+}: any) {
     const scrollTop = ref(0);
     const containerRef = ref(null);
 
@@ -38,7 +43,7 @@ export function useVirtualScroll({ items, itemHeight = 52, containerHeight = 400
         const endIndex = Math.min(totalItems, startIndex + visibleCount + overscan * 2);
 
         return {
-            items: items.value.slice(startIndex, endIndex).map((item, index) => ({
+            items: items.value.slice(startIndex, endIndex).map((item: any, index: any) => ({
                 ...item,
                 _virtualIndex: startIndex + index,
             })),
@@ -51,7 +56,7 @@ export function useVirtualScroll({ items, itemHeight = 52, containerHeight = 400
 
     const offsetY = computed(() => visibleItems.value.startIndex * itemHeight);
 
-    const setContainerRef = (el) => {
+    const setContainerRef = (el: any) => {
         if (el) {
             containerRef.value = el;
             if (el.scrollTop !== scrollTop.value) {

@@ -4,7 +4,7 @@ import { validateGeneratedUrl } from './validator.ts';
 /**
  * 批量转换Clash代理
  */
-export function batchConvertClashProxies(proxies) {
+export function batchConvertClashProxies(proxies: any) {
     if (!Array.isArray(proxies)) {
         return [];
     }

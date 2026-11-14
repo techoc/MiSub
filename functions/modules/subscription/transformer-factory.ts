@@ -6,8 +6,8 @@ import { generateBuiltinSingboxConfig } from './builtin-singbox-generator.ts';
 import { generateBuiltinEgernConfig } from './builtin-egern-generator.ts';
 
 export function transformBuiltinSubscription(
-    nodeList,
-    targetFormat,
+    nodeList: any,
+    targetFormat: any,
     options: Record<string, any> = {}
 ) {
     const normalized = (targetFormat || '').toLowerCase();

@@ -87,7 +87,7 @@ export const useSessionStore = defineStore('session', () => {
         }
     }
 
-    async function login(password) {
+    async function login(password: any) {
         const result = await apiLogin(password);
         if (result.success) {
             securityWarning.value = (result as Record<string, any>).data?.securityWarning || null;

@@ -15,7 +15,7 @@ const SUCCESS_LOG_COOLDOWN_MS = 5 * 60 * 1000;
 const ERROR_LOG_COOLDOWN_MS = 60 * 1000;
 const MAX_PERSISTED_LOGS_PER_MINUTE = 12;
 
-export function anonymizeLogToken(value, type = 'token') {
+export function anonymizeLogToken(value: any, type = 'token') {
     const text = String(value ?? '');
     const normalizedType = type === 'profile' ? 'profile' : 'token';
     if (!text) return '';
@@ -45,7 +45,7 @@ function sanitizeLogEntry(logEntry: Record<string, any> = {}) {
     };
 }
 
-async function resolvePrimaryLogStorage(env) {
+async function resolvePrimaryLogStorage(env: any) {
     const storageType = await StorageFactory.getStorageType(env);
     const storage = StorageFactory.createAdapter(env, storageType);
     if (
@@ -63,7 +63,7 @@ async function resolvePrimaryLogStorage(env) {
     };
 }
 
-function resolveLegacyLogStorage(env, primaryStorageType) {
+function resolveLegacyLogStorage(env: any, primaryStorageType: any) {
     if (primaryStorageType !== STORAGE_TYPES.D1) {
         return null;
     }
@@ -86,7 +86,7 @@ function resolveLegacyLogStorage(env, primaryStorageType) {
     return storage;
 }
 
-function getLogBucketKey(timestamp) {
+function getLogBucketKey(timestamp: any) {
     const date = new Date(timestamp);
     const yyyy = date.getUTCFullYear();
     const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -94,17 +94,17 @@ function getLogBucketKey(timestamp) {
     return `${LOG_BUCKET_PREFIX}${yyyy}-${mm}-${dd}`;
 }
 
-async function getLogBucketIndex(storage) {
+async function getLogBucketIndex(storage: any) {
     const index = await storage.get(LOG_INDEX_KV_KEY);
     return Array.isArray(index) ? index : [];
 }
 
-async function saveLogBucketIndex(storage, keys) {
+async function saveLogBucketIndex(storage: any, keys: any) {
     const unique = Array.from(new Set(keys)).sort().reverse();
     await storage.put(LOG_INDEX_KV_KEY, unique.slice(0, MAX_LOG_AGE_DAYS + 2));
 }
 
-async function readLogsFromStorage(storage) {
+async function readLogsFromStorage(storage: any) {
     const [bucketIndex, legacyLogs] = await Promise.all([
         getLogBucketIndex(storage),
         storage.get(LOG_KV_KEY),
@@ -114,7 +114,7 @@ async function readLogsFromStorage(storage) {
         bucketIndex.map((key) =>
             storage
                 .get(key)
-                .then((raw) => (Array.isArray(raw) ? raw : []))
+                .then((raw: any) => (Array.isArray(raw) ? raw : []))
                 .catch(() => [])
         )
     );
@@ -138,7 +138,7 @@ function cleanupLogBudgets(now = Date.now()) {
     }
 }
 
-function getLogFingerprint(logEntry) {
+function getLogFingerprint(logEntry: any) {
     const type = logEntry?.type || 'unknown';
     const token = anonymizeLogToken(logEntry?.token || 'unknown', type);
     const format = logEntry?.format || 'unknown';
@@ -148,7 +148,7 @@ function getLogFingerprint(logEntry) {
     return `${status}|${type}|${token}|${format}|${domain}|${message}`;
 }
 
-function shouldPersistLog(logEntry) {
+function shouldPersistLog(logEntry: any) {
     const now = Date.now();
     cleanupLogBudgets(now);
 
@@ -181,7 +181,7 @@ export const LogService = {
      * @param {Object} env - Cloudflare Environment
      * @param {Object} logEntry - 日志内容
      */
-    async addLog(env, logEntry) {
+    async addLog(env: any, logEntry: any) {
         const primaryStorage = await resolvePrimaryLogStorage(env);
         if (!primaryStorage) return;
         const sanitizedLogEntry = sanitizeLogEntry(logEntry);
@@ -211,7 +211,7 @@ export const LogService = {
     /**
      * 内部方法：将内存队列中的日志批量刷入 KV
      */
-    async _flush(env) {
+    async _flush(env: any) {
         if (logBatch.length === 0) {
             isFlushing = false;
             return;
@@ -237,7 +237,7 @@ export const LogService = {
             logs.unshift(...batchToFlush.reverse());
 
             // 1. 过滤过期日志 (30天)
-            logs = logs.filter((log) => now - log.timestamp <= MAX_LOG_AGE_MS);
+            logs = logs.filter((log: any) => now - log.timestamp <= MAX_LOG_AGE_MS);
 
             // 2. 单桶限制数量，避免单 key 无限增长
             const perBucketLimit = Math.max(MAX_LOG_ENTRIES, 100);
@@ -281,7 +281,7 @@ export const LogService = {
      * 获取日志列表
      * @param {Object} env - Cloudflare Environment
      */
-    async getLogs(env) {
+    async getLogs(env: any) {
         try {
             const primaryStorage = await resolvePrimaryLogStorage(env);
             if (!primaryStorage) return [];
@@ -303,7 +303,7 @@ export const LogService = {
      * 清空日志
      * @param {Object} env - Cloudflare Environment
      */
-    async clearLogs(env) {
+    async clearLogs(env: any) {
         try {
             const primaryStorage = await resolvePrimaryLogStorage(env);
             if (!primaryStorage) return false;

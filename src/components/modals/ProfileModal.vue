@@ -127,7 +127,7 @@
             return validSubs;
         }
         const lowerCaseSearchTerm = subscriptionSearchTerm.value.toLowerCase();
-        const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
+        const alternativeTerms = (countryCodeMap as Record<string, any>)[lowerCaseSearchTerm] || [];
 
         return validSubs.filter((sub: any) => {
             const subNameLower = (sub as Error).name
@@ -165,7 +165,7 @@
             return list;
         }
         const lowerCaseSearchTerm = subProfileSearchTerm.value.toLowerCase();
-        const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
+        const alternativeTerms = (countryCodeMap as Record<string, any>)[lowerCaseSearchTerm] || [];
 
         return list.filter((p) => {
             const pNameLower = p.name ? p.name.toLowerCase() : '';
@@ -206,7 +206,7 @@
             return nodes;
         }
         const lowerCaseSearchTerm = nodeSearchTerm.value.toLowerCase();
-        const alternativeTerms = countryCodeMap[lowerCaseSearchTerm] || [];
+        const alternativeTerms = (countryCodeMap as Record<string, any>)[lowerCaseSearchTerm] || [];
 
         return nodes!.filter((node: any) => {
             const nodeNameLower = (node as Error).name
@@ -341,7 +341,7 @@
         emit('save', profileToSave);
     };
 
-    const toggleSelection = (listName, id) => {
+    const toggleSelection = (listName: any, id: any) => {
         const list = localProfile.value[listName];
         const index = list.indexOf(id);
         if (index > -1) {
@@ -351,21 +351,21 @@
         }
     };
 
-    const handleSelectAll = (listName, sourceArray) => {
+    const handleSelectAll = (listName: any, sourceArray: any) => {
         const currentSelection = new Set(localProfile.value[listName]);
-        sourceArray.forEach((item) => currentSelection.add(item.id));
+        sourceArray.forEach((item: any) => currentSelection.add(item.id));
         localProfile.value[listName] = Array.from(currentSelection);
     };
 
-    const handleDeselectAll = (listName, sourceArray) => {
-        const sourceIds = sourceArray.map((item) => item.id);
+    const handleDeselectAll = (listName: any, sourceArray: any) => {
+        const sourceIds = sourceArray.map((item: any) => item.id);
         localProfile.value[listName] = localProfile.value[listName].filter(
-            (id) => !sourceIds.includes(id)
+            (id: any) => !sourceIds.includes(id)
         );
     };
 
     // 处理拖拽排序后的 ID 顺序更新
-    const updateSelectedIds = (listName, newIds) => {
+    const updateSelectedIds = (listName: any, newIds: any) => {
         localProfile.value[listName] = newIds;
     };
 </script>

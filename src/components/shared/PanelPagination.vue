@@ -67,7 +67,7 @@
         { immediate: true }
     );
 
-    function emitPageChange(page) {
+    function emitPageChange(page: any) {
         const parsed = parseInt(page, 10);
         if (Number.isNaN(parsed)) return;
 
@@ -80,7 +80,7 @@
         emitPageChange(pageInput.value);
     }
 
-    function handleItemsPerPageChange(event) {
+    function handleItemsPerPageChange(event: any) {
         emit('update:itemsPerPage', parseInt(event.target.value, 10));
     }
 </script>

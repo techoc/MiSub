@@ -60,8 +60,8 @@
      * 把后端返回的节点写入手动节点列表（URL 导入与文件导入共用）。
      * @returns {boolean} 是否至少写入了一个节点
      */
-    const commitParsedNodes = (backendNodes, targetGroupName, sourceLabel) => {
-        const nodes = (backendNodes || []).map((node) => ({
+    const commitParsedNodes = (backendNodes: any, targetGroupName: any, sourceLabel: any) => {
+        const nodes = (backendNodes || []).map((node: any) => ({
             id: generateNodeId(),
             name: node.name || 'Unknown',
             url: node.url,
@@ -74,7 +74,8 @@
 
         // 去重处理
         const uniqueNodes = nodes.filter(
-            (node, index, self) => index === self.findIndex((n) => n.url === node.url)
+            (node: any, index: any, self: any) =>
+                index === self.findIndex((n: any) => n.url === node.url)
         );
         const duplicateCount = nodes.length - uniqueNodes.length;
 
@@ -102,7 +103,7 @@
     /**
      * 上传本地文件导入：读取文件文本 → 后端解析 → 入库。
      */
-    const importFiles = async (fileList) => {
+    const importFiles = async (fileList: any) => {
         // 用户未填分组时，用文件名自动生成，免去手填
         if (!groupName.value.trim() && fileList?.length) {
             groupName.value = buildAutoGroupName({ fileName: fileList[0].name });
@@ -154,7 +155,7 @@
     /**
      * 验证URL格式
      */
-    const isValidUrl = (url) => {
+    const isValidUrl = (url: any) => {
         try {
             const u = new URL(url);
             return u.protocol === 'http:' || u.protocol === 'https:';

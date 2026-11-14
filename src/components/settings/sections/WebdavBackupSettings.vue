@@ -153,7 +153,7 @@
         }
     };
 
-    const restoreRemoteFile = async (file) => {
+    const restoreRemoteFile = async (file: any) => {
         if (!file?.path) return;
         const confirmed = await confirmAction({
             message: t('settings.webdavRestoreRemoteConfirm', { name: file.name }),

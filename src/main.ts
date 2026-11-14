@@ -59,14 +59,14 @@ if (typeof window !== 'undefined') {
     const assetReloadKey = 'misub:asset-reload';
     const currentOrigin = window.location.origin;
     const localHost = isLocalHost(window.location.hostname);
-    const isSameOriginResource = (resourceUrl) =>
+    const isSameOriginResource = (resourceUrl: any) =>
         isSameOriginUrl(resourceUrl, currentOrigin, window.location.href);
     // 只有打包产物里的 JS/CSS 失败才值得「清缓存重载」与错误上报，
     // 判定逻辑见 utils/url-origin.js 的 isCriticalAssetPath。
     const hasAssetReloaded = () => readSessionPreference(assetReloadKey) === '1';
     const markAssetReloaded = () => writeSessionPreference(assetReloadKey, '1');
 
-    const tryRecoverAssetLoad = async (resourceUrl) => {
+    const tryRecoverAssetLoad = async (resourceUrl: any) => {
         if (!isSameOriginResource(resourceUrl)) return false;
         let resourcePath;
         try {
@@ -180,7 +180,7 @@ if (typeof window !== 'undefined') {
 const pinia = createPinia();
 const app = createApp(App);
 
-configureUnauthorizedHandler(({ url }) => {
+configureUnauthorizedHandler(({ url }: any) => {
     window.dispatchEvent(new CustomEvent('misub:unauthorized', { detail: { url } }));
 });
 

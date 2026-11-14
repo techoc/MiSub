@@ -17,7 +17,7 @@ import {
 } from './manual-nodes/groups.ts';
 import { t } from '../i18n/index.ts';
 
-export function useManualNodes(markDirty) {
+export function useManualNodes(markDirty: any) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     const settingsStore = useSettingsStore();
@@ -62,7 +62,7 @@ export function useManualNodes(markDirty) {
         manualNodes.value.filter((n) => (n as Record<string, any>).enabled)
     );
 
-    function changeManualNodesPage(page) {
+    function changeManualNodesPage(page: any) {
         let p = parseInt(page);
         if (isNaN(p)) p = 1;
         if (p < 1) p = 1;
@@ -70,12 +70,12 @@ export function useManualNodes(markDirty) {
         manualNodesCurrentPage.value = p;
     }
 
-    function setGroupFilter(group) {
+    function setGroupFilter(group: any) {
         activeGroupFilter.value = group;
         manualNodesCurrentPage.value = 1; // Reset to page 1
     }
 
-    function batchUpdateGroup(nodeIds, groupName) {
+    function batchUpdateGroup(nodeIds: any, groupName: any) {
         if (!nodeIds || nodeIds.length === 0) return;
         const normalizedGroupName = normalizeManualNodeGroupName(groupName);
         const idsSet = new Set(nodeIds);
@@ -110,11 +110,11 @@ export function useManualNodes(markDirty) {
         }
     }
 
-    function batchDeleteNodes(nodeIds) {
+    function batchDeleteNodes(nodeIds: any) {
         if (!nodeIds || nodeIds.length === 0) return;
         // Confirmation moved to UI layer
 
-        nodeIds.forEach((id) => {
+        nodeIds.forEach((id: any) => {
             dataStore.removeSubscription(id);
         });
         // 清理组合订阅中对这些节点的引用
@@ -129,7 +129,7 @@ export function useManualNodes(markDirty) {
         showToast(t('manualNodes.deletedCount', { count: nodeIds.length }), 'success');
     }
 
-    function addNode(node) {
+    function addNode(node: any) {
         const normalizedNode = {
             ...node,
             group: normalizeManualNodeGroupName(node.group),
@@ -143,7 +143,7 @@ export function useManualNodes(markDirty) {
         markDirty();
     }
 
-    function updateNode(updatedNode) {
+    function updateNode(updatedNode: any) {
         const normalizedNode = {
             ...updatedNode,
             group: normalizeManualNodeGroupName(updatedNode.group),
@@ -153,7 +153,7 @@ export function useManualNodes(markDirty) {
         markDirty();
     }
 
-    function deleteNode(nodeId) {
+    function deleteNode(nodeId: any) {
         dataStore.removeSubscription(nodeId);
         // 清理组合订阅中对该节点的引用
         dataStore.removeManualNodeFromProfiles(nodeId);
@@ -182,7 +182,7 @@ export function useManualNodes(markDirty) {
         showToast(t('manualNodes.clearedCount', { count: idsToRemove.length }), 'success');
     }
 
-    function addNodesFromBulk(nodes, groupName = '') {
+    function addNodesFromBulk(nodes: any, groupName = '') {
         const normalizedGroupName = normalizeManualNodeGroupName(groupName);
         // Reverse insert so they appear in correct order when unshifted
         for (let i = nodes.length - 1; i >= 0; i--) {
@@ -195,13 +195,13 @@ export function useManualNodes(markDirty) {
 
     const buildDedupPlan = () => buildDedupPlanCore(manualNodes.value);
 
-    function applyDedupPlan(plan) {
+    function applyDedupPlan(plan: any) {
         if (!plan || !plan.removeNodes || plan.removeNodes.length === 0) {
             showToast(t('manualNodes.noDuplicates'), 'info');
             return;
         }
 
-        plan.removeNodes.forEach((node) => dataStore.removeSubscription(node.id));
+        plan.removeNodes.forEach((node: any) => dataStore.removeSubscription(node.id));
         showToast(
             t('manualNodes.removedDuplicates', { count: plan.removeNodes.length }),
             'success'
@@ -256,8 +256,8 @@ export function useManualNodes(markDirty) {
         if (!hasAnyLatency) return false;
 
         const nodes = [...manualNodes.value];
-        const latencyOf = (node) => {
-            const r = results[node.id];
+        const latencyOf = (node: any) => {
+            const r = (results as Record<string, any>)[node.id];
             return r && r.status === 'ok' && Number.isFinite(r.latency) ? r.latency : Infinity;
         };
 
@@ -288,7 +288,7 @@ export function useManualNodes(markDirty) {
         }
     });
 
-    function reorderManualNodes(newOrder) {
+    function reorderManualNodes(newOrder: any) {
         const currentManualNodes = manualNodes.value;
         const reorderedVisibleNodes = [...(newOrder || [])];
         const newOrderIds = new Set(reorderedVisibleNodes.map((node) => node.id));
@@ -327,7 +327,7 @@ export function useManualNodes(markDirty) {
         return buildGroupedManualNodes(filteredManualNodes.value, manualNodeGroups.value);
     });
 
-    function renameGroup(oldName, newName) {
+    function renameGroup(oldName: any, newName: any) {
         const normalizedOldName = normalizeManualNodeGroupName(oldName);
         const normalizedNewName = normalizeManualNodeGroupName(newName);
         if (!normalizedOldName || !normalizedNewName || normalizedOldName === normalizedNewName)
@@ -356,7 +356,7 @@ export function useManualNodes(markDirty) {
         markDirty();
     }
 
-    function deleteGroup(groupName) {
+    function deleteGroup(groupName: any) {
         const normalizedGroupName = normalizeManualNodeGroupName(groupName);
         if (!normalizedGroupName) return;
         // Ungroup nodes (move to default)
@@ -381,7 +381,7 @@ export function useManualNodes(markDirty) {
         markDirty();
     }
 
-    function reorderGroups(newOrder) {
+    function reorderGroups(newOrder: any) {
         // 保存用户自定义的分组顺序
         settingsStore.updateConfig({ manualNodeGroupOrder: newOrder });
         markDirty();
@@ -391,14 +391,14 @@ export function useManualNodes(markDirty) {
     const pingResults = ref({}); // { [nodeId]: { status: 'ok'|'error'|'timeout', latency: 120 } }
     const pingingNodes = ref(new Set());
 
-    async function pingNodeId(nodeId) {
+    async function pingNodeId(nodeId: any) {
         if (pingingNodes.value.has(nodeId)) return;
         const node = manualNodes.value.find((n) => (n as Record<string, any>).id === nodeId);
         if (!node) return;
 
         const { host, port } = extractHostAndPort((node as Record<string, any>).url);
         if (!host || !port) {
-            pingResults.value[nodeId] = {
+            (pingResults.value as Record<string, any>)[nodeId] = {
                 status: 'error',
                 latency: -1,
                 message: t('manualNodes.parseAddressFailed'),

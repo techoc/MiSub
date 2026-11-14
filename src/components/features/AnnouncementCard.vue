@@ -42,7 +42,7 @@
         });
     });
 
-    const dismiss = (e) => {
+    const dismiss = (e: any) => {
         e.stopPropagation();
         isVisible.value = false;
         if (props.announcement.updatedAt) {
@@ -111,7 +111,7 @@
                 glow: 'var(--glow-danger)',
             },
         };
-        return types[props.announcement.type] || types.info;
+        return (types as Record<string, any>)[props.announcement.type] || types.info;
     });
 </script>
 

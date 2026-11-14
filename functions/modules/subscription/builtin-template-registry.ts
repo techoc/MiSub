@@ -797,6 +797,6 @@ overwrite_original_rules=true`,
     },
 };
 
-export function getBuiltinTemplate(templateId) {
-    return BUILTIN_TEMPLATE_REGISTRY[templateId] || null;
+export function getBuiltinTemplate(templateId: any) {
+    return (BUILTIN_TEMPLATE_REGISTRY as Record<string, any>)[templateId] || null;
 }

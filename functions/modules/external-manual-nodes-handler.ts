@@ -26,22 +26,24 @@ function generateId(prefix = 'node') {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function nextSortIndex(items) {
-    return items.reduce((max, item) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1;
+function nextSortIndex(items: any) {
+    return (
+        items.reduce((max: any, item: any) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1
+    );
 }
 
-async function loadManualNodes(storageAdapter) {
+async function loadManualNodes(storageAdapter: any) {
     const all = await storageAdapter.getAllSubscriptions();
     return sortBySortIndex(all.filter(isManualNode));
 }
 
-async function getManualNodeById(storageAdapter, id) {
+async function getManualNodeById(storageAdapter: any, id: any) {
     const item = await storageAdapter.getSubscriptionById(id);
     if (!item || !isManualNode(item)) return null;
     return item;
 }
 
-async function removeManualNodeIdFromProfiles(storageAdapter, id) {
+async function removeManualNodeIdFromProfiles(storageAdapter: any, id: any) {
     const profiles = await storageAdapter.getAllProfiles();
     const affected: any[] = [];
     for (const profile of profiles) {
@@ -49,7 +51,7 @@ async function removeManualNodeIdFromProfiles(storageAdapter, id) {
         if (!manualNodes.includes(id)) continue;
         const updated = {
             ...profile,
-            manualNodes: manualNodes.filter((item) => item !== id),
+            manualNodes: manualNodes.filter((item: any) => item !== id),
             updatedAt: nowIso(),
         };
         await storageAdapter.putProfile(updated);
@@ -59,8 +61,8 @@ async function removeManualNodeIdFromProfiles(storageAdapter, id) {
 }
 
 export async function handleExternalManualNodesRequest(
-    request,
-    env,
+    request: any,
+    env: any,
     selector: string | KvRecord | null = null
 ) {
     const storageAdapter = await getExternalStorageAdapter(env);

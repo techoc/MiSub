@@ -17,7 +17,7 @@ import {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleParseSubscription(request, env) {
+export async function handleParseSubscription(request: any, env: any) {
     try {
         const { content } = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
 

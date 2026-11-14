@@ -5,15 +5,15 @@ import { ref, watch } from 'vue';
  * @param {import('vue').Ref<number>} targetValue - 目标数字 (必须是一个ref或computed)
  * @returns {import('vue').Ref<number>} - 一个会从旧值动画到新值的ref
  */
-export function useAnimatedCounter(targetValue) {
+export function useAnimatedCounter(targetValue: any) {
     const displayValue = ref(targetValue.value || 0);
     let animationFrameId: any = null;
 
-    const animate = (from, to) => {
+    const animate = (from: any, to: any) => {
         const duration = 700; // 动画持续时间 (毫秒)
         const start = performance.now();
 
-        const update = (now) => {
+        const update = (now: any) => {
             const elapsed = now - start;
             const progress = Math.min(elapsed / duration, 1);
 

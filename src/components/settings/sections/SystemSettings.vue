@@ -24,7 +24,7 @@
     });
     const isUpdatingPassword = ref(false);
 
-    const ensureExternalApiDefaults = (settings) => {
+    const ensureExternalApiDefaults = (settings: any) => {
         if (!settings.externalApi || typeof settings.externalApi !== 'object') {
             settings.externalApi = { enabled: false, tokens: [{ name: 'default', token: '' }] };
             return;
@@ -38,7 +38,7 @@
             return;
         }
 
-        settings.externalApi.tokens = settings.externalApi.tokens.map((item, index) => ({
+        settings.externalApi.tokens = settings.externalApi.tokens.map((item: any, index: any) => ({
             name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
             token: String(item?.token || '').trim(),
         }));
@@ -55,13 +55,13 @@
 
     ensureExternalApiDefaults(props.settings);
 
-    const handleGenerateExternalApiToken = (settings) => {
+    const handleGenerateExternalApiToken = (settings: any) => {
         ensureExternalApiDefaults(settings);
         settings.externalApi.tokens[0].token = buildExternalApiToken();
         showToast(t('systemSettings.externalApiTokenGenerated'), 'success');
     };
 
-    const handleCopyExternalApiToken = async (settings) => {
+    const handleCopyExternalApiToken = async (settings: any) => {
         ensureExternalApiDefaults(settings);
         const token = settings.externalApi.tokens[0]?.token || '';
         if (!token) {

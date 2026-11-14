@@ -15,7 +15,7 @@ const pending = ref<any>(null);
 // to the native window.confirm() so callers never hang on an unresolved promise.
 let hostMounted = false;
 
-export function setConfirmHost(mounted) {
+export function setConfirmHost(mounted: any) {
     hostMounted = Boolean(mounted);
     if (!hostMounted && pending.value) {
         // Host went away while a dialog was open — release the waiter.
@@ -51,7 +51,7 @@ export function useConfirmState() {
     return pending;
 }
 
-export function settleConfirm(result) {
+export function settleConfirm(result: any) {
     const current = pending.value;
     pending.value = null;
     if (current) {

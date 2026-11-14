@@ -26,10 +26,10 @@ import type { KvRecord } from '../../../../types/models.ts';
  * 处理节点输入（核心逻辑）
  */
 export async function handleNodeInput(
-    chatId,
-    text,
-    userId,
-    env,
+    chatId: any,
+    text: any,
+    userId: any,
+    env: any,
     requestCache: KvRecord | null = null,
     options = {}
 ) {
@@ -91,7 +91,7 @@ export async function handleNodeInput(
 
         for (const url of allUrls) {
             // 去重检测
-            const exists = allSubscriptions.some((sub) => sub.url === url);
+            const exists = allSubscriptions.some((sub: any) => sub.url === url);
             if (exists) {
                 ignoredUrls.push(url);
                 continue;
@@ -138,7 +138,7 @@ export async function handleNodeInput(
         try {
             const verifySubs = await storageAdapter.getAllSubscriptions();
             const isVerified = addedNodes.every((added) =>
-                verifySubs.some((s) => s.id === added.id)
+                verifySubs.some((s: any) => s.id === added.id)
             );
             if (!isVerified) {
                 console.warn('[Telegram Push] KV Verification failed');
@@ -154,7 +154,7 @@ export async function handleNodeInput(
         const boundProfileId = getUserBoundProfileId(config, userId);
         if (boundProfileId) {
             const profiles = await storageAdapter.getAllProfiles();
-            const targetProfile = profiles.find((p) => p.id === boundProfileId);
+            const targetProfile = profiles.find((p: any) => p.id === boundProfileId);
 
             if (targetProfile) {
                 // 分类 ID
@@ -200,7 +200,7 @@ export async function handleNodeInput(
         }
 
         // 6. 发送反馈消息
-        let message;
+        let message: any;
         const totalIgnored = ignoredUrls.length;
         const ignoreMsg = totalIgnored > 0 ? `\n⚠️ 已跳过 ${totalIgnored} 个重复链接` : '';
 

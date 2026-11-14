@@ -34,7 +34,7 @@ import { makeComparator } from './sort.ts';
 /**
  * 将 URL 列表转换为结构化 Record 列表
  */
-export function nodeUrlsToRecords(nodeUrls, options: Record<string, any> = {}) {
+export function nodeUrlsToRecords(nodeUrls: any, options: Record<string, any> = {}) {
     const input = Array.isArray(nodeUrls)
         ? nodeUrls.map((s) => String(s || '').trim()).filter(Boolean)
         : [];
@@ -63,7 +63,7 @@ export function nodeUrlsToRecords(nodeUrls, options: Record<string, any> = {}) {
 /**
  * 将 Record 列表写回 URL 列表
  */
-export function recordsToNodeUrls(records) {
+export function recordsToNodeUrls(records: any) {
     if (!Array.isArray(records)) return [];
     return records.map((r) => {
         // 如果名称发生变化（例如被正则重命名或脚本重命名），同步更新 URL
@@ -74,12 +74,15 @@ export function recordsToNodeUrls(records) {
     });
 }
 
-export function applyNodeTransformPipeline(nodeUrls, transformConfig: Record<string, any> = {}) {
+export function applyNodeTransformPipeline(
+    nodeUrls: any,
+    transformConfig: Record<string, any> = {}
+) {
     const cfg = normalizeConfig(transformConfig);
     if (!cfg.enabled) return nodeUrls;
 
     const sortKeys = cfg.sort.enabled ? cfg.sort.keys || [] : [];
-    const sortKeySet = new Set(sortKeys.map((k) => String(k?.key || '')));
+    const sortKeySet = new Set(sortKeys.map((k: any) => String(k?.key || '')));
     const needServerPort =
         (cfg.dedup.enabled && cfg.dedup.mode !== 'url') ||
         cfg.rename.template.enabled ||
@@ -108,13 +111,15 @@ export function applyNodeTransformPipeline(nodeUrls, transformConfig: Record<str
 
     if (cfg.filter.protocols.enabled && cfg.filter.protocols.values.length > 0) {
         const allowedProtocols = new Set(
-            cfg.filter.protocols.values.map((value) => normalizeProtocol(value))
+            cfg.filter.protocols.values.map((value: any) => normalizeProtocol(value))
         );
         records = records.filter((r) => allowedProtocols.has(r.protocol));
     }
 
     if (cfg.filter.regions.enabled && cfg.filter.regions.values.length > 0) {
-        const allowedRegions = new Set(cfg.filter.regions.values.map((value) => toRegionZh(value)));
+        const allowedRegions = new Set(
+            cfg.filter.regions.values.map((value: any) => toRegionZh(value))
+        );
         records = records
             .map((r) => ensureRegionInfo(r, cfg.enableEmoji))
             .filter((r) => allowedRegions.has(r.regionZh));

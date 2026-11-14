@@ -16,7 +16,7 @@ export class StorageFactory {
     /**
      * 解析 KV 命名空间（委托顶层函数）
      */
-    static resolveKV(env) {
+    static resolveKV(env: any) {
         return resolveKV(env);
     }
 
@@ -26,7 +26,7 @@ export class StorageFactory {
      * @param {string} storageType - 存储类型 ('kv' | 'd1')
      * @returns {KVStorageAdapter|D1StorageAdapter}
      */
-    static createAdapter(env, storageType = STORAGE_TYPES.KV) {
+    static createAdapter(env: any, storageType = STORAGE_TYPES.KV) {
         switch (storageType) {
             case STORAGE_TYPES.D1:
                 if (!env.MISUB_DB) {
@@ -57,7 +57,7 @@ export class StorageFactory {
      * @param {Object} env - Cloudflare 环境对象
      * @returns {Promise<string>} 存储类型
      */
-    static async getStorageType(env) {
+    static async getStorageType(env: any) {
         try {
             const settings = await SettingsCache.get(env);
             if (settings?.storageType) {
@@ -73,7 +73,7 @@ export class StorageFactory {
     /**
      * 将 KV Settings 同步到 D1（当 D1 为空时）
      */
-    static async ensureD1Settings(env) {
+    static async ensureD1Settings(env: any) {
         if (!env?.MISUB_DB) return false;
         try {
             const d1Adapter = new D1StorageAdapter(env.MISUB_DB);
@@ -103,7 +103,7 @@ export class StorageFactory {
      * @param {Object} env - Cloudflare环境对象
      * @returns {boolean} 是否配置了双重存储
      */
-    static hasDualStorage(env) {
+    static hasDualStorage(env: any) {
         return !!(StorageFactory.resolveKV(env) && env.MISUB_DB);
     }
 }

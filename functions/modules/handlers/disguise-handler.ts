@@ -4,7 +4,7 @@ import { createDisguiseResponse } from '../disguise-page.ts';
 import { authMiddleware } from '../auth-middleware.ts';
 
 import type { KvRecord } from '../../../types/models.ts';
-function normalizeLoginPath(customLoginPath) {
+function normalizeLoginPath(customLoginPath: any) {
     if (typeof customLoginPath !== 'string') return '/login';
     const normalized = customLoginPath.trim().replace(/^\/+/, '');
     return normalized ? `/${normalized}` : '/login';
@@ -19,7 +19,10 @@ function normalizeLoginPath(customLoginPath) {
  * @param {Object} [preloadedSettings] Optional, if already fetched
  * @returns {Promise<Response|null>}
  */
-export async function handleDisguiseRequest(context, preloadedSettings: KvRecord | null = null) {
+export async function handleDisguiseRequest(
+    context: any,
+    preloadedSettings: KvRecord | null = null
+) {
     const { request, env } = context;
     const url = new URL(request.url);
 

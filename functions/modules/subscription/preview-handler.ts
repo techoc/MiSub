@@ -14,7 +14,7 @@ import { handleSingleSubscriptionMode, handleDirectUrlMode } from './single-subs
  * @param {Object} requestData - 请求数据
  * @returns {string} 请求模式
  */
-export function determineRequestMode(requestData) {
+export function determineRequestMode(requestData: any) {
     if (requestData.profileId) {
         return 'profile';
     } else if (requestData.subscriptionId) {
@@ -31,7 +31,7 @@ export function determineRequestMode(requestData) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicPreviewRequest(request, env) {
+export async function handlePublicPreviewRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -53,7 +53,7 @@ export async function handlePublicPreviewRequest(request, env) {
             typeof (storageAdapter as Record<string, any>).getProfileById === 'function'
                 ? await (storageAdapter as Record<string, any>).getProfileById(profileId)
                 : ((await storageAdapter.get(KV_KEY_PROFILES)) || []).find(
-                      (p) => (p.customId && p.customId === profileId) || p.id === profileId
+                      (p: any) => (p.customId && p.customId === profileId) || p.id === profileId
                   );
 
         if (!profile || !profile.enabled || !profile.isPublic) {
@@ -93,7 +93,10 @@ export async function handlePublicPreviewRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSubscriptionNodesRequest(request, env): Promise<Record<string, any>> {
+export async function handleSubscriptionNodesRequest(
+    request: any,
+    env: any
+): Promise<Record<string, any>> {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }

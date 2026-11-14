@@ -42,14 +42,14 @@
         (fileInput.value as Record<string, any> | undefined)?.click();
     }
 
-    function onInputChange(event) {
+    function onInputChange(event: any) {
         const files = event.target.files;
         if (files && files.length) emit('files', files);
         // 允许重复选择同一文件
         event.target.value = '';
     }
 
-    function onDrop(event) {
+    function onDrop(event: any) {
         isDragging.value = false;
         if (props.isProcessing) return;
         const files = event.dataTransfer?.files;

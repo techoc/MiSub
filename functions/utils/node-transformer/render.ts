@@ -4,7 +4,7 @@
 
 import { toRegionZh } from './shared.ts';
 
-export function makeDedupKey(record, cfg) {
+export function makeDedupKey(record: any, cfg: any) {
     const server = String(record.server || '')
         .trim()
         .toLowerCase();
@@ -14,17 +14,17 @@ export function makeDedupKey(record, cfg) {
     return cfg.dedup.includeProtocol ? `${record.protocol}|${base}` : base;
 }
 
-export function choosePreferred(existing, candidate, protocolOrder) {
+export function choosePreferred(existing: any, candidate: any, protocolOrder: any) {
     if (!existing) return candidate;
     if (!protocolOrder?.length) return existing;
-    const rank = (p) => {
+    const rank = (p: any) => {
         const idx = protocolOrder.indexOf(String(p || '').toLowerCase());
         return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
     };
     return rank(candidate.protocol) < rank(existing.protocol) ? candidate : existing;
 }
 
-function applyModifier(key, value, modifier, record) {
+function applyModifier(key: any, value: any, modifier: any, record: any) {
     const val = value == null ? '' : String(value);
     switch (modifier) {
         case 'UPPER':
@@ -48,7 +48,7 @@ function applyModifier(key, value, modifier, record) {
     }
 }
 
-export function renderTemplate(template, vars, record) {
+export function renderTemplate(template: any, vars: any, record: any) {
     return String(template || '')
         .replace(/\{([a-zA-Z0-9_]+)(?::([a-zA-Z0-9]+))?\}/g, (_, key, modifier) => {
             let v;
@@ -72,11 +72,11 @@ export function renderTemplate(template, vars, record) {
         .trim();
 }
 
-export function padIndex(n, width) {
+export function padIndex(n: any, width: any) {
     return width > 0 ? String(n).padStart(width, '0') : String(n);
 }
 
-export function getIndexGroupKey(record, scope) {
+export function getIndexGroupKey(record: any, scope: any) {
     switch (scope) {
         case 'region':
             return `r:${record.region}`;

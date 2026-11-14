@@ -17,7 +17,7 @@ export { formatBytes } from '../shared/utils.ts';
  * @param {string} format - 格式化类型 'date' | 'time' | 'datetime' | 'relative'
  * @returns {string} 格式化后的日期字符串
  */
-export function formatDate(date, format = 'datetime') {
+export function formatDate(date: any, format = 'datetime') {
     if (!date) return '';
 
     const d = new Date(date);
@@ -49,7 +49,7 @@ export function formatDate(date, format = 'datetime') {
  * @param {number} num - 数字
  * @returns {string} 格式化后的字符串
  */
-export function formatNumber(num) {
+export function formatNumber(num: any) {
     if (num === null || num === undefined) return '';
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
@@ -61,7 +61,7 @@ export function formatNumber(num) {
  * @param {number} decimals - 小数位数
  * @returns {string} 百分比字符串
  */
-export function formatPercentage(value, total, decimals = 1) {
+export function formatPercentage(value: any, total: any, decimals = 1) {
     if (!total || total === 0) return '0%';
     const percentage = (value / total) * 100;
     return `${percentage.toFixed(decimals)}%`;
@@ -72,7 +72,7 @@ export function formatPercentage(value, total, decimals = 1) {
  * @param {number} seconds - 秒数
  * @returns {string} 格式化后的时间字符串
  */
-export function formatDuration(seconds) {
+export function formatDuration(seconds: any) {
     if (!seconds || seconds <= 0) return '0秒';
 
     const days = Math.floor(seconds / 86400);
@@ -95,7 +95,7 @@ export function formatDuration(seconds) {
  * @param {number} maxLength - 最大长度
  * @returns {string} 截断后的文本
  */
-export function truncateText(text, maxLength = 50) {
+export function truncateText(text: any, maxLength = 50) {
     if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
 }
@@ -106,7 +106,7 @@ export function truncateText(text, maxLength = 50) {
  * @param {number} maxLength - 最大长度
  * @returns {string} 格式化后的URL
  */
-export function formatUrl(url, maxLength = 50) {
+export function formatUrl(url: any, maxLength = 50) {
     if (!url) return '';
     try {
         const urlObj = new URL(url);

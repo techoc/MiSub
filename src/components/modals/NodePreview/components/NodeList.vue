@@ -46,7 +46,7 @@
         overscan: 10,
     });
 
-    const handleRowClick = (node) => {
+    const handleRowClick = (node: any) => {
         if (props.selectionMode) {
             emit('toggle-select', node.url);
         }

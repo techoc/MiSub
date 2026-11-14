@@ -10,7 +10,7 @@
  * @param {Array} allProfiles - 所有 Profile 对象列表
  * @returns {boolean} true 表示会导致循环引用，必须禁止
  */
-export function wouldCreateCycle(targetProfileId, candidateId, allProfiles: any[] = []) {
+export function wouldCreateCycle(targetProfileId: any, candidateId: any, allProfiles: any[] = []) {
     if (!targetProfileId || !candidateId) return false;
     if (targetProfileId === candidateId) return true;
 

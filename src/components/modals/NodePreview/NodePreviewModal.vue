@@ -73,7 +73,7 @@
     const pickingMode = ref(false);
     const selectedUrls = ref(new Set());
 
-    const toggleNodeSelection = (url) => {
+    const toggleNodeSelection = (url: any) => {
         if (selectedUrls.value.has(url)) {
             selectedUrls.value.delete(url);
         } else {
@@ -366,7 +366,7 @@
     };
 
     // 复制节点链接
-    const copyNodeUrl = async (node, nodeId) => {
+    const copyNodeUrl = async (node: any, nodeId: any) => {
         try {
             await navigator.clipboard.writeText(node.url);
             copiedNodeId.value = nodeId;
@@ -389,7 +389,7 @@
     };
 
     // 获取协议类型的显示样式
-    const getProtocolStyle = (protocol) => {
+    const getProtocolStyle = (protocol: any) => {
         const styles = {
             vmess: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
             vless: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -403,13 +403,14 @@
             anytls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
             unknown: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
         };
-        return styles[protocol] || styles.unknown;
+        return (styles as Record<string, any>)[protocol] || styles.unknown;
     };
 
     // 获取地区 Emoji
-    const getRegionEmoji = (region) => {
+    const getRegionEmoji = (region: any) => {
         if (!region) return '🌐';
-        if (REGION_EMOJI[region]) return REGION_EMOJI[region];
+        if ((REGION_EMOJI as Record<string, any>)[region])
+            return (REGION_EMOJI as Record<string, any>)[region];
 
         // 英文代码别名。中文地区名以 geo-utils 的旗帜表为准，台湾固定为 🇨🇳。
         const regionMap = {
@@ -481,7 +482,8 @@
             土耳其: '🇹🇷',
         };
 
-        if (regionMap[region]) return regionMap[region];
+        if ((regionMap as Record<string, any>)[region])
+            return (regionMap as Record<string, any>)[region];
 
         // 尝试在字符串中查找 Emoji
         const emojiMatch = region.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
@@ -491,7 +493,7 @@
     };
 
     // 解析节点信息
-    const parseNodeInfo = (node) => {
+    const parseNodeInfo = (node: any) => {
         const result = {
             name: node.name,
             server: node.server || '',
@@ -544,7 +546,7 @@
     };
 
     // 分页控件
-    const goToPage = (page) => {
+    const goToPage = (page: any) => {
         if (page >= 1 && page <= totalPages.value) {
             currentPage.value = page;
         }

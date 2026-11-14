@@ -10,7 +10,7 @@ import { isNetworkErrorMessage } from '@/utils/network-error.ts';
 
 const isDev = import.meta.env.DEV;
 
-export function useNodePreview(props) {
+export function useNodePreview(props: any) {
     // 响应式数据
     const loading = ref(false);
     const error = ref('');
@@ -169,7 +169,7 @@ export function useNodePreview(props) {
     };
 
     // 复制节点链接
-    const copyNodeUrl = async (node, nodeId) => {
+    const copyNodeUrl = async (node: any, nodeId: any) => {
         try {
             await navigator.clipboard.writeText(node.url);
             copiedNodeId.value = nodeId;
@@ -212,14 +212,14 @@ export function useNodePreview(props) {
         }
     };
 
-    const goToPage = (page) => {
+    const goToPage = (page: any) => {
         if (page >= 1 && page <= totalPages.value) {
             currentPage.value = page;
         }
     };
 
     // 更新视图模式
-    const updateViewMode = (mode) => {
+    const updateViewMode = (mode: any) => {
         viewMode.value = mode;
     };
 

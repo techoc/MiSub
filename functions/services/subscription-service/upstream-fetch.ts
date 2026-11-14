@@ -17,7 +17,7 @@ export const FETCH_CONFIG = {
 };
 
 export async function fetchWithRetry(
-    url,
+    url: any,
     init: Record<string, any> = {},
     options: Record<string, any> = {}
 ) {
@@ -93,7 +93,7 @@ export async function fetchWithRetry(
 /**
  * 确保配置是数组格式（处理 D1 数据库可能返回的 JSON 字符串）
  */
-export function ensureArray(data) {
+export function ensureArray(data: any) {
     if (!data) return [];
     if (Array.isArray(data)) return data;
     if (typeof data === 'string') {
@@ -112,7 +112,7 @@ export function ensureArray(data) {
  * @param {number} limit - 最大并发数
  * @returns {Function} - 包装函数
  */
-export function createConcurrencyLimiter(limit) {
+export function createConcurrencyLimiter(limit: any) {
     const safeLimit = Math.max(1, limit || 1); // 防御性检查，确保至少为 1
     let running = 0;
     const queue: any[] = [];
@@ -132,7 +132,7 @@ export function createConcurrencyLimiter(limit) {
             });
     };
 
-    return (task) =>
+    return (task: any) =>
         new Promise((resolve, reject) => {
             queue.push({ task, resolve, reject });
             runNext();

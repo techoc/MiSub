@@ -52,11 +52,14 @@ export const useDataStore = defineStore('data', () => {
     // --- Actions ---
 
     // Data Hydration (avoid re-fetching if passed from outside)
-    function hydrateFromData(data) {
+    function hydrateFromData(data: any) {
         if (!data) return false;
 
         try {
-            const cleanSubs = (data.misubs || []).map((sub) => ({ ...sub, isUpdating: false }));
+            const cleanSubs = (data.misubs || []).map((sub: any) => ({
+                ...sub,
+                isUpdating: false,
+            }));
             subscriptions.value = cleanSubs;
             profiles.value = data.profiles || [];
             ruleTemplates.value = data.ruleTemplates || [];
@@ -211,7 +214,7 @@ export const useDataStore = defineStore('data', () => {
      * @returns {Promise<boolean>} 成功时为 true；失败时**抛出**（沿用既有约定，
      *          调用方自行 catch，静默模式下尤其需要）
      */
-    async function saveSettings(newSettings, options: Record<string, any> = {}) {
+    async function saveSettings(newSettings: any, options: Record<string, any> = {}) {
         const { silent = false, preferencesOnly = false } = options;
         editorStore.setLoading(true);
         try {
@@ -289,7 +292,7 @@ export const useDataStore = defineStore('data', () => {
         dataCache.clear();
     }
 
-    function syncCachedConfig(nextConfig) {
+    function syncCachedConfig(nextConfig: any) {
         const cachedData = dataCache.get();
         if (!cachedData) return;
 
@@ -303,23 +306,23 @@ export const useDataStore = defineStore('data', () => {
     }
 
     // --- Proxy Actions (Mutators) ---
-    function addSubscription(subscription) {
+    function addSubscription(subscription: any) {
         subscriptions.value.unshift(subscription);
         markDirty();
     }
 
-    function overwriteSubscriptions(items) {
+    function overwriteSubscriptions(items: any) {
         subscriptions.value = items;
     }
 
-    function removeSubscription(id) {
+    function removeSubscription(id: any) {
         const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
         if (index !== -1) {
             subscriptions.value.splice(index, 1);
         }
     }
 
-    function updateSubscription(id, updates) {
+    function updateSubscription(id: any, updates: any) {
         const index = subscriptions.value.findIndex((s) => (s as Record<string, any>).id === id);
         if (index !== -1) {
             subscriptions.value[index] = { ...subscriptions.value[index], ...updates };
@@ -327,15 +330,15 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    function addProfile(profile) {
+    function addProfile(profile: any) {
         profiles.value.unshift(profile);
     }
 
-    function overwriteProfiles(items) {
+    function overwriteProfiles(items: any) {
         profiles.value = items;
     }
 
-    function removeProfile(id) {
+    function removeProfile(id: any) {
         const index = profiles.value.findIndex(
             (p) =>
                 (p as Record<string, any>).id === id || (p as Record<string, any>).customId === id
@@ -351,7 +354,7 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    function removeProfileFromProfiles(profileIds) {
+    function removeProfileFromProfiles(profileIds: any) {
         const idsToRemove = Array.isArray(profileIds) ? new Set(profileIds) : new Set([profileIds]);
         if (idsToRemove.size === 0) return;
 
@@ -364,7 +367,7 @@ export const useDataStore = defineStore('data', () => {
                 const originalLength = (profile as Record<string, any>).subProfiles.length;
                 (profile as Record<string, any>).subProfiles = (
                     profile as Record<string, any>
-                ).subProfiles.filter((id) => !idsToRemove.has(id));
+                ).subProfiles.filter((id: any) => !idsToRemove.has(id));
                 if ((profile as Record<string, any>).subProfiles.length !== originalLength) {
                     modified = true;
                 }
@@ -376,7 +379,7 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    function removeManualNodeFromProfiles(nodeIds) {
+    function removeManualNodeFromProfiles(nodeIds: any) {
         const idsToRemove = Array.isArray(nodeIds) ? new Set(nodeIds) : new Set([nodeIds]);
         if (idsToRemove.size === 0) return;
 
@@ -389,7 +392,7 @@ export const useDataStore = defineStore('data', () => {
                 const originalLength = (profile as Record<string, any>).manualNodes.length;
                 (profile as Record<string, any>).manualNodes = (
                     profile as Record<string, any>
-                ).manualNodes.filter((id) => !idsToRemove.has(id));
+                ).manualNodes.filter((id: any) => !idsToRemove.has(id));
                 if ((profile as Record<string, any>).manualNodes.length !== originalLength) {
                     modified = true;
                 }
@@ -404,7 +407,7 @@ export const useDataStore = defineStore('data', () => {
         }
     }
 
-    function removeSubscriptionFromProfiles(subIds) {
+    function removeSubscriptionFromProfiles(subIds: any) {
         const idsToRemove = Array.isArray(subIds) ? new Set(subIds) : new Set([subIds]);
         if (idsToRemove.size === 0) return;
 
@@ -417,7 +420,7 @@ export const useDataStore = defineStore('data', () => {
                 const originalLength = (profile as Record<string, any>).subscriptions.length;
                 (profile as Record<string, any>).subscriptions = (
                     profile as Record<string, any>
-                ).subscriptions.filter((id) => !idsToRemove.has(id));
+                ).subscriptions.filter((id: any) => !idsToRemove.has(id));
                 if ((profile as Record<string, any>).subscriptions.length !== originalLength) {
                     modified = true;
                 }
@@ -455,7 +458,7 @@ export const useDataStore = defineStore('data', () => {
                 const seenIds = new Set();
                 (profile as Record<string, any>).manualNodes = (
                     profile as Record<string, any>
-                ).manualNodes.filter((id) => {
+                ).manualNodes.filter((id: any) => {
                     // ID 必须存在且未被重复记录
                     if (validIds.has(id) && !seenIds.has(id)) {
                         seenIds.add(id);
@@ -477,7 +480,7 @@ export const useDataStore = defineStore('data', () => {
                 const seenIds = new Set();
                 (profile as Record<string, any>).subscriptions = (
                     profile as Record<string, any>
-                ).subscriptions.filter((id) => {
+                ).subscriptions.filter((id: any) => {
                     if (validIds.has(id) && !seenIds.has(id)) {
                         seenIds.add(id);
                         return true;

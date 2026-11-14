@@ -21,7 +21,7 @@
     const logs = ref<any[]>([]);
     const step = ref('check');
 
-    const addLog = (message, type = 'info') => {
+    const addLog = (message: any, type = 'info') => {
         logs.value.unshift({ time: new Date().toLocaleTimeString(), message, type });
     };
 
@@ -86,7 +86,7 @@
         }
     };
 
-    const getLogClass = (type) => {
+    const getLogClass = (type: any) => {
         if (type === 'success') return 'text-green-400';
         if (type === 'error') return 'text-red-400';
         return 'text-gray-500 dark:text-gray-400';

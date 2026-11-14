@@ -29,7 +29,7 @@ const REAL_PROXY_PROTOCOLS = [
 /**
  * 判断是否是真实代理节点，排除流量/到期/公告等系统伪节点
  */
-export function isRealProxyNode(node) {
+export function isRealProxyNode(node: any) {
     if (typeof node !== 'string') return false;
     const trimmed = node.trim().toLowerCase();
     if (!trimmed) return false;
@@ -49,8 +49,8 @@ export function isRealProxyNode(node) {
  * @param {Headers|Object} headers 响应头（fetch Headers 或普通对象）
  * @returns {string} 解析出的名称，取不到时返回空字符串
  */
-export function parseSubscriptionProfileTitle(headers) {
-    const read = (name) => {
+export function parseSubscriptionProfileTitle(headers: any) {
+    const read = (name: any) => {
         if (!headers) return '';
         try {
             if (typeof headers.get === 'function') return headers.get(name) || '';
@@ -64,7 +64,7 @@ export function parseSubscriptionProfileTitle(headers) {
         return '';
     };
 
-    const decodeBase64 = (value) => {
+    const decodeBase64 = (value: any) => {
         try {
             const binary = atob(value);
             const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
@@ -138,7 +138,7 @@ const NON_AIRPORT_HOSTS = [
     /\.onrender\.com$/i,
 ];
 
-export function inferAirportRootDomain(sourceUrl) {
+export function inferAirportRootDomain(sourceUrl: any) {
     const raw = String(sourceUrl || '').trim();
     if (!/^https?:\/\//i.test(raw)) return '';
 
@@ -244,7 +244,7 @@ const NOISY_SITE_TITLES = [
     /^未找到/i,
 ];
 
-export async function fetchAirportSiteTitle(rootDomain, options: Record<string, any> = {}) {
+export async function fetchAirportSiteTitle(rootDomain: any, options: Record<string, any> = {}) {
     const { timeout = 5000 } = options;
     const domain = String(rootDomain || '').trim();
     if (!domain || !domain.includes('.')) return '';

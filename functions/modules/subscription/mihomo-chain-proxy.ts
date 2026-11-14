@@ -19,8 +19,8 @@ import { hasRealPolicyMembers } from './policy-fallbacks.ts';
  * @param {string[]} members - 新建时的初始成员
  * @returns {Object} 策略组
  */
-function ensureGroup(model, name, members) {
-    let group = model.groups.find((item) => item.name === name);
+function ensureGroup(model: any, name: any, members: any) {
+    let group = model.groups.find((item: any) => item.name === name);
     if (group) {
         if (!Array.isArray(group.members)) group.members = [];
         return group;
@@ -38,7 +38,7 @@ const DYNAMIC_MEMBER_OPTION_KEYS = [
     'exclude-filter',
 ];
 
-function removeDynamicMemberOptions(group) {
+function removeDynamicMemberOptions(group: any) {
     group.filters = [];
     DYNAMIC_MEMBER_OPTION_KEYS.forEach((key) => {
         delete group.options?.[key];
@@ -53,19 +53,21 @@ function removeDynamicMemberOptions(group) {
  * @param {boolean} options.enableDialerProxy - 是否生成 Mihomo 专属 dialer-proxy 副本
  * @returns {Object} 处理后的模型
  */
-export function applyMihomoChainProxy(model, { enableDialerProxy = true } = {}) {
+export function applyMihomoChainProxy(model: any, { enableDialerProxy = true } = {}) {
     const chainConfigs = model?.extras?.chainProxy;
     if (!Array.isArray(chainConfigs) || chainConfigs.length === 0) return model;
     if (!Array.isArray(model.proxies) || !Array.isArray(model.groups)) return model;
 
     // normalizeUnifiedTemplateModel 保留了数组引用。先复制模型，避免重复渲染时不断叠加副本。
-    const baseProxies = model.proxies.filter(Boolean).map((proxy) => ({ ...proxy }));
-    const namedBaseProxies = baseProxies.filter((proxy) => proxy.name || proxy.tag);
-    const baseNames = Array.from(new Set(namedBaseProxies.map((proxy) => proxy.name || proxy.tag)));
+    const baseProxies = model.proxies.filter(Boolean).map((proxy: any) => ({ ...proxy }));
+    const namedBaseProxies = baseProxies.filter((proxy: any) => proxy.name || proxy.tag);
+    const baseNames = Array.from(
+        new Set(namedBaseProxies.map((proxy: any) => proxy.name || proxy.tag))
+    );
     if (baseNames.length === 0) return model;
 
     model.proxies = baseProxies;
-    model.groups = model.groups.filter(Boolean).map((group) => ({
+    model.groups = model.groups.filter(Boolean).map((group: any) => ({
         ...group,
         members: Array.isArray(group.members) ? [...group.members] : [],
         filters: Array.isArray(group.filters) ? [...group.filters] : [],
@@ -109,7 +111,7 @@ export function applyMihomoChainProxy(model, { enableDialerProxy = true } = {}) 
             return;
         }
 
-        const copies = namedBaseProxies.map((proxy) => {
+        const copies = namedBaseProxies.map((proxy: any) => {
             const baseName = proxy.name || proxy.tag;
             let name = `${prefix}${baseName}`;
             let suffix = 2;
@@ -124,13 +126,13 @@ export function applyMihomoChainProxy(model, { enableDialerProxy = true } = {}) 
         model.proxies.push(...copies);
 
         landingGroup.type = 'select';
-        landingGroup.members = copies.map((proxy) => proxy.name);
+        landingGroup.members = copies.map((proxy: any) => proxy.name);
         // 成员已物化，移除动态筛选，避免客户端再次纳入其它节点或提供商节点。
         removeDynamicMemberOptions(landingGroup);
 
         // 前置组只能引用原始节点：引用落地组或落地副本都会形成 dialer-proxy 环路。
         entryGroup.members = entryGroup.members.filter(
-            (member) => member !== landingName && !reservedNames.has(member)
+            (member: any) => member !== landingName && !reservedNames.has(member)
         );
         removeDynamicMemberOptions(entryGroup);
     });
@@ -150,7 +152,7 @@ export function applyMihomoChainProxy(model, { enableDialerProxy = true } = {}) 
  * @returns {Object} The mutated Clash YAML config
  */
 export function applyMihomoChainProxyToClashConfig(
-    config,
+    config: any,
     { chainConfigs = [], enableDialerProxy = true }: Record<string, any> = {}
 ) {
     if (

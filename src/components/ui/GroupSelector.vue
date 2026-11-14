@@ -25,8 +25,8 @@
     const dropdownStyle = ref<any>({ top: '0px', left: '0px', width: '0px' });
     const isTyping = ref(false);
 
-    const normalizeGroup = (value) => String(value || '').trim();
-    const normalizeGroupForCompare = (value) => normalizeGroup(value).toLowerCase();
+    const normalizeGroup = (value: any) => String(value || '').trim();
+    const normalizeGroupForCompare = (value: any) => normalizeGroup(value).toLowerCase();
     const hasExistingGroup = computed(() => {
         const current = normalizeGroupForCompare(props.modelValue);
         if (!current) return false;
@@ -59,7 +59,7 @@
         }
     };
 
-    const handleInput = (e) => {
+    const handleInput = (e: any) => {
         isTyping.value = true;
         emit('update:modelValue', e.target.value);
         isOpen.value = true;
@@ -70,7 +70,7 @@
         isOpen.value = true;
     };
 
-    const selectGroup = (group) => {
+    const selectGroup = (group: any) => {
         emit('update:modelValue', normalizeGroup(group));
         isTyping.value = false;
         isOpen.value = false;
@@ -81,7 +81,7 @@
         isOpen.value = !isOpen.value;
     };
 
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: any) => {
         if (containerRef.value && !(containerRef.value as Record<string, any>).contains(e.target)) {
             // Check if clicking inside the dropdown (which is teleported)
             const dropdownEl = document.getElementById('group-selector-dropdown');

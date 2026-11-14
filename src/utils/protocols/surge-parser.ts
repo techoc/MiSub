@@ -27,7 +27,7 @@ const PROXY_TYPE_KEYS = new Set([
  *   `ss = ProxyName, server, port, ...`（Loon 风格，键是协议类型）
  * 键是协议类型时节点名取第一个参数，否则取键。
  */
-function resolveProxyName(key, params) {
+function resolveProxyName(key: any, params: any) {
     const trimmedKey = String(key || '').trim();
     if (PROXY_TYPE_KEYS.has(trimmedKey.toLowerCase())) {
         return String(params[0] || '').trim();
@@ -35,7 +35,7 @@ function resolveProxyName(key, params) {
     return trimmedKey;
 }
 
-export function parseSurgeConfig(content) {
+export function parseSurgeConfig(content: any) {
     const nodes: any[] = [];
     const lines = content.split('\n');
 
@@ -108,13 +108,13 @@ export function parseSurgeConfig(content) {
 /**
  * 解析Surge AnyTLS配置
  */
-function parseSurgeAnytls(line) {
+function parseSurgeAnytls(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
         const name = parts[1].trim();
-        const params = parts[2].split(',').map((p) => p.trim());
+        const params = parts[2].split(',').map((p: any) => p.trim());
         const [protocol, server, port, ...options] = params;
 
         if (!server || !port) return null;
@@ -122,7 +122,7 @@ function parseSurgeAnytls(line) {
         let password = '';
         const urlParams: any[] = [];
 
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
             if (match) {
                 const [, key, value] = match;
@@ -156,14 +156,14 @@ function parseSurgeAnytls(line) {
  * 解析Surge VMess配置
  * 格式: name = vmess, server, port, username=uuid, [其他参数...]
  */
-function parseSurgeVmess(line) {
+function parseSurgeVmess(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
         const name = parts[1].trim();
         const config = parts[2];
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         if (params.length < 4) return null;
 
@@ -187,7 +187,7 @@ function parseSurgeVmess(line) {
         };
 
         // 解析选项参数
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^(\w+(?:-\w+)*)\s*=\s*(.+)$/);
             if (match) {
                 const [, key, value] = match;
@@ -243,12 +243,12 @@ function parseSurgeVmess(line) {
 /**
  * 解析Surge Shadowsocks配置
  */
-function parseSurgeSS(line) {
+function parseSurgeSS(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
-        const params = parts[2].split(',').map((p) => p.trim());
+        const params = parts[2].split(',').map((p: any) => p.trim());
         const [protocol, server, port, method, password] = params;
 
         if (!server || !port || !method || !password) return null;
@@ -271,19 +271,19 @@ function parseSurgeSS(line) {
 /**
  * 解析Surge Trojan配置
  */
-function parseSurgeTrojan(line) {
+function parseSurgeTrojan(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
-        const params = parts[2].split(',').map((p) => p.trim());
+        const params = parts[2].split(',').map((p: any) => p.trim());
         const [protocol, server, port, ...options] = params;
 
         if (!server || !port) return null;
         const name = resolveProxyName(parts[1], params);
         let password = '';
 
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
             if (match) {
                 const [, key, value] = match;
@@ -314,12 +314,12 @@ function parseSurgeTrojan(line) {
 /**
  * 解析Surge HTTP/HTTPS代理配置
  */
-function parseSurgeHTTP(line) {
+function parseSurgeHTTP(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
-        const params = parts[2].split(',').map((p) => p.trim());
+        const params = parts[2].split(',').map((p: any) => p.trim());
         const [protocol, server, port] = params;
 
         if (!server || !port) return null;
@@ -346,14 +346,14 @@ function parseSurgeHTTP(line) {
  * 解析 Surge Snell 配置
  * 格式: name = snell, server, port, psk=xxx, version=5, obfs=http, obfs-host=example.com, reuse=true, tfo=true
  */
-function parseSurgeSnell(line) {
+function parseSurgeSnell(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
         const name = parts[1].trim();
         const config = parts[2];
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         if (params.length < 4) return null;
 
@@ -372,7 +372,7 @@ function parseSurgeSnell(line) {
         };
 
         // 解析键值对参数
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^(\w+(?:-\w+)*)\s*=\s*(.+)$/);
             if (match) {
                 const [, key, value] = match;
@@ -386,12 +386,14 @@ function parseSurgeSnell(line) {
                         proxy.version = parseInt(cleanValue);
                         break;
                     case 'obfs':
-                        if (!proxy['obfs-opts']) proxy['obfs-opts'] = {};
-                        proxy['obfs-opts'].mode = cleanValue;
+                        if (!(proxy as Record<string, any>)['obfs-opts'])
+                            (proxy as Record<string, any>)['obfs-opts'] = {};
+                        (proxy as Record<string, any>)['obfs-opts'].mode = cleanValue;
                         break;
                     case 'obfs-host':
-                        if (!proxy['obfs-opts']) proxy['obfs-opts'] = {};
-                        proxy['obfs-opts'].host = cleanValue;
+                        if (!(proxy as Record<string, any>)['obfs-opts'])
+                            (proxy as Record<string, any>)['obfs-opts'] = {};
+                        (proxy as Record<string, any>)['obfs-opts'].host = cleanValue;
                         break;
                     case 'reuse':
                         proxy.reuse = cleanValue === 'true';
@@ -411,10 +413,13 @@ function parseSurgeSnell(line) {
         if (proxy.reuse !== undefined) urlParams.push(`reuse=${proxy.reuse}`);
         if (proxy.tfo !== undefined) urlParams.push(`tfo=${proxy.tfo}`);
 
-        if (proxy['obfs-opts']) {
-            if (proxy['obfs-opts'].mode) urlParams.push(`obfs=${proxy['obfs-opts'].mode}`);
-            if (proxy['obfs-opts'].host)
-                urlParams.push(`obfs-host=${encodeURIComponent(proxy['obfs-opts'].host)}`);
+        if ((proxy as Record<string, any>)['obfs-opts']) {
+            if ((proxy as Record<string, any>)['obfs-opts'].mode)
+                urlParams.push(`obfs=${(proxy as Record<string, any>)['obfs-opts'].mode}`);
+            if ((proxy as Record<string, any>)['obfs-opts'].host)
+                urlParams.push(
+                    `obfs-host=${encodeURIComponent((proxy as Record<string, any>)['obfs-opts'].host)}`
+                );
         }
 
         const query = urlParams.length > 0 ? `?${urlParams.join('&')}` : '';
@@ -438,14 +443,14 @@ function parseSurgeSnell(line) {
  * 解析 Surge Hysteria2 配置
  * 格式: name = hysteria2, server, port, password=xxx, sni=xxx, ...
  */
-function parseSurgeHysteria2(line) {
+function parseSurgeHysteria2(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
         const name = parts[1].trim();
         const config = parts[2];
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         if (params.length < 3) return null;
 
@@ -457,7 +462,7 @@ function parseSurgeHysteria2(line) {
         let password = '';
         const urlParams: any[] = [];
 
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
             if (match) {
                 const [, key, value] = match;
@@ -494,14 +499,14 @@ function parseSurgeHysteria2(line) {
  * 解析 Surge TUIC 配置
  * 格式: name = tuic, server, port, token=xxx, alpn=h3, ...
  */
-function parseSurgeTUIC(line) {
+function parseSurgeTUIC(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
         const name = parts[1].trim();
         const config = parts[2];
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         if (params.length < 3) return null;
 
@@ -511,7 +516,7 @@ function parseSurgeTUIC(line) {
         let token = '';
         const urlParams: any[] = [];
 
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
             if (match) {
                 const [, key, value] = match;
@@ -548,14 +553,14 @@ function parseSurgeTUIC(line) {
  * 格式: name = vless, server, port, username=uuid, ...
  * 注意：Surge 不原生支持 VLESS，但某些场景可能出现
  */
-function parseSurgeVless(line) {
+function parseSurgeVless(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
         const name = parts[1].trim();
         const config = parts[2];
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         if (params.length < 4) return null;
 
@@ -565,7 +570,7 @@ function parseSurgeVless(line) {
         let uuid = '';
         const urlParams = ['encryption=none'];
 
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
             if (match) {
                 const [, key, value] = match;
@@ -608,14 +613,14 @@ function parseSurgeVless(line) {
  * 格式: name = wireguard, section-name = WGSection
  * WireGuard 在 Surge 中使用独立 section，此处仅识别并标记
  */
-function parseSurgeWireGuard(line) {
+function parseSurgeWireGuard(line: any) {
     try {
         const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
         if (!parts) return null;
 
         const name = parts[1].trim();
         const config = parts[2];
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         const [protocol, server, port, ...options] = params;
         if (protocol.toLowerCase() !== 'wireguard') return null;
@@ -624,7 +629,7 @@ function parseSurgeWireGuard(line) {
 
         const urlParams: any[] = [];
         let privateKey = '';
-        options.forEach((opt) => {
+        options.forEach((opt: any) => {
             const match = opt.match(/^([\w-]+)\s*=\s*(.+)$/);
             if (!match) return;
             const [, key, value] = match;

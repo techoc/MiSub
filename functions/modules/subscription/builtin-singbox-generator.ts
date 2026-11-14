@@ -25,13 +25,13 @@ import {
 } from './safe-dns.ts';
 import { normalizeGeneratorOptions } from './generator-options.ts';
 
-function cleanControlChars(str) {
+function cleanControlChars(str: any) {
     if (typeof str !== 'string') return str;
     // eslint-disable-next-line no-control-regex
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
-function sanitizeName(name) {
+function sanitizeName(name: any) {
     if (!name) return 'Untitled';
     let safe = cleanControlChars(name);
     safe = safe
@@ -41,12 +41,12 @@ function sanitizeName(name) {
     return safe || 'Untitled';
 }
 
-function parsePort(port) {
+function parsePort(port: any) {
     const num = Number.parseInt(String(port), 10);
     return Number.isFinite(num) ? num : undefined;
 }
 
-function buildOutbound(proxy) {
+function buildOutbound(proxy: any) {
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const type = (proxy.type || '').toLowerCase();
@@ -282,7 +282,7 @@ function buildOutbound(proxy) {
     return outbound;
 }
 
-export function generateBuiltinSingboxConfig(nodeList, options: Record<string, any> = {}) {
+export function generateBuiltinSingboxConfig(nodeList: any, options: Record<string, any> = {}) {
     const {
         managedConfigUrl = '',
         skipCertVerify = false,
@@ -295,8 +295,8 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'));
+        .map((line: any) => line.trim())
+        .filter((line: any) => line && !line.startsWith('#'));
 
     const outbounds: any[] = [];
     const usedNames = new Map();
@@ -329,7 +329,8 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
 
     const levelKey = (ruleLevel || 'std').toUpperCase();
     // 获取内置策略组
-    const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+    const policyGroupsFactory =
+        (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
     let proxyGroups = policyGroupsFactory(nodeOutbounds, options);
     proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
 
@@ -342,7 +343,7 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
         const chainTags = chainOutbounds.map((outbound) => outbound.tag);
         outbounds.push(...chainOutbounds);
         proxyGroups = proxyGroups
-            .map((group) => {
+            .map((group: any) => {
                 if (group.name === '🔗 链式代理') {
                     return {
                         ...group,
@@ -365,11 +366,11 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
     // 除非自定义 DNS 覆盖文本显式引用该组（fail-closed），否则整组移除
     const domesticDns = isDomesticDnsMode(options.dnsMode);
     if (domesticDns && !String(options.customDnsOverride || '').includes(DNS_PROXY_GROUP)) {
-        proxyGroups = proxyGroups.filter((group) => group.name !== DNS_PROXY_GROUP);
+        proxyGroups = proxyGroups.filter((group: any) => group.name !== DNS_PROXY_GROUP);
     }
 
     // 将抽象分组转换为 Sing-Box Outbounds
-    const groupOutbounds = proxyGroups.map((group) => {
+    const groupOutbounds = proxyGroups.map((group: any) => {
         let type = 'selector';
         if (group.type === 'url-test') type = 'urltest';
         if (group.type === 'fallback') type = 'urltest'; // Sing-Box 暂时映射为 urltest
@@ -424,7 +425,7 @@ export function generateBuiltinSingboxConfig(nodeList, options: Record<string, a
               ]
             : []),
         { domain_suffix: ['localhost'], outbound: 'DIRECT' },
-        ...rawRules.map((r) => {
+        ...rawRules.map((r: any) => {
             if (r.type === 'rule_set') return { rule_set: [r.tag], outbound: r.outbound };
             return r; // 已经是 Sing-Box 格式的普通规则
         }),

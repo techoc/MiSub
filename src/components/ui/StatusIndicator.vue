@@ -48,7 +48,7 @@
                 icon: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
             },
         };
-        return configs[props.status] || configs.idle;
+        return (configs as Record<string, any>)[props.status] || configs.idle;
     });
 
     const sizeClasses = computed(() => {
@@ -66,7 +66,7 @@
                 icon: 'w-5 h-5',
             },
         };
-        return sizes[props.size];
+        return (sizes as Record<string, any>)[props.size];
     });
 </script>
 

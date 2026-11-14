@@ -8,7 +8,7 @@
  * @param {string} content - Clash配置内容
  * @returns {string} - 修复后的配置内容
  */
-export function clashFix(content) {
+export function clashFix(content: any) {
     if (!content || !content.includes('wireguard')) return content;
 
     // let lines = content.split(/\r?\n/);
@@ -51,7 +51,7 @@ export function clashFix(content) {
  * @param {string} str - 要检测的字符串
  * @returns {boolean} - 是否为有效Base64
  */
-export function isValidBase64(str) {
+export function isValidBase64(str: any) {
     if (!str || typeof str !== 'string') return false;
 
     // 去除空白字符，保证纯粹的Base64内容
@@ -76,7 +76,7 @@ export function isValidBase64(str) {
  * @param {string} url - 请求URL（可选）
  * @returns {string} - 处理后的用户代理字符串
  */
-export function getProcessedUserAgent(originalUserAgent, url = '') {
+export function getProcessedUserAgent(originalUserAgent: any, url = '') {
     if (!originalUserAgent) return originalUserAgent;
 
     const rawUrl = typeof url === 'string' ? url : '';
@@ -103,7 +103,7 @@ export function getProcessedUserAgent(originalUserAgent, url = '') {
  * @param {string} userAgentHeader - User-Agent头部
  * @returns {string} - 对应的格式
  */
-export function determineFormatByUserAgent(userAgentHeader) {
+export function determineFormatByUserAgent(userAgentHeader: any) {
     const ua = userAgentHeader.toLowerCase();
     // 使用陣列來保證比對的優先順序
     const uaMapping = [
@@ -146,7 +146,7 @@ export function determineFormatByUserAgent(userAgentHeader) {
  * @param {URL} url - URL对象
  * @returns {string|null} - 目标格式
  */
-export function determineFormatByUrl(url) {
+export function determineFormatByUrl(url: any) {
     let targetFormat = url.searchParams.get('target');
     if (!targetFormat) {
         const supportedFormats = [

@@ -8,12 +8,12 @@
  * 返回链接数组；无法识别的出站跳过。
  */
 
-function toArray(value) {
+function toArray(value: any) {
     if (value === undefined || value === null) return [];
     return Array.isArray(value) ? value : [value];
 }
 
-function b64url(input) {
+function b64url(input: any) {
     const str = typeof input === 'string' ? input : JSON.stringify(input);
     return btoa(unescape(encodeURIComponent(str)))
         .replace(/\+/g, '-')
@@ -21,7 +21,7 @@ function b64url(input) {
         .replace(/=+$/, '');
 }
 
-function tlsParams(outbound) {
+function tlsParams(outbound: any) {
     const tls = outbound.tls || {};
     const params: any[] = [];
     if (tls.enabled) {
@@ -48,7 +48,7 @@ function tlsParams(outbound) {
     return params;
 }
 
-function buildQuery(params) {
+function buildQuery(params: any) {
     const search = new URLSearchParams();
     for (const [key, value] of params) {
         if (value !== undefined && value !== null && value !== '') search.set(key, value);
@@ -61,7 +61,7 @@ function buildQuery(params) {
  * @param {object} ob sing-box outbound 对象
  * @returns {string|null} 节点链接，或 null（不支持）
  */
-export function singboxOutboundToUrl(ob) {
+export function singboxOutboundToUrl(ob: any) {
     if (!ob || typeof ob !== 'object') return null;
     const type = String(ob.type || '').toLowerCase();
     const server = ob.server;
@@ -138,7 +138,7 @@ export function singboxOutboundToUrl(ob) {
  * @param {object} config 解析后的 sing-box 配置
  * @returns {string[]}
  */
-export function extractSingboxNodes(config) {
+export function extractSingboxNodes(config: any) {
     if (!config || typeof config !== 'object') return [];
     const outbounds = toArray(config.outbounds);
     return outbounds.map(singboxOutboundToUrl).filter(Boolean);

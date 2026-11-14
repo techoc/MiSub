@@ -5,7 +5,7 @@ import { StorageFactory, STORAGE_TYPES } from '../../storage-adapter.ts';
  * Handle proxied GitHub release requests with caching
  * GET /api/github/release?repo=owner/repo
  */
-export async function handleGithubReleaseRequest(request, env) {
+export async function handleGithubReleaseRequest(request: any, env: any) {
     const url = new URL(request.url);
     const repo = url.searchParams.get('repo');
 

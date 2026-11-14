@@ -61,7 +61,7 @@
     const { subscriptions } = storeToRefs(dataStore);
     const { manualNodes } = useManualNodes(markDirty);
 
-    const handleProfileReorder = (profileId, direction) => {
+    const handleProfileReorder = (profileId: any, direction: any) => {
         const fromIndex = profiles.value.findIndex(
             (profile) => profile.id === profileId || profile.customId === profileId
         );
@@ -86,7 +86,7 @@
     const previewProfileId = ref<any>(null);
     const previewProfileName = ref('');
 
-    const handlePreviewProfile = (profileId) => {
+    const handlePreviewProfile = (profileId: any) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             previewProfileId.value = profileId;
@@ -109,7 +109,7 @@
     const showCopyModal = ref(false);
     const showCopyModalProfile = ref<any>(null);
 
-    const handleOpenCopy = (profileId) => {
+    const handleOpenCopy = (profileId: any) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             showCopyModalProfile.value = profile;
@@ -117,7 +117,7 @@
         }
     };
 
-    const handleViewLogs = (profileId) => {
+    const handleViewLogs = (profileId: any) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             logProfileName.value = profile.name;
@@ -132,7 +132,7 @@
     const qrCodeTitle = ref('');
     const { settings } = storeToRefs(dataStore); // Check if settings is already imported or available from dataStore
 
-    const handleQRCode = (profileId) => {
+    const handleQRCode = (profileId: any) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (profile) {
             if (!settings.value.profileToken) {

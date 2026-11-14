@@ -3,7 +3,7 @@
  * 从 main-handler.js 拆分而来；编排器见 ../main-handler.js。
  */
 
-export function getCurrentRequestUserInfo(context, sub) {
+export function getCurrentRequestUserInfo(context: any, sub: any) {
     const currentInfo = context?.currentSubscriptionRuntimeInfo || {};
     const runtimeKey = [sub?.id, sub?.url].find(
         (key) => key && Object.prototype.hasOwnProperty.call(currentInfo, key)
@@ -14,10 +14,10 @@ export function getCurrentRequestUserInfo(context, sub) {
     return sub?.userInfo || null;
 }
 
-export function mergeSubscriptionUserInfo(context, subscriptions) {
+export function mergeSubscriptionUserInfo(context: any, subscriptions: any) {
     const strategy = context?.config?.mergeExpireStrategy || 'max';
     return subscriptions.reduce(
-        (acc, sub) => {
+        (acc: any, sub: any) => {
             const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;
             if (!userInfo) return acc;
 
@@ -52,8 +52,8 @@ export function mergeSubscriptionUserInfo(context, subscriptions) {
 }
 
 export function buildUserInfoHeaderFromSubscriptions(
-    context,
-    subscriptions,
+    context: any,
+    subscriptions: any,
     profileExpiresAt = ''
 ) {
     const totalUserInfo = mergeSubscriptionUserInfo(context, subscriptions);
@@ -78,7 +78,7 @@ export function buildUserInfoHeaderFromSubscriptions(
         : null;
 }
 
-export function resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp = 0) {
+export function resolveNotificationExpireDate(profileExpiresAt: any, mergedExpireTimestamp = 0) {
     let date = profileExpiresAt ? new Date(profileExpiresAt) : null;
     if (!date || Number.isNaN(date.getTime())) {
         const timestamp = Number(mergedExpireTimestamp);
@@ -91,7 +91,7 @@ export function resolveNotificationExpireDate(profileExpiresAt, mergedExpireTime
     return !date || Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function formatNotificationExpireTime(profileExpiresAt, mergedExpireTimestamp = 0) {
+export function formatNotificationExpireTime(profileExpiresAt: any, mergedExpireTimestamp = 0) {
     const date = resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp);
 
     if (!date) return '未设置';
@@ -103,7 +103,7 @@ export function formatNotificationExpireTime(profileExpiresAt, mergedExpireTimes
 }
 
 export function formatNotificationExpireStatus(
-    profileExpiresAt,
+    profileExpiresAt: any,
     mergedExpireTimestamp = 0,
     now = Date.now(),
     thresholdDays = 3
@@ -120,7 +120,7 @@ export function formatNotificationExpireStatus(
     return '正常';
 }
 
-export function formatSubscriptionExpireTime(expireTimestamp) {
+export function formatSubscriptionExpireTime(expireTimestamp: any) {
     const timestamp = Number(expireTimestamp);
     if (!Number.isFinite(timestamp) || timestamp <= 0) return '';
 
@@ -135,7 +135,7 @@ export function formatSubscriptionExpireTime(expireTimestamp) {
     return `${values.year}-${values.month}-${values.day}`;
 }
 
-export function countSubscriptionNodes(nodeList, prependedContent = '') {
+export function countSubscriptionNodes(nodeList: any, prependedContent = '') {
     const lines = String(nodeList || '')
         .split(/\r?\n/)
         .map((line) => line.trim())

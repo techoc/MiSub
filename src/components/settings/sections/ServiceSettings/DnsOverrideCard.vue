@@ -22,7 +22,7 @@
 
     const jsonError = ref('');
 
-    function detectFormat(raw) {
+    function detectFormat(raw: any) {
         if (/^\s*\{/.test(raw)) return 'json';
         return 'yaml';
     }

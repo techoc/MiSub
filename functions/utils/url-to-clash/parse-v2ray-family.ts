@@ -6,7 +6,7 @@
 import { extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 import { applyDownloadInheritanceGuard, parseXhttpExtra } from '../xhttp-extra.ts';
 
-export function parseVlessUrl(url) {
+export function parseVlessUrl(url: any) {
     try {
         // vless://uuid@server:port?params#name
         const body = url.substring(8); // 去掉 vless://
@@ -121,10 +121,10 @@ export function parseVlessUrl(url) {
         if (network === 'grpc') {
             const grpcOpts = {};
             if (params.get('serviceName')) {
-                grpcOpts['grpc-service-name'] = params.get('serviceName');
+                (grpcOpts as Record<string, any>)['grpc-service-name'] = params.get('serviceName');
             }
             if (params.get('mode')) {
-                grpcOpts['grpc-mode'] = params.get('mode');
+                (grpcOpts as Record<string, any>)['grpc-mode'] = params.get('mode');
             }
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
@@ -147,9 +147,12 @@ export function parseVlessUrl(url) {
         if (security === 'reality') {
             proxy.tls = true;
             const realityOpts = {};
-            if (params.get('pbk')) realityOpts['public-key'] = params.get('pbk');
-            if (params.get('sid')) realityOpts['short-id'] = params.get('sid');
-            if (params.get('spx')) realityOpts['spider-x'] = params.get('spx');
+            if (params.get('pbk'))
+                (realityOpts as Record<string, any>)['public-key'] = params.get('pbk');
+            if (params.get('sid'))
+                (realityOpts as Record<string, any>)['short-id'] = params.get('sid');
+            if (params.get('spx'))
+                (realityOpts as Record<string, any>)['spider-x'] = params.get('spx');
             const sxm =
                 params.get('support-x25519mlkem768') ||
                 params.get('support_x25519mlkem768') ||
@@ -157,7 +160,7 @@ export function parseVlessUrl(url) {
             if (sxm === '0' || sxm === 'false') {
                 // 显式禁用
             } else if (sxm === '1' || sxm === 'true') {
-                realityOpts['support-x25519mlkem768'] = true;
+                (realityOpts as Record<string, any>)['support-x25519mlkem768'] = true;
             }
             if (Object.keys(realityOpts).length > 0) {
                 proxy['reality-opts'] = realityOpts;
@@ -220,7 +223,7 @@ export function parseVlessUrl(url) {
  * @param {string} url - Trojan URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseTrojanUrl(url) {
+export function parseTrojanUrl(url: any) {
     try {
         // trojan://password@server:port?params#name
         const body = url.substring(9); // 去掉 trojan://
@@ -276,8 +279,9 @@ export function parseTrojanUrl(url) {
         if (network === 'grpc') {
             const grpcOpts = {};
             if (params.get('serviceName'))
-                grpcOpts['grpc-service-name'] = params.get('serviceName');
-            if (params.get('mode')) grpcOpts['grpc-mode'] = params.get('mode');
+                (grpcOpts as Record<string, any>)['grpc-service-name'] = params.get('serviceName');
+            if (params.get('mode'))
+                (grpcOpts as Record<string, any>)['grpc-mode'] = params.get('mode');
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
             }
@@ -312,9 +316,12 @@ export function parseTrojanUrl(url) {
         if (security === 'reality') {
             proxy.tls = true;
             const realityOpts = {};
-            if (params.get('pbk')) realityOpts['public-key'] = params.get('pbk');
-            if (params.get('sid')) realityOpts['short-id'] = params.get('sid');
-            if (params.get('spx')) realityOpts['spider-x'] = params.get('spx');
+            if (params.get('pbk'))
+                (realityOpts as Record<string, any>)['public-key'] = params.get('pbk');
+            if (params.get('sid'))
+                (realityOpts as Record<string, any>)['short-id'] = params.get('sid');
+            if (params.get('spx'))
+                (realityOpts as Record<string, any>)['spider-x'] = params.get('spx');
             const sxm =
                 params.get('support-x25519mlkem768') ||
                 params.get('support_x25519mlkem768') ||
@@ -322,7 +329,7 @@ export function parseTrojanUrl(url) {
             if (sxm === '0' || sxm === 'false') {
                 // 显式禁用
             } else if (sxm === '1' || sxm === 'true') {
-                realityOpts['support-x25519mlkem768'] = true;
+                (realityOpts as Record<string, any>)['support-x25519mlkem768'] = true;
             }
             if (Object.keys(realityOpts).length > 0) {
                 proxy['reality-opts'] = realityOpts;
@@ -341,7 +348,7 @@ export function parseTrojanUrl(url) {
  * @param {string} url - VMess URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseVmessUrl(url) {
+export function parseVmessUrl(url: any) {
     try {
         // vmess://base64(json)
         const base64Part = url.substring(8);
@@ -390,8 +397,8 @@ export function parseVmessUrl(url) {
         // gRPC 配置
         if (network === 'grpc') {
             const grpcOpts = {};
-            if (config.path) grpcOpts['grpc-service-name'] = config.path; // vmess json sometimes use path for serviceName
-            if (config.host) grpcOpts['grpc-service-name'] = config.host;
+            if (config.path) (grpcOpts as Record<string, any>)['grpc-service-name'] = config.path; // vmess json sometimes use path for serviceName
+            if (config.host) (grpcOpts as Record<string, any>)['grpc-service-name'] = config.host;
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
             }
@@ -401,7 +408,7 @@ export function parseVmessUrl(url) {
         if (network === 'h2') {
             const h2Opts: Record<string, any> = {};
             if (config.path) h2Opts.path = config.path;
-            if (config.host) h2Opts.host = config.host.split(',').map((h) => h.trim());
+            if (config.host) h2Opts.host = config.host.split(',').map((h: any) => h.trim());
             if (Object.keys(h2Opts).length > 0) {
                 proxy['h2-opts'] = h2Opts;
             }
@@ -412,7 +419,7 @@ export function parseVmessUrl(url) {
             const httpOpts = {
                 path: config.path || '/',
                 headers: {
-                    Host: config.host ? config.host.split(',').map((h) => h.trim()) : [],
+                    Host: config.host ? config.host.split(',').map((h: any) => h.trim()) : [],
                 },
             };
             proxy['http-opts'] = httpOpts;

@@ -75,10 +75,10 @@ export { applyFilterRules } from './subscription-service/filter-rules.ts';
  * @returns {Promise<string>} - 组合后的节点列表
  */
 export async function generateCombinedNodeList(
-    context,
-    config,
-    userAgent,
-    misubs,
+    context: any,
+    config: any,
+    userAgent: any,
+    misubs: any,
     prependedContent = '',
     profilePrefixSettings: KvRecord | null = null,
     debug = false,
@@ -124,7 +124,7 @@ export async function generateCombinedNodeList(
     // --- 阶段 1: 数据准备与手动节点处理 ---
 
     // [增强修复] 定义统一的订阅源级转换中枢
-    const applySubscriptionTransforms = async (nodes, subSource) => {
+    const applySubscriptionTransforms = async (nodes: any, subSource: any) => {
         if (!nodes || nodes.length === 0) return [];
 
         let currentNodes = [...nodes];
@@ -154,7 +154,7 @@ export async function generateCombinedNodeList(
     };
 
     // 重构后的手动节点处理逻辑
-    const manualSubSourceGroups = misubs.filter((sub) => {
+    const manualSubSourceGroups = misubs.filter((sub: any) => {
         if (sub?.isFromSubProfile) return true;
         const url = typeof sub?.url === 'string' ? sub.url.trim() : '';
         return Boolean(url) && !/^https?:\/\//i.test(url);
@@ -196,7 +196,7 @@ export async function generateCombinedNodeList(
     const processedManualNodeList = manualProcessedLines.join('\n');
 
     const httpSubs = misubs.filter(
-        (sub) =>
+        (sub: any) =>
             !sub?.isFromSubProfile &&
             sub &&
             sub.url &&
@@ -211,7 +211,7 @@ export async function generateCombinedNodeList(
      * @param {Object} sub - 订阅对象
      * @returns {Promise<string>} - 处理后的节点列表
      */
-    const fetchSingleSubscription = async (sub) => {
+    const fetchSingleSubscription = async (sub: any) => {
         const cacheEnabled = sub?.enableNodeCache === true;
         const storage = context?.storage;
         const recordEmptyRuntimeInfo = () => {
@@ -233,7 +233,7 @@ export async function generateCombinedNodeList(
             return readSubscriptionNodeCache(storage, sub);
         };
         // 旧缓存没有指纹时视为"配置未变化"，保持原有的截断保护行为
-        const hasFilterConfigChanged = (cached) =>
+        const hasFilterConfigChanged = (cached: any) =>
             Boolean(cached) &&
             typeof cached.filterFingerprint === 'string' &&
             cached.filterFingerprint !== buildSubscriptionFilterFingerprint(sub);
@@ -262,7 +262,7 @@ export async function generateCombinedNodeList(
             if (sub.fetchProxy && typeof sub.fetchProxy === 'string' && sub.fetchProxy.trim()) {
                 requestUrl = buildFetchProxyUrl(sub.fetchProxy, sub.url, processedUserAgent);
             }
-            requestUrl = assertPublicNetworkUrl(requestUrl).toString();
+            requestUrl = (assertPublicNetworkUrl(requestUrl) as URL).toString();
 
             const response = await fetchWithRetry(requestUrl, {
                 headers: requestHeaders,
@@ -384,7 +384,7 @@ export async function generateCombinedNodeList(
     };
 
     // 使用并发控制器限制同时请求数量，避免网络拥塞
-    const subPromises = httpSubs.map((sub) => limiter(() => fetchSingleSubscription(sub)));
+    const subPromises = httpSubs.map((sub: any) => limiter(() => fetchSingleSubscription(sub)));
     const processedSubContents = await Promise.all(subPromises);
 
     // --- 阶段 1: 原始数据汇聚 (Raw Data Aggregation) ---

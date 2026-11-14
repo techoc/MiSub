@@ -21,7 +21,7 @@ import {
 } from './url-to-clash/parse-modern-protocols.ts';
 import { parseHttpsUrl, parseSocks5Url } from './url-to-clash/parse-legacy-schemes.ts';
 
-export function urlToClashProxy(url) {
+export function urlToClashProxy(url: any) {
     if (!url || typeof url !== 'string') return null;
 
     if (/^mierus:\/\//i.test(url)) {
@@ -104,7 +104,7 @@ export function urlToClashProxy(url) {
  * @param {Object} options - 参数增强选项 (tfo, udp, scv 等)
  * @returns {Object[]} Clash 代理对象数组
  */
-export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
+export function urlsToClashProxies(urls: any, options: Record<string, any> = {}) {
     if (!Array.isArray(urls)) return [];
 
     return urls
@@ -131,13 +131,16 @@ export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
                 }
             }
 
-            if (options.skipCertVerify) proxy['skip-cert-verify'] = true;
+            if (options.skipCertVerify) (proxy as Record<string, any>)['skip-cert-verify'] = true;
 
-            if (options.supportX25519mlkem768 !== undefined && proxy['reality-opts']) {
+            if (
+                options.supportX25519mlkem768 !== undefined &&
+                (proxy as Record<string, any>)['reality-opts']
+            ) {
                 if (options.supportX25519mlkem768) {
-                    proxy['reality-opts']['support-x25519mlkem768'] = true;
+                    (proxy as Record<string, any>)['reality-opts']['support-x25519mlkem768'] = true;
                 } else {
-                    delete proxy['reality-opts']['support-x25519mlkem768'];
+                    delete (proxy as Record<string, any>)['reality-opts']['support-x25519mlkem768'];
                 }
             }
 
@@ -167,7 +170,7 @@ export function urlsToClashProxies(urls, options: Record<string, any> = {}) {
  * @param {Object} options - 配置选项
  * @returns {string} Clash YAML 配置
  */
-export function generateClashConfig(urls, options: Record<string, any> = {}) {
+export function generateClashConfig(urls: any, options: Record<string, any> = {}) {
     const proxies = urlsToClashProxies(urls, options);
 
     if (proxies.length === 0) {

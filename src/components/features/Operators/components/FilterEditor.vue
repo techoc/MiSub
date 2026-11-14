@@ -23,19 +23,19 @@
         set: (val) => emit('update:modelValue', val),
     });
 
-    const updateParam = (key, value) => {
+    const updateParam = (key: any, value: any) => {
         const newParams = { ...params.value, [key]: value };
         emit('update:modelValue', newParams);
     };
 
-    const addRule = (type) => {
-        const current = { ...params.value[type] };
+    const addRule = (type: any) => {
+        const current = { ...(params.value as Record<string, any>)[type] };
         current.rules = [...(current.rules || []), { pattern: '', flags: 'i' }];
         updateParam(type, current);
     };
 
-    const normalizeRuleFlags = (type, index) => {
-        const current = { ...params.value[type] };
+    const normalizeRuleFlags = (type: any, index: any) => {
+        const current = { ...(params.value as Record<string, any>)[type] };
         current.rules = [...(current.rules || [])];
         const rule = current.rules[index];
         if (!rule) return;
@@ -43,8 +43,8 @@
         updateParam(type, current);
     };
 
-    const removeRule = (type, index) => {
-        const current = { ...params.value[type] };
+    const removeRule = (type: any, index: any) => {
+        const current = { ...(params.value as Record<string, any>)[type] };
         current.rules = [...current.rules];
         current.rules.splice(index, 1);
         updateParam(type, current);
@@ -62,12 +62,14 @@
         英国: 'United Kingdom',
         德国: 'Germany',
     };
-    const statusLabel = (enabled) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
-    const regionLabel = (region) =>
-        t('operators.regionLabel', { region: regionLabels[region] || region });
+    const statusLabel = (enabled: any) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
+    const regionLabel = (region: any) =>
+        t('operators.regionLabel', {
+            region: (regionLabels as Record<string, any>)[region] || region,
+        });
 
-    const toggleValue = (type, value) => {
-        const current = { ...params.value[type] };
+    const toggleValue = (type: any, value: any) => {
+        const current = { ...(params.value as Record<string, any>)[type] };
         const values = new Set(current.values || []);
         if (values.has(value)) {
             values.delete(value);

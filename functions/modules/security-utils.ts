@@ -6,7 +6,7 @@ const URL_KEY_PATTERN = /(url|uri|link|endpoint)$/i;
 const ALLOWED_FETCH_PROTOCOLS = new Set(['http:', 'https:']);
 const MAX_SAFE_REDIRECTS = 3;
 
-export function redactSensitiveValue(value) {
+export function redactSensitiveValue(value: any): any {
     if (value === null || value === undefined) return value;
     if (typeof value === 'string') return REDACTED;
     if (typeof value === 'number' || typeof value === 'boolean') return value;
@@ -15,7 +15,7 @@ export function redactSensitiveValue(value) {
     return REDACTED;
 }
 
-export function redactSensitiveObject(value, seen = new WeakSet()) {
+export function redactSensitiveObject(value: any, seen = new WeakSet()): any {
     if (value === null || value === undefined) return value;
     if (Array.isArray(value)) return value.map((item) => redactSensitiveObject(item, seen));
     if (typeof value !== 'object') return value;
@@ -25,19 +25,19 @@ export function redactSensitiveObject(value, seen = new WeakSet()) {
     const output = {};
     for (const [key, item] of Object.entries(value)) {
         if (SENSITIVE_KEY_PATTERN.test(key)) {
-            output[key] = redactSensitiveValue(item);
+            (output as Record<string, any>)[key] = redactSensitiveValue(item);
             continue;
         }
         if (URL_KEY_PATTERN.test(key) && typeof item === 'string') {
-            output[key] = redactUrl(item);
+            (output as Record<string, any>)[key] = redactUrl(item);
             continue;
         }
-        output[key] = redactSensitiveObject(item, seen);
+        (output as Record<string, any>)[key] = redactSensitiveObject(item, seen);
     }
     return output;
 }
 
-export function redactUrl(value) {
+export function redactUrl(value: any) {
     if (typeof value !== 'string' || !value.trim()) return value;
     try {
         const url = new URL(value);
@@ -57,7 +57,7 @@ export function redactUrl(value) {
     }
 }
 
-export function validatePublicFetchUrl(value) {
+export function validatePublicFetchUrl(value: any) {
     let url;
     try {
         url = new URL(String(value || '').trim());
@@ -87,7 +87,7 @@ export function validatePublicFetchUrl(value) {
 }
 
 export async function safeFetchPublicUrl(
-    inputUrl,
+    inputUrl: any,
     init: Record<string, any> = {},
     options: Record<string, any> = {}
 ) {
@@ -99,7 +99,7 @@ export async function safeFetchPublicUrl(
         throw error;
     }
 
-    let currentUrl = validation.url.toString();
+    let currentUrl = validation.url!.toString();
     for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount++) {
         const response = await fetch(
             new Request(currentUrl, {
@@ -129,7 +129,7 @@ export async function safeFetchPublicUrl(
             (error as { status?: number }).status = 400;
             throw error;
         }
-        currentUrl = nextValidation.url.toString();
+        currentUrl = nextValidation.url!.toString();
     }
 
     const error = new Error('Too many redirects');
@@ -137,7 +137,7 @@ export async function safeFetchPublicUrl(
     throw error;
 }
 
-export function validatePublicNetworkUrl(value) {
+export function validatePublicNetworkUrl(value: any) {
     let url;
     try {
         url = new URL(String(value || '').trim());
@@ -160,7 +160,7 @@ export function validatePublicNetworkUrl(value) {
     return { ok: true, url };
 }
 
-export function assertPublicFetchUrl(inputUrl) {
+export function assertPublicFetchUrl(inputUrl: any) {
     const validation = validatePublicFetchUrl(inputUrl);
     if (!validation.ok) {
         const error = new Error(validation.error);
@@ -170,7 +170,7 @@ export function assertPublicFetchUrl(inputUrl) {
     return validation.url;
 }
 
-export function assertPublicNetworkUrl(inputUrl) {
+export function assertPublicNetworkUrl(inputUrl: any) {
     const validation = validatePublicNetworkUrl(inputUrl);
     if (!validation.ok) {
         const error = new Error(validation.error);
@@ -180,11 +180,11 @@ export function assertPublicNetworkUrl(inputUrl) {
     return validation.url;
 }
 
-function isRedirectStatus(status) {
+function isRedirectStatus(status: any) {
     return [301, 302, 303, 307, 308].includes(status);
 }
 
-function normalizeHostname(hostname) {
+function normalizeHostname(hostname: any) {
     return String(hostname || '')
         .trim()
         .toLowerCase()
@@ -192,7 +192,7 @@ function normalizeHostname(hostname) {
         .replace(/\.$/, '');
 }
 
-function isAllowedExternalHostname(hostname) {
+function isAllowedExternalHostname(hostname: any) {
     const normalized = normalizeHostname(hostname);
     return (
         normalized === 'raw.githubusercontent.com' ||
@@ -205,12 +205,12 @@ function isAllowedExternalHostname(hostname) {
     );
 }
 
-function isIpLiteral(hostname) {
+function isIpLiteral(hostname: any) {
     const normalized = normalizeHostname(hostname);
     return Boolean(parseIpv4(normalized)) || normalized.includes(':');
 }
 
-function isBlockedHostname(hostname) {
+function isBlockedHostname(hostname: any) {
     const normalized = normalizeHostname(hostname);
     if (!normalized) return true;
     if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
@@ -224,18 +224,18 @@ function isBlockedHostname(hostname) {
     return false;
 }
 
-function parseIpv4(hostname) {
+function parseIpv4(hostname: any) {
     const parts = hostname.split('.');
     if (parts.length !== 4) return null;
-    const nums = parts.map((part) => {
+    const nums = parts.map((part: any) => {
         if (!/^\d+$/.test(part)) return NaN;
         return Number(part);
     });
-    if (nums.some((num) => !Number.isInteger(num) || num < 0 || num > 255)) return null;
+    if (nums.some((num: any) => !Number.isInteger(num) || num < 0 || num > 255)) return null;
     return nums;
 }
 
-function isBlockedIpv4(parts) {
+function isBlockedIpv4(parts: any) {
     const [a, b] = parts;
     return (
         a === 0 ||
@@ -250,7 +250,7 @@ function isBlockedIpv4(parts) {
     );
 }
 
-function isBlockedIpv6(hostname) {
+function isBlockedIpv6(hostname: any) {
     const hextets = parseIpv6(hostname);
     if (!hextets) return true;
 
@@ -274,13 +274,13 @@ function isBlockedIpv6(hostname) {
     return mapped ? isBlockedIpv4(mapped) : false;
 }
 
-function parseIpv6(value) {
+function parseIpv6(value: any) {
     const input = String(value || '').toLowerCase();
     if (!/^[0-9a-f:.]+$/i.test(input)) return null;
     const [leftRaw, rightRaw, extra] = input.split('::');
     if (extra !== undefined) return null;
 
-    const parseSide = (side) => {
+    const parseSide = (side: any) => {
         if (!side) return [];
         const parts = side.split(':');
         const output: number[] = [];
@@ -307,7 +307,7 @@ function parseIpv6(value) {
     return hextets.length === 8 ? hextets : null;
 }
 
-function parseEmbeddedIpv4(hextets) {
+function parseEmbeddedIpv4(hextets: any) {
     if (!Array.isArray(hextets) || hextets.length !== 8) return null;
     if (hextets.slice(0, 5).every((part) => part === 0) && hextets[5] === 0xffff) {
         return [

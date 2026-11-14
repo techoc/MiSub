@@ -37,7 +37,7 @@ const REGION_ZH_TO_CODE = buildZhToCodeMap();
 export const warnedRegexRules = new Set();
 export const VIRTUAL_INFO_NODE_UUID = '00000000-0000-0000-0000-000000000000';
 
-export function warnInvalidRegex(rule, error) {
+export function warnInvalidRegex(rule: any, error: any) {
     const key = `${rule.pattern || ''}|${rule.flags || ''}`;
     if (warnedRegexRules.has(key)) return;
     warnedRegexRules.add(key);
@@ -50,7 +50,7 @@ export function warnInvalidRegex(rule, error) {
 
 // ============ 工具函数 ============
 
-export function safeDecodeURI(value) {
+export function safeDecodeURI(value: any) {
     try {
         return decodeURIComponent(value);
     } catch {
@@ -58,7 +58,7 @@ export function safeDecodeURI(value) {
     }
 }
 
-export function normalizeBase64(input) {
+export function normalizeBase64(input: any) {
     let s = String(input || '')
         .trim()
         .replace(/\s+/g, '');
@@ -76,17 +76,17 @@ export function normalizeBase64(input) {
     return s;
 }
 
-export function base64UrlEncode(text) {
+export function base64UrlEncode(text: any) {
     return base64Encode(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-export function getSchemePayload(url, prefixLen) {
+export function getSchemePayload(url: any, prefixLen: any) {
     const rest = String(url || '').slice(prefixLen);
     const cut = rest.search(/[?#]/);
     return (cut === -1 ? rest : rest.slice(0, cut)).trim();
 }
 
-export function splitSchemeQueryAndFragment(url, prefixLen) {
+export function splitSchemeQueryAndFragment(url: any, prefixLen: any) {
     const rest = String(url || '').slice(prefixLen);
     const hashIdx = rest.indexOf('#');
     const queryIdx = rest.indexOf('?');
@@ -99,21 +99,21 @@ export function splitSchemeQueryAndFragment(url, prefixLen) {
     return { payload, query, hasFragment: hashIdx !== -1 };
 }
 
-export function base64Decode(base64) {
+export function base64Decode(base64: any) {
     const binary = atob(normalizeBase64(base64));
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return new TextDecoder('utf-8').decode(bytes);
 }
 
-export function base64Encode(text) {
+export function base64Encode(text: any) {
     const bytes = new TextEncoder().encode(String(text));
     let binary = '';
     for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
     return btoa(binary);
 }
 
-export function getProtocol(url) {
+export function getProtocol(url: any) {
     const m = String(url || '').match(/^([a-zA-Z0-9+.-]+):\/\//);
     return m ? m[1].toLowerCase() : 'unknown';
 }
@@ -121,26 +121,26 @@ export function getProtocol(url) {
 /**
  * 归一化协议名称，将别名统一为标准名
  */
-export function normalizeProtocol(proto) {
+export function normalizeProtocol(proto: any) {
     const p = String(proto || 'unknown').toLowerCase();
     if (p === 'hy' || p === 'hy2' || p === 'hysteria') return 'hysteria2';
     return p;
 }
 
-export function getFragment(url) {
+export function getFragment(url: any) {
     const idx = String(url || '').lastIndexOf('#');
     if (idx === -1) return '';
     return safeDecodeURI(url.slice(idx + 1)).trim();
 }
 
-export function setFragment(url, name) {
+export function setFragment(url: any, name: any) {
     const s = String(url || '');
     const idx = s.lastIndexOf('#');
     const base = idx === -1 ? s : s.slice(0, idx);
     return `${base}#${encodeURIComponent(String(name || ''))}`;
 }
 
-export function parseHostPort(hostPort) {
+export function parseHostPort(hostPort: any) {
     const s = String(hostPort || '').trim();
     if (!s) return { server: '', port: '' };
     if (s.startsWith('[') && s.includes(']')) {
@@ -158,7 +158,7 @@ export function parseHostPort(hostPort) {
 
 // ============ 节点解析 ============
 
-export function stripLeadingEmoji(name) {
+export function stripLeadingEmoji(name: any) {
     return String(name || '')
         .replace(/^[\uD83C][\uDDE6-\uDDFF][\uD83C][\uDDE6-\uDDFF]\s*/g, '')
         .trim();
@@ -166,7 +166,7 @@ export function stripLeadingEmoji(name) {
 
 // ============ 配置标准化 ============
 
-export function normalizeConfig(cfg) {
+export function normalizeConfig(cfg: any) {
     const config = cfg && typeof cfg === 'object' ? cfg : {};
     const filter = config.filter || {};
     const rename = config.rename || {};
@@ -191,14 +191,14 @@ export function normalizeConfig(cfg) {
                 enabled: Boolean(filter.protocols?.enabled),
                 values: Array.isArray(filter.protocols?.values)
                     ? filter.protocols.values
-                          .map((value) => normalizeProtocol(value))
+                          .map((value: any) => normalizeProtocol(value))
                           .filter(Boolean)
                     : [],
             },
             regions: {
                 enabled: Boolean(filter.regions?.enabled),
                 values: Array.isArray(filter.regions?.values)
-                    ? filter.regions.values.map((value) => toRegionZh(value)).filter(Boolean)
+                    ? filter.regions.values.map((value: any) => toRegionZh(value)).filter(Boolean)
                     : [],
             },
             script: {
@@ -234,7 +234,7 @@ export function normalizeConfig(cfg) {
             includeProtocol: Boolean(dedup.includeProtocol),
             prefer: {
                 protocolOrder: Array.isArray(dedup.prefer?.protocolOrder)
-                    ? dedup.prefer.protocolOrder.map((s) => String(s).toLowerCase())
+                    ? dedup.prefer.protocolOrder.map((s: any) => String(s).toLowerCase())
                     : [],
             },
         },
@@ -256,11 +256,13 @@ function buildRegionCodeToZhMap() {
             const code = String(keyword || '').trim();
             if (/^[A-Za-z]{2,3}$/.test(code)) {
                 const upper = code.toUpperCase();
-                if (!map[upper]) map[upper] = zhName;
+                if (!(map as Record<string, any>)[upper])
+                    (map as Record<string, any>)[upper] = zhName;
             }
         }
     }
-    if (map['GB'] && !map['UK']) map['UK'] = map['GB'];
+    if ((map as Record<string, any>)['GB'] && !(map as Record<string, any>)['UK'])
+        (map as Record<string, any>)['UK'] = (map as Record<string, any>)['GB'];
     return map;
 }
 
@@ -276,7 +278,7 @@ function buildZhToCodeMap() {
         for (const keyword of keywords) {
             const code = String(keyword || '').trim();
             if (/^[A-Za-z]{2,3}$/.test(code)) {
-                map[zhName] = code.toUpperCase();
+                (map as Record<string, any>)[zhName] = code.toUpperCase();
                 break;
             }
         }
@@ -289,19 +291,19 @@ function buildZhToCodeMap() {
  * @param {string} zhRegion - 中文地区名 (如 '美国')
  * @returns {string} 地区代码 (如 'US')，如未找到则返回原值
  */
-export function toRegionCode(zhRegion) {
+export function toRegionCode(zhRegion: any) {
     const region = String(zhRegion || '').trim();
     if (!region) return '';
     // 如果已经是地区代码格式，直接返回大写
     if (/^[A-Za-z]{2,3}$/.test(region)) return region.toUpperCase();
     // 从映射表中查找
-    return REGION_ZH_TO_CODE[region] || region;
+    return (REGION_ZH_TO_CODE as Record<string, any>)[region] || region;
 }
 
-export function toRegionZh(value) {
+export function toRegionZh(value: any) {
     const region = String(value || '').trim();
     if (!region) return '';
     if (/[\u4e00-\u9fa5]/.test(region)) return region;
     const upper = region.toUpperCase();
-    return REGION_CODE_TO_ZH[upper] || region;
+    return (REGION_CODE_TO_ZH as Record<string, any>)[upper] || region;
 }

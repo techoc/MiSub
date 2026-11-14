@@ -1,7 +1,7 @@
 import { inferAirportRootDomain } from './airport-domain.ts';
 
 /** Stable grouping key shared by list sorting and visual grouping. */
-export function getAirportIdentityKey(subscription) {
+export function getAirportIdentityKey(subscription: any) {
     const identityKey = String(subscription?.airportIdentity?.groupId || '').trim();
     if (identityKey) return `identity:${identityKey}`;
     const root = inferAirportRootDomain(subscription?.url);
@@ -14,7 +14,7 @@ export function getAirportIdentityKey(subscription) {
     }
 }
 
-export function getAirportIdentityName(subscription) {
+export function getAirportIdentityName(subscription: any) {
     return String(subscription?.airportIdentity?.name || '').trim();
 }
 
@@ -25,7 +25,7 @@ export function createAirportGroupId() {
     );
 }
 
-export function setAirportIdentity(subscription, groupId, name) {
+export function setAirportIdentity(subscription: any, groupId: any, name: any) {
     if (!subscription || typeof subscription !== 'object') return subscription;
     const normalizedId = String(groupId || '').trim();
     const normalizedName = String(name || '').trim();
@@ -34,7 +34,7 @@ export function setAirportIdentity(subscription, groupId, name) {
     return subscription;
 }
 
-export function resetAirportIdentity(subscription) {
+export function resetAirportIdentity(subscription: any) {
     if (!subscription || typeof subscription !== 'object') return subscription;
     subscription.airportIdentity = null;
     return subscription;

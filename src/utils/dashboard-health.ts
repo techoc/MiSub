@@ -9,7 +9,7 @@ function getTokenState(settings: Record<string, any> = {}) {
     return 'stable';
 }
 
-function getTrafficState(sub, now) {
+function getTrafficState(sub: any, now: any) {
     return getSubscriptionTrafficState(sub, now);
 }
 
@@ -50,18 +50,19 @@ export function getDashboardHealthItems({
     now = DEFAULT_NOW(),
 }: Record<string, any> = {}) {
     const items: any[] = [];
-    const enabledSubscriptions = subscriptions.filter((sub) => sub.enabled);
-    const disabledSubscriptions = subscriptions.filter((sub) => !sub.enabled);
-    const activeProfiles = profiles.filter((profile) => profile.enabled !== false);
+    const enabledSubscriptions = subscriptions.filter((sub: any) => sub.enabled);
+    const disabledSubscriptions = subscriptions.filter((sub: any) => !sub.enabled);
+    const activeProfiles = profiles.filter((profile: any) => profile.enabled !== false);
     const tokenState = getTokenState(settings);
     const resolvedTotalNodes =
-        totalNodesCount ?? subscriptions.reduce((sum, sub) => sum + Number(sub.nodeCount || 0), 0);
-    const errorSubscriptions = subscriptions.filter((sub) => Boolean(sub.lastError));
+        totalNodesCount ??
+        subscriptions.reduce((sum: any, sub: any) => sum + Number(sub.nodeCount || 0), 0);
+    const errorSubscriptions = subscriptions.filter((sub: any) => Boolean(sub.lastError));
     const expiredSubscriptions = subscriptions.filter(
-        (sub) => getTrafficState(sub, now) === 'expired'
+        (sub: any) => getTrafficState(sub, now) === 'expired'
     );
     const lowTrafficSubscriptions = subscriptions.filter(
-        (sub) => getTrafficState(sub, now) === 'low'
+        (sub: any) => getTrafficState(sub, now) === 'low'
     );
 
     if (subscriptions.length === 0) {
@@ -208,10 +209,10 @@ export function getDashboardHealthItems({
  * Falls back to the raw key when a translation is missing, which keeps
  * incomplete locales from rendering blank cards.
  */
-export function resolveHealthItemCopy(item, t) {
+export function resolveHealthItemCopy(item: any, t: any) {
     if (!item || typeof t !== 'function') return item;
 
-    const translate = (key, params?: Record<string, any>) => {
+    const translate = (key: any, params?: Record<string, any>) => {
         if (!key) return '';
         const value = t(key, params);
         return value === undefined || value === null ? '' : value;

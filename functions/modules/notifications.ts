@@ -16,25 +16,30 @@ import {
 /**
  * 转义 Telegram HTML 特殊字符
  */
-export function tgEscape(text) {
+export function tgEscape(text: any) {
     return coreTgEscape(text);
 }
 
 /**
  * 发送Telegram基础通知 (兼容旧调用)
  */
-export async function sendTgNotification(settings, message) {
+export async function sendTgNotification(settings: any, message: any) {
     return sendCoreTg(settings, message);
 }
 
 /**
  * 增强版TG通知 (兼容旧调用)
  */
-export async function sendEnhancedTgNotification(settings, type, clientIp, additionalData = '') {
+export async function sendEnhancedTgNotification(
+    settings: any,
+    type: any,
+    clientIp: any,
+    additionalData = ''
+) {
     return sendCoreEnhancedTg(settings, type, clientIp, additionalData);
 }
 
-async function loadSubscriptionsForCron(storageAdapter) {
+async function loadSubscriptionsForCron(storageAdapter: any) {
     if (typeof storageAdapter.getAllSubscriptions === 'function') {
         const subscriptions = await storageAdapter.getAllSubscriptions();
         if (Array.isArray(subscriptions)) {
@@ -46,7 +51,7 @@ async function loadSubscriptionsForCron(storageAdapter) {
     return Array.isArray(subscriptions) ? subscriptions : [];
 }
 
-async function persistSubscriptionsForCron(storageAdapter, subscriptions) {
+async function persistSubscriptionsForCron(storageAdapter: any, subscriptions: any) {
     if (typeof storageAdapter.putAllSubscriptions === 'function') {
         await storageAdapter.putAllSubscriptions(subscriptions);
         return;
@@ -58,7 +63,7 @@ async function persistSubscriptionsForCron(storageAdapter, subscriptions) {
 /**
  * 检查并发送订阅到期和流量预警通知
  */
-export async function checkAndNotify(sub, settings, env) {
+export async function checkAndNotify(sub: any, settings: any, env: any) {
     if (!sub?.enabled || !sub.userInfo) return;
 
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -111,7 +116,7 @@ export async function checkAndNotify(sub, settings, env) {
 /**
  * 处理定时任务的通知更新（并行处理版本）
  */
-export async function handleCronTrigger(env) {
+export async function handleCronTrigger(env: any) {
     const { StorageFactory } = await import('../storage-adapter.ts');
 
     const storageAdapter = await StorageFactory.createAdapter(
@@ -137,9 +142,9 @@ export async function handleCronTrigger(env) {
     let failedCount = 0;
     const failedSubscriptions: any[] = [];
 
-    async function processSubscription(sub) {
+    async function processSubscription(sub: any) {
         try {
-            const fetchWithTimeout = (url, options) => {
+            const fetchWithTimeout = (url: any, options: any) => {
                 const { cf, ...requestInit } = options;
                 const fetchCall = cf
                     ? fetch(new Request(url, requestInit), { cf })
@@ -177,9 +182,12 @@ export async function handleCronTrigger(env) {
                 );
                 if (userInfoHeader) {
                     const info = {};
-                    userInfoHeader.split(';').forEach((part) => {
+                    userInfoHeader.split(';').forEach((part: any) => {
                         const [key, value] = part.trim().split('=');
-                        if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
+                        if (key && value)
+                            (info as Record<string, any>)[key] = /^\d+$/.test(value)
+                                ? Number(value)
+                                : value;
                     });
                     const originalSub = allSubs.find((s) => s.id === sub.id);
                     if (originalSub) {
@@ -243,11 +251,11 @@ export async function handleCronTrigger(env) {
         }
     }
 
-    async function runWithConcurrency(items, concurrency, fn) {
+    async function runWithConcurrency(items: any, concurrency: any, fn: any) {
         const results: any[] = [];
         const executing = new Set();
         for (const item of items) {
-            const promise = fn(item).then((result) => {
+            const promise = fn(item).then((result: any) => {
                 executing.delete(promise);
                 return result;
             });

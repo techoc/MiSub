@@ -8,11 +8,11 @@
  * @param {string} nodeUrl
  * @returns {string}
  */
-export function fixNodeUrlEncoding(nodeUrl, options: Record<string, any> = {}) {
+export function fixNodeUrlEncoding(nodeUrl: any, options: Record<string, any> = {}) {
     if (!nodeUrl) return '';
 
     // 辅助函数：安全解码
-    const safeDecode = (value) => {
+    const safeDecode = (value: any) => {
         try {
             return decodeURIComponent(value);
         } catch (e) {
@@ -21,7 +21,7 @@ export function fixNodeUrlEncoding(nodeUrl, options: Record<string, any> = {}) {
     };
 
     const { plusAsSpace = false } = options;
-    const normalizeFragment = (url) => {
+    const normalizeFragment = (url: any) => {
         const hashIndex = url.lastIndexOf('#');
         if (hashIndex === -1) return url;
 
@@ -39,7 +39,7 @@ export function fixNodeUrlEncoding(nodeUrl, options: Record<string, any> = {}) {
     };
 
     // 辅助函数：最多解码两次，处理双重编码
-    const decodeRepeatedly = (value, maxRounds = 2) => {
+    const decodeRepeatedly = (value: any, maxRounds = 2) => {
         let current = value;
         for (let i = 0; i < maxRounds; i += 1) {
             const next = safeDecode(current);
@@ -92,12 +92,12 @@ export function fixNodeUrlEncoding(nodeUrl, options: Record<string, any> = {}) {
 /**
  * 修复SS节点编码
  */
-export function fixSSEncoding(nodeUrl, options: Record<string, any> = {}) {
+export function fixSSEncoding(nodeUrl: any, options: Record<string, any> = {}) {
     if (!nodeUrl.startsWith('ss://')) return nodeUrl;
 
     const { plusAsSpace = false } = options;
 
-    const safeDecode = (value) => {
+    const safeDecode = (value: any) => {
         try {
             return decodeURIComponent(value);
         } catch (e) {
@@ -105,7 +105,7 @@ export function fixSSEncoding(nodeUrl, options: Record<string, any> = {}) {
         }
     };
 
-    const decodeRepeatedly = (value, maxRounds = 2) => {
+    const decodeRepeatedly = (value: any, maxRounds = 2) => {
         let current = value;
         for (let i = 0; i < maxRounds; i += 1) {
             const next = safeDecode(current);
@@ -145,7 +145,7 @@ export function fixSSEncoding(nodeUrl, options: Record<string, any> = {}) {
 /**
  * ArrayBuffer -> Base64
  */
-export function encodeArrayBufferToBase64(buffer) {
+export function encodeArrayBufferToBase64(buffer: any) {
     const bytes = new Uint8Array(buffer);
     const chunkSize = 0x8000;
     let binary = '';
@@ -165,7 +165,7 @@ export function encodeArrayBufferToBase64(buffer) {
  * @param {string|string[]} lines
  * @param {boolean} stripKeepPrefix
  */
-export function buildRuleSet(lines, stripKeepPrefix = false) {
+export function buildRuleSet(lines: any, stripKeepPrefix = false) {
     const protocols = new Set();
     const patterns: any[] = [];
 
@@ -188,9 +188,9 @@ export function buildRuleSet(lines, stripKeepPrefix = false) {
             const parts = line
                 .substring('proto:'.length)
                 .split(',')
-                .map((p) => p.trim().toLowerCase())
+                .map((p: any) => p.trim().toLowerCase())
                 .filter(Boolean);
-            parts.forEach((p) => protocols.add(p));
+            parts.forEach((p: any) => protocols.add(p));
             continue;
         }
 
@@ -205,7 +205,7 @@ export function buildRuleSet(lines, stripKeepPrefix = false) {
     };
 }
 
-export function buildSafeRegex(patterns) {
+export function buildSafeRegex(patterns: any) {
     if (!patterns || patterns.length === 0) return null;
     try {
         return new RegExp(patterns.join('|'), 'i');
@@ -215,7 +215,7 @@ export function buildSafeRegex(patterns) {
     }
 }
 
-export function parseFilterRuleText(ruleText) {
+export function parseFilterRuleText(ruleText: any) {
     const lines = Array.isArray(ruleText)
         ? ruleText.map((line) => String(line || '').trim()).filter(Boolean)
         : String(ruleText || '')
@@ -259,11 +259,11 @@ export function parseFilterRuleText(ruleText) {
  * @param {Object} rules
  * @param {string} mode 'include' | 'exclude'
  */
-export function filterNodeObjects(nodes, rules, mode = 'exclude') {
+export function filterNodeObjects(nodes: any, rules: any, mode = 'exclude') {
     if (!rules || !rules.hasRules) return nodes;
     const isInclude = mode === 'include';
 
-    return nodes.filter((node) => {
+    return nodes.filter((node: any) => {
         const protocol = (node.protocol || '').toLowerCase();
         const name = node.name || '';
 
@@ -277,7 +277,7 @@ export function filterNodeObjects(nodes, rules, mode = 'exclude') {
     });
 }
 
-export function filterNodeUrls(nodeUrls, rules, mode = 'exclude') {
+export function filterNodeUrls(nodeUrls: any, rules: any, mode = 'exclude') {
     if (!rules || !rules.hasRules || !Array.isArray(nodeUrls)) return nodeUrls;
 
     const nodes = nodeUrls.map((url) => ({
@@ -288,11 +288,11 @@ export function filterNodeUrls(nodeUrls, rules, mode = 'exclude') {
                 ?.toLowerCase() || '',
         name: parseNodeUrlName(url),
     }));
-    const keptUrls = new Set(filterNodeObjects(nodes, rules, mode).map((node) => node.url));
+    const keptUrls = new Set(filterNodeObjects(nodes, rules, mode).map((node: any) => node.url));
     return nodeUrls.filter((url) => keptUrls.has(url));
 }
 
-function parseNodeUrlName(nodeUrl) {
+function parseNodeUrlName(nodeUrl: any) {
     if (!nodeUrl || typeof nodeUrl !== 'string') return '';
     const hashIndex = nodeUrl.lastIndexOf('#');
     if (hashIndex === -1) return nodeUrl;
@@ -306,7 +306,7 @@ function parseNodeUrlName(nodeUrl) {
 /**
  * 将手动节点的自定义名称应用到节点链接中
  */
-export function applyManualNodeName(nodeUrl, customName) {
+export function applyManualNodeName(nodeUrl: any, customName: any) {
     if (!customName || !nodeUrl) return nodeUrl;
 
     const encodedName = encodeURIComponent(customName);
@@ -359,7 +359,7 @@ export function applyManualNodeName(nodeUrl, customName) {
  * @param {Object} sub
  * @returns {Array} filtered nodes
  */
-export function applyFilterRules(validNodes, sub) {
+export function applyFilterRules(validNodes: any, sub: any) {
     if (!sub || !Array.isArray(validNodes)) return validNodes;
 
     let filteredNodes = [...validNodes];

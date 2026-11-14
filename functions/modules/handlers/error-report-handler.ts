@@ -21,17 +21,17 @@ const MAX_PERSISTED_REPORTS_PER_MINUTE = 6;
 let recentReportFingerprints = new Map();
 let persistedReportTimestamps: number[] = [];
 
-function getKV(env) {
+function getKV(env: any) {
     return env?.MISUB_KV || null;
 }
 
-function safeString(value, limit) {
+function safeString(value: any, limit: any) {
     if (value === undefined || value === null) return '';
     const text = String(value);
     return text.length > limit ? text.slice(0, limit) : text;
 }
 
-function safeAdditionalData(value) {
+function safeAdditionalData(value: any) {
     if (!value) return null;
     try {
         const json = JSON.stringify(value);
@@ -51,7 +51,7 @@ function cleanupReportBudgets(now = Date.now()) {
     }
 }
 
-function buildReportFingerprint(body, request) {
+function buildReportFingerprint(body: any, request: any) {
     const message = safeString(body?.message, 160);
     const context = safeString(body?.context, 120);
     const url = safeString(body?.url, 200);
@@ -59,7 +59,7 @@ function buildReportFingerprint(body, request) {
     return `${context}|${message}|${url}|${origin}`;
 }
 
-function shouldPersistReport(body, request) {
+function shouldPersistReport(body: any, request: any) {
     const now = Date.now();
     cleanupReportBudgets(now);
 
@@ -78,7 +78,7 @@ function shouldPersistReport(body, request) {
     return true;
 }
 
-export async function handleErrorReportRequest(request, env) {
+export async function handleErrorReportRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }

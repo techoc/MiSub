@@ -13,15 +13,15 @@ function getCrypto() {
     return cryptoImpl;
 }
 
-function bytesToHex(buffer) {
+function bytesToHex(buffer: any) {
     return Array.from(new Uint8Array(buffer))
         .map((byte) => byte.toString(16).padStart(2, '0'))
         .join('');
 }
 
-function bytesToBase64Url(bytes) {
+function bytesToBase64Url(bytes: any) {
     let binary = '';
-    bytes.forEach((byte) => {
+    bytes.forEach((byte: any) => {
         binary += String.fromCharCode(byte);
     });
     const base64 =
@@ -31,7 +31,7 @@ function bytesToBase64Url(bytes) {
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-function encodeUtf8Base64(text) {
+function encodeUtf8Base64(text: any) {
     const bytes = new TextEncoder().encode(String(text || ''));
     let binary = '';
     bytes.forEach((byte) => {
@@ -42,7 +42,7 @@ function encodeUtf8Base64(text) {
         : Buffer.from(binary, 'binary').toString('base64');
 }
 
-function base64UrlToBytes(value) {
+function base64UrlToBytes(value: any) {
     const base64 = String(value || '')
         .replace(/-/g, '+')
         .replace(/_/g, '/');
@@ -54,16 +54,16 @@ function base64UrlToBytes(value) {
     return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
-function encodePayload(payload) {
+function encodePayload(payload: any) {
     return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
 }
 
-function decodePayload(encoded) {
+function decodePayload(encoded: any) {
     const json = new TextDecoder().decode(base64UrlToBytes(encoded));
     return JSON.parse(json);
 }
 
-async function hmacSha256Base64Url(data, secret) {
+async function hmacSha256Base64Url(data: any, secret: any) {
     const cryptoImpl = getCrypto();
     const key = await cryptoImpl.subtle.importKey(
         'raw',
@@ -76,12 +76,12 @@ async function hmacSha256Base64Url(data, secret) {
     return bytesToBase64Url(new Uint8Array(signature));
 }
 
-async function sha256Hex(text) {
+async function sha256Hex(text: any) {
     const digest = await getCrypto().subtle.digest('SHA-256', new TextEncoder().encode(text));
     return bytesToHex(digest);
 }
 
-function timingSafeEqualString(a, b) {
+function timingSafeEqualString(a: any, b: any) {
     const left = String(a || '');
     const right = String(b || '');
     if (left.length !== right.length) return false;
@@ -93,10 +93,10 @@ function timingSafeEqualString(a, b) {
 }
 
 function getMemoryCache() {
-    if (!globalThis[MEMORY_CACHE_SYMBOL]) {
-        globalThis[MEMORY_CACHE_SYMBOL] = new Map();
+    if (!(globalThis as Record<string, any>)[MEMORY_CACHE_SYMBOL]) {
+        (globalThis as Record<string, any>)[MEMORY_CACHE_SYMBOL] = new Map();
     }
-    return globalThis[MEMORY_CACHE_SYMBOL];
+    return (globalThis as Record<string, any>)[MEMORY_CACHE_SYMBOL];
 }
 
 function resolveExternalNodesKv(env: Record<string, any> = {}) {
@@ -120,7 +120,7 @@ function resolveExternalNodesD1Adapter(env: Record<string, any> = {}) {
     }
 }
 
-function normalizeDurableStoredNodes(stored) {
+function normalizeDurableStoredNodes(stored: any) {
     if (stored === null || stored === undefined) return null;
     if (typeof stored === 'string') return stored;
     if (typeof stored === 'object') {
@@ -157,12 +157,12 @@ export function shouldUseExternalNodesCallback({
     return Number(inlineUrlLength) > maxInlineUrlLength || Number(nodeCount) > maxInlineNodeCount;
 }
 
-export function buildExternalNodesCacheKey(profileId, nodeHash) {
+export function buildExternalNodesCacheKey(profileId: any, nodeHash: any) {
     const safeProfileId = String(profileId || 'default').replace(/[^a-zA-Z0-9._:-]/g, '_');
     return `tmp_external_nodes:${safeProfileId}:${nodeHash}`;
 }
 
-export async function hashExternalNodes(nodesText) {
+export async function hashExternalNodes(nodesText: any) {
     return sha256Hex(String(nodesText || ''));
 }
 
@@ -257,7 +257,7 @@ export async function createExternalNodesToken({
     return `${encodedPayload}.${signature}`;
 }
 
-export async function verifyExternalNodesToken(token, secret) {
+export async function verifyExternalNodesToken(token: any, secret: any) {
     if (!secret) {
         throw new Error('external nodes callback secret is missing');
     }
@@ -290,8 +290,8 @@ export function resolveExternalNodesCallbackSecret(env: Record<string, any> = {}
 }
 
 export function buildExternalNodesCallbackUrl(
-    requestUrl,
-    token,
+    requestUrl: any,
+    token: any,
     { encoding }: Record<string, any> = {}
 ) {
     const callbackUrl = new URL('/api/external-nodes-callback', requestUrl);
@@ -325,7 +325,10 @@ export async function prepareExternalNodesCallback({
     };
 }
 
-export async function handleExternalNodesCallbackRequest(request, env: Record<string, any> = {}) {
+export async function handleExternalNodesCallbackRequest(
+    request: any,
+    env: Record<string, any> = {}
+) {
     const url = new URL(request.url);
     const token = url.searchParams.get('token');
     if (!token) {
@@ -358,7 +361,7 @@ export async function handleExternalNodesCallbackRequest(request, env: Record<st
         'X-MiSub-Mode': 'external-nodes-callback',
     };
     if (encoding === 'base64') {
-        headers['X-MiSub-Callback-Encoding'] = 'base64';
+        (headers as Record<string, any>)['X-MiSub-Callback-Encoding'] = 'base64';
     }
 
     return new Response(responseText, {

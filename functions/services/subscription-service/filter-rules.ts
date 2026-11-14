@@ -11,7 +11,7 @@ import { parseNodeInfo } from '../../modules/utils/geo-utils.ts';
  * @param {string} text - 可能包含Base64的文本
  * @returns {Promise<string>} - 解码后的文本
  */
-export async function decodeBase64Content(text) {
+export async function decodeBase64Content(text: any) {
     try {
         const cleanedText = text.replace(/\s/g, '');
         const { isValidBase64 } = await import('../../utils/format-utils.ts');
@@ -40,7 +40,7 @@ export async function decodeBase64Content(text) {
  * @param {string} customName - 用户自定义名称
  * @returns {string} - 应用名称后的URL
  */
-export function applyManualNodeName(nodeUrl, customName) {
+export function applyManualNodeName(nodeUrl: any, customName: any) {
     if (!customName) return nodeUrl;
 
     // vmess 协议：修改 base64 解码后 JSON 中的 ps 字段
@@ -102,38 +102,38 @@ export function applyManualNodeName(nodeUrl, customName) {
  * @param {Object} sub - 订阅对象
  * @returns {Array} - 过滤后的节点列表
  */
-export function applyFilterRules(validNodes, sub) {
+export function applyFilterRules(validNodes: any, sub: any) {
     const ruleText = sub.exclude;
     if (!ruleText || ruleText.trim() === '') return validNodes;
 
     const lines = ruleText
         .split('\n')
-        .map((r) => r.trim())
+        .map((r: any) => r.trim())
         .filter(Boolean);
 
     if (lines.length === 0) return validNodes;
 
     // 规则分割：--- 为分隔，keep: 为白名单
-    const dividerIndex = lines.findIndex((line) => line === '---');
+    const dividerIndex = lines.findIndex((line: any) => line === '---');
     const hasDivider = dividerIndex !== -1;
 
     let excludeLines: any[] = [];
     let keepLines: any[] = [];
 
     if (hasDivider) {
-        lines.slice(0, dividerIndex).forEach((l) => {
+        lines.slice(0, dividerIndex).forEach((l: any) => {
             if (l.toLowerCase().startsWith('keep:')) {
                 keepLines.push(l);
             } else {
                 excludeLines.push(l);
             }
         });
-        lines.slice(dividerIndex + 1).forEach((l) => {
+        lines.slice(dividerIndex + 1).forEach((l: any) => {
             keepLines.push(l);
         });
     } else {
-        excludeLines = lines.filter((line) => !line.toLowerCase().startsWith('keep:'));
-        keepLines = lines.filter((line) => line.toLowerCase().startsWith('keep:'));
+        excludeLines = lines.filter((line: any) => !line.toLowerCase().startsWith('keep:'));
+        keepLines = lines.filter((line: any) => line.toLowerCase().startsWith('keep:'));
     }
 
     const excludeRules = buildRuleSet(excludeLines, false);
@@ -159,7 +159,7 @@ export function applyFilterRules(validNodes, sub) {
  * @returns {Promise<string[]>}
  */
 
-function buildRuleSet(lines, stripKeepPrefix = false) {
+function buildRuleSet(lines: any, stripKeepPrefix = false) {
     const protocols = new Set();
     const patterns: any[] = [];
 
@@ -176,9 +176,9 @@ function buildRuleSet(lines, stripKeepPrefix = false) {
             const parts = line
                 .substring('proto:'.length)
                 .split(',')
-                .map((p) => p.trim().toLowerCase())
+                .map((p: any) => p.trim().toLowerCase())
                 .filter(Boolean);
-            parts.forEach((p) => protocols.add(p));
+            parts.forEach((p: any) => protocols.add(p));
             continue;
         }
 
@@ -193,7 +193,7 @@ function buildRuleSet(lines, stripKeepPrefix = false) {
     };
 }
 
-function buildSafeRegex(patterns) {
+function buildSafeRegex(patterns: any) {
     if (!patterns.length) return null;
     try {
         return new RegExp(patterns.join('|'), 'i');
@@ -203,11 +203,11 @@ function buildSafeRegex(patterns) {
     }
 }
 
-function filterNodes(nodes, rules, mode = 'exclude') {
+function filterNodes(nodes: any, rules: any, mode = 'exclude') {
     if (!rules || !rules.hasRules) return nodes;
     const isInclude = mode === 'include';
 
-    return nodes.filter((nodeLink) => {
+    return nodes.filter((nodeLink: any) => {
         // [升级] 传统过滤引擎现在也支持元数据/ISO感知
         const nodeInfo = parseNodeInfo(nodeLink);
         const protocol = nodeInfo.protocol || '';
@@ -242,7 +242,7 @@ function filterNodes(nodes, rules, mode = 'exclude') {
  * @param {Object} config - 旧版配置对象
  * @returns {Array} - 转换后的操作符列表
  */
-export function adaptLegacyTransform(config) {
+export function adaptLegacyTransform(config: any) {
     if (!config || !config.enabled) return [];
 
     const ops: any[] = [];
@@ -336,7 +336,7 @@ export function adaptLegacyTransform(config) {
 /**
  * ArrayBuffer -> Base64 ??
  */
-export function encodeArrayBufferToBase64(buffer) {
+export function encodeArrayBufferToBase64(buffer: any) {
     const bytes = new Uint8Array(buffer);
     const chunkSize = 0x8000;
     let binary = '';

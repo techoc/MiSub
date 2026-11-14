@@ -80,7 +80,7 @@ export const AI_DOMAIN_RULE_LINES = AI_SERVICE_RULES.flatMap((service) =>
 const AI_AUTO_GROUP = '🤖 AI 自动';
 const AI_FALLBACK_GROUP = '🤖 AI 故障转移';
 
-function dnsProxyGroup(proxyNames) {
+function dnsProxyGroup(proxyNames: any) {
     return {
         name: DNS_PROXY_GROUP,
         type: 'url-test',
@@ -90,7 +90,7 @@ function dnsProxyGroup(proxyNames) {
     };
 }
 
-function aiPolicyGroups(proxyNames, regionNames, { relay = false } = {}) {
+function aiPolicyGroups(proxyNames: any, regionNames: any, { relay = false } = {}) {
     const nodeCandidates = proxyNames.length > 0 ? proxyNames : ['REJECT'];
     const candidates = [AI_AUTO_GROUP, AI_FALLBACK_GROUP, ...regionNames, MANUAL_SELECT_GROUP];
     if (relay) candidates.push('🔗 链式代理', '🚀 常用节点');
@@ -124,7 +124,7 @@ function aiPolicyGroups(proxyNames, regionNames, { relay = false } = {}) {
  * @param {Object[]} proxies
  * @returns {Array} 地区分组数据
  */
-function generateRegionData(proxies, options: Record<string, any> = {}) {
+function generateRegionData(proxies: any, options: Record<string, any> = {}) {
     // [智能升级] 直接传递代理对象数组，region-groups 现在能识别 metadata
     // 占位信息节点（trojan://127.0.0.1）不参与地区分组，避免地区组仅由占位节点构成
     const realProxies = (Array.isArray(proxies) ? proxies : []).filter(
@@ -139,10 +139,10 @@ function generateRegionData(proxies, options: Record<string, any> = {}) {
  * @param {Array} proxies - 可用代理对象数组
  * @returns {Array} 清理后的策略组数组
  */
-export function pruneProxyGroups(proxyGroups, proxies) {
+export function pruneProxyGroups(proxyGroups: any, proxies: any) {
     const validTargetNames = new Set([
-        ...proxies.map((p) => p.tag || p.name),
-        ...proxyGroups.map((g) => g.name),
+        ...proxies.map((p: any) => p.tag || p.name),
+        ...proxyGroups.map((g: any) => g.name),
         DEFAULT_SELECT_GROUP,
         DEFAULT_RELAY_GROUP,
         AUTO_SELECT_GROUP,
@@ -152,10 +152,10 @@ export function pruneProxyGroups(proxyGroups, proxies) {
         ...['DIRECT', 'REJECT', 'REJECT-DROP', 'ANY'], // 各平台通用保留字
     ]);
 
-    return proxyGroups.map((group) => {
+    return proxyGroups.map((group: any) => {
         if (!Array.isArray(group.proxies)) return group;
 
-        const newProxies = group.proxies.filter((member) => {
+        const newProxies = group.proxies.filter((member: any) => {
             // 核心修复 1：禁止策略组引用自身
             if (member === group.name) return false;
 
@@ -191,7 +191,7 @@ export function pruneProxyGroups(proxyGroups, proxies) {
 /**
  * 内部辅助：生成地区相关的策略组定义
  */
-function _generateRegionGroups(proxies, options: Record<string, any> = {}) {
+function _generateRegionGroups(proxies: any, options: Record<string, any> = {}) {
     const regions = generateRegionData(proxies, options);
     const regionSelectGroups: any[] = []; // 地区选择组（顶级按钮）
     const regionSupportGroups: any[] = []; // 地区辅助组（隐藏/末尾）
@@ -227,8 +227,8 @@ function _generateRegionGroups(proxies, options: Record<string, any> = {}) {
  */
 export const POLICY_GROUPS = {
     // 基础配置：精简版
-    BASE: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+    BASE: (proxies: any, options = {}) => {
+        const proxyNames = proxies.map((p: any) => p.tag || p.name);
         return [
             dnsProxyGroup(proxyNames),
             {
@@ -243,8 +243,8 @@ export const POLICY_GROUPS = {
         ];
     },
     // 标准配置：全能型
-    STD: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+    STD: (proxies: any, options = {}) => {
+        const proxyNames = proxies.map((p: any) => p.tag || p.name);
         const { regionSelectGroups, regionSupportGroups, regionNames } = _generateRegionGroups(
             proxies,
             options
@@ -307,8 +307,8 @@ export const POLICY_GROUPS = {
         ];
     },
     // 完整配置：细化分类
-    FULL: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+    FULL: (proxies: any, options = {}) => {
+        const proxyNames = proxies.map((p: any) => p.tag || p.name);
         const { regionSelectGroups, regionSupportGroups, regionNames } = _generateRegionGroups(
             proxies,
             options
@@ -382,8 +382,8 @@ export const POLICY_GROUPS = {
         ];
     },
     // 链式代理：中转优化
-    RELAY: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+    RELAY: (proxies: any, options = {}) => {
+        const proxyNames = proxies.map((p: any) => p.tag || p.name);
         const { regionSelectGroups, regionSupportGroups, regionNames } = _generateRegionGroups(
             proxies,
             options
@@ -502,7 +502,7 @@ const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/$
  * @param {boolean} [options.mirror=true] 是否启用 CDN 镜像重写
  * @returns {string} 重写后的地址（不满足条件时原样返回）
  */
-export function pinRemoteRuleUrl(sourceUrl, options: Record<string, any> = {}) {
+export function pinRemoteRuleUrl(sourceUrl: any, options: Record<string, any> = {}) {
     const { mirror = true } = options;
     const raw = String(sourceUrl || '').trim();
     if (!/^https?:\/\//i.test(raw)) return sourceUrl;
@@ -520,7 +520,7 @@ export function pinRemoteRuleUrl(sourceUrl, options: Record<string, any> = {}) {
             'blackmatrix7/ios_rule_script': PINNED_RULE_REVISIONS.BLACKMATRIX,
             'aethersailor/custom_openclash_rules': PINNED_RULE_REVISIONS.AETHERSAILOR,
         };
-        const revision = revisions[key];
+        const revision = (revisions as Record<string, any>)[key];
         if (revision) {
             parts[2] = revision;
         }
@@ -649,7 +649,7 @@ export const RULE_SETS = {
  */
 
 // 转换单行规则到目标格式
-export function translateRuleLine(line, format) {
+export function translateRuleLine(line: any, format: any) {
     const parts = line.split(',');
     const type = parts[0];
     const value = parts[1];
@@ -657,7 +657,7 @@ export function translateRuleLine(line, format) {
     const extra = parts[3];
 
     if (type === 'RULE-SET') {
-        const source = REMOTE_SOURCES[value];
+        const source = (REMOTE_SOURCES as Record<string, any>)[value];
         if (!source) return null;
 
         switch (format) {
@@ -708,9 +708,9 @@ export function translateRuleLine(line, format) {
 }
 
 // 获取全量分流规则文本/对象
-export function getBuiltinRules(level, format) {
-    const rawRules = RULE_SETS[level.toUpperCase()] || RULE_SETS.STD;
-    return rawRules.map((l) => translateRuleLine(l, format)).filter(Boolean);
+export function getBuiltinRules(level: any, format: any) {
+    const rawRules = (RULE_SETS as Record<string, any>)[level.toUpperCase()] || RULE_SETS.STD;
+    return rawRules.map((l: any) => translateRuleLine(l, format)).filter(Boolean);
 }
 
 /**
@@ -722,14 +722,14 @@ export function getBuiltinRules(level, format) {
  *   国内 DNS 模式下传入 DIRECT（DNS 出口组不存在时避免悬空引用）
  */
 export function getRemoteProviderDefinitions(
-    format,
-    ruleLines,
+    format: any,
+    ruleLines: any,
     { downloadDetour = DNS_PROXY_GROUP } = {}
 ) {
     const providers = {};
     const usedTags = new Set();
 
-    ruleLines.forEach((line) => {
+    ruleLines.forEach((line: any) => {
         if (format === 'clash' && line.type === 'rule-provider') {
             usedTags.add(line.provider);
         } else if ((format === 'singbox' || format === 'sing-box') && line.type === 'rule_set') {
@@ -738,11 +738,11 @@ export function getRemoteProviderDefinitions(
     });
 
     usedTags.forEach((tag) => {
-        const source = REMOTE_SOURCES[tag as string];
+        const source = (REMOTE_SOURCES as Record<string, any>)[tag as string];
         if (!source) return;
 
         if (format === 'clash') {
-            providers[tag as string] = {
+            (providers as Record<string, any>)[tag as string] = {
                 type: 'http',
                 behavior: 'classical',
                 url: pinRemoteRuleUrl(source.clash),
@@ -750,7 +750,7 @@ export function getRemoteProviderDefinitions(
                 interval: 86400,
             };
         } else if (format === 'singbox' || format === 'sing-box') {
-            providers[tag as string] = {
+            (providers as Record<string, any>)[tag as string] = {
                 tag: tag,
                 type: 'remote',
                 format: String(source.singbox || '')
@@ -769,10 +769,10 @@ export function getRemoteProviderDefinitions(
 }
 
 export function getSingboxDnsRuleSet(downloadDetour = DNS_PROXY_GROUP) {
-    return getRemoteProviderDefinitions(
-        'singbox',
-        [{ type: 'rule_set', tag: SINGBOX_CN_RULE_SET }],
-        { downloadDetour }
+    return (
+        getRemoteProviderDefinitions('singbox', [{ type: 'rule_set', tag: SINGBOX_CN_RULE_SET }], {
+            downloadDetour,
+        }) as Record<string, any>
     )[SINGBOX_CN_RULE_SET];
 }
 
@@ -782,9 +782,11 @@ export function getSingboxDnsRuleSet(downloadDetour = DNS_PROXY_GROUP) {
  * 国内模式不产生该引用，调用方不应注入。
  */
 export function getSingboxForeignRuleSet(downloadDetour = DNS_PROXY_GROUP) {
-    return getRemoteProviderDefinitions(
-        'singbox',
-        [{ type: 'rule_set', tag: SINGBOX_FOREIGN_RULE_SET }],
-        { downloadDetour }
+    return (
+        getRemoteProviderDefinitions(
+            'singbox',
+            [{ type: 'rule_set', tag: SINGBOX_FOREIGN_RULE_SET }],
+            { downloadDetour }
+        ) as Record<string, any>
     )[SINGBOX_FOREIGN_RULE_SET];
 }

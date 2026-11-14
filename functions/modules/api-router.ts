@@ -78,7 +78,7 @@ import type { KvRecord } from '../../types/models.ts';
 // 常量定义
 const OLD_KV_KEY = 'misub_data_v1';
 const KV_KEY_PROFILES = 'misub_profiles_v1'; // Ensure this is defined if used
-function isAuthDiagnosticsEnabled(env) {
+function isAuthDiagnosticsEnabled(env: any) {
     return String(env?.ENABLE_AUTH_DIAGNOSTICS || '').toLowerCase() === 'true';
 }
 
@@ -200,7 +200,7 @@ export async function handleApiRequest(
             if (!kv) {
                 return createJsonResponse({ success: false, message: 'KV 未绑定' }, 400);
             }
-            const oldData = await kv.get(OLD_KV_KEY).then((r) => (r ? JSON.parse(r) : null));
+            const oldData = await kv.get(OLD_KV_KEY).then((r: any) => (r ? JSON.parse(r) : null));
             const newDataRaw = await kv.get(KV_KEY_SUBS);
             const newDataExists = newDataRaw !== null;
 
@@ -567,7 +567,7 @@ export async function handleApiRequest(
     }
 }
 
-export async function handleSubconverterTestRequest(request, env) {
+export async function handleSubconverterTestRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -607,22 +607,22 @@ export async function handleSubconverterTestRequest(request, env) {
 
     try {
         // 使用公开测试节点内容直接传给后端，避免探测时依赖用户订阅链接或 MiSub 回调 URL。
-        endpoint.searchParams.set('target', safeTarget);
-        endpoint.searchParams.set(
+        endpoint!.searchParams.set('target', safeTarget);
+        endpoint!.searchParams.set(
             'url',
             'trojan://password@example.com:443?allowInsecure=1&sni=example.com#MiSub-Test-Node'
         );
-        endpoint.searchParams.set('insert', 'false');
-        endpoint.searchParams.set('emoji', 'false');
-        endpoint.searchParams.set('list', 'false');
-        endpoint.searchParams.set('udp', 'true');
-        endpoint.searchParams.set('tfo', 'false');
-        endpoint.searchParams.set('scv', 'true');
-        endpoint.searchParams.set('sort', 'false');
+        endpoint!.searchParams.set('insert', 'false');
+        endpoint!.searchParams.set('emoji', 'false');
+        endpoint!.searchParams.set('list', 'false');
+        endpoint!.searchParams.set('udp', 'true');
+        endpoint!.searchParams.set('tfo', 'false');
+        endpoint!.searchParams.set('scv', 'true');
+        endpoint!.searchParams.set('sort', 'false');
 
         const startedAt = Date.now();
         const response = await fetch(
-            new Request(endpoint.toString(), {
+            new Request(endpoint!.toString(), {
                 method: 'GET',
                 headers: {
                     'User-Agent': 'MiSub/Backend-Test',
@@ -646,7 +646,7 @@ export async function handleSubconverterTestRequest(request, env) {
                 available: hasUsableOutput,
                 status: response.status,
                 statusText: response.statusText,
-                endpoint: `${endpoint.origin}${endpoint.pathname}`,
+                endpoint: `${endpoint!.origin}${endpoint!.pathname}`,
                 elapsedMs,
                 sample,
                 message: hasUsableOutput
@@ -684,7 +684,7 @@ export async function handleSubconverterTestRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleExternalFetchRequest(request, env) {
+export async function handleExternalFetchRequest(request: any, env: any) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -724,7 +724,7 @@ export async function handleExternalFetchRequest(request, env) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-        const response = await safeFetchPublicUrl(urlValidation.url.toString(), {
+        const response = await safeFetchPublicUrl(urlValidation.url!.toString(), {
             method: 'GET',
             headers: {
                 'User-Agent': 'v2rayN/7.23',
@@ -822,7 +822,7 @@ export async function handleExternalFetchRequest(request, env) {
 /**
  * ArrayBuffer -> Base64 ??
  */
-function encodeArrayBufferToBase64(buffer) {
+function encodeArrayBufferToBase64(buffer: any) {
     const bytes = new Uint8Array(buffer);
     const chunkSize = 0x8000;
     let binary = '';
@@ -840,7 +840,7 @@ function encodeArrayBufferToBase64(buffer) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-async function handleCronStatusRequest(env) {
+async function handleCronStatusRequest(env: any) {
     try {
         // 检查是否启用Cron功能
         const enableCron = env.ENABLE_CRON !== 'false';
@@ -894,7 +894,7 @@ async function handleCronStatusRequest(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-async function handleCronTriggerRequest(env) {
+async function handleCronTriggerRequest(env: any) {
     try {
         // 检查是否启用Cron功能
         const enableCron = env.ENABLE_CRON !== 'false';

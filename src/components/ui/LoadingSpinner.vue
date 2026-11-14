@@ -52,7 +52,13 @@
     >
         <div class="flex flex-col items-center gap-4">
             <!-- Spinner 加载器 -->
-            <div v-if="type === 'spinner'" :class="[sizeClasses[size], colorClasses[color]]">
+            <div
+                v-if="type === 'spinner'"
+                :class="[
+                    (sizeClasses as Record<string, any>)[size],
+                    (colorClasses as Record<string, any>)[color],
+                ]"
+            >
                 <svg class="animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle
                         class="opacity-25"
@@ -84,26 +90,29 @@
                                 ? 'w-4 h-4'
                                 : 'w-5 h-5',
                         'rounded-full animate-bounce',
-                        colorClasses[color].replace('text-', 'bg-'),
+                        (colorClasses as Record<string, any>)[color].replace('text-', 'bg-'),
                     ]"
                     :style="{ animationDelay: `${i * 0.1}s` }"
                 ></div>
             </div>
 
             <!-- 脉冲加载器 -->
-            <div v-else-if="type === 'pulse'" :class="[sizeClasses[size], 'relative']">
+            <div
+                v-else-if="type === 'pulse'"
+                :class="[(sizeClasses as Record<string, any>)[size], 'relative']"
+            >
                 <div
                     :class="[
                         'absolute inset-0 rounded-full animate-ping',
-                        colorClasses[color].replace('text-', 'bg-'),
+                        (colorClasses as Record<string, any>)[color].replace('text-', 'bg-'),
                         'opacity-20',
                     ]"
                 ></div>
                 <div
                     :class="[
                         'relative rounded-full animate-pulse',
-                        colorClasses[color].replace('text-', 'bg-'),
-                        sizeClasses[size],
+                        (colorClasses as Record<string, any>)[color].replace('text-', 'bg-'),
+                        (sizeClasses as Record<string, any>)[size],
                     ]"
                 ></div>
             </div>
@@ -122,7 +131,7 @@
                                 ? 'w-3'
                                 : 'w-4',
                         'animate-wave rounded-full',
-                        colorClasses[color].replace('text-', 'bg-'),
+                        (colorClasses as Record<string, any>)[color].replace('text-', 'bg-'),
                     ]"
                     :style="{
                         animationDelay: `${i * 0.1}s`,

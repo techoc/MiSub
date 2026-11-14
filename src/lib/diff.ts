@@ -2,7 +2,7 @@
  * Deep compare two objects for equality
  * Uses JSON.stringify for simplicity and effectiveness with plain data objects
  */
-function isEqual(a, b) {
+function isEqual(a: any, b: any) {
     return JSON.stringify(a) === JSON.stringify(b);
 }
 

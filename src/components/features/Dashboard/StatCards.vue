@@ -64,7 +64,7 @@
     const warningCardClass =
         'border-amber-200/80 bg-amber-50/70 dark:border-amber-400/20 dark:bg-amber-500/10';
 
-    const navigate = (path, query = {}) => {
+    const navigate = (path: any, query = {}) => {
         emit('navigate', path, query);
     };
 </script>

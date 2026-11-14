@@ -115,7 +115,7 @@
         return [];
     });
 
-    const handleRemoveKeep = (index) => {
+    const handleRemoveKeep = (index: any) => {
         if (props.removeKeepRule) {
             props.removeKeepRule(index);
         } else {
@@ -123,7 +123,7 @@
         }
     };
 
-    const handleRemoveExclude = (index) => {
+    const handleRemoveExclude = (index: any) => {
         if (props.removeExcludeRule) {
             props.removeExcludeRule(index);
         } else {

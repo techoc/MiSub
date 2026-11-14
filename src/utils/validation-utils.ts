@@ -11,7 +11,7 @@ import { t } from '@/i18n/index.ts';
  * @param {string} url - 要验证的URL
  * @returns {boolean} 是否为有效的URL
  */
-export function isValidUrl(url) {
+export function isValidUrl(url: any) {
     if (!url || typeof url !== 'string') return false;
 
     try {
@@ -27,7 +27,7 @@ export function isValidUrl(url) {
  * @param {string} nodeUrl - 节点URL
  * @returns {boolean} 是否为有效的节点URL
  */
-export function isValidNodeUrl(nodeUrl) {
+export function isValidNodeUrl(nodeUrl: any) {
     if (!nodeUrl || typeof nodeUrl !== 'string') return false;
 
     // 检查是否为支持的协议
@@ -39,7 +39,7 @@ export function isValidNodeUrl(nodeUrl) {
  * @param {string} email - 邮箱地址
  * @returns {boolean} 是否为有效的邮箱格式
  */
-export function isValidEmail(email) {
+export function isValidEmail(email: any) {
     if (!email || typeof email !== 'string') return false;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,7 +51,7 @@ export function isValidEmail(email) {
  * @param {string} password - 密码
  * @returns {Object} 密码强度信息
  */
-export function validatePasswordStrength(password) {
+export function validatePasswordStrength(password: any) {
     if (!password) {
         return {
             score: 0,
@@ -116,7 +116,7 @@ export function validatePasswordStrength(password) {
  * @param {Object} rules - 验证规则
  * @returns {Object} 验证结果
  */
-export function validateForm(formData, rules) {
+export function validateForm(formData: any, rules: any) {
     const errors = {};
     const isValid = true;
 
@@ -173,7 +173,7 @@ export function validateForm(formData, rules) {
         }
 
         if (fieldErrors.length > 0) {
-            errors[field] = fieldErrors;
+            (errors as Record<string, any>)[field] = fieldErrors;
         }
     }
 
@@ -188,7 +188,7 @@ export function validateForm(formData, rules) {
  * @param {Object} subscription - 订阅配置
  * @returns {Object} 验证结果
  */
-export function validateSubscription(subscription) {
+export function validateSubscription(subscription: any) {
     const rules = {
         name: {
             required: t('validation.subscriptionNameRequired'),
@@ -209,7 +209,7 @@ export function validateSubscription(subscription) {
  * @param {Object} profile - 配置文件
  * @returns {Object} 验证结果
  */
-export function validateProfile(profile) {
+export function validateProfile(profile: any) {
     const rules = {
         name: {
             required: t('validation.profileNameRequired'),
@@ -220,7 +220,7 @@ export function validateProfile(profile) {
             maxLength: 50,
         },
         transformConfig: {
-            validator: (value) => {
+            validator: (value: any) => {
                 if (!value) return null;
 
                 // 允许 builtin: 和 custom: 前缀（内置/自定义模板）

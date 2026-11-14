@@ -8,7 +8,7 @@ const IDENTIFIER_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 const STRING_RE = /^(?:'([^'\\]*(?:\\.[^'\\]*)*)'|"([^"\\]*(?:\\.[^"\\]*)*)")$/;
 const NUMBER_RE = /^-?\d+(?:\.\d+)?$/;
 
-function unquote(value) {
+function unquote(value: any) {
     const text = String(value || '').trim();
     const match = text.match(STRING_RE);
     if (!match) return text;
@@ -27,7 +27,7 @@ function unquote(value) {
     });
 }
 
-function splitArgs(input) {
+function splitArgs(input: any) {
     const args: string[] = [];
     let current = '';
     let quote = '';
@@ -67,18 +67,18 @@ function splitArgs(input) {
     return args;
 }
 
-function getField(ctx, name) {
+function getField(ctx: any, name: any) {
     if (!IDENTIFIER_RE.test(String(name || ''))) return '';
     if (Object.prototype.hasOwnProperty.call(ctx, name)) return ctx[name];
     return '';
 }
 
-function safeTitle(value) {
+function safeTitle(value: any) {
     const text = String(value || '');
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 }
 
-function safeMatch(value, pattern, flags = 'i') {
+function safeMatch(value: any, pattern: any, flags = 'i') {
     try {
         return new RegExp(String(pattern || ''), String(flags || 'i')).test(String(value || ''));
     } catch {
@@ -86,7 +86,7 @@ function safeMatch(value, pattern, flags = 'i') {
     }
 }
 
-function safeReplace(value, pattern, replacement = '', flags = 'g') {
+function safeReplace(value: any, pattern: any, replacement = '', flags = 'g') {
     try {
         return String(value || '').replace(
             new RegExp(String(pattern || ''), String(flags || 'g')),
@@ -97,18 +97,18 @@ function safeReplace(value, pattern, replacement = '', flags = 'g') {
     }
 }
 
-function fallback(...values) {
+function fallback(...values: any[]) {
     for (const value of values) {
         if (value !== null && value !== undefined && String(value).trim() !== '') return value;
     }
     return '';
 }
 
-function pick(condition, truthyValue, falsyValue = '') {
+function pick(condition: any, truthyValue: any, falsyValue = '') {
     return condition ? truthyValue : falsyValue;
 }
 
-function evalValue(expr, ctx) {
+function evalValue(expr: any, ctx: any): any {
     const text = String(expr || '').trim();
     if (!text) return '';
     if (STRING_RE.test(text)) return unquote(text);
@@ -120,7 +120,7 @@ function evalValue(expr, ctx) {
     const call = text.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\((.*)\)$/s);
     if (call) {
         const [, fn, rawArgs] = call;
-        const args = splitArgs(rawArgs).map((arg) => evalValue(arg, ctx));
+        const args: any = splitArgs(rawArgs).map((arg) => evalValue(arg, ctx));
         switch (fn) {
             case 'upper':
                 return String(args[0] || '').toUpperCase();
@@ -150,7 +150,7 @@ function evalValue(expr, ctx) {
     return getField(ctx, text);
 }
 
-export function evaluateDslExpression(expression, ctx: Record<string, any> = {}) {
+export function evaluateDslExpression(expression: any, ctx: Record<string, any> = {}): any {
     const expr = String(expression || '').trim();
     if (!expr) return true;
 
@@ -184,7 +184,7 @@ export function evaluateDslExpression(expression, ctx: Record<string, any> = {})
     return Boolean(evalValue(expr, ctx));
 }
 
-export function renderDslTemplate(template, ctx: Record<string, any> = {}) {
+export function renderDslTemplate(template: any, ctx: Record<string, any> = {}) {
     return String(template || '')
         .replace(/\{([^{}]+)\}/g, (_, inner) => {
             const value = evalValue(inner, ctx);
@@ -193,7 +193,7 @@ export function renderDslTemplate(template, ctx: Record<string, any> = {}) {
         .trim();
 }
 
-export function matchesDslCondition(record, condition: Record<string, any> = {}) {
+export function matchesDslCondition(record: any, condition: Record<string, any> = {}) {
     if (typeof condition === 'string') return evaluateDslExpression(condition, record);
     if (!condition || typeof condition !== 'object') return true;
     const actual = getField(record, condition.field || 'name');

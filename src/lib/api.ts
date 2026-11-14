@@ -11,7 +11,7 @@ import { t } from '../i18n/index.ts';
  * @param {string} context - 错误上下文
  * @returns {Object} 标准错误响应
  */
-function handleApiError(error, context = '') {
+function handleApiError(error: any, context = '') {
     console.error(`[API Error - ${context}]`, error);
 
     let errorType = 'unknown';
@@ -61,7 +61,7 @@ function extractHttpStatus(message = '') {
     return match ? Number(match[1]) : null;
 }
 
-function formatHttpErrorMessage(status, message = '') {
+function formatHttpErrorMessage(status: any, message = '') {
     const normalizedMessage = String(message || '').trim();
     if (!status) return normalizedMessage;
     if (new RegExp(`^HTTP\\s+${status}\\b`, 'i').test(normalizedMessage)) {
@@ -70,7 +70,7 @@ function formatHttpErrorMessage(status, message = '') {
     return `HTTP ${status}: ${normalizedMessage || `HTTP ${status}`}`;
 }
 
-function normalizeApiFailure(data, fallbackMessage = t('settings.operationFailed')) {
+function normalizeApiFailure(data: any, fallbackMessage = t('settings.operationFailed')) {
     const error = data?.error || data?.message || fallbackMessage;
     const status = data?.status || extractHttpStatus(error);
     return {
@@ -102,7 +102,7 @@ export async function fetchInitialData() {
     }
 }
 
-export async function login(password) {
+export async function login(password: any) {
     try {
         const data = await api.post('/api/login', { password });
         return { success: true, data };
@@ -119,7 +119,7 @@ export async function login(password) {
 }
 
 // [核心修改] saveMisubs 现在接收并发送 profiles
-export async function saveMisubs(misubs, profiles) {
+export async function saveMisubs(misubs: any, profiles: any) {
     try {
         // 数据预验证
         if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
@@ -136,7 +136,12 @@ export async function saveMisubs(misubs, profiles) {
     }
 }
 
-export async function fetchNodeCount(subUrl, fetchProxy = '', plusAsSpace = false, userAgent = '') {
+export async function fetchNodeCount(
+    subUrl: any,
+    fetchProxy = '',
+    plusAsSpace = false,
+    userAgent = ''
+) {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -197,7 +202,7 @@ export async function fetchPublicConfig() {
     }
 }
 
-export async function saveSettings(settings) {
+export async function saveSettings(settings: any) {
     try {
         return await api.post('/api/settings', settings);
     } catch (error) {
@@ -222,7 +227,7 @@ export async function resetSettings() {
  * @param {string[]} subscriptionIds - 要更新的订阅ID数组
  * @returns {Promise<Object>} - 更新结果
  */
-export async function batchUpdateNodes(subscriptionIds) {
+export async function batchUpdateNodes(subscriptionIds: any) {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -290,7 +295,7 @@ export async function migrateLegacyD1() {
     }
 }
 
-export async function fetchGithubLatestRelease(repo) {
+export async function fetchGithubLatestRelease(repo: any) {
     try {
         return await api.get(`/api/github/release?repo=${encodeURIComponent(repo)}`);
     } catch (error) {
@@ -298,7 +303,7 @@ export async function fetchGithubLatestRelease(repo) {
     }
 }
 
-export async function testSubconverterBackend(backend, target = 'clash') {
+export async function testSubconverterBackend(backend: any, target = 'clash') {
     let timeoutId;
     try {
         const controller = new AbortController();
@@ -322,7 +327,7 @@ export async function testSubconverterBackend(backend, target = 'clash') {
  * @param {string} userAgent - User-Agent
  * @returns {Promise<Object>} - 测试结果
  */
-export async function testSubscription(url, userAgent) {
+export async function testSubscription(url: any, userAgent: any) {
     try {
         return await api.post('/api/debug_subscription', { url, userAgent });
     } catch (error) {

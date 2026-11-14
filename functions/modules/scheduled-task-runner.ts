@@ -12,12 +12,12 @@ const LOCK_KEY = 'misub_webdav_backup_lock';
 const CHECK_THROTTLE_MS = 5 * 60 * 1000;
 const LOCK_TTL_MS = 10 * 60 * 1000;
 
-function parseTime(value) {
+function parseTime(value: any) {
     const ts = Date.parse(value || '');
     return Number.isFinite(ts) ? ts : 0;
 }
 
-function intervalMs(interval) {
+function intervalMs(interval: any) {
     switch (interval) {
         case 'hourly':
             return 60 * 60 * 1000;
@@ -31,7 +31,7 @@ function intervalMs(interval) {
     }
 }
 
-async function getStorage(env) {
+async function getStorage(env: any) {
     const storageType = await StorageFactory.getStorageType(env);
     return StorageFactory.createAdapter(env, storageType);
 }

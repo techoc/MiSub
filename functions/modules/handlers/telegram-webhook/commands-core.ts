@@ -14,7 +14,7 @@ import type { KvRecord } from '../../../../types/models.ts';
 /**
  * 处理 /start 命令
  */
-export async function handleStartCommand(chatId, env) {
+export async function handleStartCommand(chatId: any, env: any) {
     const message =
         '👋 <b>欢迎使用 MiSub Telegram Bot！</b>\n\n' +
         '通过这个 Bot，你可以：\n' +
@@ -31,7 +31,7 @@ export async function handleStartCommand(chatId, env) {
 /**
  * 处理 /help 命令
  */
-export async function handleHelpCommand(chatId, env) {
+export async function handleHelpCommand(chatId: any, env: any) {
     const message =
         '📖 <b>MiSub Bot 命令帮助</b>\n\n' +
         '<b>📤 添加节点</b>\n' +
@@ -63,8 +63,8 @@ export async function handleHelpCommand(chatId, env) {
  * 处理 /menu 命令 - 快捷菜单
  */
 export async function handleMenuCommand(
-    chatId,
-    env,
+    chatId: any,
+    env: any,
     messageId: KvRecord | null = null,
     requestCache: KvRecord | null = null
 ) {
@@ -108,9 +108,9 @@ export async function handleMenuCommand(
  * 处理 /list 命令 - 节点列表（带分页和操作按钮）
  */
 export async function handleListCommand(
-    chatId,
-    userId,
-    env,
+    chatId: any,
+    userId: any,
+    env: any,
     page = 0,
     type = 'all',
     messageId: KvRecord | null = null,
@@ -146,7 +146,9 @@ export async function handleListCommand(
 
         // 获取当前绑定的订阅组
         const boundProfileId = getUserBoundProfileId(config, userId);
-        const boundProfile = boundProfileId ? profiles.find((p) => p.id === boundProfileId) : null;
+        const boundProfile = boundProfileId
+            ? profiles.find((p: any) => p.id === boundProfileId)
+            : null;
         const boundNodeIds = new Set(boundProfile?.manualNodes || []);
 
         if (userNodes.length === 0) {
@@ -270,8 +272,8 @@ export async function handleListCommand(
 }
 
 export async function handleListTypeSelector(
-    chatId,
-    env,
+    chatId: any,
+    env: any,
     messageId: KvRecord | null = null,
     requestCache: KvRecord | null = null
 ) {
@@ -304,9 +306,9 @@ export async function handleListTypeSelector(
  * 处理 /stats 命令
  */
 export async function handleStatsCommand(
-    chatId,
-    userId,
-    env,
+    chatId: any,
+    userId: any,
+    env: any,
     requestCache: KvRecord | null = null
 ) {
     try {
@@ -325,7 +327,8 @@ export async function handleStatsCommand(
             } else {
                 nodeCount++;
                 const protocol = node.url.split('://')[0].toUpperCase();
-                protocolCounts[protocol] = (protocolCounts[protocol] || 0) + 1;
+                (protocolCounts as Record<string, any>)[protocol] =
+                    ((protocolCounts as Record<string, any>)[protocol] || 0) + 1;
             }
 
             if (node.enabled) enabledCount++;

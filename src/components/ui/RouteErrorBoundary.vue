@@ -30,7 +30,7 @@
         window.location.reload();
     };
 
-    const errorCaptured = (error) => {
+    const errorCaptured = (error: any) => {
         hasError.value = true;
         errorMessage.value = error?.message || t('common.routeRenderFailed');
         return false;

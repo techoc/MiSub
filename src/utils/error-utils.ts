@@ -12,7 +12,7 @@ const isDev = import.meta.env.DEV;
  * @param {string} context - 错误上下文
  * @returns {Object} 标准化的错误对象
  */
-export function createApiError(error, context = 'Unknown') {
+export function createApiError(error: any, context = 'Unknown') {
     console.error(`[${context}] Error:`, error);
 
     return {
@@ -30,7 +30,7 @@ export function createApiError(error, context = 'Unknown') {
  * @param {string} context - 请求上下文
  * @returns {Promise<Object>} 错误信息
  */
-export async function handleApiResponseError(response, context = 'API Request') {
+export async function handleApiResponseError(response: any, context = 'API Request') {
     let errorMessage = t('errors.requestFailedWithStatus', { status: response.status });
 
     try {
@@ -51,7 +51,7 @@ export async function handleApiResponseError(response, context = 'API Request') 
  * @param {string} userMessage - 用户友好的消息
  * @returns {Error} 错误对象
  */
-export function createUserError(message, userMessage) {
+export function createUserError(message: any, userMessage: any) {
     const error = new Error(message);
     (error as Record<string, any>).userMessage = userMessage || message;
     return error;
@@ -63,7 +63,7 @@ export function createUserError(message, userMessage) {
  * @param {string} context - 错误上下文
  * @returns {Promise<{success: boolean, data?: any, error?: Object}>} 执行结果
  */
-export async function safeExecute(fn, context = 'Function Execution') {
+export async function safeExecute(fn: any, context = 'Function Execution') {
     try {
         const data = await fn();
         return { success: true, data };

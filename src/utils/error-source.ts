@@ -21,13 +21,13 @@ const URL_IN_STACK = /https?:\/\/[^\s)]+/g;
 /** 浏览器抹平后的跨域错误消息 */
 const OPAQUE_ERROR_MESSAGE = 'Script error.';
 
-function resolveOrigin(origin) {
+function resolveOrigin(origin: any) {
     if (origin) return origin;
     if (typeof window !== 'undefined' && window.location) return window.location.origin;
     return null;
 }
 
-function safeOrigin(url, fallbackOrigin) {
+function safeOrigin(url: any, fallbackOrigin: any) {
     try {
         return new URL(url, fallbackOrigin).origin;
     } catch (error) {
@@ -67,7 +67,7 @@ export function isAppScriptError(info: Record<string, any> = {}, origin?: string
  * @param {string} [origin] 本站 origin（默认取 window.location.origin）
  * @returns {boolean} true 表示属于第三方/扩展噪音，应当忽略
  */
-export function isForeignRejection(reason, origin?: string) {
+export function isForeignRejection(reason: any, origin?: string) {
     if (!reason) return false;
 
     const base = resolveOrigin(origin);

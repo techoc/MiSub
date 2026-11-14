@@ -44,7 +44,7 @@ export function createLoadingState() {
      * 设置错误
      * @param {string} errorMessage - 错误消息
      */
-    const setError = (errorMessage) => {
+    const setError = (errorMessage: any) => {
         error.value = errorMessage;
         isLoading.value = false;
         loadingMessage.value = '';

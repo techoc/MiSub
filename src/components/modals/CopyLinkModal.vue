@@ -64,7 +64,7 @@
         },
     ]);
 
-    const copyToClipboard = async (format) => {
+    const copyToClipboard = async (format: any) => {
         if (!baseUrl.value) {
             showToast(t('copyLink.tokenMissing'), 'error');
             return;
@@ -85,7 +85,7 @@
         }
     };
 
-    const fallbackCopy = (link) => {
+    const fallbackCopy = (link: any) => {
         const textArea = document.createElement('textarea');
         textArea.value = link;
         textArea.style.position = 'fixed';

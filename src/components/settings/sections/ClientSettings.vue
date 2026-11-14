@@ -69,7 +69,7 @@
         },
     ];
 
-    const handleIconFileSelect = (event) => {
+    const handleIconFileSelect = (event: any) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
@@ -174,7 +174,7 @@
         showEditModal.value = true;
     };
 
-    const handleEdit = (client) => {
+    const handleEdit = (client: any) => {
         isNew.value = false;
         editingClient.value = JSON.parse(JSON.stringify(client));
         if (!(editingClient.value as Record<string, any>).platforms)
@@ -202,7 +202,7 @@
         }
     };
 
-    const moveClient = async (index, direction) => {
+    const moveClient = async (index: any, direction: any) => {
         const targetIndex = index + direction;
         if (targetIndex < 0 || targetIndex >= clients.value.length) return;
         const next = [...clients.value];
@@ -242,7 +242,7 @@
     const showDeleteConfirm = ref(false);
     const clientToDeleteId = ref<any>(null);
 
-    const handleDelete = (id) => {
+    const handleDelete = (id: any) => {
         clientToDeleteId.value = id;
         showDeleteConfirm.value = true;
     };
@@ -261,7 +261,7 @@
         }
     };
 
-    const getPlatformClass = (platform) => {
+    const getPlatformClass = (platform: any) => {
         const option = platformOptions.find((opt) => opt.value === platform);
         return option
             ? option.class

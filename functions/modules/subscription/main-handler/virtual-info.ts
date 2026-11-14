@@ -16,7 +16,7 @@ export function buildPrependedVirtualNodes({
     targetMisubs,
     currentProfile,
     isProfileExpired,
-}) {
+}: any) {
     let prependedContentForSubconverter = '';
 
     if (isProfileExpired) {
@@ -33,7 +33,7 @@ export function buildPrependedVirtualNodes({
                 profileExpireTimestamp > 0 ? profileExpireTimestamp : totalUserInfo.expire;
             const virtualNodes: any[] = [];
 
-            const totalRemainingBytes = targetMisubs.reduce((acc, sub) => {
+            const totalRemainingBytes = targetMisubs.reduce((acc: any, sub: any) => {
                 const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;
                 if (userInfo && userInfo.total > 0) {
                     const used = (userInfo.upload || 0) + (userInfo.download || 0);

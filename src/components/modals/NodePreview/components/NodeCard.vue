@@ -32,7 +32,7 @@
 
     const emit = defineEmits(['copy', 'toggle-select']);
 
-    const handleCardClick = (node) => {
+    const handleCardClick = (node: any) => {
         if (props.selectionMode) {
             emit('toggle-select', node.url);
         }

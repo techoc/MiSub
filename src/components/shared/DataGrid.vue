@@ -134,7 +134,7 @@
         },
     ]);
 
-    const rowClasses = computed(() => (index) => [
+    const rowClasses = computed(() => (index: any) => [
         {
             'bg-white dark:bg-gray-900': !props.striped || index % 2 === 0,
             'bg-gray-50 dark:bg-gray-800': props.striped && index % 2 === 1,
@@ -144,12 +144,12 @@
     ]);
 
     // 选择相关方法
-    const isRowSelected = (row) => {
+    const isRowSelected = (row: any) => {
         const key = row[props.rowKey];
         return selectedKeySet.value.has(key);
     };
 
-    const toggleRowSelection = (row) => {
+    const toggleRowSelection = (row: any) => {
         if (!props.selectable) return;
 
         const key = row[props.rowKey];
@@ -185,7 +185,7 @@
     };
 
     // 排序相关方法
-    const handleSort = (column) => {
+    const handleSort = (column: any) => {
         if (!column.sortable) return;
 
         if (sortField.value === column.key) {
@@ -200,7 +200,7 @@
     };
 
     // 获取列值
-    const getColumnValue = (row, column) => {
+    const getColumnValue = (row: any, column: any) => {
         const value = column.render ? column.render(row) : row[column.key];
         return value !== undefined && value !== null ? value : '';
     };
@@ -215,7 +215,7 @@
     );
 
     // 分页事件
-    const handlePageChange = (page) => {
+    const handlePageChange = (page: any) => {
         emit('pageChange', page);
     };
 </script>

@@ -65,7 +65,7 @@
         }
     }
 
-    function handleClickOutside(event) {
+    function handleClickOutside(event: any) {
         const isClickInTrigger =
             triggerRef.value && (triggerRef.value as Record<string, any>).contains(event.target);
         const isClickInMenu =
@@ -76,7 +76,7 @@
         }
     }
 
-    function handleTriggerKeydown(event) {
+    function handleTriggerKeydown(event: any) {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             toggleMenu();
@@ -95,7 +95,7 @@
         }
     }
 
-    function handleMenuKeydown(event) {
+    function handleMenuKeydown(event: any) {
         if (event.key === 'Escape') {
             event.preventDefault();
             closeMenu({ restoreFocus: true });

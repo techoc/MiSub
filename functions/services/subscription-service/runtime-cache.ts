@@ -5,7 +5,7 @@
 
 import { isRealProxyNode } from './source-identity.ts';
 
-export function parseSubscriptionUserInfoHeader(header) {
+export function parseSubscriptionUserInfoHeader(header: any) {
     if (typeof header !== 'string' || !header.trim()) return null;
 
     const info = {};
@@ -14,7 +14,7 @@ export function parseSubscriptionUserInfoHeader(header) {
         const key = rawKey?.trim();
         const value = rawValue?.trim();
         if (!key || value === undefined || value === '') return;
-        info[key] = /^\d+$/.test(value) ? Number(value) : value;
+        (info as Record<string, any>)[key] = /^\d+$/.test(value) ? Number(value) : value;
     });
 
     return Object.keys(info).length > 0 ? info : null;
@@ -53,7 +53,7 @@ export function buildSubscriptionFilterFingerprint(sub: Record<string, any> = {}
  * @param {Object} sub 订阅对象（用于构建缓存 key）
  * @returns {Promise<{nodes: string[], nodeCount: number, updatedAt: string, filterFingerprint?: string}|null>}
  */
-export async function readSubscriptionNodeCache(storage, sub) {
+export async function readSubscriptionNodeCache(storage: any, sub: any) {
     if (!storage?.get) return null;
     try {
         const cached = await storage.get(buildSubscriptionNodeCacheKey(sub));
@@ -66,7 +66,7 @@ export async function readSubscriptionNodeCache(storage, sub) {
     }
 }
 
-export async function writeSubscriptionNodeCache(storage, sub, nodes) {
+export async function writeSubscriptionNodeCache(storage: any, sub: any, nodes: any) {
     if (!storage?.put) return false;
     const realNodes = Array.isArray(nodes) ? nodes.filter(isRealProxyNode) : [];
     if (realNodes.length === 0) return false;
@@ -88,7 +88,11 @@ export async function writeSubscriptionNodeCache(storage, sub, nodes) {
     }
 }
 
-async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo: Record<string, any> = {}) {
+async function writeSubscriptionRuntimeInfo(
+    storage: any,
+    sub: any,
+    runtimeInfo: Record<string, any> = {}
+) {
     if (!storage || !sub?.id) return false;
     const { nodeCount, userInfo, lastGoodNodeCount, detectedName } = runtimeInfo;
     const hasUserInfo = Object.prototype.hasOwnProperty.call(runtimeInfo, 'userInfo');
@@ -99,7 +103,7 @@ async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo: Record<st
     const hasDetectedName = typeof detectedName === 'string' && detectedName.trim().length > 0;
 
     try {
-        const applyUpdate = (current) => {
+        const applyUpdate = (current: any) => {
             if (!current) return current;
             return {
                 ...current,
@@ -137,7 +141,12 @@ async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo: Record<st
     return false;
 }
 
-export function scheduleSubscriptionRuntimeInfoUpdate(context, storage, sub, runtimeInfo) {
+export function scheduleSubscriptionRuntimeInfoUpdate(
+    context: any,
+    storage: any,
+    sub: any,
+    runtimeInfo: any
+) {
     const promise = writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo);
 
     if (context && typeof context.waitUntil === 'function') {
@@ -154,7 +163,7 @@ export function scheduleSubscriptionRuntimeInfoUpdate(context, storage, sub, run
     });
 }
 
-export function recordCurrentRequestRuntimeInfo(context, sub, runtimeInfo) {
+export function recordCurrentRequestRuntimeInfo(context: any, sub: any, runtimeInfo: any) {
     const key = sub?.id || sub?.url;
     if (!context || !key) return;
 

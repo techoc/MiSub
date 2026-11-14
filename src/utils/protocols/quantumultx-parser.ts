@@ -4,7 +4,7 @@ import { base64Encode } from './common/base64.ts';
 /**
  * 解析Quantumult X配置
  */
-export function parseQuantumultXConfig(content) {
+export function parseQuantumultXConfig(content: any) {
     const nodes: any[] = [];
     const lines = content.split('\n');
 
@@ -44,7 +44,7 @@ export function parseQuantumultXConfig(content) {
     return nodes;
 }
 
-function parseServerPortToken(value) {
+function parseServerPortToken(value: any) {
     const token = decodeURIComponent(value || '').trim();
     const lastColon = token.lastIndexOf(':');
     if (lastColon === -1) return null;
@@ -54,9 +54,9 @@ function parseServerPortToken(value) {
     };
 }
 
-function parseKeyValueParams(parts) {
+function parseKeyValueParams(parts: any) {
     const map = new Map();
-    parts.forEach((param) => {
+    parts.forEach((param: any) => {
         const [key, ...rest] = param.split('=');
         if (!key || rest.length === 0) return;
         map.set(key.trim().toLowerCase(), rest.join('=').trim());
@@ -67,13 +67,13 @@ function parseKeyValueParams(parts) {
 /**
  * 解析Quantumult X VMess配置
  */
-function parseQuantumultXVmess(line) {
+function parseQuantumultXVmess(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
 
         const config = line.slice(equalIndex + 1);
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         let name = '';
         let server = '';
@@ -177,13 +177,13 @@ function parseQuantumultXVmess(line) {
 /**
  * 解析Quantumult X Shadowsocks配置
  */
-function parseQuantumultXSS(line) {
+function parseQuantumultXSS(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
 
         const config = line.slice(equalIndex + 1);
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         let name = '';
         let server = '';
@@ -230,13 +230,13 @@ function parseQuantumultXSS(line) {
 /**
  * 解析Quantumult X Trojan配置
  */
-function parseQuantumultXTrojan(line) {
+function parseQuantumultXTrojan(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
 
         const config = line.slice(equalIndex + 1);
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         let name = '';
         let server = '';
@@ -275,13 +275,13 @@ function parseQuantumultXTrojan(line) {
     }
 }
 
-function parseQuantumultXVless(line) {
+function parseQuantumultXVless(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
 
         const config = line.slice(equalIndex + 1);
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
         let name = '';
         let server = '';
         let port = '';
@@ -310,7 +310,9 @@ function parseQuantumultXVless(line) {
 
         const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>)
+                .split('=')
+                .map((p: any) => p.trim());
             if (!key || !value) return;
             switch (key.toLowerCase()) {
                 case 'transport':
@@ -358,12 +360,12 @@ function parseQuantumultXVless(line) {
     }
 }
 
-function parseQuantumultXHysteria2(line) {
+function parseQuantumultXHysteria2(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
         const config = line.slice(equalIndex + 1);
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
         let name = '';
         let server = '';
         let port = '';
@@ -392,7 +394,9 @@ function parseQuantumultXHysteria2(line) {
 
         const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>)
+                .split('=')
+                .map((p: any) => p.trim());
             if (!key || !value) return;
             if (
                 key.toLowerCase() === 'sni' ||
@@ -418,12 +422,12 @@ function parseQuantumultXHysteria2(line) {
     }
 }
 
-function parseQuantumultXTuic(line) {
+function parseQuantumultXTuic(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
         const config = line.slice(equalIndex + 1);
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
         let name = '';
         let server = '';
         let port = '';
@@ -458,7 +462,9 @@ function parseQuantumultXTuic(line) {
             : encodeURIComponent(uuid.trim());
         const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>)
+                .split('=')
+                .map((p: any) => p.trim());
             if (!key || !value) return;
             if (key.toLowerCase() === 'sni' || key.toLowerCase() === 'peer')
                 urlParams.push(`sni=${encodeURIComponent(value)}`);
@@ -482,12 +488,12 @@ function parseQuantumultXTuic(line) {
     }
 }
 
-function parseQuantumultXAnyTLS(line) {
+function parseQuantumultXAnyTLS(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
         const config = line.slice(equalIndex + 1);
-        const rawParams = config.split(',').map((p) => p.trim());
+        const rawParams = config.split(',').map((p: any) => p.trim());
         const params: any[] = [];
         for (const param of rawParams) {
             if (
@@ -527,7 +533,9 @@ function parseQuantumultXAnyTLS(line) {
         let password = '';
         const urlParams: any[] = [];
         extra.forEach((param) => {
-            const [key, value] = (param as Record<string, any>).split('=').map((p) => p.trim());
+            const [key, value] = (param as Record<string, any>)
+                .split('=')
+                .map((p: any) => p.trim());
             if (!key || !value) return;
             switch (key.toLowerCase()) {
                 case 'password':
@@ -564,13 +572,13 @@ function parseQuantumultXAnyTLS(line) {
 /**
  * 解析Quantumult X HTTP配置
  */
-function parseQuantumultXHTTP(line) {
+function parseQuantumultXHTTP(line: any) {
     try {
         const equalIndex = line.indexOf('=');
         if (equalIndex === -1) return null;
 
         const config = line.slice(equalIndex + 1);
-        const params = config.split(',').map((p) => p.trim());
+        const params = config.split(',').map((p: any) => p.trim());
 
         if (params.length < 3) return null;
 

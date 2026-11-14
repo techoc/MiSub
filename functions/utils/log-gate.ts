@@ -20,12 +20,14 @@ const SUPPRESSED_BY_LEVEL = {
 
 const originalConsole = {};
 for (const method of CONSOLE_METHODS) {
-    originalConsole[method] = console[method]?.bind(console);
+    (originalConsole as Record<string, any>)[method] = (console as Record<string, any>)[
+        method
+    ]?.bind(console);
 }
 
 let appliedLevel: any = null;
 
-function normalizeLevel(value) {
+function normalizeLevel(value: any) {
     const level = String(value ?? '')
         .trim()
         .toLowerCase();
@@ -34,20 +36,20 @@ function normalizeLevel(value) {
     return null;
 }
 
-export function installLogGate(env) {
+export function installLogGate(env: any) {
     const level = normalizeLevel(env?.MISUB_LOG_LEVEL);
     if (level === appliedLevel) return;
 
     appliedLevel = level;
     // 先还原，再按需抑制，避免多次包装叠加
     for (const method of CONSOLE_METHODS) {
-        console[method] = originalConsole[method];
+        (console as Record<string, any>)[method] = (originalConsole as Record<string, any>)[method];
     }
     if (!level) return;
 
     const suppressed = SUPPRESSED_BY_LEVEL[level];
     for (const method of CONSOLE_METHODS) {
         if (!suppressed.has(method)) continue;
-        console[method] = () => {};
+        (console as Record<string, any>)[method] = () => {};
     }
 }

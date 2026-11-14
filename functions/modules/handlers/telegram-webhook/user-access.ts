@@ -10,16 +10,16 @@ import { getStorageAdapter, getTelegramPushConfig } from './cache.ts';
 /**
  * 验证 Telegram Webhook 请求
  */
-export function verifyTelegramRequest(request, config) {
+export function verifyTelegramRequest(request: any, config: any) {
     const secretToken = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
     return secretToken === config.webhook_secret;
 }
 
-function getUserBindingKey(userId) {
+function getUserBindingKey(userId: any) {
     return userId?.toString().trim();
 }
 
-export function getUserBoundProfileId(config, userId) {
+export function getUserBoundProfileId(config: any, userId: any) {
     const bindingKey = getUserBindingKey(userId);
     const bindings = config?.user_bindings || {};
 
@@ -34,7 +34,7 @@ export function getUserBoundProfileId(config, userId) {
     return '';
 }
 
-export function setUserBoundProfileId(config, userId, profileId) {
+export function setUserBoundProfileId(config: any, userId: any, profileId: any) {
     const bindingKey = getUserBindingKey(userId);
     const bindings =
         config.user_bindings && typeof config.user_bindings === 'object'
@@ -51,7 +51,7 @@ export function setUserBoundProfileId(config, userId, profileId) {
 /**
  * 检查用户权限
  */
-export function checkUserPermission(userId, config) {
+export function checkUserPermission(userId: any, config: any) {
     if (!config.enabled) {
         return { allowed: false, reason: 'Bot 已被管理员禁用' };
     }
@@ -68,7 +68,7 @@ export function checkUserPermission(userId, config) {
     }
 
     const userIdStr = userId.toString();
-    if (!config.allowed_user_ids.some((id) => id.toString().trim() === userIdStr)) {
+    if (!config.allowed_user_ids.some((id: any) => id.toString().trim() === userIdStr)) {
         return { allowed: false, reason: '无权限使用此 Bot，请联系管理员添加白名单' };
     }
 
@@ -78,7 +78,7 @@ export function checkUserPermission(userId, config) {
 /**
  * 检查频率限制
  */
-export async function checkRateLimit(userId, env, config) {
+export async function checkRateLimit(userId: any, env: any, config: any) {
     const minuteKey = `tg_push_rate:${userId}:min`;
     const dayKey = `tg_push_rate:${userId}:day`;
 
@@ -110,7 +110,7 @@ export async function checkRateLimit(userId, env, config) {
 /**
  * 获取用户通过 Telegram 添加的节点
  */
-export async function getUserNodes(userId, env): Promise<any[]> {
+export async function getUserNodes(userId: any, env: any): Promise<any[]> {
     const storageAdapter = await getStorageAdapter(env);
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
 
@@ -125,14 +125,14 @@ export async function getUserNodes(userId, env): Promise<any[]> {
 
     // 否则仅返回该用户通过 Telegram 添加的节点（兜底逻辑）
     return allSubscriptions.filter(
-        (sub) => sub.source === 'telegram' && sub.telegram_user_id === userId
+        (sub: any) => sub.source === 'telegram' && sub.telegram_user_id === userId
     );
 }
 
 /**
  * 获取所有节点和用户节点的索引映射
  */
-export async function getNodesWithMapping(userId, env): Promise<Record<string, any>> {
+export async function getNodesWithMapping(userId: any, env: any): Promise<Record<string, any>> {
     const storageAdapter = await getStorageAdapter(env);
     const allSubscriptions = await storageAdapter.getAllSubscriptions();
 
@@ -142,7 +142,7 @@ export async function getNodesWithMapping(userId, env): Promise<Record<string, a
     const userNodes: any[] = [];
     const indexMapping: any[] = []; // userIndex -> allIndex
 
-    allSubscriptions.forEach((sub, allIndex) => {
+    allSubscriptions.forEach((sub: any, allIndex: any) => {
         if (permission.allowed || (sub.source === 'telegram' && sub.telegram_user_id === userId)) {
             indexMapping.push(allIndex);
             userNodes.push(sub);

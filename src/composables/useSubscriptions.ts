@@ -11,7 +11,7 @@ import { getAirportIdentityKey } from '../utils/airport-identity.ts';
 
 const isDev = import.meta.env.DEV;
 
-export function useSubscriptions(markDirty) {
+export function useSubscriptions(markDirty: any) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     // Rename the store ref to avoid confusion, as it contains ALL items
@@ -122,12 +122,12 @@ export function useSubscriptions(markDirty) {
         }
     });
 
-    function changeSubsPage(page) {
+    function changeSubsPage(page: any) {
         if (page < 1 || page > subsTotalPages.value) return;
         subsCurrentPage.value = page;
     }
 
-    async function handleUpdateNodeCount(subId, isInitialLoad = false) {
+    async function handleUpdateNodeCount(subId: any, isInitialLoad = false) {
         // Find in the filtered list
         const subToUpdate = subscriptions.value.find(
             (s) => (s as Record<string, any>).id === subId
@@ -275,14 +275,14 @@ export function useSubscriptions(markDirty) {
         }
     }
 
-    function addSubscription(sub) {
+    function addSubscription(sub: any) {
         dataStore.addSubscription(sub);
         subsCurrentPage.value = 1;
         handleUpdateNodeCount(sub.id);
         markDirty();
     }
 
-    function updateSubscription(updatedSub) {
+    function updateSubscription(updatedSub: any) {
         // Verify it exists in our filtered list
         const originalSub = subscriptions.value.find(
             (s) => (s as Record<string, any>).id === updatedSub.id
@@ -305,7 +305,7 @@ export function useSubscriptions(markDirty) {
         }
     }
 
-    function deleteSubscription(subId) {
+    function deleteSubscription(subId: any) {
         dataStore.removeSubscription(subId);
         // 清理组合订阅中对该订阅源的引用
         dataStore.removeSubscriptionFromProfiles(subId);
@@ -335,21 +335,21 @@ export function useSubscriptions(markDirty) {
         showToast(t('subscriptions.clearedCount', { count: idsToRemove.length }), 'success');
     }
 
-    async function addSubscriptionsFromBulk(subs) {
+    async function addSubscriptionsFromBulk(subs: any) {
         // Reverse insert to maintain order
         for (let i = subs.length - 1; i >= 0; i--) {
             dataStore.addSubscription(subs[i]);
         }
         markDirty();
 
-        const subsToUpdate = subs.filter((sub) => sub.url && sub.url.startsWith('http'));
+        const subsToUpdate = subs.filter((sub: any) => sub.url && sub.url.startsWith('http'));
 
         if (subsToUpdate.length > 0) {
             showToast(t('subscriptions.batchUpdating', { count: subsToUpdate.length }), 'info');
 
             // Use individual updates instead of batch backend update
             // This avoids 400 error because backend doesn't have these IDs yet.
-            const updatePromises = subsToUpdate.map((sub) => handleUpdateNodeCount(sub.id));
+            const updatePromises = subsToUpdate.map((sub: any) => handleUpdateNodeCount(sub.id));
 
             // handleUpdateNodeCount 内部已逐个提示失败，自身不抛出，
             // 所以 Promise.allSettled 恒为 fulfilled —— 原先包在这里的 try/catch 是死代码。
@@ -404,7 +404,7 @@ export function useSubscriptions(markDirty) {
                 let successCount = 0;
                 const resultList = Array.isArray(result.results) ? result.results : [];
 
-                resultList.forEach((updateResult) => {
+                resultList.forEach((updateResult: any) => {
                     const id = updateResult.subscriptionId || updateResult.id;
                     const sub = subscriptions.value.find(
                         (s) => (s as Record<string, any>).id === id
@@ -552,12 +552,12 @@ export function useSubscriptions(markDirty) {
         }
     }
 
-    function restartAutoUpdate(intervalMinutes) {
+    function restartAutoUpdate(intervalMinutes: any) {
         stopAutoUpdate();
         startAutoUpdate(intervalMinutes);
     }
 
-    function reorderSubscriptions(newOrder) {
+    function reorderSubscriptions(newOrder: any) {
         // 1. Get all Manual Nodes (to preserve them)
         // We can't rely just on manualNodes computed because it might be filtered or not imported here.
         // Instead, filter from source of truth: allSubscriptions

@@ -1,7 +1,7 @@
 import { createUnifiedTemplateModel } from '../template-model.ts';
 import { pinRemoteRuleUrl } from '../builtin-rules-provider.ts';
 
-function parseIniSections(templateText) {
+function parseIniSections(templateText: any) {
     const lines = String(templateText || '').split(/\r?\n/);
     const sections = new Map();
     let currentSection = 'custom'; // Default to custom if no section headers are found
@@ -24,7 +24,7 @@ function parseIniSections(templateText) {
     return sections;
 }
 
-function parseGroupLine(line) {
+function parseGroupLine(line: any) {
     const parts = line.split('=');
     if (parts.length < 2) return null;
 
@@ -33,7 +33,7 @@ function parseGroupLine(line) {
         .slice(1)
         .join('=')
         .split(',')
-        .map((part) => part.trim())
+        .map((part: any) => part.trim())
         .filter(Boolean);
     if (bodyParts.length === 0) return null;
 
@@ -44,7 +44,7 @@ function parseGroupLine(line) {
     for (const part of bodyParts.slice(1)) {
         if (part.includes('=')) {
             const [key, value] = part.split(/=(.*)/, 2);
-            options[key.trim()] = (value || '').trim();
+            (options as Record<string, any>)[key.trim()] = (value || '').trim();
         } else {
             members.push(part);
         }
@@ -53,10 +53,10 @@ function parseGroupLine(line) {
     return { name, type, members, options };
 }
 
-function parseRuleLine(line) {
+function parseRuleLine(line: any) {
     const parts = line
         .split(',')
-        .map((part) => part.trim())
+        .map((part: any) => part.trim())
         .filter(Boolean);
     if (parts.length < 2) return null;
 
@@ -68,9 +68,9 @@ function parseRuleLine(line) {
     };
 }
 
-function parseAclRuleSetLine(line) {
+function parseAclRuleSetLine(line: any) {
     const raw = line.replace(/^ruleset=/i, '');
-    const parts = raw.split(',').map((part) => part.trim());
+    const parts = raw.split(',').map((part: any) => part.trim());
     if (parts.length < 2) return null;
 
     const policy = parts[0];
@@ -87,7 +87,7 @@ function parseAclRuleSetLine(line) {
         const inlineValue = source.slice(2);
         const inlineParts = inlineValue
             .split(',')
-            .map((part) => part.trim())
+            .map((part: any) => part.trim())
             .filter(Boolean);
         const type = (inlineParts[0] || '').toLowerCase();
         return {
@@ -118,11 +118,11 @@ function parseAclRuleSetLine(line) {
     };
 }
 
-function parseAclProxyGroupLine(line) {
+function parseAclProxyGroupLine(line: any) {
     const raw = line.replace(/^custom_proxy_group=/i, '');
     const parts = raw
         .split('`')
-        .map((part) => part.trim())
+        .map((part: any) => part.trim())
         .filter(Boolean);
     if (parts.length < 2) return null;
 
@@ -145,7 +145,7 @@ function parseAclProxyGroupLine(line) {
         if (/^\d+(?:,\s*\d*)*$/.test(part)) {
             const nums = part
                 .split(',')
-                .map((s) => s.trim())
+                .map((s: any) => s.trim())
                 .filter(Boolean)
                 .map(Number);
             if (nums.length > 0) {
@@ -181,7 +181,7 @@ function parseAclProxyGroupLine(line) {
  * 语法：custom_chain_proxy=<落地组名>`<前置组名>[`<落地副本名前缀>]
  * 前缀省略时默认为 "<落地组名> - "。
  */
-function parseChainProxyLine(line) {
+function parseChainProxyLine(line: any) {
     const raw = line.replace(/^\s*/, '').replace(/^custom_chain_proxy=/i, '');
     const parts = raw.split('`');
     const group = (parts[0] || '').trim();
@@ -191,19 +191,19 @@ function parseChainProxyLine(line) {
     return { group, entry, prefix: parts.length > 2 ? parts[2] : '' };
 }
 
-export function parseIniTemplate(templateText, options: Record<string, any> = {}) {
+export function parseIniTemplate(templateText: any, options: Record<string, any> = {}) {
     const sections = parseIniSections(templateText);
     const aclCustomLines = sections.get('custom') || [];
     const parsedAclGroups = aclCustomLines
-        .filter((line) => /^custom_proxy_group=/i.test(line.trim()))
+        .filter((line: any) => /^custom_proxy_group=/i.test(line.trim()))
         .map(parseAclProxyGroupLine)
         .filter(Boolean);
     const parsedAclRules = aclCustomLines
-        .filter((line) => /^ruleset=/i.test(line.trim()))
+        .filter((line: any) => /^ruleset=/i.test(line.trim()))
         .map(parseAclRuleSetLine)
         .filter(Boolean);
     const parsedChainProxy = aclCustomLines
-        .filter((line) => /^custom_chain_proxy=/i.test(line.trim()))
+        .filter((line: any) => /^custom_chain_proxy=/i.test(line.trim()))
         .map(parseChainProxyLine)
         .filter(Boolean);
 
