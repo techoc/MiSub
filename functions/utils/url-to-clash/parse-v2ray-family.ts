@@ -96,7 +96,9 @@ export function parseVlessUrl(url: any) {
                     // URL 的 host 参数是分享链接的显式声明，优先级高于 extra 里的同名头；
                     // HTTP 头名大小写不敏感，小写 host 也要让位，避免同一头出现两份。
                     if (extraHeaders) {
-                        const mergedHeaders = { ...extraHeaders };
+                        const mergedHeaders: Record<string, unknown> = {
+                            ...(extraHeaders as Record<string, unknown>),
+                        };
                         if ((xhttpOpts.headers as Record<string, any> | undefined)?.Host) {
                             for (const key of Object.keys(mergedHeaders)) {
                                 if (key.toLowerCase() === 'host') {
