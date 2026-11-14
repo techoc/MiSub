@@ -24,16 +24,41 @@ import {
     SINGBOX_FOREIGN_RULE_SET,
 } from './safe-dns.ts';
 import { normalizeGeneratorOptions } from './generator-options.ts';
+import type { ProxyNode } from '../../../types/models.ts';
 
-function cleanControlChars(str: any) {
+/** sing-box 出站对象 */
+interface SingboxOutbound {
+    tag: string;
+    type: string;
+    server?: string;
+    server_port?: number;
+    tls?: Record<string, unknown>;
+    transport?: Record<string, unknown>;
+    [key: string]: unknown;
+}
+
+/** 生成器选项 */
+interface SingboxGeneratorOptions {
+    managedConfigUrl?: string;
+    skipCertVerify?: boolean;
+    enableUdp?: boolean;
+    enableTfo?: boolean;
+    ruleLevel?: string;
+    dnsMode?: string;
+    customDnsOverride?: string;
+    generatorOptions?: Record<string, unknown>;
+    [key: string]: unknown;
+}
+
+function cleanControlChars(str: string): string {
     if (typeof str !== 'string') return str;
     // eslint-disable-next-line no-control-regex
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
-function sanitizeName(name: any) {
+function sanitizeName(name: unknown): string {
     if (!name) return 'Untitled';
-    let safe = cleanControlChars(name);
+    let safe = cleanControlChars(name as string);
     safe = safe
         .replace(/\s+/g, ' ')
         .replace(/[\r\n\t]/g, ' ')
@@ -41,12 +66,13 @@ function sanitizeName(name: any) {
     return safe || 'Untitled';
 }
 
-function parsePort(port: any) {
+function parsePort(port: unknown): number | undefined {
     const num = Number.parseInt(String(port), 10);
     return Number.isFinite(num) ? num : undefined;
 }
 
-function buildOutbound(proxy: any) {
+function buildOutbound(proxyInput: unknown): SingboxOutbound | null {
+    const proxy = proxyInput as ProxyNode | null;
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const type = (proxy.type || '').toLowerCase();
@@ -55,7 +81,7 @@ function buildOutbound(proxy: any) {
     const port = parsePort(proxy.port);
     if (!port) return null;
 
-    const outbound: Record<string, any> = { tag, type: 'direct' };
+    const outbound: SingboxOutbound = { tag, type: 'direct' };
 
     if (type === 'ss' || type === 'shadowsocks') {
         outbound.type = 'shadowsocks';
@@ -90,18 +116,17 @@ function buildOutbound(proxy: any) {
                 server_name: proxy.sni || proxy.servername || server,
             };
             if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
-                (outbound.tls as Record<string, any>).insecure = true;
+                outbound.tls.insecure = true;
             }
         }
         outbound.transport = {
             type: proxy.network === 'ws' ? 'ws' : 'tcp',
         };
         if (proxy['ws-opts']?.path || proxy.wsOpts?.path) {
-            (outbound.transport as Record<string, any>).path =
-                proxy['ws-opts']?.path || proxy.wsOpts?.path;
+            outbound.transport.path = proxy['ws-opts']?.path || proxy.wsOpts?.path;
         }
         const host = proxy['ws-opts']?.headers?.Host || proxy.wsOpts?.headers?.Host;
-        if (host) (outbound.transport as Record<string, any>).headers = { Host: host };
+        if (host) outbound.transport.headers = { Host: host };
     } else if (type === 'vless') {
         outbound.type = 'vless';
         outbound.server = server;
@@ -111,24 +136,18 @@ function buildOutbound(proxy: any) {
             outbound.transport = { type: proxy.network };
             if (proxy.network === 'ws') {
                 const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
-                if (wsOpts?.path) (outbound.transport as Record<string, any>).path = wsOpts.path;
+                if (wsOpts?.path) outbound.transport.path = wsOpts.path;
                 if (wsOpts?.headers?.Host)
-                    (outbound.transport as Record<string, any>).headers = {
-                        Host: wsOpts.headers.Host,
-                    };
+                    outbound.transport.headers = { Host: wsOpts.headers.Host };
             } else if (proxy.network === 'grpc') {
                 const grpcOpts = proxy['grpc-opts'] || proxy.grpcOpts;
                 if (grpcOpts?.['grpc-service-name'])
-                    (outbound.transport as Record<string, any>).service_name =
-                        grpcOpts['grpc-service-name'];
+                    outbound.transport.service_name = grpcOpts['grpc-service-name'];
             } else if (proxy.network === 'xhttp') {
                 const xhttpOpts = proxy['xhttp-opts'] || proxy.xhttpOpts;
-                if (xhttpOpts?.path)
-                    (outbound.transport as Record<string, any>).path = xhttpOpts.path;
-                if (xhttpOpts?.host)
-                    (outbound.transport as Record<string, any>).host = xhttpOpts.host;
-                if (xhttpOpts?.mode)
-                    (outbound.transport as Record<string, any>).mode = xhttpOpts.mode;
+                if (xhttpOpts?.path) outbound.transport.path = xhttpOpts.path;
+                if (xhttpOpts?.host) outbound.transport.host = xhttpOpts.host;
+                if (xhttpOpts?.mode) outbound.transport.mode = xhttpOpts.mode;
             }
         }
         if (proxy.flow) outbound.flow = proxy.flow;
@@ -196,10 +215,7 @@ function buildOutbound(proxy: any) {
             enabled: true,
             server_name: proxy.sni || proxy.servername || server,
         };
-        if (proxy.alpn)
-            (outbound.tls as Record<string, any>).alpn = Array.isArray(proxy.alpn)
-                ? proxy.alpn
-                : [proxy.alpn];
+        if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
     } else if (type === 'anytls') {
         outbound.type = 'anytls';
         outbound.server = server;
@@ -255,21 +271,19 @@ function buildOutbound(proxy: any) {
 
     if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
         outbound.tls = outbound.tls || {};
-        (outbound.tls as Record<string, any>).enabled = true;
-        (outbound.tls as Record<string, any>).insecure = true;
+        outbound.tls.enabled = true;
+        outbound.tls.insecure = true;
     }
     if (
         (proxy.sni || proxy.servername) &&
-        ((type !== 'ss' && type !== 'shadowsocks') ||
-            proxy.tls ||
-            (outbound.tls as Record<string, any> | undefined)?.enabled)
+        ((type !== 'ss' && type !== 'shadowsocks') || proxy.tls || outbound.tls?.enabled)
     ) {
         outbound.tls = outbound.tls || {};
-        (outbound.tls as Record<string, any>).server_name = proxy.sni || proxy.servername;
+        outbound.tls.server_name = proxy.sni || proxy.servername;
     }
     if (proxy['client-fingerprint']) {
         outbound.tls = outbound.tls || {};
-        (outbound.tls as Record<string, any>).utls = {
+        outbound.tls.utls = {
             enabled: true,
             fingerprint: proxy['client-fingerprint'],
         };
@@ -282,7 +296,10 @@ function buildOutbound(proxy: any) {
     return outbound;
 }
 
-export function generateBuiltinSingboxConfig(nodeList: any, options: Record<string, any> = {}) {
+export function generateBuiltinSingboxConfig(
+    nodeList: string,
+    options: SingboxGeneratorOptions = {}
+) {
     const {
         managedConfigUrl = '',
         skipCertVerify = false,
@@ -295,12 +312,12 @@ export function generateBuiltinSingboxConfig(nodeList: any, options: Record<stri
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line: any) => line.trim())
-        .filter((line: any) => line && !line.startsWith('#'));
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('#'));
 
-    const outbounds: any[] = [];
-    const usedNames = new Map();
-    const nodeEntries: any[] = [];
+    const outbounds: SingboxOutbound[] = [];
+    const usedNames = new Map<string, number>();
+    const nodeEntries: Array<{ tag: string; outbound: SingboxOutbound }> = [];
 
     const proxies = urlsToClashProxies(nodeUrls, options);
 
@@ -330,7 +347,7 @@ export function generateBuiltinSingboxConfig(nodeList: any, options: Record<stri
     const levelKey = (ruleLevel || 'std').toUpperCase();
     // 获取内置策略组
     const policyGroupsFactory =
-        (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
+        POLICY_GROUPS[levelKey as keyof typeof POLICY_GROUPS] || POLICY_GROUPS.STD;
     let proxyGroups = policyGroupsFactory(nodeOutbounds, options);
     proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
 
@@ -343,7 +360,7 @@ export function generateBuiltinSingboxConfig(nodeList: any, options: Record<stri
         const chainTags = chainOutbounds.map((outbound) => outbound.tag);
         outbounds.push(...chainOutbounds);
         proxyGroups = proxyGroups
-            .map((group: any) => {
+            .map((group) => {
                 if (group.name === '🔗 链式代理') {
                     return {
                         ...group,
@@ -358,7 +375,7 @@ export function generateBuiltinSingboxConfig(nodeList: any, options: Record<stri
                 }
                 return group;
             })
-            .filter(Boolean);
+            .filter((group): group is NonNullable<typeof group> => group !== null);
         proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
     }
 
@@ -366,11 +383,11 @@ export function generateBuiltinSingboxConfig(nodeList: any, options: Record<stri
     // 除非自定义 DNS 覆盖文本显式引用该组（fail-closed），否则整组移除
     const domesticDns = isDomesticDnsMode(options.dnsMode);
     if (domesticDns && !String(options.customDnsOverride || '').includes(DNS_PROXY_GROUP)) {
-        proxyGroups = proxyGroups.filter((group: any) => group.name !== DNS_PROXY_GROUP);
+        proxyGroups = proxyGroups.filter((group) => group.name !== DNS_PROXY_GROUP);
     }
 
     // 将抽象分组转换为 Sing-Box Outbounds
-    const groupOutbounds = proxyGroups.map((group: any) => {
+    const groupOutbounds = proxyGroups.map((group) => {
         let type = 'selector';
         if (group.type === 'url-test') type = 'urltest';
         if (group.type === 'fallback') type = 'urltest'; // Sing-Box 暂时映射为 urltest
@@ -403,11 +420,10 @@ export function generateBuiltinSingboxConfig(nodeList: any, options: Record<stri
         // 国外 DNS 模式下 DNS 分流规则引用 geolocation-!cn，需注入对应 rule-set 定义；
         // 国内模式无该引用，不注入（避免无谓下载）
         ...(domesticDns ? [] : [getSingboxForeignRuleSet(dnsDetour)]),
-        ...Object.values(ruleSetsMap).filter(
-            (ruleSet) =>
-                (ruleSet as Record<string, any>).tag !== SINGBOX_CN_RULE_SET &&
-                (ruleSet as Record<string, any>).tag !== SINGBOX_FOREIGN_RULE_SET
-        ),
+        ...Object.values(ruleSetsMap).filter((ruleSet) => {
+            const tag = (ruleSet as { tag?: string }).tag;
+            return tag !== SINGBOX_CN_RULE_SET && tag !== SINGBOX_FOREIGN_RULE_SET;
+        }),
     ];
 
     // 转换路由规则：将中间对象映射为 Sing-Box 语法
@@ -425,7 +441,8 @@ export function generateBuiltinSingboxConfig(nodeList: any, options: Record<stri
               ]
             : []),
         { domain_suffix: ['localhost'], outbound: 'DIRECT' },
-        ...rawRules.map((r: any) => {
+        ...rawRules.map((r) => {
+            if (typeof r === 'string') return r;
             if (r.type === 'rule_set') return { rule_set: [r.tag], outbound: r.outbound };
             return r; // 已经是 Sing-Box 格式的普通规则
         }),
