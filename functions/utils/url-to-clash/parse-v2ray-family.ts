@@ -5,8 +5,9 @@
 
 import { extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 import { applyDownloadInheritanceGuard, parseXhttpExtra } from '../xhttp-extra.ts';
+import type { ProxyNode } from '../../../types/models.ts';
 
-export function parseVlessUrl(url: any) {
+export function parseVlessUrl(url: string): ProxyNode | null {
     try {
         // vless://uuid@server:port?params#name
         const body = url.substring(8); // 去掉 vless://
@@ -35,7 +36,7 @@ export function parseVlessUrl(url: any) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy: Record<string, any> = {
+        const proxy: ProxyNode = {
             name: name || `VLESS-${server}`,
             type: 'vless',
             server,
@@ -51,7 +52,7 @@ export function parseVlessUrl(url: any) {
 
         // WebSocket 配置
         if (network === 'ws') {
-            const wsOpts: Record<string, any> = {};
+            const wsOpts: Record<string, unknown> = {};
             if (params.get('path')) wsOpts.path = params.get('path');
             if (params.get('host')) {
                 wsOpts.headers = { Host: params.get('host') };
@@ -63,7 +64,7 @@ export function parseVlessUrl(url: any) {
 
         // xHTTP 配置
         if (network === 'xhttp') {
-            const xhttpOpts: Record<string, any> = {};
+            const xhttpOpts: Record<string, unknown> = {};
 
             const path = params.get('xhttp-path') || params.get('path');
 
@@ -99,14 +100,18 @@ export function parseVlessUrl(url: any) {
                         const mergedHeaders: Record<string, unknown> = {
                             ...(extraHeaders as Record<string, unknown>),
                         };
-                        if ((xhttpOpts.headers as Record<string, any> | undefined)?.Host) {
+                        const existingHeaders =
+                            xhttpOpts.headers && typeof xhttpOpts.headers === 'object'
+                                ? (xhttpOpts.headers as Record<string, unknown>)
+                                : {};
+                        if (existingHeaders.Host) {
                             for (const key of Object.keys(mergedHeaders)) {
                                 if (key.toLowerCase() === 'host') {
                                     delete mergedHeaders[key];
                                 }
                             }
                         }
-                        xhttpOpts.headers = { ...mergedHeaders, ...(xhttpOpts.headers || {}) };
+                        xhttpOpts.headers = { ...mergedHeaders, ...existingHeaders };
                     }
                 } catch (e) {
                     // extra 非法时不能让整个订阅转换失败。
@@ -121,12 +126,12 @@ export function parseVlessUrl(url: any) {
 
         // gRPC 配置
         if (network === 'grpc') {
-            const grpcOpts = {};
+            const grpcOpts: Record<string, unknown> = {};
             if (params.get('serviceName')) {
-                (grpcOpts as Record<string, any>)['grpc-service-name'] = params.get('serviceName');
+                grpcOpts['grpc-service-name'] = params.get('serviceName');
             }
             if (params.get('mode')) {
-                (grpcOpts as Record<string, any>)['grpc-mode'] = params.get('mode');
+                grpcOpts['grpc-mode'] = params.get('mode');
             }
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
@@ -135,7 +140,7 @@ export function parseVlessUrl(url: any) {
 
         // HTTPUpgrade 配置
         if (network === 'httpupgrade') {
-            const httpupgradeOpts: Record<string, any> = {};
+            const httpupgradeOpts: Record<string, unknown> = {};
             if (params.get('path')) httpupgradeOpts.path = params.get('path');
             if (params.get('host')) httpupgradeOpts.host = params.get('host');
             if (Object.keys(httpupgradeOpts).length > 0) {
@@ -148,13 +153,10 @@ export function parseVlessUrl(url: any) {
 
         if (security === 'reality') {
             proxy.tls = true;
-            const realityOpts = {};
-            if (params.get('pbk'))
-                (realityOpts as Record<string, any>)['public-key'] = params.get('pbk');
-            if (params.get('sid'))
-                (realityOpts as Record<string, any>)['short-id'] = params.get('sid');
-            if (params.get('spx'))
-                (realityOpts as Record<string, any>)['spider-x'] = params.get('spx');
+            const realityOpts: Record<string, unknown> = {};
+            if (params.get('pbk')) realityOpts['public-key'] = params.get('pbk');
+            if (params.get('sid')) realityOpts['short-id'] = params.get('sid');
+            if (params.get('spx')) realityOpts['spider-x'] = params.get('spx');
             const sxm =
                 params.get('support-x25519mlkem768') ||
                 params.get('support_x25519mlkem768') ||
@@ -162,7 +164,7 @@ export function parseVlessUrl(url: any) {
             if (sxm === '0' || sxm === 'false') {
                 // 显式禁用
             } else if (sxm === '1' || sxm === 'true') {
-                (realityOpts as Record<string, any>)['support-x25519mlkem768'] = true;
+                realityOpts['support-x25519mlkem768'] = true;
             }
             if (Object.keys(realityOpts).length > 0) {
                 proxy['reality-opts'] = realityOpts;
@@ -225,7 +227,7 @@ export function parseVlessUrl(url: any) {
  * @param {string} url - Trojan URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseTrojanUrl(url: any) {
+export function parseTrojanUrl(url: string): ProxyNode | null {
     try {
         // trojan://password@server:port?params#name
         const body = url.substring(9); // 去掉 trojan://
@@ -251,7 +253,7 @@ export function parseTrojanUrl(url: any) {
         const params = parseQueryParams(url);
         const name = extractName(url);
 
-        const proxy: Record<string, any> = {
+        const proxy: ProxyNode = {
             name: name || `Trojan-${server}`,
             type: 'trojan',
             server,
@@ -267,7 +269,7 @@ export function parseTrojanUrl(url: any) {
 
         // WebSocket 配置
         if (network === 'ws') {
-            const wsOpts: Record<string, any> = {};
+            const wsOpts: Record<string, unknown> = {};
             if (params.get('path')) wsOpts.path = params.get('path');
             if (params.get('host')) {
                 wsOpts.headers = { Host: params.get('host') };
@@ -279,11 +281,10 @@ export function parseTrojanUrl(url: any) {
 
         // gRPC 配置
         if (network === 'grpc') {
-            const grpcOpts = {};
+            const grpcOpts: Record<string, unknown> = {};
             if (params.get('serviceName'))
-                (grpcOpts as Record<string, any>)['grpc-service-name'] = params.get('serviceName');
-            if (params.get('mode'))
-                (grpcOpts as Record<string, any>)['grpc-mode'] = params.get('mode');
+                grpcOpts['grpc-service-name'] = params.get('serviceName');
+            if (params.get('mode')) grpcOpts['grpc-mode'] = params.get('mode');
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
             }
@@ -317,13 +318,10 @@ export function parseTrojanUrl(url: any) {
         const security = params.get('security');
         if (security === 'reality') {
             proxy.tls = true;
-            const realityOpts = {};
-            if (params.get('pbk'))
-                (realityOpts as Record<string, any>)['public-key'] = params.get('pbk');
-            if (params.get('sid'))
-                (realityOpts as Record<string, any>)['short-id'] = params.get('sid');
-            if (params.get('spx'))
-                (realityOpts as Record<string, any>)['spider-x'] = params.get('spx');
+            const realityOpts: Record<string, unknown> = {};
+            if (params.get('pbk')) realityOpts['public-key'] = params.get('pbk');
+            if (params.get('sid')) realityOpts['short-id'] = params.get('sid');
+            if (params.get('spx')) realityOpts['spider-x'] = params.get('spx');
             const sxm =
                 params.get('support-x25519mlkem768') ||
                 params.get('support_x25519mlkem768') ||
@@ -331,7 +329,7 @@ export function parseTrojanUrl(url: any) {
             if (sxm === '0' || sxm === 'false') {
                 // 显式禁用
             } else if (sxm === '1' || sxm === 'true') {
-                (realityOpts as Record<string, any>)['support-x25519mlkem768'] = true;
+                realityOpts['support-x25519mlkem768'] = true;
             }
             if (Object.keys(realityOpts).length > 0) {
                 proxy['reality-opts'] = realityOpts;
@@ -350,7 +348,7 @@ export function parseTrojanUrl(url: any) {
  * @param {string} url - VMess URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseVmessUrl(url: any) {
+export function parseVmessUrl(url: string): ProxyNode | null {
     try {
         // vmess://base64(json)
         const base64Part = url.substring(8);
@@ -368,7 +366,7 @@ export function parseVmessUrl(url: any) {
         const jsonStr = new TextDecoder('utf-8').decode(bytes);
         const config = JSON.parse(jsonStr);
 
-        const proxy: Record<string, any> = {
+        const proxy: ProxyNode = {
             name: config.ps || `VMess-${config.add}`,
             type: 'vmess',
             server: config.add || config.host || config.sni || '',
@@ -386,7 +384,7 @@ export function parseVmessUrl(url: any) {
 
         // WebSocket 配置
         if (network === 'ws') {
-            const wsOpts: Record<string, any> = {};
+            const wsOpts: Record<string, unknown> = {};
             if (config.path) wsOpts.path = config.path;
             if (config.host) {
                 wsOpts.headers = { Host: config.host };
@@ -398,9 +396,9 @@ export function parseVmessUrl(url: any) {
 
         // gRPC 配置
         if (network === 'grpc') {
-            const grpcOpts = {};
-            if (config.path) (grpcOpts as Record<string, any>)['grpc-service-name'] = config.path; // vmess json sometimes use path for serviceName
-            if (config.host) (grpcOpts as Record<string, any>)['grpc-service-name'] = config.host;
+            const grpcOpts: Record<string, unknown> = {};
+            if (config.path) grpcOpts['grpc-service-name'] = config.path; // vmess json sometimes use path for serviceName
+            if (config.host) grpcOpts['grpc-service-name'] = config.host;
             if (Object.keys(grpcOpts).length > 0) {
                 proxy['grpc-opts'] = grpcOpts;
             }
@@ -408,9 +406,9 @@ export function parseVmessUrl(url: any) {
 
         // H2 (HTTP/2) 配置
         if (network === 'h2') {
-            const h2Opts: Record<string, any> = {};
+            const h2Opts: Record<string, unknown> = {};
             if (config.path) h2Opts.path = config.path;
-            if (config.host) h2Opts.host = config.host.split(',').map((h: any) => h.trim());
+            if (config.host) h2Opts.host = config.host.split(',').map((h: string) => h.trim());
             if (Object.keys(h2Opts).length > 0) {
                 proxy['h2-opts'] = h2Opts;
             }
@@ -421,7 +419,7 @@ export function parseVmessUrl(url: any) {
             const httpOpts = {
                 path: config.path || '/',
                 headers: {
-                    Host: config.host ? config.host.split(',').map((h: any) => h.trim()) : [],
+                    Host: config.host ? config.host.split(',').map((h: string) => h.trim()) : [],
                 },
             };
             proxy['http-opts'] = httpOpts;
@@ -429,7 +427,7 @@ export function parseVmessUrl(url: any) {
 
         // QUIC 配置
         if (network === 'quic') {
-            const quicOpts: Record<string, any> = {};
+            const quicOpts: Record<string, unknown> = {};
             if (config.type) quicOpts.header = { type: config.type };
             if (config.host) quicOpts.security = config.host;
             if (config.path) quicOpts.key = config.path;
