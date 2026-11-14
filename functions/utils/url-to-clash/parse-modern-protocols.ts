@@ -5,12 +5,13 @@
 
 import { extractName, parseHostPort, parseQueryParams } from './parse-shared.ts';
 
-export function parseHysteria2Url(url: any) {
+export function parseHysteria2Url(url: unknown): Record<string, unknown> | null {
     try {
+        const urlText = String(url || '');
         // hysteria2://password@server:port?params#name
         // hy2://password@server:port?params#name
-        const prefixLen = url.startsWith('hysteria2://') ? 12 : 6;
-        const body = url.substring(prefixLen);
+        const prefixLen = urlText.startsWith('hysteria2://') ? 12 : 6;
+        const body = urlText.substring(prefixLen);
 
         const atIndex = body.indexOf('@');
         if (atIndex === -1) return null;
@@ -31,10 +32,10 @@ export function parseHysteria2Url(url: any) {
         }
 
         const { server, port } = parseHostPort(serverPart);
-        const params = parseQueryParams(url);
-        const name = extractName(url);
+        const params = parseQueryParams(urlText);
+        const name = extractName(urlText);
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `Hysteria2-${server}`,
             type: 'hysteria2',
             server,
@@ -95,18 +96,17 @@ export function parseHysteria2Url(url: any) {
         const realmServerUrl = params.get('realm-server') || params.get('server-url');
         const stunServers = params.get('stun-servers');
         if (realmId || realmToken || realmServerUrl || stunServers) {
-            proxy['realm-opts'] = {
-                enable: true,
-            };
-            if (realmId) proxy['realm-opts']['realm-id'] = realmId;
-            if (realmToken) proxy['realm-opts'].token = realmToken;
-            if (realmServerUrl) proxy['realm-opts']['server-url'] = realmServerUrl;
+            const realmOpts: Record<string, unknown> = { enable: true };
+            if (realmId) realmOpts['realm-id'] = realmId;
+            if (realmToken) realmOpts.token = realmToken;
+            if (realmServerUrl) realmOpts['server-url'] = realmServerUrl;
             if (stunServers) {
-                proxy['realm-opts']['stun-servers'] = stunServers
+                realmOpts['stun-servers'] = stunServers
                     .split(',')
                     .map((item) => item.trim())
                     .filter(Boolean);
             }
+            proxy['realm-opts'] = realmOpts;
         }
 
         // [重要] dialer-proxy 链式代理
@@ -126,10 +126,11 @@ export function parseHysteria2Url(url: any) {
  * @param {string} url - TUIC URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseTuicUrl(url: any) {
+export function parseTuicUrl(url: unknown): Record<string, unknown> | null {
     try {
+        const urlText = String(url || '');
         // tuic://token@server:port?sni=xxx&alpn=xxx#name
-        const body = url.substring(7); // 去掉 tuic://
+        const body = urlText.substring(7); // 去掉 tuic://
 
         const atIndex = body.lastIndexOf('@');
         if (atIndex === -1) return null;
@@ -139,7 +140,7 @@ export function parseTuicUrl(url: any) {
         const rawUuid = separatorIndex === -1 ? token : token.substring(0, separatorIndex);
         const rawPassword = separatorIndex === -1 ? '' : token.substring(separatorIndex + 1);
 
-        const safeDecode = (value: any) => {
+        const safeDecode = (value: string): string => {
             try {
                 return decodeURIComponent(value);
             } catch {
@@ -161,10 +162,10 @@ export function parseTuicUrl(url: any) {
         }
 
         const { server, port } = parseHostPort(serverPart);
-        const params = parseQueryParams(url);
-        const name = extractName(url);
+        const params = parseQueryParams(urlText);
+        const name = extractName(urlText);
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `TUIC-${server}`,
             type: 'tuic',
             server,
@@ -293,10 +294,11 @@ export function parseTuicUrl(url: any) {
  * @param {string} url - WireGuard URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseWireguardUrl(url: any) {
+export function parseWireguardUrl(url: unknown): Record<string, unknown> | null {
     try {
+        const urlText = String(url || '');
         // wireguard://privatekey@server:port?params#name
-        const body = url.substring('wireguard://'.length);
+        const body = urlText.substring('wireguard://'.length);
 
         const atIndex = body.indexOf('@');
         if (atIndex === -1) return null;
@@ -317,10 +319,10 @@ export function parseWireguardUrl(url: any) {
         }
 
         const { server, port } = parseHostPort(serverPart);
-        const params = parseQueryParams(url);
-        const name = extractName(url);
+        const params = parseQueryParams(urlText);
+        const name = extractName(urlText);
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `WireGuard-${server}`,
             type: 'wireguard',
             server,
@@ -402,9 +404,10 @@ export function parseWireguardUrl(url: any) {
  * @param {string} url - Snell URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseSnellUrl(url: any) {
+export function parseSnellUrl(url: unknown): Record<string, unknown> | null {
     try {
-        const body = url.substring('snell://'.length);
+        const urlText = String(url || '');
+        const body = urlText.substring('snell://'.length);
         let psk = '';
         let serverPart = '';
         const atIndex = body.indexOf('@');
@@ -428,12 +431,12 @@ export function parseSnellUrl(url: any) {
         }
 
         const { server, port } = parseHostPort(hostPortStr);
-        const params = parseQueryParams(url);
-        const name = extractName(url);
+        const params = parseQueryParams(urlText);
+        const name = extractName(urlText);
 
         if (!psk) psk = params.get('psk') || params.get('password') || '';
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `Snell-${server}`,
             type: 'snell',
             server,
@@ -449,9 +452,10 @@ export function parseSnellUrl(url: any) {
         const obfs = params.get('obfs');
         const obfsHost = params.get('obfs-host');
         if (obfs || obfsHost) {
-            proxy['obfs-opts'] = {};
-            if (obfs) proxy['obfs-opts'].mode = obfs;
-            if (obfsHost) proxy['obfs-opts'].host = obfsHost;
+            const obfsOpts: Record<string, unknown> = {};
+            if (obfs) obfsOpts.mode = obfs;
+            if (obfsHost) obfsOpts.host = obfsHost;
+            proxy['obfs-opts'] = obfsOpts;
         }
         if (params.get('udp-relay') === 'true') proxy.udp = true;
         if (params.get('ecn') === 'true' || params.get('ecn') === '1') proxy.ecn = true;
@@ -467,9 +471,10 @@ export function parseSnellUrl(url: any) {
  * @param {string} url - AnyTLS URL
  * @returns {Object|null} Clash 代理对象
  */
-export function parseAnytlsUrl(url: any) {
+export function parseAnytlsUrl(url: unknown): Record<string, unknown> | null {
     try {
-        const body = url.substring(9);
+        const urlText = String(url || '');
+        const body = urlText.substring(9);
         let password = '';
         let serverPart = '';
         const atIndex = body.indexOf('@');
@@ -494,10 +499,10 @@ export function parseAnytlsUrl(url: any) {
 
         const { server, port } = parseHostPort(hostPortStr);
         const safePort = isNaN(port) ? 443 : port;
-        const params = parseQueryParams(url);
-        const name = extractName(url);
+        const params = parseQueryParams(urlText);
+        const name = extractName(urlText);
 
-        const proxy: Record<string, any> = {
+        const proxy: Record<string, unknown> = {
             name: name || `AnyTLS-${server}`,
             type: 'anytls',
             server,
