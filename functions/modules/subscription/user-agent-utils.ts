@@ -9,19 +9,18 @@
  * @param {string} userAgent
  * @returns {boolean}
  */
-export function isBrowserAgent(userAgent: any) {
+export function isBrowserAgent(userAgent: unknown): boolean {
     if (!userAgent) return false;
     // Common browser keywords - must contain Mozilla and not be a common bot
+    const ua = String(userAgent);
     const isBrowser =
-        /Mozilla/i.test(userAgent) &&
-        /Chrome|Safari|Edge|Opera|Firefox|Via|UCBrowser|Quark|MQQBrowser|Konqueror/i.test(
-            userAgent
-        );
+        /Mozilla/i.test(ua) &&
+        /Chrome|Safari|Edge|Opera|Firefox|Via|UCBrowser|Quark|MQQBrowser|Konqueror/i.test(ua);
 
     // Common proxy client and bot keywords to exclude
     const isProxyOrBot =
         /clash|flclash|v2ray|surge|loon|shadowrocket|quantumult|stash|shadowsocks|mihomo|mihomo\.party|meta|nekobox|nekoray|sfi|sfa|sfra|sing-box|surfboard|hiddify|egern|yuetu|月兔|dio|dart|flutter|http-client|okhttp|axios|postman|curl|wget|go-http-client|python|java/i.test(
-            userAgent
+            ua
         );
 
     return isBrowser && !isProxyOrBot;
@@ -33,13 +32,14 @@ export function isBrowserAgent(userAgent: any) {
  * @param {URLSearchParams} searchParams
  * @returns {string} targetFormat (e.g., 'clash', 'singbox', 'base64')
  */
-export function isHiddifyAgent(userAgent: any) {
-    return /hiddify/i.test(userAgent || '');
+export function isHiddifyAgent(userAgent: unknown): boolean {
+    return /hiddify/i.test(String(userAgent || ''));
 }
 
-export function determineTargetFormat(userAgent: any, searchParams: any) {
+export function determineTargetFormat(userAgent: unknown, searchParams: unknown): string {
+    const params = searchParams as URLSearchParams;
     // 1. Check URL parameters first
-    let targetFormat = searchParams.get('target');
+    let targetFormat = params.get('target');
     if (!targetFormat) {
         const supportedFormats = [
             'clash',
@@ -54,7 +54,7 @@ export function determineTargetFormat(userAgent: any, searchParams: any) {
             'nodes',
         ];
         for (const format of supportedFormats) {
-            if (searchParams.has(format)) {
+            if (params.has(format)) {
                 // Normalize v2ray/trojan to base64 as they share the output format
                 targetFormat = format === 'v2ray' || format === 'trojan' ? 'base64' : format;
                 break;
@@ -68,7 +68,7 @@ export function determineTargetFormat(userAgent: any, searchParams: any) {
             return 'singbox';
         }
         if (normalizedTarget === 'surge') {
-            const ver = searchParams.get('ver');
+            const ver = params.get('ver');
             const safeVer = ver && /^\d+$/.test(ver) ? parseInt(ver, 10) : 4;
             return `surge&ver=${safeVer}`;
         }
@@ -79,7 +79,7 @@ export function determineTargetFormat(userAgent: any, searchParams: any) {
     }
 
     // 2. Check User-Agent
-    const ua = (userAgent || '').toLowerCase();
+    const ua = String(userAgent || '').toLowerCase();
 
     // --- Surge Specific Handling ---
     // Extract version accurately (e.g., "Surge/4.0", "Surge Mac/3.0", "Surge-Mac/5.0")
@@ -160,14 +160,15 @@ export function determineTargetFormat(userAgent: any, searchParams: any) {
  * @param {URLSearchParams} [searchParams]
  * @returns {boolean}
  */
-export function isMetaCore(userAgent: any, searchParams: any) {
+export function isMetaCore(userAgent: unknown, searchParams?: unknown): boolean {
+    const params = searchParams as URLSearchParams | null | undefined;
     // 支持通过 URL 参数强制开启 meta 模式 (e.g., &meta=true)
-    if (searchParams && (searchParams.get('meta') === '1' || searchParams.get('meta') === 'true')) {
-        return true;
+    if (params && typeof params.get === 'function') {
+        if (params.get('meta') === '1' || params.get('meta') === 'true') return true;
     }
 
     if (!userAgent) return false;
-    const ua = userAgent.toLowerCase();
+    const ua = String(userAgent).toLowerCase();
 
     // 包含 meta, mihomo, verge, flclash, stash, party, nekobox 等识别特征
     // [注意] 我们将 'clash' 放在稍后的位置，并与 core 关键字结合

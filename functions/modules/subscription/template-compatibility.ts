@@ -1,4 +1,12 @@
-export const TEMPLATE_COMPATIBILITY = {
+/** 单目标的模板兼容规则 */
+interface TemplateCompatibilityRule {
+    allowExternalTemplate: boolean;
+    externalTemplateTypes: string[];
+    strategy: string;
+    description: string;
+}
+
+export const TEMPLATE_COMPATIBILITY: Record<string, TemplateCompatibilityRule> = {
     clash: {
         allowExternalTemplate: true,
         externalTemplateTypes: ['ini'],
@@ -32,7 +40,7 @@ export const TEMPLATE_COMPATIBILITY = {
     },
 };
 
-function getTemplateExtension(templateUrl: any) {
+function getTemplateExtension(templateUrl: unknown): string {
     const normalizedTemplateUrl = typeof templateUrl === 'string' ? templateUrl.trim() : '';
     if (!normalizedTemplateUrl) return '';
 
@@ -45,19 +53,22 @@ function getTemplateExtension(templateUrl: any) {
     }
 }
 
-export function normalizeTemplateTarget(targetFormat: any) {
+export function normalizeTemplateTarget(targetFormat: unknown): string {
     const normalizedTarget = typeof targetFormat === 'string' ? targetFormat.toLowerCase() : '';
     if (normalizedTarget.startsWith('surge&ver=')) return 'surge';
     if (normalizedTarget === 'sing-box') return 'singbox';
     return normalizedTarget;
 }
 
-export function getTemplateCompatibility(targetFormat: any) {
+export function getTemplateCompatibility(targetFormat: unknown) {
     const normalizedTarget = normalizeTemplateTarget(targetFormat);
-    return (TEMPLATE_COMPATIBILITY as Record<string, any>)[normalizedTarget] || null;
+    return TEMPLATE_COMPATIBILITY[normalizedTarget] || null;
 }
 
-export function shouldApplyExternalTemplateForTarget(targetFormat: any, templateUrl: any) {
+export function shouldApplyExternalTemplateForTarget(
+    targetFormat: unknown,
+    templateUrl: unknown
+): boolean {
     const normalizedTemplateUrl = typeof templateUrl === 'string' ? templateUrl.trim() : '';
     const targetRule = getTemplateCompatibility(targetFormat);
 

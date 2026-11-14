@@ -5,7 +5,7 @@ import { StorageFactory, STORAGE_TYPES } from '../../storage-adapter.ts';
  * Handle proxied GitHub release requests with caching
  * GET /api/github/release?repo=owner/repo
  */
-export async function handleGithubReleaseRequest(request: any, env: any) {
+export async function handleGithubReleaseRequest(request: Request, env: Env) {
     const url = new URL(request.url);
     const repo = url.searchParams.get('repo');
 
@@ -76,12 +76,13 @@ export async function handleGithubReleaseRequest(request: any, env: any) {
         const data = await response.json();
 
         // Extract only needed fields
+        const release = data as Record<string, unknown>;
         const simplifiedData = {
-            tag_name: (data as Record<string, any>).tag_name,
-            html_url: (data as Record<string, any>).html_url,
-            published_at: (data as Record<string, any>).published_at,
-            name: (data as Error).name,
-            body: (data as Record<string, any>).body || '',
+            tag_name: release.tag_name,
+            html_url: release.html_url,
+            published_at: release.published_at,
+            name: release.name,
+            body: release.body || '',
         };
 
         const cachePayload = {
