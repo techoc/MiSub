@@ -35,18 +35,19 @@
     const { handleBulkImport } = useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk });
 
     // [文件导入] 新增节点时支持选择本地文件，内容直接填入编辑框，复用多行预览与批量导入流程
-    const fileInputRef = ref<any>(null);
+    const fileInputRef = ref<HTMLInputElement | null>(null);
     const fileAccept = IMPORT_FILE_ACCEPT;
     const fileNameHint = ref('');
     const isReadingFile = ref(false);
 
     const openFilePicker = () => {
-        (fileInputRef.value as Record<string, any> | undefined)?.click();
+        fileInputRef.value?.click();
     };
 
-    const onFilePicked = async (event: any) => {
-        const files = event.target.files;
-        event.target.value = '';
+    const onFilePicked = async (event: Event) => {
+        const input = event.target as HTMLInputElement | null;
+        const files = input?.files;
+        if (input) input.value = '';
         if (!files || !files.length || !props.editingNode) return;
 
         isReadingFile.value = true;
@@ -81,7 +82,7 @@
     const urlFocused = ref(false);
 
     // 协议检测
-    const getProtocol = (url: any) => {
+    const getProtocol = (url: string) => {
         if (!url) return null;
         const lowerUrl = url.toLowerCase().trim();
         if (lowerUrl.startsWith('anytls://')) return { name: 'AnyTLS', color: 'slate' };
@@ -105,7 +106,7 @@
     };
 
     // 从链接提取节点名称
-    const extractNodeName = (url: any) => {
+    const extractNodeName = (url: string) => {
         if (!url) return null;
         try {
             // VMess 特殊处理
@@ -130,9 +131,9 @@
         if (!props.editingNode?.url) return [];
         const lines = props.editingNode.url
             .split('\n')
-            .map((l: any) => l.trim())
+            .map((l: string) => l.trim())
             .filter(Boolean);
-        return lines.map((line: any, index: any) => {
+        return lines.map((line: string, index: number) => {
             const protocol = getProtocol(line);
             const name = extractNodeName(line) || `${t('common.node')} ${index + 1}`;
             return { line, protocol, name, index };

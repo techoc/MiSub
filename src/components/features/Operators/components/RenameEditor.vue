@@ -12,13 +12,13 @@
     const emit = defineEmits(['update:modelValue']);
     const { t } = useI18n();
 
-    const updateParam = (key: any, value: any) => {
+    const updateParam = (key: string, value: Record<string, unknown>) => {
         const newParams = { ...props.modelValue };
         newParams[key] = { ...newParams[key], ...value };
         emit('update:modelValue', newParams);
     };
 
-    const updateTemplate = (updates: any) => {
+    const updateTemplate = (updates: Record<string, unknown>) => {
         const current = props.modelValue.template || { enabled: false, template: '', offset: 1 };
         updateParam('template', { ...current, ...updates });
     };
@@ -29,19 +29,20 @@
         updateParam('regex', current);
     };
 
-    const normalizeRuleFlags = (index: any) => {
+    const normalizeRuleFlags = (index: number | string) => {
+        const idx = Number(index);
         const current = { ...(props.modelValue.regex || { rules: [] }) };
         current.rules = [...(current.rules || [])];
-        const rule = current.rules[index];
+        const rule = current.rules[idx];
         if (!rule) return;
-        current.rules[index] = { ...rule, flags: 'gi' };
+        current.rules[idx] = { ...rule, flags: 'gi' };
         updateParam('regex', current);
     };
 
-    const removeRule = (index: any) => {
+    const removeRule = (index: number | string) => {
         const current = { ...(props.modelValue.regex || { rules: [] }) };
         current.rules = [...current.rules];
-        current.rules.splice(index, 1);
+        current.rules.splice(Number(index), 1);
         updateParam('regex', current);
     };
 
@@ -56,7 +57,7 @@
         { nameKey: 'operators.templatePresetName', template: '{name}' },
     ];
 
-    const applyPresetTemplate = (tpl: any) => {
+    const applyPresetTemplate = (tpl: string) => {
         updateTemplate({ enabled: true, template: tpl });
     };
 
@@ -74,9 +75,10 @@
         },
     ];
 
-    const statusLabel = (enabled: any) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
+    const statusLabel = (enabled: unknown): string =>
+        t(enabled ? 'operators.statusOn' : 'operators.statusOff');
 
-    const applyPresetRegex = (rule: any) => {
+    const applyPresetRegex = (rule: Record<string, unknown>) => {
         const current = { ...(props.modelValue.regex || { enabled: true, rules: [] }) };
         current.enabled = true;
         current.rules = [...(current.rules || []), { ...rule, flags: 'gi' }];
