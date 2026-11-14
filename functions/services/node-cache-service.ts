@@ -1,4 +1,25 @@
-import type { KvRecord } from '../../types/models.ts'; /**
+import type { KvRecord } from '../../types/models.ts';
+
+/** 缓存条目 */
+interface CacheEntry {
+    nodes: string;
+    timestamp: number;
+    nodeCount: number;
+    sources: string[];
+}
+
+type CacheStatus = 'fresh' | 'stale' | 'expired' | 'miss';
+
+/** 节点缓存服务用到的存储适配器最小面 */
+interface NodeCacheStorage {
+    get(key: string): Promise<unknown>;
+    put(key: string, value: unknown): Promise<unknown>;
+    delete(key: string): Promise<unknown>;
+    list?(prefix?: string): Promise<unknown>;
+    kv?: KVNamespace;
+}
+
+/**
  * 节点缓存服务
  * 解决订阅拉取超时问题：缓存节点数据，快速响应客户端请求
  * @author MiSub Team
@@ -21,7 +42,7 @@ const CACHE_CONFIG = {
 const SHRINK_PROTECTION_MIN_CACHED_NODES = 10;
 const SHRINK_PROTECTION_MAX_RATIO = 0.3;
 
-export function isSuspiciousNodeCountDrop(previousCount: any, nextCount: any) {
+export function isSuspiciousNodeCountDrop(previousCount: unknown, nextCount: unknown): boolean {
     const previous = Number(previousCount);
     const next = Number(nextCount);
     if (!Number.isFinite(previous) || !Number.isFinite(next)) return false;
@@ -29,7 +50,7 @@ export function isSuspiciousNodeCountDrop(previousCount: any, nextCount: any) {
     return next / previous < SHRINK_PROTECTION_MAX_RATIO;
 }
 
-export function isLikelyPartialAggregateNodeList(nodes: any) {
+export function isLikelyPartialAggregateNodeList(nodes: unknown): boolean {
     const lines = String(nodes || '')
         .split(/\r?\n+/)
         .map((line) => line.trim())
@@ -50,11 +71,11 @@ export function isLikelyPartialAggregateNodeList(nodes: any) {
  * @param {string} identifier - 标识符
  * @returns {string} 缓存键
  */
-export function generateCacheKey(type: any, identifier: any) {
+export function generateCacheKey(type: string, identifier: string): string {
     return `${CACHE_CONFIG.KEY_PREFIX}${type}_${identifier}`;
 }
 
-function isSubscriptionNodeCacheKey(key: any) {
+function isSubscriptionNodeCacheKey(key: unknown): boolean {
     return (
         typeof key === 'string' &&
         (key.startsWith(`${CACHE_CONFIG.KEY_PREFIX}subscription_`) ||
@@ -77,9 +98,12 @@ function isSubscriptionNodeCacheKey(key: any) {
  * @param {string} cacheKey - 缓存键
  * @returns {Promise<{data: CacheEntry|null, status: 'fresh'|'stale'|'expired'|'miss'}>}
  */
-export async function getCache(storageAdapter: any, cacheKey: any) {
+export async function getCache(
+    storageAdapter: NodeCacheStorage,
+    cacheKey: string
+): Promise<{ data: CacheEntry | null; status: CacheStatus }> {
     try {
-        const cached = await storageAdapter.get(cacheKey);
+        const cached = (await storageAdapter.get(cacheKey)) as CacheEntry | null;
         if (!cached) {
             return { data: null, status: 'miss' };
         }
@@ -111,20 +135,20 @@ export async function getCache(storageAdapter: any, cacheKey: any) {
  * @returns {Promise<boolean>}
  */
 export async function setCache(
-    storageAdapter: any,
-    cacheKey: any,
-    nodes: any,
-    sources: any[] = []
-) {
+    storageAdapter: NodeCacheStorage,
+    cacheKey: string,
+    nodes: string,
+    sources: string[] = []
+): Promise<boolean> {
     try {
-        const nodeCount = nodes.split('\n').filter((line: any) => line.trim()).length;
+        const nodeCount = nodes.split('\n').filter((line) => line.trim()).length;
         if (isLikelyPartialAggregateNodeList(nodes)) {
             console.warn(
                 `[Cache] Refusing to cache a likely partial aggregate node list for ${cacheKey}`
             );
             return false;
         }
-        const existing = await storageAdapter.get(cacheKey);
+        const existing = (await storageAdapter.get(cacheKey)) as CacheEntry | null;
         const existingNodeCount =
             existing?.nodeCount ||
             String(existing?.nodes || '')
@@ -177,22 +201,26 @@ export async function setCache(
  * @param {Object} context - Cloudflare 上下文
  * @param {Function} refreshFn - 刷新函数
  */
-export function triggerBackgroundRefresh(context: any, refreshFn: any) {
-    if (context && typeof context.waitUntil === 'function') {
+export function triggerBackgroundRefresh(
+    context: unknown,
+    refreshFn: () => Promise<unknown>
+): void {
+    const ctx = context as { waitUntil?: (promise: Promise<unknown>) => void } | null;
+    if (ctx && typeof ctx.waitUntil === 'function') {
         // 使用 waitUntil 在响应后继续执行
         const refreshPromise = Promise.race([
             refreshFn(),
-            new Promise((_, reject) =>
+            new Promise<never>((_, reject) =>
                 setTimeout(
                     () => reject(new Error('Background refresh timeout')),
                     CACHE_CONFIG.BACKGROUND_REFRESH_TIMEOUT
                 )
             ),
         ]).catch((error) => {
-            console.warn('[Cache] Background refresh failed:', error.message);
+            console.warn('[Cache] Background refresh failed:', (error as Error).message);
         });
 
-        context.waitUntil(refreshPromise);
+        ctx.waitUntil(refreshPromise);
     } else {
         // 降级：不等待刷新完成
         console.warn('[Cache] waitUntil not available, skipping background refresh');
@@ -205,7 +233,7 @@ export function triggerBackgroundRefresh(context: any, refreshFn: any) {
  * @param {number} nodeCount - 节点数量
  * @returns {Object} 响应头对象
  */
-export function createCacheHeaders(status: any, nodeCount: any) {
+export function createCacheHeaders(status: string, nodeCount: number): Record<string, string> {
     return {
         'X-Cache-Status': status,
         'X-Node-Count': String(nodeCount),
@@ -226,7 +254,10 @@ export function getCacheConfig() {
  * @param {string} cacheKey - 缓存键
  * @returns {Promise<boolean>}
  */
-export async function clearCache(storageAdapter: any, cacheKey: any) {
+export async function clearCache(
+    storageAdapter: NodeCacheStorage,
+    cacheKey: string
+): Promise<boolean> {
     try {
         await storageAdapter.delete(cacheKey);
 
@@ -242,12 +273,15 @@ export async function clearCache(storageAdapter: any, cacheKey: any) {
  * @param {Object} storageAdapter - 存储适配器
  * @returns {Promise<{cleared: number, failed: number}>}
  */
-export async function clearAllNodeCaches(storageAdapter: any, options: Record<string, any> = {}) {
+export async function clearAllNodeCaches(
+    storageAdapter: NodeCacheStorage,
+    options: { preserveKeys?: string[] } = {}
+): Promise<{ cleared: number; failed: number; skipped: number }> {
     try {
         let cleared = 0;
         let failed = 0;
         let skipped = 0;
-        let cursor: any = null;
+        let cursor: string | null = null;
         const preserveKeys = new Set(
             Array.isArray(options?.preserveKeys)
                 ? options.preserveKeys.filter(isSubscriptionNodeCacheKey)
@@ -256,25 +290,27 @@ export async function clearAllNodeCaches(storageAdapter: any, options: Record<st
 
         // 循环处理分页，KV list 默认最多返回 1000 个 key
         do {
-            let keys = [];
+            let keys: Array<{ name: string } | string> = [];
             let listComplete = true;
 
             // 判断存储适配器类型并正确调用
             if (storageAdapter.kv && typeof storageAdapter.kv.list === 'function') {
                 // 直接使用 KV namespace
-                const listOptions: Record<string, any> = { prefix: CACHE_CONFIG.KEY_PREFIX };
+                const listOptions: KVNamespaceListOptions = { prefix: CACHE_CONFIG.KEY_PREFIX };
                 if (cursor) {
                     listOptions.cursor = cursor;
                 }
                 const result = await storageAdapter.kv.list(listOptions);
                 keys = result.keys || [];
-                cursor = result.list_complete ? null : result.cursor;
+                cursor = result.list_complete ? null : (result.cursor ?? null);
                 listComplete = result.list_complete !== false;
             } else if (typeof storageAdapter.list === 'function') {
                 // 使用适配器的 list 方法（KVStorageAdapter 或 D1StorageAdapter）
                 // 注意：适配器的 list 方法接受 prefix 字符串参数
                 const result = await storageAdapter.list(CACHE_CONFIG.KEY_PREFIX);
-                keys = Array.isArray(result) ? result : result.keys || [];
+                keys = Array.isArray(result)
+                    ? (result as Array<{ name: string }>)
+                    : ((result as { keys?: Array<{ name: string }> }).keys ?? []);
                 cursor = null; // 适配器可能不支持分页，一次性返回所有
                 listComplete = true;
             } else {
@@ -284,8 +320,7 @@ export async function clearAllNodeCaches(storageAdapter: any, options: Record<st
 
             // 删除缓存
             for (const keyInfo of keys) {
-                const key =
-                    typeof keyInfo === 'string' ? keyInfo : (keyInfo as Error).name || keyInfo;
+                const key = typeof keyInfo === 'string' ? keyInfo : keyInfo.name;
                 if (preserveKeys.has(key)) {
                     skipped++;
                     continue;
@@ -323,10 +358,10 @@ export async function clearAllNodeCaches(storageAdapter: any, options: Record<st
  * @returns {Promise<number>} 清除的缓存数量
  */
 export async function invalidateCaches(
-    storageAdapter: any,
-    profileIds: any[] = [],
-    token: KvRecord | null = null
-) {
+    storageAdapter: NodeCacheStorage,
+    profileIds: string[] = [],
+    token: string | null = null
+): Promise<number> {
     let clearedCount = 0;
 
     // 清除 Profile 缓存

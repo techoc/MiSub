@@ -247,7 +247,7 @@ export async function applyGroupOperation(
     // 清理节点缓存，避免前端读到旧数据
     if (type === 'node') {
         invalidateOutputCache();
-        await clearAllNodeCaches(env);
+        await clearAllNodeCaches(storageAdapter);
     }
 
     return changed;
