@@ -15,6 +15,22 @@ import { parseNodeList } from '../utils/node-parser.ts';
 import { getProcessedUserAgent } from '../../utils/format-utils.ts';
 import { buildFetchProxyUrl } from '../../utils/fetch-proxy-utils.ts';
 import { isSuspiciousNodeCountDrop } from '../../services/node-cache-service.ts';
+import type { SubscriptionItem, SubscriptionUserInfo } from '../../../types/models.ts';
+
+/** /api/node_count 的响应数据 */
+interface NodeCountResult {
+    count: number;
+    userInfo: SubscriptionUserInfo | null;
+    protected?: boolean;
+    lastGoodNodeCount?: number;
+}
+
+/** fetch / 解析阶段可能抛出的错误形状 */
+interface FetchErrorLike {
+    name?: string;
+    message?: string;
+    status?: number;
+}
 
 // 创建用于全局匹配的协议正则表达式
 const NODE_PROTOCOL_GLOBAL_REGEX = new RegExp(
@@ -33,14 +49,14 @@ const SUBSCRIPTION_BODY_ERROR_PATTERNS = [
     /\bhttp\s*(400|401|403|404|429|5\d\d)\b/i,
 ];
 
-function summarizeResponseText(text: any) {
+function summarizeResponseText(text: unknown): string {
     return String(text || '')
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, 180);
 }
 
-function detectSubscriptionBodyError(text: any) {
+function detectSubscriptionBodyError(text: unknown): Error | null {
     const summary = summarizeResponseText(text);
     if (!summary) return null;
 
@@ -57,7 +73,7 @@ function detectSubscriptionBodyError(text: any) {
     return error;
 }
 
-async function resolveNodeCountFetchCfOptions(env: any) {
+async function resolveNodeCountFetchCfOptions(env: Env) {
     try {
         const storageAdapter = StorageFactory.createAdapter(
             env,
@@ -82,7 +98,7 @@ async function resolveNodeCountFetchCfOptions(env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleNodeCountRequest(request: any, env: any) {
+export async function handleNodeCountRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createErrorResponse('Method Not Allowed', 405);
     }
@@ -98,10 +114,10 @@ export async function handleNodeCountRequest(request: any, env: any) {
             return createErrorResponse('Invalid or missing url', 400);
         }
 
-        const result: Record<string, any> = { count: 0, userInfo: null };
+        const result: NodeCountResult = { count: 0, userInfo: null };
         let trafficRequestSucceeded = false;
         let nodeCountRequestSucceeded = false;
-        let fetchError: any = null;
+        let fetchError: FetchErrorLike | null = null;
 
         let requestUrl = subUrl;
         const requestedUserAgent =
@@ -133,16 +149,14 @@ export async function handleNodeCountRequest(request: any, env: any) {
 
             // 1. 处理流量请求的结果
             // 辅助函数：从响应头提取用户信息
-            const extractUserInfo = (response: any) => {
+            const extractUserInfo = (response: Response): SubscriptionUserInfo | null => {
                 const userInfoHeader = response.headers.get('subscription-userinfo');
                 if (userInfoHeader) {
-                    const info = {};
-                    userInfoHeader.split(';').forEach((part: any) => {
+                    const info: SubscriptionUserInfo = {};
+                    userInfoHeader.split(';').forEach((part) => {
                         const [key, value] = part.trim().split('=');
                         if (key && value)
-                            (info as Record<string, any>)[key] = /^\d+$/.test(value)
-                                ? Number(value)
-                                : value;
+                            info[key] = /^\d+$/.test(value) ? Number(value) : value;
                     });
                     return info;
                 }
@@ -151,12 +165,12 @@ export async function handleNodeCountRequest(request: any, env: any) {
 
             // 辅助函数：从响应体伪节点名称中解析流量和到期信息
             // 许多机场会在节点列表中嵌入 "剩余流量：985.4 GB" / "套餐到期：2025-12-31" 等伪节点
-            const extractUserInfoFromBody = (decodedText: any) => {
+            const extractUserInfoFromBody = (decodedText: string): SubscriptionUserInfo | null => {
                 if (!decodedText) return null;
 
-                const info: Record<string, any> = {};
+                const info: SubscriptionUserInfo = {};
                 // 解析所有 URI fragment（# 后面的部分）
-                const fragments: any[] = [];
+                const fragments: string[] = [];
                 const lines = decodedText.split('\n');
                 for (const line of lines) {
                     const hashIdx = line.indexOf('#');
@@ -182,15 +196,13 @@ export async function handleNodeCountRequest(request: any, env: any) {
                     if (match) {
                         const value = parseFloat(match[1]);
                         const unit = match[2].toUpperCase();
-                        const multipliers = {
+                        const multipliers: Record<string, number> = {
                             KB: 1024,
                             MB: 1024 ** 2,
                             GB: 1024 ** 3,
                             TB: 1024 ** 4,
                         };
-                        const bytes = Math.round(
-                            value * ((multipliers as Record<string, any>)[unit] || 1)
-                        );
+                        const bytes = Math.round(value * (multipliers[unit] || 1));
                         // 用 total = bytes, upload = 0, download = 0 表示剩余流量
                         info.total = bytes;
                         info.upload = 0;
@@ -388,20 +400,18 @@ export async function handleNodeCountRequest(request: any, env: any) {
                 if (fetchError) {
                     if (
                         fetchError.name === 'AbortError' ||
-                        (fetchError.message as Record<string, any> | undefined)?.includes('timeout')
+                        fetchError.message?.includes('timeout')
                     ) {
                         errorType = 'timeout';
                         errorMessage = '订阅请求超时';
                     } else if (
-                        (fetchError.message as Record<string, any> | undefined)?.includes('HTTP')
+                        fetchError.message?.includes('HTTP')
                     ) {
                         errorType = 'server';
-                        errorMessage = fetchError.message;
+                        errorMessage = String(fetchError.message);
                     } else if (
-                        (fetchError.message as Record<string, any> | undefined)?.includes(
-                            'network'
-                        ) ||
-                        (fetchError.message as Record<string, any> | undefined)?.includes('fetch')
+                        fetchError.message?.includes('network') ||
+                        fetchError.message?.includes('fetch')
                     ) {
                         errorType = 'network';
                         errorMessage = '网络连接失败';
@@ -429,8 +439,9 @@ export async function handleNodeCountRequest(request: any, env: any) {
                     env,
                     await StorageFactory.getStorageType(env)
                 );
-                const originalSubs = (await storageAdapter.get('misub_subscriptions_v1')) || [];
-                const subToUpdate = originalSubs.find((s: any) => s.url === subUrl);
+                const originalSubs: SubscriptionItem[] =
+                    (await storageAdapter.get('misub_subscriptions_v1')) || [];
+                const subToUpdate = originalSubs.find((s) => s.url === subUrl);
 
                 if (subToUpdate) {
                     const knownNodeCount = Math.max(
@@ -454,13 +465,14 @@ export async function handleNodeCountRequest(request: any, env: any) {
                         });
                     }
 
-                    if (
-                        typeof (storageAdapter as Record<string, any>).updateSubscriptionById ===
-                        'function'
-                    ) {
-                        await (storageAdapter as Record<string, any>).updateSubscriptionById(
-                            subToUpdate.id,
-                            (current: any) => ({
+                    const updatable = storageAdapter as {
+                        updateSubscriptionById?: (
+                            id: string,
+                            updater: (current: SubscriptionItem) => SubscriptionItem
+                        ) => Promise<unknown>;
+                    };
+                    if (typeof updatable.updateSubscriptionById === 'function') {
+                        await updatable.updateSubscriptionById(subToUpdate.id, (current) => ({
                                 ...current,
                                 nodeCount: result.count,
                                 ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),
@@ -471,7 +483,7 @@ export async function handleNodeCountRequest(request: any, env: any) {
                         );
                     } else {
                         const allSubs = structuredClone(originalSubs);
-                        const target = allSubs.find((s: any) => s.url === subUrl);
+                        const target = allSubs.find((s) => s.url === subUrl);
                         if (target) {
                             target.nodeCount = result.count;
                             if (result.count >= 10) target.lastGoodNodeCount = result.count;
@@ -510,7 +522,7 @@ export async function handleNodeCountRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleBatchUpdateNodesRequest(request: any, env: any) {
+export async function handleBatchUpdateNodesRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -533,11 +545,12 @@ export async function handleBatchUpdateNodesRequest(request: any, env: any) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const allSubscriptions = (await storageAdapter.get('misub_subscriptions_v1')) || [];
+        const allSubscriptions: SubscriptionItem[] =
+            (await storageAdapter.get('misub_subscriptions_v1')) || [];
 
         // 过滤出要更新的订阅
         const targetSubscriptions = allSubscriptions.filter(
-            (sub: any) =>
+            (sub) =>
                 subscriptionIds.includes(sub.id) &&
                 sub.enabled &&
                 sub.url &&
@@ -557,13 +570,13 @@ export async function handleBatchUpdateNodesRequest(request: any, env: any) {
         const SINGLE_SUB_TIMEOUT = 15000;
 
         // 并行获取所有订阅的节点（带超时）
-        const updatePromises = targetSubscriptions.map(async (subscription: any) => {
+        const updatePromises = targetSubscriptions.map(async (subscription) => {
             try {
                 const effectiveUserAgent =
                     (typeof subscription.customUserAgent === 'string' &&
                         subscription.customUserAgent.trim()) ||
                     getProcessedUserAgent(userAgent, subscription.url);
-                let requestUrl = subscription.url;
+                let requestUrl = String(subscription.url || '');
                 if (
                     subscription.fetchProxy &&
                     typeof subscription.fetchProxy === 'string' &&
@@ -585,19 +598,17 @@ export async function handleBatchUpdateNodesRequest(request: any, env: any) {
                     { cf: { insecureSkipVerify: true } }
                 );
 
-                const timeoutPromise = new Promise((_, reject) =>
+                const timeoutPromise = new Promise<never>((_, reject) =>
                     setTimeout(() => reject(new Error('请求超时')), SINGLE_SUB_TIMEOUT)
                 );
 
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
 
-                if (!(response as Record<string, any>).ok) {
-                    throw new Error(
-                        `HTTP ${(response as Record<string, any>).status}: ${(response as Record<string, any>).statusText}`
-                    );
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const text = await (response as Record<string, any>).text();
+                const text = await response.text();
 
                 // 使用与预览功能相同的解码和节点统计逻辑
                 let nodeCount = 0;
@@ -677,7 +688,7 @@ export async function handleBatchUpdateNodesRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleCleanNodesRequest(request: any, env: any) {
+export async function handleCleanNodesRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
@@ -701,10 +712,13 @@ export async function handleCleanNodesRequest(request: any, env: any) {
             }
 
             // 去重处理
-            const uniqueNodes: any[] = [];
-            const seenUrls = new Set();
+            const previewNodes: SubscriptionItem[] = Array.isArray(previewResult.nodes)
+                ? previewResult.nodes
+                : [];
+            const uniqueNodes: SubscriptionItem[] = [];
+            const seenUrls = new Set<string>();
 
-            (previewResult.nodes as Record<string, any>).forEach((node: any) => {
+            previewNodes.forEach((node) => {
                 if (node.url && !seenUrls.has(node.url)) {
                     seenUrls.add(node.url);
                     uniqueNodes.push(node);
@@ -714,10 +728,9 @@ export async function handleCleanNodesRequest(request: any, env: any) {
             return createJsonResponse({
                 success: true,
                 profileId,
-                originalCount: (previewResult.nodes as Record<string, any>).length,
+                originalCount: previewNodes.length,
                 cleanedCount: uniqueNodes.length,
-                removedDuplicates:
-                    (previewResult.nodes as Record<string, any>).length - uniqueNodes.length,
+                removedDuplicates: previewNodes.length - uniqueNodes.length,
                 cleanedNodes: uniqueNodes,
             });
         } else {
@@ -735,7 +748,7 @@ export async function handleCleanNodesRequest(request: any, env: any) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleHealthCheckRequest(request: any, env: any) {
+export async function handleHealthCheckRequest(request: Request, env: Env) {
     if (request.method !== 'POST') {
         return createJsonResponse('Method Not Allowed', 405);
     }
