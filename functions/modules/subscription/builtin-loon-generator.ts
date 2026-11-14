@@ -21,11 +21,24 @@ import {
     pruneProxyGroups,
 } from './builtin-rules-provider.ts';
 import { normalizeGeneratorOptions } from './generator-options.ts';
+import type { ProxyNode } from '../../../types/models.ts';
+
+/** Loon 生成器选项 */
+interface LoonGeneratorOptions {
+    managedConfigUrl?: string;
+    interval?: number;
+    skipCertVerify?: boolean;
+    enableUdp?: boolean;
+    enableTfo?: boolean;
+    ruleLevel?: string;
+    generatorOptions?: Record<string, unknown>;
+    [key: string]: unknown;
+}
 
 /**
  * 清理控制字符
  */
-function cleanControlChars(str: any) {
+function cleanControlChars(str: string): string {
     if (typeof str !== 'string') return str;
     // eslint-disable-next-line no-control-regex -- 目的本身就是清除控制字符，正则必须包含控制字符范围
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
@@ -34,9 +47,9 @@ function cleanControlChars(str: any) {
 /**
  * 安全化节点名称
  */
-function sanitizeNodeName(name: any) {
+function sanitizeNodeName(name: unknown): string {
     if (!name) return 'Untitled';
-    let safe = cleanControlChars(name);
+    let safe = cleanControlChars(name as string);
     // 移除或替换可能破坏 INI 解析的字符
     safe = safe.replace(/,/g, ' ').replace(/=/g, '-');
     safe = safe.replace(/\s+/g, ' ').trim();
@@ -46,7 +59,7 @@ function sanitizeNodeName(name: any) {
 /**
  * 参数值加引号（如果包含特殊字符）
  */
-function loonQuote(value: any) {
+function loonQuote(value: unknown): string {
     if (value === undefined || value === null) return '';
     const strValue = String(value);
     // 如果包含逗号、空格、等号、引号，则需要加双引号并转义内部引号
@@ -60,7 +73,7 @@ function loonQuote(value: any) {
 /**
  * 根据节点名称获取对应的图标 URL
  */
-function getIconByNodeName(name: any) {
+function getIconByNodeName(name: string): string | null {
     const iconRepo = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
     if (/港|HK|Hong Kong/i.test(name)) return `${iconRepo}/Hong_Kong.png`;
     if (/台|TW|Taiwan/i.test(name)) return `${iconRepo}/Taiwan.png`;
@@ -78,7 +91,8 @@ function getIconByNodeName(name: any) {
 /**
  * 将 Clash 代理对象转换为 Loon [Proxy] 行
  */
-function clashProxyToLoonResult(proxy: any) {
+function clashProxyToLoonResult(proxyInput: unknown): string | null {
+    const proxy = proxyInput as ProxyNode | null;
     if (!proxy || !proxy.server || !proxy.port) return null;
 
     const name = sanitizeNodeName(proxy.name);
@@ -86,7 +100,7 @@ function clashProxyToLoonResult(proxy: any) {
     const server = proxy.server;
     const port = proxy.port;
 
-    const parts: any[] = [];
+    const parts: string[] = [];
 
     if (type === 'ss' || type === 'shadowsocks') {
         parts.push(`${name} = Shadowsocks`);
@@ -268,7 +282,7 @@ function clashProxyToLoonResult(proxy: any) {
     return parts.join(', ');
 }
 
-function appendTlsParams(parts: any, proxy: any) {
+function appendTlsParams(parts: string[], proxy: ProxyNode) {
     if (proxy.sni || proxy.servername) {
         parts.push(`sni=${loonQuote(proxy.sni || proxy.servername)}`);
     }
@@ -288,7 +302,7 @@ function appendTlsParams(parts: any, proxy: any) {
  * 生成内置 Loon 配置
  */
 
-export function generateBuiltinLoonConfig(nodeList: any, options: Record<string, any> = {}) {
+export function generateBuiltinLoonConfig(nodeList: string, options: LoonGeneratorOptions = {}) {
     const {
         managedConfigUrl = '',
         interval = 86400,
@@ -297,21 +311,26 @@ export function generateBuiltinLoonConfig(nodeList: any, options: Record<string,
         enableTfo = false,
         ruleLevel = 'std',
     } = options;
-    const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
+    const rawGeneratorOptions = options.generatorOptions;
+    const generatorOptions = normalizeGeneratorOptions(
+        rawGeneratorOptions && typeof rawGeneratorOptions === 'object'
+            ? (rawGeneratorOptions as Record<string, unknown>)
+            : {}
+    );
 
     const cleanedNodeList = cleanControlChars(nodeList);
     const nodeUrls = cleanedNodeList
         .split('\n')
-        .map((line: any) => line.trim())
-        .filter((line: any) => line && !line.startsWith('#'));
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('#'));
 
     const proxyLines: string[] = [];
-    const proxyNames: any[] = [];
-    const proxiesWithMetadata: any[] = [];
-    const usedNames = new Map();
+    const proxyNames: string[] = [];
+    const proxiesWithMetadata: ProxyNode[] = [];
+    const usedNames = new Map<string, number>();
 
     // 转换为 Clash 代理对象
-    const proxies = urlsToClashProxies(nodeUrls, options);
+    const proxies = urlsToClashProxies(nodeUrls, options) as unknown as ProxyNode[];
 
     // 应用 UDP 开关
     // (已在 urlsToClashProxies 中全局处理)
@@ -348,18 +367,19 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
     sections.push(`[Proxy]\nDIRECT = direct\n${proxyLines.join('\n')}`);
 
     const levelKey = (ruleLevel || 'std').toUpperCase();
-    const policyFactory = (POLICY_GROUPS as Record<string, any>)[levelKey] || POLICY_GROUPS.STD;
+    const policyFactory =
+        POLICY_GROUPS[levelKey as keyof typeof POLICY_GROUPS] || POLICY_GROUPS.STD;
     let abstractGroups = policyFactory(proxiesWithMetadata, options);
     if (levelKey === 'RELAY') {
-        abstractGroups = abstractGroups.map((group: any) =>
+        abstractGroups = abstractGroups.map((group) =>
             group.name === '🔗 链式代理'
                 ? { ...group, type: 'relay', proxies: ['入口节点', '落地节点'] }
                 : group
         );
-        if (!abstractGroups.some((group: any) => group.name === '落地节点')) {
+        if (!abstractGroups.some((group) => group.name === '落地节点')) {
             const proxyNames = proxiesWithMetadata.map((proxy) => proxy.name);
             abstractGroups.splice(
-                abstractGroups.findIndex((group: any) => group.name === '入口节点') + 1,
+                abstractGroups.findIndex((group) => group.name === '入口节点') + 1,
                 0,
                 {
                     name: '落地节点',
@@ -372,7 +392,7 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
     abstractGroups = pruneProxyGroups(abstractGroups, proxiesWithMetadata);
 
     const iconRepo = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
-    const groupIcons = {
+    const groupIcons: Record<string, string> = {
         [DEFAULT_SELECT_GROUP]: `${iconRepo}/Proxy.png`,
         [DEFAULT_RELAY_GROUP]: `${iconRepo}/Proxy.png`,
         '♻️ 自动选择': `${iconRepo}/Speedtest.png`,
@@ -392,15 +412,13 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
         '🇬🇧 英国节点': `${iconRepo}/United_Kingdom.png`,
     };
 
-    const proxyGroupLines = abstractGroups.map((group: any) => {
+    const proxyGroupLines = abstractGroups.map((group) => {
         let type = group.type === 'url-test' ? 'url-test' : 'select';
         if (group.type === 'fallback') type = 'fallback';
         if (group.type === 'relay') type = 'relay';
 
-        const proxies = group.proxies.join(', ');
-        const icon = (groupIcons as Record<string, any>)[group.name]
-            ? `, icon=${(groupIcons as Record<string, any>)[group.name]}`
-            : '';
+        const proxies = (group.proxies || []).join(', ');
+        const icon = groupIcons[group.name] ? `, icon=${groupIcons[group.name]}` : '';
         const extra =
             type === 'url-test' || type === 'fallback'
                 ? `, url=http://www.gstatic.com/generate_204, interval=300, tolerance=50`
