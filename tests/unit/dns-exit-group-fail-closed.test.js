@@ -36,9 +36,9 @@ describe('DNS exit group fail-closed behavior across renderers', () => {
         expect(dnsGroup, '零节点时 🌐 DNS 出口 组不应被整组丢弃').toBeTruthy();
         expect(dnsGroup.proxies).toEqual(['REJECT']);
 
-        const policy = parsed.dns?.['nameserver-policy']?.['geosite:geolocation-!cn'] || [];
-        expect(policy.length).toBeGreaterThan(0);
-        for (const entry of policy) {
+        const fallback = parsed.dns?.fallback || [];
+        expect(fallback.length).toBeGreaterThan(0);
+        for (const entry of fallback) {
             expect(entry.endsWith(`#${DNS_PROXY_GROUP}`)).toBe(true);
         }
     });

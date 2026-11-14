@@ -4,6 +4,7 @@ import { PINNED_RULE_REVISIONS } from '../functions/modules/subscription/builtin
 import {
     DNS_PROXY_GROUP,
     SINGBOX_CN_RULE_SET,
+    SINGBOX_FOREIGN_RULE_SET,
 } from '../functions/modules/subscription/safe-dns.js';
 
 function assert(condition, message) {
@@ -76,6 +77,19 @@ function assertDnsMode(values, mode, label) {
     }
 }
 
+function assertDomesticBaseline(values, label) {
+    const servers = array(values);
+    assert(servers.length > 0, `${label} has no DNS servers`);
+    assert(
+        servers.every((server) => /^udp:\/\//i.test(String(server))),
+        `${label} baseline is not plaintext UDP`
+    );
+    assert(
+        servers.every((server) => !String(server).includes('#')),
+        `${label} baseline must resolve directly (no proxy annotation)`
+    );
+}
+
 export function validateClashConfig(config, mode) {
     assert(config && typeof config === 'object', 'Clash output is not an object');
     assert(config.ipv6 === false, 'Clash IPv6 is enabled');
@@ -89,9 +103,19 @@ export function validateClashConfig(config, mode) {
     const dns = config.dns || {};
     assert(dns['enhanced-mode'] === 'fake-ip', 'Clash fake-ip mode is missing');
     assert(dns['respect-rules'] === true, 'Clash DNS respect-rules is disabled');
-    assertDnsMode(dns.nameserver, mode, 'Clash DNS');
-    if (mode === 'clean')
-        assert(array(dns.fallback).length === 0, 'Clash clean mode has fallback DNS');
+    // 国内 DNS 兜底基线：nameserver 恒为国内明文 UDP 直连
+    assertDomesticBaseline(dns.nameserver, 'Clash DNS');
+    // 国外 DNS 经出口策略组进入 fallback（clean=明文 UDP、polluted=加密 DoH）
+    assertDnsMode(dns.fallback, mode, 'Clash fallback DNS');
+    assert(
+        array(dns.fallback).every((server) => String(server).endsWith(`#${DNS_PROXY_GROUP}`)),
+        'Clash fallback DNS is not proxied via the DNS exit group'
+    );
+    // geolocation-!cn 策略会让国外域名绕过 fallback 竞速，兜底失效
+    assert(
+        !dns['nameserver-policy']?.['geosite:geolocation-!cn'],
+        'Clash geolocation-!cn policy bypasses the fallback baseline'
+    );
     assert(
         array(dns['nameserver-policy']?.['geosite:cn']).length > 0,
         'Clash geosite:cn DNS policy is missing'
@@ -133,6 +157,15 @@ export function validateSingboxConfig(config, mode) {
         ),
         'sing-box geosite-cn DNS route is missing'
     );
+    assert(dns.final === 'dns-cn-1', 'sing-box DNS final must fall back to the domestic resolver');
+    assert(
+        array(dns.rules).some(
+            (rule) =>
+                array(rule.rule_set).includes(SINGBOX_FOREIGN_RULE_SET) &&
+                rule.server === 'dns-foreign-1'
+        ),
+        'sing-box geolocation-!cn DNS route is missing'
+    );
     const cnRuleSet = array(config.route?.rule_set).find(
         (ruleSet) => ruleSet?.tag === SINGBOX_CN_RULE_SET
     );
@@ -143,6 +176,17 @@ export function validateSingboxConfig(config, mode) {
     assert(
         String(cnRuleSet.url || '').includes(PINNED_RULE_REVISIONS.SING_GEOSITE),
         'sing-box geosite-cn rule-set is not SHA-pinned'
+    );
+    const foreignRuleSet = array(config.route?.rule_set).find(
+        (ruleSet) => ruleSet?.tag === SINGBOX_FOREIGN_RULE_SET
+    );
+    assert(
+        foreignRuleSet?.type === 'remote' && foreignRuleSet.format === 'binary',
+        'sing-box geolocation-!cn rule-set definition is missing'
+    );
+    assert(
+        String(foreignRuleSet.url || '').includes(PINNED_RULE_REVISIONS.SING_GEOSITE),
+        'sing-box geolocation-!cn rule-set is not SHA-pinned'
     );
 
     const domestic = array(dns.servers).filter((server) =>

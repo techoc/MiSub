@@ -10,6 +10,7 @@ export const DNS_MODES = Object.freeze({
 
 export const DNS_PROXY_GROUP = '🌐 DNS 出口';
 export const SINGBOX_CN_RULE_SET = 'geosite-cn';
+export const SINGBOX_FOREIGN_RULE_SET = 'geosite-geolocation-!cn';
 
 export const DEFAULT_DNS_POLICY = Object.freeze({
     domestic: ['223.5.5.5', '119.29.29.29'],
@@ -274,22 +275,28 @@ export function resolveSafeDnsConfig(raw, options = {}) {
     const generatorOptions = normalizeGeneratorOptions(options.generatorOptions);
     const policy = resolveDnsPolicy(raw, options);
     const isDomestic = isDomesticDnsMode(policy.mode);
-    // 国外形态沿用既有语义：clean=明文 UDP、polluted=加密 DoH，均带 #DNS 出口 后缀；
-    // 国内形态整块走阿里/腾讯直连（clean=明文 UDP、polluted=加密 DoH），绝不引用出口策略组。
-    const foreign = !isDomestic
-        ? policy.mode === DNS_MODES.POLLUTED
-            ? policy.polluted
-            : policy.foreign
-        : policy.mode === DNS_MODES.DOMESTIC_POLLUTED
-          ? policy.domesticEncrypted
-          : policy.domestic.map(plainResolver).filter(Boolean);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
+    // 国内模式（domestic-clean / domestic-polluted）整块走阿里/腾讯直连
+    // （clean=明文 UDP、polluted=加密 DoH），绝不引用出口策略组。
+    const domesticNameserver =
+        policy.mode === DNS_MODES.DOMESTIC_POLLUTED
+            ? policy.domesticEncrypted
+            : policy.domestic.map(plainResolver).filter(Boolean);
+    // 国外模式采用经典反污染结构：nameserver 固定为国内明文 UDP 直连（兜底基线），
+    // 国外 DNS（clean=明文 UDP / polluted=加密 DoH）经 DNS 出口策略组进入 fallback，
+    // 与 nameserver 并发查询：国内结果为非 CN IP 时按 fallback-filter 改用国外结果；
+    // 国外 DNS 不可达时并发中的国内结果自然兜底，避免国外域名解析整体失败。
+    // geosite:geolocation-!cn 不写入 nameserver-policy——policy 优先于 fallback 竞速，
+    // 保留会让国外域名绕过兜底、在出口组失效时解析失败。
+    const foreignFallback = isDomestic
+        ? []
+        : (policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign).map((value) =>
+              withProxy(value, proxyGroup)
+          );
     const dns = clone(DEFAULT_DNS_CONFIG);
 
     dns['default-nameserver'] = [...policy.domestic];
-    dns.nameserver = isDomestic
-        ? [...foreign]
-        : foreign.map((value) => withProxy(value, proxyGroup));
+    dns.nameserver = [...domesticNameserver];
     dns['nameserver-policy'] = {
         'geosite:private': [...policy.domestic],
         'geosite:cn': [...policy.domestic],
@@ -301,16 +308,11 @@ export function resolveSafeDnsConfig(raw, options = {}) {
             }
             return acc;
         }, {}),
-        'geosite:geolocation-!cn': isDomestic
-            ? [...foreign]
-            : foreign.map((value) => withProxy(value, proxyGroup)),
+        ...(isDomestic ? { 'geosite:geolocation-!cn': [...domesticNameserver] } : {}),
     };
     dns['proxy-server-nameserver'] = [...policy.domestic];
     dns['direct-nameserver'] = [...policy.domestic];
-    dns.fallback =
-        policy.mode === DNS_MODES.POLLUTED
-            ? foreign.map((value) => withProxy(value, proxyGroup))
-            : [];
+    dns.fallback = foreignFallback;
 
     const override = policyInput(rawOverride);
     SAFE_DNS_FIELDS.forEach((key) => {
@@ -382,8 +384,19 @@ export function buildSingboxDnsConfig(raw, options = {}) {
         rules: [
             { rule_set: [SINGBOX_CN_RULE_SET], action: 'route', server: domesticTag },
             { domain_suffix: ['.cn', '.lan', '.local'], action: 'route', server: domesticTag },
+            // 国外模式：已知境外域名走 dns-foreign（经出口组），其余域名 final 兜底到国内解析，
+            // 与 mihomo 经典结构一致；引用的 rule-set 定义由生成端注入 route.rule_set
+            ...(isDomestic
+                ? []
+                : [
+                      {
+                          rule_set: [SINGBOX_FOREIGN_RULE_SET],
+                          action: 'route',
+                          server: foreignTag,
+                      },
+                  ]),
         ],
-        final: isDomestic ? domesticTag : foreignTag,
+        final: domesticTag,
     };
 }
 

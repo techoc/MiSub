@@ -48,7 +48,8 @@ describe('Clash 内置生成器', () => {
         expect(parsed.dns.ipv6).toBe(false);
         expect(parsed.dns['enhanced-mode']).toBe('fake-ip');
         expect(parsed.dns['respect-rules']).toBe(true);
-        expect(parsed.dns.nameserver).toContain('udp://8.8.8.8:53#🌐 DNS 出口');
+        expect(parsed.dns.nameserver).toEqual(['udp://223.5.5.5:53', 'udp://119.29.29.29:53']);
+        expect(parsed.dns.fallback).toContain('udp://8.8.8.8:53#🌐 DNS 出口');
         expect(parsed.dns['nameserver-policy']['geosite:cn']).toEqual([
             '223.5.5.5',
             '119.29.29.29',

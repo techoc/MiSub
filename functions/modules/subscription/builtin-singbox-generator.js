@@ -11,6 +11,7 @@ import {
     getBuiltinRules,
     getRemoteProviderDefinitions,
     getSingboxDnsRuleSet,
+    getSingboxForeignRuleSet,
     DEFAULT_SELECT_GROUP,
     DEFAULT_RELAY_GROUP,
     pruneProxyGroups,
@@ -20,6 +21,7 @@ import {
     DNS_PROXY_GROUP,
     isDomesticDnsMode,
     SINGBOX_CN_RULE_SET,
+    SINGBOX_FOREIGN_RULE_SET,
 } from './safe-dns.js';
 import { normalizeGeneratorOptions } from './generator-options.js';
 
@@ -382,7 +384,13 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     });
     const ruleSets = [
         getSingboxDnsRuleSet(dnsDetour),
-        ...Object.values(ruleSetsMap).filter((ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET),
+        // 国外 DNS 模式下 DNS 分流规则引用 geolocation-!cn，需注入对应 rule-set 定义；
+        // 国内模式无该引用，不注入（避免无谓下载）
+        ...(domesticDns ? [] : [getSingboxForeignRuleSet(dnsDetour)]),
+        ...Object.values(ruleSetsMap).filter(
+            (ruleSet) =>
+                ruleSet.tag !== SINGBOX_CN_RULE_SET && ruleSet.tag !== SINGBOX_FOREIGN_RULE_SET
+        ),
     ];
 
     // 转换路由规则：将中间对象映射为 Sing-Box 语法

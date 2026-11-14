@@ -64,7 +64,7 @@ describe('Custom template isolation & Custom DNS override', () => {
         );
         expect(aiGroups).toEqual([]);
 
-        // 未配置自定义 DNS，采用作者默认 Safe DNS 时，保留 DNS 出口策略组以供 nameserver 引用
+        // 未配置自定义 DNS，采用作者默认 Safe DNS 时，保留 DNS 出口策略组以供 fallback 引用
         expect(groupNames).toContain(DNS_PROXY_GROUP);
 
         const rules = parsed.rules || [];
@@ -133,7 +133,8 @@ describe('Custom template isolation & Custom DNS override', () => {
         expect(groupNames).toContain(DNS_PROXY_GROUP);
         expect(groupNames).toContain('🤖 AI 自动');
         expect(groupNames).toContain('🤖 OpenAI');
-        expect(parsed.dns.nameserver).toEqual([
+        expect(parsed.dns.nameserver).toEqual(['udp://223.5.5.5:53', 'udp://119.29.29.29:53']);
+        expect(parsed.dns.fallback).toEqual([
             `udp://8.8.8.8:53#${DNS_PROXY_GROUP}`,
             `udp://1.1.1.1:53#${DNS_PROXY_GROUP}`,
         ]);

@@ -1288,7 +1288,7 @@ export default {
                 'Prevents traffic from bypassing TUN. Disabling improves compatibility but may leak direct traffic.',
             generatorDnsMode: 'DNS mode',
             generatorDnsModeHint:
-                'Foreign: Clean plain UDP, Polluted encrypted DoH (8.8.8.8/1.1.1.1). Domestic: Clean Ali/Tencent plain UDP, Polluted Ali/Tencent encrypted DoH (223.5.5.5/119.29.29.29); all domestic resolvers go direct without the proxy.',
+                'Foreign modes: Clean plain UDP / Polluted encrypted DoH (8.8.8.8/1.1.1.1) queried via the DNS exit group, with Ali/Tencent DNS racing as a domestic fallback. Domestic modes resolve everything directly via Ali/Tencent (223.5.5.5/119.29.29.29) without the proxy.',
             generatorDnsModeClean: 'Foreign · Clean (plain UDP)',
             generatorDnsModePolluted: 'Foreign · Polluted (encrypted DoH)',
             generatorDnsModeDomesticClean: 'Domestic · Clean (Ali/Tencent plain)',

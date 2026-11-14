@@ -216,7 +216,7 @@ describe('Builtin template rule audit', () => {
             auto_route: true,
             strict_route: true,
         });
-        expect(singbox.dns.final).toBe('dns-foreign-1');
+        expect(singbox.dns.final).toBe('dns-cn-1');
         expect(
             singbox.outbounds.find((outbound) => outbound.tag === '🌐 DNS 出口')?.outbounds
         ).toContain('REJECT');

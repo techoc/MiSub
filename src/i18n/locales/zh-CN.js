@@ -1242,7 +1242,7 @@ export default {
             generatorTunStrictRouteHint: '阻止流量绕过 TUN。关闭后兼容性更好，但可能泄漏直连流量。',
             generatorDnsMode: 'DNS 模式',
             generatorDnsModeHint:
-                '国外：Clean 明文 UDP、Polluted 加密 DoH（8.8.8.8/1.1.1.1）；国内：Clean 阿里/腾讯明文 UDP、Polluted 阿里/腾讯加密 DoH（223.5.5.5/119.29.29.29），全部直连不经过代理。',
+                '国外模式：Clean 明文 UDP / Polluted 加密 DoH（8.8.8.8/1.1.1.1）经 DNS 出口组查询，国内 DNS（阿里/腾讯）并发兜底；国内模式全部直连阿里/腾讯（223.5.5.5/119.29.29.29），不经过代理。',
             generatorDnsModeClean: '国外 · Clean（明文 UDP）',
             generatorDnsModePolluted: '国外 · Polluted（加密 DoH）',
             generatorDnsModeDomesticClean: '国内 · Clean（阿里/腾讯明文）',

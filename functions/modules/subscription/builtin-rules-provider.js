@@ -1,5 +1,5 @@
 import { groupNodeLinesByRegion, isPlaceholderInfoNode } from './region-groups.js';
-import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';
+import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET, SINGBOX_FOREIGN_RULE_SET } from './safe-dns.js';
 import { withPolicyFallbacks } from './policy-fallbacks.js';
 
 /**
@@ -586,6 +586,10 @@ export const REMOTE_SOURCES = {
         name: 'China Domains (GeoSite)',
         singbox: `${SING_GEOSITE_BASE}/geosite-cn.srs`,
     },
+    [SINGBOX_FOREIGN_RULE_SET]: {
+        name: 'Non-CN Domains (GeoSite)',
+        singbox: `${SING_GEOSITE_BASE}/geosite-geolocation-!cn.srs`,
+    },
 };
 
 /**
@@ -770,4 +774,17 @@ export function getSingboxDnsRuleSet(downloadDetour = DNS_PROXY_GROUP) {
         [{ type: 'rule_set', tag: SINGBOX_CN_RULE_SET }],
         { downloadDetour }
     )[SINGBOX_CN_RULE_SET];
+}
+
+/**
+ * sing-box DNS 分流用的境外域名 rule-set 定义（geosite-geolocation-!cn）。
+ * 国外 DNS 模式下 DNS 规则通过它把境外域名路由到 dns-foreign-*；
+ * 国内模式不产生该引用，调用方不应注入。
+ */
+export function getSingboxForeignRuleSet(downloadDetour = DNS_PROXY_GROUP) {
+    return getRemoteProviderDefinitions(
+        'singbox',
+        [{ type: 'rule_set', tag: SINGBOX_FOREIGN_RULE_SET }],
+        { downloadDetour }
+    )[SINGBOX_FOREIGN_RULE_SET];
 }

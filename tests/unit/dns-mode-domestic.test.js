@@ -65,19 +65,20 @@ describe('DNS mode normalization (4 options)', () => {
         expect(isDomesticDnsMode('')).toBe(false);
     });
 
-    it('keeps legacy foreign behavior intact (nameservers reference the DNS exit group)', () => {
+    it('keeps foreign modes on the domestic-baseline structure (fallback via the exit group)', () => {
         const clean = resolveSafeDnsConfig('', { mode: 'clean' });
-        expect(clean.nameserver).toEqual([
+        expect(clean.nameserver).toEqual(['udp://223.5.5.5:53', 'udp://119.29.29.29:53']);
+        expect(clean.fallback).toEqual([
             `udp://8.8.8.8:53#${DNS_PROXY_GROUP}`,
             `udp://1.1.1.1:53#${DNS_PROXY_GROUP}`,
         ]);
-        expect(clean.fallback).toEqual([]);
 
         const polluted = resolveSafeDnsConfig('', { mode: 'polluted' });
-        expect(polluted.nameserver.every((server) => server.endsWith(`#${DNS_PROXY_GROUP}`))).toBe(
+        expect(polluted.nameserver).toEqual(['udp://223.5.5.5:53', 'udp://119.29.29.29:53']);
+        expect(polluted.fallback.every((server) => server.startsWith('https://'))).toBe(true);
+        expect(polluted.fallback.every((server) => server.endsWith(`#${DNS_PROXY_GROUP}`))).toBe(
             true
         );
-        expect(polluted.nameserver.every((server) => server.startsWith('https://'))).toBe(true);
     });
 });
 

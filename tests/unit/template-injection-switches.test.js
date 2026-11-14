@@ -125,7 +125,7 @@ describe('Clash template renderer honors injection switches', () => {
 
         expect(config['proxy-groups'].some((group) => group.name === DNS_PROXY_GROUP)).toBe(true);
         expect(
-            (config.dns.nameserver || []).some((ns) => String(ns).includes(`#${DNS_PROXY_GROUP}`))
+            (config.dns.fallback || []).some((ns) => String(ns).includes(`#${DNS_PROXY_GROUP}`))
         ).toBe(true);
         expect(config['proxy-groups'].some((group) => String(group.name).includes('🤖'))).toBe(
             true

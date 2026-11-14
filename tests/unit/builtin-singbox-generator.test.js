@@ -128,7 +128,15 @@ describe('Built-in Sing-box generator', () => {
                 }),
             ])
         );
-        expect(parsed.dns.final).toBe('dns-foreign-1');
+        expect(parsed.dns.final).toBe('dns-cn-1');
+        expect(parsed.dns.rules).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    rule_set: ['geosite-geolocation-!cn'],
+                    server: 'dns-foreign-1',
+                }),
+            ])
+        );
         expect(parsed.dns.rules[0].rule_set).toEqual(['geosite-cn']);
     });
 
