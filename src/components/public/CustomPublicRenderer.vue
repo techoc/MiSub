@@ -10,6 +10,12 @@
     const themeStore = useThemeStore();
     const { t } = useI18n();
 
+    /** 公开页 profile 条目中用于统计的字段 */
+    interface ProfileCountSource {
+        subscriptionCount?: number;
+        manualNodeCount?: number;
+    }
+
     const props = defineProps({
         content: {
             type: String,
@@ -60,7 +66,7 @@
     const isIframeMode = computed(() =>
         ['iframe-srcdoc', 'iframe-url'].includes(customPageType.value)
     );
-    const sanitizeHtml = (html: any) =>
+    const sanitizeHtml = (html: string): string =>
         DOMPurify.sanitize(html || '', {
             USE_PROFILES: { html: true },
             ADD_ATTR: ['data-slot'],
@@ -71,7 +77,7 @@
     const iframeSrcdoc = computed(() =>
         customPageType.value === 'iframe-srcdoc' ? sanitizeHtml(props.content || '') : undefined
     );
-    const safeIframeUrl = (value: any) => {
+    const safeIframeUrl = (value: unknown): string => {
         try {
             const url = new URL(String(value || ''), window.location.origin);
             return ['http:', 'https:'].includes(url.protocol) ? url.toString() : '';
@@ -100,7 +106,7 @@
     const iframeUsesDefaultViewportHeight = computed(() => !customPageConfig.value.iframeHeight);
 
     const parsedSource = computed(() => parseCustomPageSource(props.content, props.css));
-    const escapeHtml = (value: any) => {
+    const escapeHtml = (value: unknown): string => {
         return String(value)
             .replace(/&/g, '&amp;')
             .replace(/"/g, '&quot;')
@@ -112,11 +118,8 @@
         let html = parsedSource.value.html || '';
 
         // 1. 文本占位符替换
-        const nodeCount = props.profiles.reduce(
-            (sum, p) =>
-                sum +
-                ((p as Record<string, any>).subscriptionCount || 0) +
-                (((p as Record<string, any>).manualNodeCount as any as any as any) || 0),
+        const nodeCount = (props.profiles as ProfileCountSource[]).reduce(
+            (sum, p) => sum + (p.subscriptionCount || 0) + (p.manualNodeCount || 0),
             0
         );
         const textVars = {
@@ -151,7 +154,7 @@
     });
 
     // 用于检测占位符是否在 HTML 中的辅助函数
-    const hasSlot = (name: any) => {
+    const hasSlot = (name: string): boolean => {
         return renderedHtml.value.includes(`data-slot="${name}"`);
     };
 
