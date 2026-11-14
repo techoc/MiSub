@@ -13,6 +13,16 @@ import { extractSingboxNodes } from './singbox-to-url.ts';
 import { validateSS2022Node, fixSS2022Node } from './ss2022-validator.ts';
 import { extractNodeMetadata } from './metadata-extractor.ts';
 import { parseV2rayNLink } from './v2rayn-parser.ts';
+import type { ProxyNode } from '../../../types/models.ts';
+
+/** SS2022 校验告警 */
+interface NodeWarning {
+    type: string;
+    message?: string;
+    details?: unknown;
+    originalCipher?: string;
+    fixedCipher?: string;
+}
 
 /**
  * 支持的节点协议正则表达式
@@ -24,7 +34,7 @@ export const NODE_PROTOCOL_REGEX =
  * 尝试解析 Surge 或 Quantumult X 格式的节点字符串
  * 转换为 Clash proxy 对象
  */
-function parseSurgeOrQxLine(line: any) {
+function parseSurgeOrQxLine(line: string): ProxyNode | null {
     if (!line || line.startsWith('#') || line.startsWith(';')) return null;
 
     // Surge 格式: "name = protocol, server, port, key=value, ..."
@@ -32,7 +42,7 @@ function parseSurgeOrQxLine(line: any) {
         /^([^=]+?)\s*=\s*(shadowsocks|ss|ssr|vmess|vless|trojan|hysteria2?|hy2|hysteria|tuic|snell|anytls|socks5|http|https|wireguard)\s*,\s*([^,]+?)\s*,\s*(\d+)(.*)$/i
     );
     if (match) {
-        const proxy: Record<string, any> = {
+        const proxy: ProxyNode = {
             name: match[1].trim(),
             type: match[2].toLowerCase(),
             server: match[3].trim(),
@@ -40,7 +50,7 @@ function parseSurgeOrQxLine(line: any) {
         };
         const extraParams = match[5];
         if (extraParams) {
-            const parts = extraParams.split(',').map((p: any) => p.trim());
+            const parts = extraParams.split(',').map((p: string) => p.trim());
             let positionalIndex = 0;
             for (const p of parts) {
                 if (!p) continue;
@@ -74,11 +84,11 @@ function parseSurgeOrQxLine(line: any) {
                         proxy.cipher = v;
                     if (k === 'obfs') {
                         proxy.pluginOpts = proxy.pluginOpts || {};
-                        (proxy.pluginOpts as Record<string, any>).mode = v;
+                        proxy.pluginOpts.mode = v;
                     }
                     if (k === 'obfs-host') {
                         proxy.pluginOpts = proxy.pluginOpts || {};
-                        (proxy.pluginOpts as Record<string, any>).host = v;
+                        proxy.pluginOpts.host = v;
                     }
                     if (k === 'version') proxy.version = parseInt(v);
                     if (k === 'reuse' && v === 'true') proxy.reuse = true;
@@ -116,7 +126,7 @@ function parseSurgeOrQxLine(line: any) {
         /^(shadowsocks|ss|ssr|vmess|vless|trojan|hysteria2?|hy2|hysteria|tuic|snell|anytls|socks5|http|https|wireguard)\s*=\s*([^,:]+?)\s*:\s*(\d+)(.*)$/i
     );
     if (match) {
-        const proxy: Record<string, any> = {
+        const proxy: ProxyNode = {
             name: 'Untitled',
             type: match[1].toLowerCase(),
             server: match[2].trim(),
@@ -124,7 +134,7 @@ function parseSurgeOrQxLine(line: any) {
         };
         const extraParams = match[4];
         if (extraParams) {
-            const parts = extraParams.split(',').map((p: any) => p.trim());
+            const parts = extraParams.split(',').map((p: string) => p.trim());
             for (const p of parts) {
                 if (!p) continue;
                 const kv = p.split('=');
@@ -157,7 +167,7 @@ function parseSurgeOrQxLine(line: any) {
                         if (v === 'over-tls') proxy.tls = true;
                         else {
                             proxy.pluginOpts = proxy.pluginOpts || {};
-                            (proxy.pluginOpts as Record<string, any>).mode = v;
+                            proxy.pluginOpts.mode = v;
                         }
                     }
                     if (k === 'vless-flow') proxy.flow = v;
@@ -190,10 +200,10 @@ function parseSurgeOrQxLine(line: any) {
  * 从文本中提取所有有效的节点URL
  * 支持：Clash YAML, Base64, 纯文本列表, Surge/QX 参数文本
  */
-export function extractValidNodes(text: any) {
+export function extractValidNodes(text: unknown): string[] {
     if (!text || typeof text !== 'string') return [];
 
-    let nodes: any[] = [];
+    let nodes: string[] = [];
 
     // 0. 尝试解析为 sing-box / JSON 配置（outbounds 列表）
     const trimmed = text.trim();
@@ -201,7 +211,9 @@ export function extractValidNodes(text: any) {
         try {
             const jsonObj = JSON.parse(trimmed);
             if (jsonObj && Array.isArray(jsonObj.outbounds)) {
-                nodes = extractSingboxNodes(jsonObj);
+                nodes = extractSingboxNodes(jsonObj).filter(
+                    (item): item is string => typeof item === 'string'
+                );
                 if (nodes.length > 0) return nodes;
             }
         } catch (e) {
@@ -214,10 +226,9 @@ export function extractValidNodes(text: any) {
     const lowerText = text.toLowerCase();
     if (/\bproxies\s*:/.test(lowerText)) {
         try {
-            const yamlObj = yaml.load(text);
+            const yamlObj = yaml.load(text) as Record<string, unknown> | null;
             // 兼容 proxies 和 Proxy 字段
-            const proxies =
-                (yamlObj as Record<string, any>).proxies || (yamlObj as Record<string, any>).Proxy;
+            const proxies = yamlObj?.proxies || yamlObj?.Proxy;
 
             if (Array.isArray(proxies)) {
                 proxies.forEach((proxy) => {
@@ -306,7 +317,7 @@ const SUPPORTED_SS_CIPHERS = [
 /**
  * 验证 UUID 格式
  */
-function isValidUUID(uuid: any) {
+function isValidUUID(uuid: unknown): boolean {
     if (!uuid || typeof uuid !== 'string') return false;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
@@ -315,7 +326,10 @@ function isValidUUID(uuid: any) {
 /**
  * 解析节点列表 (用于预览和计数)
  */
-export function parseNodeList(content: any, options: Record<string, any> = {}) {
+export function parseNodeList(
+    content: unknown,
+    options: Record<string, unknown> = {}
+): ProxyNode[] {
     const validNodes = extractValidNodes(content);
 
     return validNodes
@@ -324,7 +338,7 @@ export function parseNodeList(content: any, options: Record<string, any> = {}) {
             let fixedUrl = fixNodeUrlEncoding(nodeUrl, options);
 
             // 2. [新增] 验证和修复 SS 2022 节点 & 过滤传统 SS 算法
-            let ss2022Warning: any = null;
+            let ss2022Warning: NodeWarning | null = null;
             if (fixedUrl.startsWith('ss://')) {
                 // 2.1 提取加密算法
                 let method = '';
@@ -440,7 +454,7 @@ export function parseNodeList(content: any, options: Record<string, any> = {}) {
                 // VLESS 链接格式:
                 // 1. 标准: vless://uuid@host:port
                 // 2. Base64: vless://base64(uuid@host:port)
-                let id: any = null;
+                let id: string | null = null;
 
                 // 尝试标准格式 vless://uuid@host:port 优先
                 const matchStandard = fixedUrl.match(/^vless:\/\/([0-9a-fA-F-]{36})@/);
@@ -519,11 +533,7 @@ export function parseNodeList(content: any, options: Record<string, any> = {}) {
             // 6. 添加元数据提取 (Intelligence)
             const metadata = extractNodeMetadata(nodeInfo.name);
 
-            const result: Record<string, any> = {
-                ...nodeInfo,
-                url: fixedUrl,
-                metadata: metadata,
-            };
+            const result = { ...nodeInfo, url: fixedUrl, metadata: metadata } as unknown as ProxyNode;
 
             if (ss2022Warning) {
                 result.warning = ss2022Warning;
@@ -537,16 +547,16 @@ export function parseNodeList(content: any, options: Record<string, any> = {}) {
 /**
  * 统计节点协议类型分布
  */
-export function calculateProtocolStats(nodes: any) {
-    const stats = {};
+export function calculateProtocolStats(nodes: Array<{ name?: string; protocol?: unknown }>) {
+    const counts: Record<string, number> = {};
     const total = nodes.length;
-    nodes.forEach((node: any) => {
-        const protocol = node.protocol || 'unknown';
-        (stats as Record<string, any>)[protocol] =
-            ((stats as Record<string, any>)[protocol] || 0) + 1;
+    nodes.forEach((node) => {
+        const protocol = String(node.protocol || 'unknown');
+        counts[protocol] = (counts[protocol] || 0) + 1;
     });
-    for (const [protocol, count] of Object.entries(stats) as [string, number][]) {
-        (stats as Record<string, any>)[protocol] = {
+    const stats: Record<string, { count: number; percentage: number }> = {};
+    for (const [protocol, count] of Object.entries(counts)) {
+        stats[protocol] = {
             count,
             percentage: Math.round((count / total) * 100),
         };
@@ -557,17 +567,18 @@ export function calculateProtocolStats(nodes: any) {
 /**
  * 统计节点地区分布
  */
-export function calculateRegionStats(nodes: any) {
-    const stats = {};
+export function calculateRegionStats(nodes: Array<{ name?: string }>) {
+    const counts: Record<string, number> = {};
     const total = nodes.length;
-    nodes.forEach((node: any) => {
+    nodes.forEach((node) => {
         const region = extractNodeRegion(node.name || '');
-        (stats as Record<string, any>)[region] = ((stats as Record<string, any>)[region] || 0) + 1;
+        counts[region] = (counts[region] || 0) + 1;
     });
-    for (const [region, count] of Object.entries(stats) as [string, number][]) {
-        (stats as Record<string, any>)[region] = {
+    const stats: Record<string, { count: number; percentage: number }> = {};
+    for (const [region, count] of Object.entries(counts)) {
+        stats[region] = {
             count,
-            percentage: Math.round((count / (total as number)) * 100),
+            percentage: Math.round((count / total) * 100),
         };
     }
     return stats;
@@ -576,10 +587,10 @@ export function calculateRegionStats(nodes: any) {
 /**
  * 去除重复节点
  */
-export function removeDuplicateNodes(nodes: any) {
+export function removeDuplicateNodes<T extends { url?: string }>(nodes: T[] | unknown): T[] {
     if (!Array.isArray(nodes)) return [];
-    const seen = new Set();
-    return nodes.filter((node) => {
+    const seen = new Set<string>();
+    return (nodes as T[]).filter((node) => {
         const url = node.url || '';
         if (seen.has(url)) return false;
         seen.add(url);
@@ -590,7 +601,7 @@ export function removeDuplicateNodes(nodes: any) {
 /**
  * 格式化节点数量显示
  */
-export function formatNodeCount(count: any) {
+export function formatNodeCount(count: unknown): string {
     if (typeof count !== 'number' || count < 0) return '0 个节点';
     return `${count} 个节点`;
 }
@@ -600,7 +611,7 @@ export function formatNodeCount(count: any) {
  * @param {string} url - Snell URL
  * @returns {Object|null} Clash 代理对象或 null
  */
-export function parseSnellUrl(url: any) {
+export function parseSnellUrl(url: string): ProxyNode | null {
     try {
         const urlObj = new URL(url);
 
@@ -623,7 +634,7 @@ export function parseSnellUrl(url: any) {
             return null;
         }
 
-        const proxy: Record<string, any> = {
+        const proxy: ProxyNode = {
             type: 'snell',
             name: name,
             server: server,
@@ -661,7 +672,7 @@ export function parseSnellUrl(url: any) {
  * @param {string} url - Snell URL
  * @returns {Object} 验证结果 {valid, error?, details?, proxy?}
  */
-export function validateSnellNode(url: any) {
+export function validateSnellNode(url: unknown) {
     try {
         if (!url || typeof url !== 'string') {
             return { valid: false, error: '无效的 URL 格式' };
