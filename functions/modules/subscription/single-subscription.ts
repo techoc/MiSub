@@ -5,6 +5,14 @@ import { calculateProtocolStats, calculateRegionStats } from '../utils/node-pars
 import { KV_KEY_SUBS } from '../config.ts';
 import { fetchSubscriptionNodes } from './node-fetcher.ts';
 
+import type { SubscriptionItem } from '../../../types/models.ts';
+
+/** 预览用到的存储适配器最小面 */
+interface PreviewStorage {
+    get(key: string): Promise<unknown>;
+    getSubscriptionById?(id: string): Promise<SubscriptionItem | null>;
+}
+
 /**
  * 处理单个订阅模式的节点获取
  * @param {Object} request - HTTP请求对象
@@ -14,36 +22,38 @@ import { fetchSubscriptionNodes } from './node-fetcher.ts';
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleSingleSubscriptionMode(
-    request: any,
-    env: any,
-    subscriptionId: any,
-    userAgent: any,
+    request: Request,
+    env: Env,
+    subscriptionId: string,
+    userAgent: string,
     skipCertVerify = false
 ) {
     const storageAdapter = StorageFactory.createAdapter(
         env,
         await StorageFactory.getStorageType(env)
     );
+    const adapter = storageAdapter as unknown as PreviewStorage;
 
     // 查找订阅
-    const subscription =
-        typeof (storageAdapter as Record<string, any>).getSubscriptionById === 'function'
-            ? await (storageAdapter as Record<string, any>).getSubscriptionById(subscriptionId)
-            : ((await storageAdapter.get(KV_KEY_SUBS)) || []).find(
-                  (sub: any) => sub.id === subscriptionId
-              );
+    const subscription: SubscriptionItem | null =
+        typeof adapter.getSubscriptionById === 'function'
+            ? await adapter.getSubscriptionById(subscriptionId)
+            : (((await adapter.get(KV_KEY_SUBS)) as SubscriptionItem[] | null) || []).find(
+                  (sub) => sub.id === subscriptionId
+              ) || null;
 
     if (!subscription || !subscription.enabled) {
         return createJsonResponse({ error: '订阅不存在或已禁用' }, 404);
     }
+    const url = subscription.url || '';
 
     // 检查是否为手工节点
-    if (!subscription.url.startsWith('http')) {
+    if (!url.startsWith('http')) {
         // 手工节点：直接解析节点URL
-        const nodeInfo = parseNodeInfo(subscription.url);
+        const nodeInfo = parseNodeInfo(url);
         const manualNodeResult = {
             subscriptionName: subscription.name || '手工节点',
-            url: subscription.url,
+            url,
             success: true,
             nodes: [
                 {
@@ -69,13 +79,13 @@ export async function handleSingleSubscriptionMode(
 
     // HTTP订阅：获取节点（开启保护性缓存时，上游失败回退缓存节点，与输出链路一致）
     const result = await fetchSubscriptionNodes(
-        subscription.url,
+        url,
         subscription.name,
         userAgent,
-        subscription.customUserAgent,
+        subscription.customUserAgent ?? null,
         false,
-        subscription.exclude,
-        subscription.fetchProxy,
+        subscription.exclude ?? '',
+        subscription.fetchProxy ?? null,
         skipCertVerify,
         Boolean(subscription?.plusAsSpace),
         subscription?.enableNodeCache === true,
@@ -103,8 +113,8 @@ export async function handleSingleSubscriptionMode(
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleDirectUrlMode(
-    subscriptionUrl: any,
-    userAgent: any,
+    subscriptionUrl: string,
+    userAgent: string,
     skipCertVerify = false,
     plusAsSpace = false
 ) {
