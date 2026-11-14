@@ -5,23 +5,65 @@ const DEFAULT_MAX_INLINE_URL_LENGTH = 6000;
 const DEFAULT_MAX_INLINE_NODE_COUNT = 80;
 const MEMORY_CACHE_SYMBOL = '__misubExternalNodesCallbackCache';
 
+/** 内存回退缓存条目 */
+interface MemoryEntry {
+    value: string;
+    expiresAt: number;
+}
+
+/** 外部节点回调 token 载荷 */
+interface ExternalNodesTokenPayload {
+    profileId?: string;
+    nodeHash?: string;
+    exp?: number;
+}
+
+interface PutExternalNodesOptions {
+    env?: Env;
+    profileId?: string;
+    nodesText?: string;
+    ttlSeconds?: number;
+}
+
+interface GetExternalNodesOptions {
+    env?: Env;
+    profileId?: string;
+    nodeHash?: string;
+}
+
+interface CreateExternalNodesTokenOptions {
+    profileId?: string;
+    nodeHash?: string;
+    secret?: string;
+    expiresInSeconds?: number;
+}
+
+interface PrepareExternalNodesCallbackOptions {
+    env?: Env;
+    requestUrl?: string | URL;
+    profileId?: string;
+    nodesText?: string;
+    ttlSeconds?: number;
+    encoding?: string;
+}
+
 function getCrypto() {
-    const cryptoImpl = (globalThis as Record<string, any>).crypto;
+    const cryptoImpl = (globalThis as unknown as { crypto?: Crypto }).crypto;
     if (!cryptoImpl?.subtle) {
         throw new Error('WebCrypto subtle API is unavailable');
     }
     return cryptoImpl;
 }
 
-function bytesToHex(buffer: any) {
+function bytesToHex(buffer: ArrayBuffer): string {
     return Array.from(new Uint8Array(buffer))
         .map((byte) => byte.toString(16).padStart(2, '0'))
         .join('');
 }
 
-function bytesToBase64Url(bytes: any) {
+function bytesToBase64Url(bytes: Uint8Array): string {
     let binary = '';
-    bytes.forEach((byte: any) => {
+    bytes.forEach((byte) => {
         binary += String.fromCharCode(byte);
     });
     const base64 =
@@ -31,7 +73,7 @@ function bytesToBase64Url(bytes: any) {
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-function encodeUtf8Base64(text: any) {
+function encodeUtf8Base64(text: unknown): string {
     const bytes = new TextEncoder().encode(String(text || ''));
     let binary = '';
     bytes.forEach((byte) => {
@@ -42,7 +84,7 @@ function encodeUtf8Base64(text: any) {
         : Buffer.from(binary, 'binary').toString('base64');
 }
 
-function base64UrlToBytes(value: any) {
+function base64UrlToBytes(value: unknown): Uint8Array {
     const base64 = String(value || '')
         .replace(/-/g, '+')
         .replace(/_/g, '/');
@@ -54,16 +96,16 @@ function base64UrlToBytes(value: any) {
     return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
-function encodePayload(payload: any) {
+function encodePayload(payload: unknown): string {
     return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
 }
 
-function decodePayload(encoded: any) {
+function decodePayload(encoded: string): ExternalNodesTokenPayload {
     const json = new TextDecoder().decode(base64UrlToBytes(encoded));
     return JSON.parse(json);
 }
 
-async function hmacSha256Base64Url(data: any, secret: any) {
+async function hmacSha256Base64Url(data: string, secret: string): Promise<string> {
     const cryptoImpl = getCrypto();
     const key = await cryptoImpl.subtle.importKey(
         'raw',
@@ -76,12 +118,12 @@ async function hmacSha256Base64Url(data: any, secret: any) {
     return bytesToBase64Url(new Uint8Array(signature));
 }
 
-async function sha256Hex(text: any) {
+async function sha256Hex(text: string): Promise<string> {
     const digest = await getCrypto().subtle.digest('SHA-256', new TextEncoder().encode(text));
     return bytesToHex(digest);
 }
 
-function timingSafeEqualString(a: any, b: any) {
+function timingSafeEqualString(a: unknown, b: unknown): boolean {
     const left = String(a || '');
     const right = String(b || '');
     if (left.length !== right.length) return false;
@@ -92,14 +134,15 @@ function timingSafeEqualString(a: any, b: any) {
     return diff === 0;
 }
 
-function getMemoryCache() {
-    if (!(globalThis as Record<string, any>)[MEMORY_CACHE_SYMBOL]) {
-        (globalThis as Record<string, any>)[MEMORY_CACHE_SYMBOL] = new Map();
+function getMemoryCache(): Map<string, MemoryEntry> {
+    const scope = globalThis as unknown as Record<string, Map<string, MemoryEntry> | undefined>;
+    if (!scope[MEMORY_CACHE_SYMBOL]) {
+        scope[MEMORY_CACHE_SYMBOL] = new Map();
     }
-    return (globalThis as Record<string, any>)[MEMORY_CACHE_SYMBOL];
+    return scope[MEMORY_CACHE_SYMBOL]!;
 }
 
-function resolveExternalNodesKv(env: Record<string, any> = {}) {
+function resolveExternalNodesKv(env: Env) {
     try {
         return StorageFactory.resolveKV(env);
     } catch {
@@ -107,7 +150,7 @@ function resolveExternalNodesKv(env: Record<string, any> = {}) {
     }
 }
 
-function resolveExternalNodesD1Adapter(env: Record<string, any> = {}) {
+function resolveExternalNodesD1Adapter(env: Env) {
     if (!env?.MISUB_DB) return null;
     try {
         return StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
@@ -120,14 +163,15 @@ function resolveExternalNodesD1Adapter(env: Record<string, any> = {}) {
     }
 }
 
-function normalizeDurableStoredNodes(stored: any) {
+function normalizeDurableStoredNodes(stored: unknown): string | null {
     if (stored === null || stored === undefined) return null;
     if (typeof stored === 'string') return stored;
     if (typeof stored === 'object') {
-        if (Number(stored.expiresAt || 0) && Number(stored.expiresAt) <= Date.now()) {
+        const record = stored as { expiresAt?: number; value?: unknown };
+        if (Number(record.expiresAt || 0) && Number(record.expiresAt) <= Date.now()) {
             return null;
         }
-        if (typeof stored.value === 'string') return stored.value;
+        if (typeof record.value === 'string') return record.value;
     }
     return null;
 }
@@ -157,21 +201,21 @@ export function shouldUseExternalNodesCallback({
     return Number(inlineUrlLength) > maxInlineUrlLength || Number(nodeCount) > maxInlineNodeCount;
 }
 
-export function buildExternalNodesCacheKey(profileId: any, nodeHash: any) {
+export function buildExternalNodesCacheKey(profileId: unknown, nodeHash: unknown) {
     const safeProfileId = String(profileId || 'default').replace(/[^a-zA-Z0-9._:-]/g, '_');
     return `tmp_external_nodes:${safeProfileId}:${nodeHash}`;
 }
 
-export async function hashExternalNodes(nodesText: any) {
+export async function hashExternalNodes(nodesText: unknown) {
     return sha256Hex(String(nodesText || ''));
 }
 
 export async function putExternalNodes({
-    env = {},
+    env = {} as Env,
     profileId = 'default',
     nodesText = '',
     ttlSeconds = DEFAULT_EXTERNAL_NODES_TTL_SECONDS,
-} = {}) {
+}: PutExternalNodesOptions = {}) {
     const normalizedNodes = String(nodesText || '');
     const nodeHash = await hashExternalNodes(normalizedNodes);
     const cacheKey = buildExternalNodesCacheKey(profileId, nodeHash);
@@ -213,10 +257,10 @@ export async function putExternalNodes({
 }
 
 export async function getExternalNodes({
-    env = {},
+    env = {} as Env,
     profileId = 'default',
     nodeHash,
-}: Record<string, any> = {}) {
+}: GetExternalNodesOptions = {}) {
     const cacheKey = buildExternalNodesCacheKey(profileId, nodeHash);
     const kv = resolveExternalNodesKv(env);
     if (kv?.get) {
@@ -235,7 +279,7 @@ export async function getExternalNodes({
 
     purgeExpiredMemoryEntries();
     const entry = getMemoryCache().get(cacheKey);
-    return entry?.expiresAt > Date.now() ? entry.value : null;
+    return entry && entry.expiresAt > Date.now() ? entry.value : null;
 }
 
 export async function createExternalNodesToken({
@@ -243,7 +287,7 @@ export async function createExternalNodesToken({
     nodeHash,
     secret,
     expiresInSeconds = DEFAULT_EXTERNAL_NODES_TTL_SECONDS,
-}: Record<string, any> = {}) {
+}: CreateExternalNodesTokenOptions = {}) {
     if (!secret) {
         throw new Error('external nodes callback secret is missing');
     }
@@ -257,20 +301,24 @@ export async function createExternalNodesToken({
     return `${encodedPayload}.${signature}`;
 }
 
-export async function verifyExternalNodesToken(token: any, secret: any) {
-    if (!secret) {
+export async function verifyExternalNodesToken(
+    token: unknown,
+    secret: unknown
+): Promise<ExternalNodesTokenPayload> {
+    const secretValue = String(secret ?? '');
+    if (!secretValue) {
         throw new Error('external nodes callback secret is missing');
     }
     const [encodedPayload, signature, extra] = String(token || '').split('.');
     if (!encodedPayload || !signature || extra !== undefined) {
         throw new Error('invalid external nodes callback token');
     }
-    const expectedSignature = await hmacSha256Base64Url(encodedPayload, secret);
+    const expectedSignature = await hmacSha256Base64Url(encodedPayload, secretValue);
     if (!timingSafeEqualString(signature, expectedSignature)) {
         throw new Error('invalid external nodes callback token');
     }
 
-    let payload;
+    let payload: ExternalNodesTokenPayload;
     try {
         payload = decodePayload(encodedPayload);
     } catch {
@@ -285,14 +333,14 @@ export async function verifyExternalNodesToken(token: any, secret: any) {
     return payload;
 }
 
-export function resolveExternalNodesCallbackSecret(env: Record<string, any> = {}) {
-    return env?.CALLBACK_TOKEN_SECRET || env?.COOKIE_SECRET || '';
+export function resolveExternalNodesCallbackSecret(env: Env = {} as Env) {
+    return String(env?.CALLBACK_TOKEN_SECRET || env?.COOKIE_SECRET || '');
 }
 
 export function buildExternalNodesCallbackUrl(
-    requestUrl: any,
-    token: any,
-    { encoding }: Record<string, any> = {}
+    requestUrl: string | URL,
+    token: string,
+    { encoding }: { encoding?: string } = {}
 ) {
     const callbackUrl = new URL('/api/external-nodes-callback', requestUrl);
     callbackUrl.searchParams.set('token', token);
@@ -303,13 +351,13 @@ export function buildExternalNodesCallbackUrl(
 }
 
 export async function prepareExternalNodesCallback({
-    env = {},
+    env = {} as Env,
     requestUrl,
     profileId = 'default',
     nodesText = '',
     ttlSeconds = DEFAULT_EXTERNAL_NODES_TTL_SECONDS,
     encoding,
-}: Record<string, any> = {}) {
+}: PrepareExternalNodesCallbackOptions = {}) {
     const secret = resolveExternalNodesCallbackSecret(env);
     const stored = await putExternalNodes({ env, profileId, nodesText, ttlSeconds });
     const token = await createExternalNodesToken({
@@ -321,13 +369,13 @@ export async function prepareExternalNodesCallback({
     return {
         ...stored,
         token,
-        callbackUrl: buildExternalNodesCallbackUrl(requestUrl, token, { encoding }),
+        callbackUrl: buildExternalNodesCallbackUrl(requestUrl as string, token, { encoding }),
     };
 }
 
 export async function handleExternalNodesCallbackRequest(
-    request: any,
-    env: Record<string, any> = {}
+    request: Request,
+    env: Env = {} as Env
 ) {
     const url = new URL(request.url);
     const token = url.searchParams.get('token');
@@ -335,7 +383,7 @@ export async function handleExternalNodesCallbackRequest(
         return new Response('Missing callback token', { status: 400 });
     }
 
-    let payload;
+    let payload: ExternalNodesTokenPayload;
     try {
         payload = await verifyExternalNodesToken(token, resolveExternalNodesCallbackSecret(env));
     } catch (err) {
@@ -355,13 +403,13 @@ export async function handleExternalNodesCallbackRequest(
 
     const encoding = (url.searchParams.get('encoding') || '').toLowerCase();
     const responseText = encoding === 'base64' ? encodeUtf8Base64(nodesText) : nodesText;
-    const headers = {
+    const headers: Record<string, string> = {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-store, no-cache',
         'X-MiSub-Mode': 'external-nodes-callback',
     };
     if (encoding === 'base64') {
-        (headers as Record<string, any>)['X-MiSub-Callback-Encoding'] = 'base64';
+        headers['X-MiSub-Callback-Encoding'] = 'base64';
     }
 
     return new Response(responseText, {
